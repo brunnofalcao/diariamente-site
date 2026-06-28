@@ -106,7 +106,7 @@ export function ImageSlot({
       );
     }
     return (
-      <div className={`img-slot ${shape}`} style={{ border: "1px solid var(--border)", ...style }}>
+      <div className={`img-slot ${shape} has-img`} style={{ border: "1px solid var(--border)", ...style }}>
         <img className="img-real" src={src} alt={alt} loading="lazy" />
       </div>
     );

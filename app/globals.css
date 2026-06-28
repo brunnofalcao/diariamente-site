@@ -116,6 +116,8 @@ h3,.h3{ font-size:17px; font-weight:600; line-height:1.35; }
 .img-slot .slot-label{ color:var(--n-200); font-size:14px; font-weight:600; }
 .img-slot .slot-dims{ color:var(--n-500); font-size:12px; margin-top:4px; }
 .img-slot.tall{ min-height:520px; }
+/* slot com imagem real: sem listras nem borda tracejada (placeholder some) */
+.img-slot.has-img{ background:transparent; border:none; min-height:0; }
 .img-slot.square{ aspect-ratio:1/1; min-height:0; }
 .img-slot.portrait{ aspect-ratio:4/5; min-height:0; }
 .img-slot.wide{ aspect-ratio:16/10; min-height:0; }
@@ -307,10 +309,11 @@ body::before{ animation:breathe 9s var(--ease) infinite; }
 /* fundo neutro escuro, sem teal (deixa o recorte transparente limpo) */
 .autor-foto{ position:relative; background:linear-gradient(180deg, var(--s-2,#181D1D), var(--s-1,#111616)); }
 .autor-foto > *{ position:relative; z-index:1; }
-/* a foto transparente preenche o quadrado, ancorada no topo (cabeça) */
-.autor-foto .img-real{ object-position:center top; }
-/* Roberta: enquadramento mais afastado (zoom out) */
-.autor-foto-zoom .img-real{ transform:scale(0.92); transform-origin:center top; }
+/* a foto transparente preenche o quadrado, ancorada embaixo (fixa no box) */
+.autor-foto{ overflow:hidden; }
+.autor-foto .img-real{ object-position:center bottom; }
+/* Roberta: enquadramento mais afastado (zoom out), ainda ancorada embaixo */
+.autor-foto-zoom .img-real{ transform:scale(0.92); transform-origin:center bottom; }
 
 /* ---------- FAIXA DE STATS (prova social) ---------- */
 .stats-band{

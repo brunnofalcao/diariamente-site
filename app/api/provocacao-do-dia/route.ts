@@ -68,10 +68,20 @@ export const revalidate = 0;
 export async function GET() {
   const { mes, dia, diaAno } = mesDiaBR();
 
-  // Sem Supabase configurado → fallback teaser
+  // Sem Supabase configurado → fallback teaser (com diagnóstico claro)
   if (!SB_URL || !SB_KEY) {
     const t = TEASER[(diaAno - 1) % TEASER.length];
-    return NextResponse.json({ dia: diaAno, total: 365, fonte: "teaser", ...t });
+    const faltando = [
+      !SB_URL ? "SUPABASE_URL" : null,
+      !SB_KEY ? "SUPABASE_SERVICE_KEY" : null,
+    ].filter(Boolean);
+    return NextResponse.json({
+      dia: diaAno,
+      total: 365,
+      fonte: "teaser",
+      motivo: `variavel(eis) de ambiente ausente(s) no Vercel: ${faltando.join(", ")}`,
+      ...t,
+    });
   }
 
   try {
