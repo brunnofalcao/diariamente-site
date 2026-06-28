@@ -66,7 +66,7 @@ export function HeroProvocacao() {
     return () => window.clearTimeout(startDelay);
   }, [prov]);
 
-  const diaLabel = prov ? `Dia ${prov.dia} de ${prov.total}` : "Dia — de 365";
+  const diaLabel = prov ? `Dia ${prov.dia} de ${prov.total}` : "Dia · de 365";
 
   return (
     <div className="hero-search reveal">
@@ -78,7 +78,7 @@ export function HeroProvocacao() {
           </span>
           <span className="hs-streak" aria-hidden="true">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 4-2 5-2 8a4 4 0 008 0c0-1-1-2-1-3 2 1 3 3 3 6a8 8 0 11-16 0c0-5 5-7 8-11z"/></svg>
-            {prov ? prov.dia : "—"}
+            {prov ? prov.dia : "·"}
           </span>
         </div>
 
@@ -102,7 +102,7 @@ export function HeroProvocacao() {
 
         {/* rodapé: autor + microcopy do app */}
         <div className="hs-foot">
-          {done && prov?.autor && <span className="hs-autor">— {prov.autor}</span>}
+          {done && prov?.autor && <span className="hs-autor">{prov.autor}</span>}
           <span className="hs-sub">Sua vez. O que você vai fazer com isso?</span>
         </div>
       </div>

@@ -6,15 +6,15 @@ import { GARANTIA } from "@/config";
 const FAQ_ITEMS = [
   {
     q: "É caro?",
-    a: "É menos de R$ 13 por mês por um ano inteiro de provocação diária — com um sistema feito pra você realmente usar, não esquecer numa estante digital.",
+    a: "É menos de R$ 13 por mês por um ano inteiro de provocação diária, com um sistema feito pra você realmente usar, não esquecer numa estante digital.",
   },
   {
     q: "Não tenho tempo.",
-    a: "É uma provocação por dia, cerca de 5 minutos. O app inclusive te lembra no WhatsApp. A questão nunca foi tempo — foi constância.",
+    a: "É uma provocação por dia, cerca de 5 minutos. O app inclusive te lembra no WhatsApp. A questão nunca foi tempo: foi constância.",
   },
   {
     q: "Já comprei livros assim e larguei.",
-    a: "Exatamente por isso o Diariamente foi construído no ponto onde você largou antes. Ofensiva, conquistas e Ações existem pra te ajudar a voltar no dia seguinte — não pra te cobrar perfeição.",
+    a: "Exatamente por isso o Diariamente foi construído no ponto onde você largou antes. Ofensiva, conquistas e Ações existem pra te ajudar a voltar no dia seguinte, não pra te cobrar perfeição.",
   },
   {
     q: "Será que funciona pra mim?",
@@ -26,11 +26,11 @@ const FAQ_ITEMS = [
   },
   {
     q: "Posso ler tudo de uma vez?",
-    a: "Não — e isso é de propósito. No app você vive o dia de hoje, um por vez. É o que diferencia um ritual diário de um livro que você devora e esquece. Quando quiser adiantar, sua própria constância destrava o próximo dia: você conquista o direito de seguir em frente.",
+    a: "Não, e isso é de propósito. No app você vive o dia de hoje, um por vez. É o que diferencia um ritual diário de um livro que você devora e esquece. Quando quiser adiantar, sua própria constância destrava o próximo dia: você conquista o direito de seguir em frente.",
   },
   {
     q: "Como recebo o acesso?",
-    a: "Por e-mail, logo após a confirmação. Você abre o app e já faz a provocação do dia 1 — sua jornada começa na hora.",
+    a: "Por e-mail, logo após a confirmação. Você abre o app e já faz a provocação do dia 1, e sua jornada começa na hora.",
   },
   {
     q: "E se eu não gostar?",

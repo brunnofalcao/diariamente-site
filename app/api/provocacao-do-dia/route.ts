@@ -3,36 +3,42 @@ import { NextResponse } from "next/server";
 // =====================================================================
 // API: provocação do dia  (hero dinâmico — barra de busca)
 // ---------------------------------------------------------------------
-// SEGURANÇA: roda no SERVIDOR. A chave do Supabase nunca vai ao navegador.
-// O front chama /api/provocacao-do-dia e recebe UMA provocação — nunca a lista.
+// Mostra a pergunta do DIA REAL (1..365) conforme a data de acesso.
+// Roda no servidor; o front só recebe UMA pergunta (a do dia).
 //
-// >>> COMO PLUGAR NO SUPABASE (passo a passo no fim do arquivo) <<<
+// >>> SCHEMA REAL (tabela `provocacoes`) <<<
+//   dia_ano  int   -> dia do ano 1..365  (qual pergunta mostrar hoje)
+//   pergunta text  -> a provocação
+//   autor_dia text -> "roberta" | "brunno"  (assinatura)
+//   dia, mes int   -> data de referência (disponíveis se precisar)
 //
 // Variáveis de ambiente (Vercel → Settings → Environment Variables):
-//   SUPABASE_URL          = https://SEU-PROJETO.supabase.co
-//   SUPABASE_SERVICE_KEY  = (service_role key — só servidor)
+//   NEXT_PUBLIC_SUPABASE_URL       = https://xycwmtsicuqjswfiohbc.supabase.co
+//   NEXT_PUBLIC_SUPABASE_ANON_KEY  = (anon/public key)
 //
-// Mapeamento de tabela/colunas (têm defaults; ajuste se seus nomes diferem):
-//   SUPABASE_TABLE        = conteudo        (a "aba de conteúdo")
-//   COL_TITULO            = titulo          (a provocação está aqui, como título)
-//   COL_DIA               = dia             (número do dia 1..365)
-//   COL_AUTOR             = autor           (opcional)
-//   COL_PUBLICA           = publica         (boolean — só expõe as marcadas true)
+// Mapeamento (defaults já batem com a base; só mude se renomear colunas):
+//   SUPABASE_TABLE=provocacoes  COL_DIA_ANO=dia_ano
+//   COL_PERGUNTA=pergunta       COL_AUTOR_DIA=autor_dia
 // =====================================================================
 
-const SB_URL = process.env.SUPABASE_URL;
-const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
+const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SB_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const TABLE = process.env.SUPABASE_TABLE || "conteudo";
-const C_TITULO = process.env.COL_TITULO || "titulo";
-const C_DIA = process.env.COL_DIA || "dia";
-const C_AUTOR = process.env.COL_AUTOR || "autor";
-const C_PUBLICA = process.env.COL_PUBLICA || "publica";
+const TABLE = process.env.SUPABASE_TABLE || "provocacoes";
+const C_DIA_ANO = process.env.COL_DIA_ANO || "dia_ano";
+const C_PERGUNTA = process.env.COL_PERGUNTA || "pergunta";
+const C_AUTOR_DIA = process.env.COL_AUTOR_DIA || "autor_dia";
+
+// autor_dia (slug) -> nome de exibição
+const AUTOR_NOME: Record<string, string> = {
+  brunno: "Brunno Falcão",
+  roberta: "Roberta Carbonari",
+};
 
 // Fallback teaser (marketing-safe — NÃO são as provocações reais do livro)
 const TEASER = [
   { texto: "O que você está adiando que, no fundo, já sabe que precisa decidir?", autor: "Diariamente" },
-  { texto: "Se hoje fosse a única chance de começar, você começaria — ou esperaria estar pronto?", autor: "Diariamente" },
+  { texto: "Se hoje fosse a única chance de começar, você começaria, ou esperaria estar pronto?", autor: "Diariamente" },
   { texto: "O que você faria diferente se ninguém estivesse olhando o resultado?", autor: "Diariamente" },
   { texto: "Qual conversa você está evitando que mudaria o seu próximo ano?", autor: "Diariamente" },
   { texto: "O que te trouxe até aqui é o mesmo que vai te levar adiante?", autor: "Diariamente" },
@@ -40,7 +46,7 @@ const TEASER = [
   { texto: "O que você constrói quando ninguém te cobra nada?", autor: "Diariamente" },
 ];
 
-// Dia do ano (1..365), determinístico — todos veem o mesmo no mesmo dia
+// Dia do ano (1..365), determinístico pela data
 function diaDoAno(d: Date): number {
   const start = new Date(d.getFullYear(), 0, 0);
   return Math.floor((d.getTime() - start.getTime()) / 86_400_000);
@@ -51,20 +57,20 @@ export const revalidate = 3600; // cache 1h
 export async function GET() {
   const dia = ((diaDoAno(new Date()) - 1) % 365) + 1; // 1..365
 
-  // Sem Supabase configurado → fallback teaser (rotaciona pela data)
+  // Sem Supabase configurado → fallback teaser
   if (!SB_URL || !SB_KEY) {
     const t = TEASER[(dia - 1) % TEASER.length];
     return NextResponse.json({ dia, total: 365, fonte: "teaser", ...t });
   }
 
   try {
-    // Busca só as públicas; seleciona título, dia e autor.
-    const select = encodeURIComponent(`${C_TITULO},${C_DIA},${C_AUTOR}`);
+    // Pega exatamente a pergunta de hoje (dia_ano = dia atual)
+    const select = encodeURIComponent(`${C_PERGUNTA},${C_AUTOR_DIA},${C_DIA_ANO}`);
     const endpoint =
       `${SB_URL}/rest/v1/${TABLE}` +
       `?select=${select}` +
-      `&${C_PUBLICA}=eq.true` +
-      `&order=${C_DIA}.asc`;
+      `&${C_DIA_ANO}=eq.${dia}` +
+      `&limit=1`;
 
     const r = await fetch(endpoint, {
       headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
@@ -73,21 +79,20 @@ export async function GET() {
     if (!r.ok) throw new Error(`supabase ${r.status}`);
 
     const linhas: Record<string, unknown>[] = await r.json();
-    if (!linhas?.length) throw new Error("sem provocações públicas");
+    if (!linhas?.length) throw new Error("dia sem pergunta");
 
-    // Tenta casar o dia exato; se não houver, rotaciona entre as públicas.
-    const doDia = linhas.find((l) => Number(l[C_DIA]) === dia);
-    const escolhida = doDia ?? linhas[(dia - 1) % linhas.length];
+    const row = linhas[0];
+    const slug = String(row[C_AUTOR_DIA] ?? "").toLowerCase().trim();
+    const autor = AUTOR_NOME[slug] || "Diariamente";
 
     return NextResponse.json({
       dia,
       total: 365,
       fonte: "supabase",
-      texto: String(escolhida[C_TITULO] ?? ""),
-      autor: String(escolhida[C_AUTOR] ?? "Diariamente"),
+      texto: String(row[C_PERGUNTA] ?? ""),
+      autor,
     });
   } catch {
-    // Qualquer falha → fallback teaser (o hero nunca quebra)
     const t = TEASER[(dia - 1) % TEASER.length];
     return NextResponse.json({ dia, total: 365, fonte: "teaser", ...t });
   }
@@ -96,30 +101,23 @@ export async function GET() {
 // =====================================================================
 // PASSO A PASSO PARA PLUGAR (faça quando for conectar):
 //
-// 1) No Supabase, garanta na sua tabela de conteúdo uma coluna boolean
-//    de visibilidade pública. Se ainda não existir:
+// 1) No Vercel (Settings → Environment Variables), defina:
+//      NEXT_PUBLIC_SUPABASE_URL       = https://xycwmtsicuqjswfiohbc.supabase.co
+//      NEXT_PUBLIC_SUPABASE_ANON_KEY  = (anon/public key do projeto)
 //
-//      alter table conteudo add column if not exists publica boolean default false;
+// 2) SEGURANÇA (anon key é pública): ligue RLS deixando a tabela
+//    `provocacoes` apenas-leitura pública. No SQL Editor do Supabase:
 //
-// 2) Marque como públicas APENAS 10-15 provocações "vitrine"
-//    (NUNCA marque todas — as 365 são o produto pago):
+//      alter table provocacoes enable row level security;
+//      create policy "leitura_publica_provocacoes"
+//        on provocacoes for select
+//        to anon
+//        using (true);
 //
-//      update conteudo set publica = true where dia in (1,7,14,21,30,45,60,90,120,180);
+//    Isso permite SELECT (ler), mas bloqueia insert/update/delete pelo anon.
 //
-// 3) (Recomendado) Restrinja o acesso anônimo só às públicas via RLS,
-//    como defesa extra além da API server-side:
-//
-//      alter table conteudo enable row level security;
-//      create policy "publicas_legiveis" on conteudo
-//        for select using (publica = true);
-//
-// 4) No Vercel, defina as variáveis (Settings -> Environment Variables):
-//      SUPABASE_URL          = https://SEU-PROJETO.supabase.co
-//      SUPABASE_SERVICE_KEY  = (service_role key)
-//    E, se seus nomes diferem dos defaults, ajuste também:
-//      SUPABASE_TABLE, COL_TITULO, COL_DIA, COL_AUTOR, COL_PUBLICA
-//
-// 5) Redeploy. Pronto: o hero passa a puxar do Supabase automaticamente.
-//    Teste em /api/provocacao-do-dia — o campo "fonte" dirá "supabase".
-//    Se algo falhar, cai sozinho no teaser (campo "fonte":"teaser").
+// 3) Redeploy. O hero passa a mostrar a `pergunta` do dia real,
+//    assinada por Brunno Falcão / Roberta Carbonari (via autor_dia).
+//    Teste em /api/provocacao-do-dia — campo "fonte" dirá "supabase".
+//    Se algo falhar, cai sozinho no teaser (nunca quebra).
 // =====================================================================

@@ -304,16 +304,39 @@ body::before{ animation:breathe 9s var(--ease) infinite; }
 }
 
 /* ---------- RETRATOS DOS AUTORES (PNG transparente) ---------- */
-/* fundo sutil pra cutout transparente parecer intencional */
-.autor-foto{ position:relative; }
-.autor-foto::before{
-  content:""; position:absolute; inset:0; z-index:0;
-  background:
-    radial-gradient(ellipse 75% 90% at 50% 100%, rgba(39,189,190,.14), transparent 70%),
-    linear-gradient(180deg, var(--s-3,#262D2D), var(--s-1,#111616));
-}
+/* fundo neutro escuro, sem teal (deixa o recorte transparente limpo) */
+.autor-foto{ position:relative; background:linear-gradient(180deg, var(--s-2,#181D1D), var(--s-1,#111616)); }
 .autor-foto > *{ position:relative; z-index:1; }
 /* a foto transparente preenche o quadrado, ancorada no topo (cabeça) */
 .autor-foto .img-real{ object-position:center top; }
-/* zoom: aproxima o rosto (ex.: Roberta). Ajuste a escala se precisar. */
-.autor-foto-zoom .img-real{ transform:scale(1.18); transform-origin:center top; }
+/* Roberta: enquadramento mais afastado (zoom out) */
+.autor-foto-zoom .img-real{ transform:scale(0.92); transform-origin:center top; }
+
+/* ---------- FAIXA DE STATS (prova social) ---------- */
+.stats-band{
+  display:flex; align-items:center; justify-content:center;
+  gap:var(--sp8,32px); flex-wrap:wrap;
+  padding:var(--sp8,32px) var(--sp6,24px);
+  border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+}
+.stat{ text-align:center; min-width:130px; }
+.stat-num{
+  font-family:var(--font-serif, Georgia, serif);
+  font-size:38px; line-height:1; color:#fff; margin-bottom:6px;
+}
+.stat-num .teal, .stat-num{ letter-spacing:-.01em; }
+.stat-lbl{ font-size:13px; color:var(--n-400,#8A9494); }
+.stat-div{ width:1px; height:44px; background:var(--border); }
+@media (max-width:560px){
+  .stats-band{ gap:var(--sp5,20px); }
+  .stat-div{ display:none; }
+  .stat{ min-width:40%; }
+}
+
+/* ---------- social do rodapé (com ícones) ---------- */
+.foot-social{
+  display:inline-flex; align-items:center; gap:6px;
+  color:var(--n-500,#6B7777); transition:color .2s var(--ease);
+}
+.foot-social:hover{ color:var(--p-500,#27BDBE); }
+.foot-social svg{ flex:0 0 14px; }

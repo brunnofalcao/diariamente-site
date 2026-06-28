@@ -11,7 +11,7 @@ export const SITE = {
   dominio: "https://diariamente.club",
   appUrl: "https://app.diariamente.club",
   descricao:
-    "Diariamente não é um livro comum, nem um ebook. É um livro vivo: um app com uma provocação por dia, por 365 dias, para você se desenvolver profissionalmente — criado pra te ajudar a voltar amanhã, depois de amanhã e no dia seguinte. Um ritual diário na palma da sua mão, de Brunno Falcão e Roberta Carbonari.",
+    "Diariamente não é um livro comum, nem um ebook. É um livro vivo: um app com uma provocação por dia, por 365 dias, para você se desenvolver profissionalmente, criado pra te ajudar a voltar amanhã, depois de amanhã e no dia seguinte. Um ritual diário na palma da sua mão, de Brunno Falcão e Roberta Carbonari.",
   // OG image — usar o asset oficial do brandbook (Cloudinary)
   // [CONFIRMAR] mesmo cloud (dlzrfhwin); colar URL oficial do Asset_7 (OG/favicon)
   ogImage:
@@ -38,10 +38,10 @@ export const LOGOS = {
 // Telas reais do app: Hoje · Dias · Ações · Ritmo · Conta
 // ---------------------------------------------------------------------
 export const SCREENSHOTS = {
-  hoje: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782662616/Tela_HOJE_Diariamente_plfwme.png",
-  dias: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782662615/Tela_DIAS_Diariamente_vy8cfk.png",
-  acoes: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782662616/Tela_ACOES_Diariamente_tsxia2.png",
-  ritmo: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782662616/Tela_RITMO_Diariamente_tzmsli.png",
+  hoje: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664582/Tela_HOJE_Diariamente_shzi7c.png",
+  dias: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664583/Tela_DIAS_Diariamente_i4dpih.png",
+  acoes: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664582/Tela_ACOES_Diariamente_nr8gwf.png",
+  ritmo: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664581/Tela_RITMO_Diariamente_mz9efm.png",
 };
 
 // ---------------------------------------------------------------------
@@ -100,7 +100,7 @@ export const PLANOS: Plano[] = [
     parcela: "ou 12x de R$ 14,70",
     inclui: [
       "App completo: leitura do dia, calendário, Ações, ofensiva, conquistas e ranking",
-      "365 provocações — uma para cada dia do ano",
+      "365 provocações, uma para cada dia do ano",
       "Menu Ações: transforme a provocação em tarefa concreta",
       "Acompanhamento da sua jornada de constância",
       "Lembrete diário no WhatsApp",
@@ -155,7 +155,7 @@ export const AUTORES = {
     nome: "Brunno Falcão",
     bio: "Empresário e palestrante, é fundador e CEO da Science Play e do Nutrição Brasil, com clientes em mais de 95 países. Autor best-seller de Zona Desconforto e O Fim do Consultório, criador do Palestre•se e colunista da Forbes Portugal, Revista Medicina S/A e O Fit Feed.",
     instagram: "brunnofalcao",
-    foto: "",  // [TROCAR] retrato PNG transparente do Brunno (URL Cloudinary)
+    foto: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782662941/Brunno_4_fijkeq.png",
   },
   roberta: {
     nome: "Roberta Carbonari",
@@ -189,6 +189,6 @@ export const EMPRESA = {
   site: "https://www.scienceplay.com",
   instagram: "scienceplay",
   linkedin: "scienceplay",
-  endereco: "[TROCAR: endereço completo da empresa — recomendado nos legais]",
+  endereco: "[TROCAR: endereço completo da empresa, recomendado nos legais]",
   vigenciaLegal: "Junho de 2026",
 };
