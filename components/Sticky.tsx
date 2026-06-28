@@ -41,7 +41,10 @@ export function StickyCTA() {
 // Hook simples de reveal on scroll (aplica .in nos elementos .reveal)
 export function RevealOnScroll() {
   useEffect(() => {
-    const els = document.querySelectorAll(".reveal");
+    // marca que o JS está ativo — só então os .reveal começam ocultos (progressive enhancement)
+    document.documentElement.classList.add("js");
+
+    const els = Array.from(document.querySelectorAll(".reveal"));
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
@@ -51,10 +54,19 @@ export function RevealOnScroll() {
           }
         });
       },
-      { threshold: 0.12 }
+      { threshold: 0.1, rootMargin: "0px 0px -8% 0px" }
     );
     els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+
+    // rede de segurança: se algo não disparar em 2.5s, revela tudo
+    const safety = setTimeout(() => {
+      els.forEach((el) => el.classList.add("in"));
+    }, 2500);
+
+    return () => {
+      io.disconnect();
+      clearTimeout(safety);
+    };
   }, []);
   return null;
 }

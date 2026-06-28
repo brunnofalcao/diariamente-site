@@ -2,6 +2,16 @@
 
 import { PLANOS, PRECO_ANCORA_LIVRO, GARANTIA, ESCASSEZ } from "@/config";
 
+// Anexa as UTMs da URL atual ao link de checkout (preserva origem do tráfego).
+function buildCheckoutUrl(base: string): string {
+  if (typeof window === "undefined") return base;
+  const here = new URLSearchParams(window.location.search);
+  const utms = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"];
+  const carry = utms.filter((k) => here.get(k)).map((k) => `${k}=${encodeURIComponent(here.get(k)!)}`);
+  if (!carry.length) return base;
+  return base + (base.includes("?") ? "&" : "?") + carry.join("&");
+}
+
 export function Oferta() {
   const onCheckout = (planoId: string, url: string) => {
     (window as any).dataLayer?.push({ event: "InitiateCheckout", plano: planoId });
@@ -10,30 +20,30 @@ export function Oferta() {
       alert("Checkout em configuração. Em breve disponível.");
       return;
     }
-    window.location.href = url;
+    window.location.href = buildCheckoutUrl(url);
   };
 
   return (
     <section id="oferta">
-      <div className="wrap">
-        <div className="center">
+      <div className="wrap-narrow">
+        <div className="center sec-head">
           {ESCASSEZ.ativa && (
             <span className="badge badge-gold eyebrow">{ESCASSEZ.selo}</span>
           )}
-          <h2 className="display-md sec-title">Escolha como quer começar</h2>
-          <p className="muted" style={{ maxWidth: "44ch", margin: "0 auto var(--sp8)" }}>
+          <h2 className="display-md">Escolha como quer começar</h2>
+          <p className="lead sec-intro" style={{ maxWidth: "44ch", margin: "var(--sp4) auto 0" }}>
             Você pode continuar comprando livros que param na página 20. Ou entrar numa
             jornada feita pra você ir até o último dia.
           </p>
         </div>
 
-        <div className="stack">
+        <div className="grid cols-2" style={{ alignItems: "start" }}>
           {PLANOS.map((p) => (
             <div
               key={p.id}
               className="sf-dark"
               style={{
-                padding: "var(--sp6)",
+                padding: "var(--sp8)",
                 position: "relative",
                 borderColor: p.destaque ? "rgba(39,189,190,.35)" : "var(--border)",
                 boxShadow: p.destaque ? "0 0 0 1px rgba(39,189,190,.15), 0 20px 60px rgba(0,0,0,.4)" : "none",
@@ -75,7 +85,7 @@ export function Oferta() {
               </ul>
 
               <button
-                className={`btn ${p.destaque ? "btn-primary" : "btn-dark"}`}
+                className={`btn btn-block ${p.destaque ? "btn-primary" : "btn-dark"}`}
                 onClick={() => onCheckout(p.id, p.checkoutUrl)}
               >
                 {p.ctaLabel}

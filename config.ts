@@ -56,6 +56,23 @@ export type Plano = {
   rodape?: string;
 };
 
+// ---------------------------------------------------------------------
+// CHECKOUT — HOTMART
+// Cole abaixo o link de checkout de cada produto. Formato Hotmart:
+//   https://pay.hotmart.com/XXXXXXXXX?checkoutMode=10
+// O parâmetro ?off= e UTMs são anexados automaticamente em runtime
+// (ver helper buildCheckoutUrl em components/Oferta.tsx).
+// Enquanto o link começar com "[", o botão avisa "em configuração"
+// em vez de quebrar (sem botão morto).
+// ---------------------------------------------------------------------
+export const HOTMART = {
+  // exemplos de formato — substitua pelos links reais dos seus produtos:
+  // digital: "https://pay.hotmart.com/A00000000?checkoutMode=10",
+  // combo:   "https://pay.hotmart.com/B00000000?checkoutMode=10",
+  digital: "[TROCAR_HOTMART_DIGITAL]",
+  combo: "[TROCAR_HOTMART_COMBO]",
+};
+
 export const PLANOS: Plano[] = [
   {
     id: "digital",
@@ -73,7 +90,7 @@ export const PLANOS: Plano[] = [
       "Acesso imediato por e-mail",
     ],
     ctaLabel: "Quero meu acesso",
-    checkoutUrl: "[TROCAR_CHECKOUT_DIGITAL]",
+    checkoutUrl: HOTMART.digital,
   },
   {
     id: "combo",
@@ -89,7 +106,7 @@ export const PLANOS: Plano[] = [
       "A experiência completa: papel + ritual no bolso",
     ],
     ctaLabel: "Quero o livro + o app",
-    checkoutUrl: "[TROCAR_CHECKOUT_COMBO]",
+    checkoutUrl: HOTMART.combo,
     rodape: "+ frete · estoque limitado nesta condição de lançamento",
   },
 ];
@@ -137,4 +154,18 @@ export const TRACKING = {
   ga4Id: "[TROCAR_GA4_ID]",
   gtmId: "[TROCAR_GTM_ID]",
   ativo: false, // vira true quando os IDs estiverem preenchidos
+};
+
+// ---------------------------------------------------------------------
+// EMPRESA / SUPORTE / LEGAL
+// CNPJ e razão social: [TROCAR] pelo documento oficial da Science Play.
+// Não inventar número de documento — tem peso jurídico.
+// ---------------------------------------------------------------------
+export const EMPRESA = {
+  marca: "Science Play",
+  razaoSocial: "[TROCAR: razão social oficial da Science Play]",
+  cnpj: "[TROCAR: CNPJ oficial]",
+  suporteEmail: "contato@scienceplay.com",
+  endereco: "[TROCAR: endereço da empresa, se for incluir]",
+  vigenciaLegal: "Junho de 2026",
 };

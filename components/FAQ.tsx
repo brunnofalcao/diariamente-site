@@ -39,7 +39,7 @@ export function FAQ() {
 
   return (
     <section id="faq">
-      <div className="wrap">
+      <div className="wrap-content">
         <div className="center">
           <span className="overline eyebrow">Perguntas frequentes</span>
           <h2 className="display-md sec-title">Ainda em dúvida? Respondido.</h2>
