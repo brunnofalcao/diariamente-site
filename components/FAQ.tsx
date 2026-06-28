@@ -6,7 +6,7 @@ import { GARANTIA } from "@/config";
 const FAQ_ITEMS = [
   {
     q: "É caro?",
-    a: "É menos de R$ 13 por mês por um ano inteiro de provocação diária, com um sistema feito pra você realmente usar, não esquecer numa estante digital.",
+    a: "Dá menos de R$ 1 por dia por um ano inteiro de provocação diária, com um sistema feito pra você realmente usar, não esquecer numa estante digital. E tem 7 dias de garantia: se não for pra você, devolvemos.",
   },
   {
     q: "Não tenho tempo.",

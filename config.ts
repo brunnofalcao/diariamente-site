@@ -65,10 +65,11 @@ export type Plano = {
   destaque: boolean;
   precoNumero: number;
   preco: string;
+  precoDe?: string;       // preço original riscado (âncora de lançamento)
   parcela?: string;
+  perDia?: string;        // ex: "menos de R$ 1 por dia"
   inclui: string[];
   ctaLabel: string;
-  // Link do checkout — [TROCAR] quando a plataforma estiver definida
   checkoutUrl: string;
   rodape?: string;
 };
@@ -95,9 +96,11 @@ export const PLANOS: Plano[] = [
     id: "digital",
     nome: "Diariamente Digital",
     destaque: false,
-    precoNumero: 147,
-    preco: "147",
-    parcela: "ou 12x de R$ 14,70",
+    precoNumero: 247,
+    preco: "247",
+    precoDe: "297",
+    parcela: "ou 12x de R$ 24,70",
+    perDia: "menos de R$ 1 por dia",
     inclui: [
       "App completo: leitura do dia, calendário, Ações, ofensiva, conquistas e ranking",
       "365 provocações, uma para cada dia do ano",
@@ -108,15 +111,18 @@ export const PLANOS: Plano[] = [
     ],
     ctaLabel: "Quero meu acesso",
     checkoutUrl: HOTMART.digital,
+    rodape: "Preço de lançamento, por tempo limitado",
   },
   {
     id: "combo",
     nome: "Combo Livro + App",
     selo: "Mais completo · poucas unidades",
     destaque: true,
-    precoNumero: 247,
-    preco: "247",
-    parcela: "ou 12x de R$ 24,70",
+    precoNumero: 297,
+    preco: "297",
+    precoDe: "397",
+    parcela: "ou 12x de R$ 29,70",
+    perDia: "menos de R$ 1 por dia, com o livro na sua casa",
     inclui: [
       "Tudo do plano Digital",
       "O livro físico Diariamente na sua casa",
@@ -155,7 +161,7 @@ export const AUTORES = {
     nome: "Brunno Falcão",
     bio: "Empresário e palestrante, é fundador e CEO da Science Play e do Nutrição Brasil, com clientes em mais de 95 países. Autor best-seller de Zona Desconforto e O Fim do Consultório, criador do Palestre•se e colunista da Forbes Portugal, Revista Medicina S/A e O Fit Feed.",
     instagram: "brunnofalcao",
-    foto: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782662941/Brunno_4_fijkeq.png",
+    foto: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782666480/Brunno_Falca%CC%83o_-_Palco_-_Transparente_kyhow7.png",
   },
   roberta: {
     nome: "Roberta Carbonari",

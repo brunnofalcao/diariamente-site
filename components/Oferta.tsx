@@ -31,20 +31,23 @@ export function Oferta() {
             <span className="badge badge-gold eyebrow">{ESCASSEZ.selo}</span>
           )}
           <h2 className="display-md">Escolha como quer começar</h2>
-          <p className="lead sec-intro" style={{ maxWidth: "44ch", margin: "var(--sp4) auto 0" }}>
-            Você pode continuar comprando livros que param na página 20. Ou entrar numa
-            jornada feita pra você ir até o último dia.
+          <p className="lead sec-intro" style={{ maxWidth: "46ch", margin: "var(--sp4) auto 0" }}>
+            Por menos de R$ 1 por dia, você troca a estante de livros não terminados por um
+            sistema que te traz de volta todo dia. Não é mais um conteúdo. É o que faz o
+            conteúdo virar constância.
           </p>
         </div>
 
-        <div className="grid cols-2" style={{ alignItems: "start" }}>
+        <div className="grid cols-2" style={{ alignItems: "stretch" }}>
           {PLANOS.map((p) => (
             <div
               key={p.id}
-              className="sf-dark"
+              className="sf-dark plano-card"
               style={{
                 padding: "var(--sp8)",
                 position: "relative",
+                display: "flex",
+                flexDirection: "column",
                 borderColor: p.destaque ? "rgba(39,189,190,.35)" : "var(--border)",
                 boxShadow: p.destaque ? "0 0 0 1px rgba(39,189,190,.15), 0 20px 60px rgba(0,0,0,.4)" : "none",
               }}
@@ -58,27 +61,32 @@ export function Oferta() {
                 </span>
               )}
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: p.selo ? 8 : 0 }}>
-                <h3 className="h2">{p.nome}</h3>
+              <h3 className="h2" style={{ marginTop: p.selo ? 8 : 0 }}>{p.nome}</h3>
+
+              {/* âncora: livro avulso só no combo */}
+              <div className="caption" style={{ marginTop: 6, minHeight: 18 }}>
+                {p.destaque ? (
+                  <>Livro avulso: <s>R$ {PRECO_ANCORA_LIVRO}</s> · aqui ele vem junto do app</>
+                ) : (
+                  <>Acesso completo ao app, por 1 ano inteiro</>
+                )}
               </div>
 
-              {/* âncora de valor: só no combo, mostra o livro avulso */}
-              {p.destaque && (
-                <div className="caption" style={{ marginTop: 6 }}>
-                  Livro avulso: <s>R$ {PRECO_ANCORA_LIVRO}</s> · aqui ele vem junto do app
+              {/* preço: de/por (riscado + lançamento) */}
+              <div className="preco-bloco">
+                {p.precoDe && (
+                  <span className="preco-de">de R$ {p.precoDe}</span>
+                )}
+                <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
+                  <span className="muted" style={{ fontSize: 15 }}>por R$</span>
+                  <span className="preco-num">{p.preco}</span>
                 </div>
-              )}
-
-              <div style={{ display: "flex", alignItems: "flex-end", gap: 8, margin: "var(--sp4) 0 2px" }}>
-                <span className="muted" style={{ fontSize: 15 }}>R$</span>
-                <span style={{ fontFamily: "var(--font-serif)", fontSize: 44, lineHeight: 1, color: "var(--n-0)" }}>
-                  {p.preco}
-                </span>
+                {p.parcela && <div className="caption">{p.parcela}</div>}
+                {p.perDia && <div className="caption teal" style={{ marginTop: 2, fontWeight: 600 }}>{p.perDia}</div>}
+                {p.rodape && <div className="caption gold" style={{ marginTop: 4 }}>{p.rodape}</div>}
               </div>
-              {p.parcela && <div className="caption">{p.parcela}</div>}
-              {p.rodape && <div className="caption gold" style={{ marginTop: 4 }}>{p.rodape}</div>}
 
-              <ul className="check-list" style={{ margin: "var(--sp5) 0 var(--sp6)" }}>
+              <ul className="check-list" style={{ margin: "var(--sp5) 0 var(--sp6)", flex: 1 }}>
                 {p.inclui.map((item, i) => (
                   <li key={i} className="body-sm">{item}</li>
                 ))}
@@ -93,6 +101,11 @@ export function Oferta() {
             </div>
           ))}
         </div>
+
+        {/* frase de fechamento perto do carrinho */}
+        <p className="oferta-frase center">
+          O livro te provoca. O app te ajuda a voltar amanhã.
+        </p>
 
         {/* Garantia */}
         <div className="sf-glass" style={{ padding: "var(--sp5)", marginTop: "var(--sp6)", display: "flex", gap: "var(--sp4)", alignItems: "flex-start" }}>

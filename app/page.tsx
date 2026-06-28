@@ -449,8 +449,8 @@ export default function Page() {
                 após a confirmação.
               </p>
               <p>
-                <strong className="teal">Planos:</strong> Digital (app, R$ 147) e Combo
-                (livro físico + app, R$ 247). Garantia de 7 dias. Realização Science Play.
+                <strong className="teal">Planos:</strong> Digital (app, R$ 247) e Combo
+                (livro físico + app, R$ 297). Garantia de 7 dias. Realização Science Play.
               </p>
             </div>
           </div>

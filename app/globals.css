@@ -340,3 +340,21 @@ body::before{ animation:breathe 9s var(--ease) infinite; }
 }
 .foot-social:hover{ color:var(--p-500,#27BDBE); }
 .foot-social svg{ flex:0 0 14px; }
+
+/* ---------- OFERTA / CARRINHO (alinhamento + preço de/por) ---------- */
+.plano-card{ height:100%; }
+.preco-bloco{ margin:var(--sp4) 0 2px; }
+.preco-de{
+  display:inline-block; font-size:14px; color:var(--n-500,#6B7777);
+  text-decoration:line-through; margin-bottom:2px;
+}
+.preco-num{
+  font-family:var(--font-serif, Georgia, serif);
+  font-size:46px; line-height:1; color:#fff; letter-spacing:-.01em;
+}
+.oferta-frase{
+  font-family:var(--font-serif, Georgia, serif);
+  font-size:19px; color:var(--n-300,#AAB2B2); font-style:italic;
+  margin-top:var(--sp6,24px);
+}
+.oferta-frase .teal{ font-style:normal; }
