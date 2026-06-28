@@ -34,6 +34,41 @@ export function OfficialLogo({ height = 34 }: { height?: number }) {
   );
 }
 
+// Logomarca para o rodapé (Asset_10 — Cloudinary oficial)
+export function FooterLogo({ height = 56 }: { height?: number }) {
+  return (
+    <img
+      src="https://res.cloudinary.com/dlzrfhwin/image/upload/v1775400164/Asset_10_cirv6z.png"
+      alt="Diariamente"
+      height={height}
+      style={{ height, width: "auto", display: "block", margin: "0 auto" }}
+    />
+  );
+}
+
+// Link de Instagram do autor (ícone + @handle), abre em nova aba.
+export function InstagramLink({ handle }: { handle: string }) {
+  return (
+    <a
+      href={`https://instagram.com/${handle}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 7,
+        textDecoration: "none", color: "var(--p-500)", fontSize: 14, fontWeight: 600,
+        marginTop: "var(--sp3)",
+      }}
+    >
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+      </svg>
+      @{handle}
+    </a>
+  );
+}
+
 /**
  * ImageSlot — marcação visual de onde entra um asset real.
  * Para publicar a imagem real: passe `src` (e `alt`). Sem src, mostra o placeholder marcado.

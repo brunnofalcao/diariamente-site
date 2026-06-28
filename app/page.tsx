@@ -1,5 +1,5 @@
 import { SITE, PROVA, AUTORES } from "@/config";
-import { Wordmark, AppMockup, Logomark, ImageSlot, OfficialLogo } from "@/components/Brand";
+import { AppMockup, Logomark, ImageSlot, OfficialLogo, FooterLogo, InstagramLink } from "@/components/Brand";
 import { StickyCTA, RevealOnScroll } from "@/components/Sticky";
 import { Oferta } from "@/components/Oferta";
 import { FAQ } from "@/components/FAQ";
@@ -13,7 +13,7 @@ export default function Page() {
       <nav className="topnav">
         <div className="wrap" style={{ display: "flex", justifyContent: "center", padding: "var(--sp4) 0" }}>
           <a href="/" aria-label="Diariamente" style={{ textDecoration: "none" }}>
-            <OfficialLogo height={36} />
+            <OfficialLogo height={72} />
           </a>
         </div>
       </nav>
@@ -30,7 +30,8 @@ export default function Page() {
               </h1>
               <p className="lead" style={{ maxWidth: "48ch", marginBottom: "var(--sp8)" }}>
                 Diariamente é o livro que virou um ritual diário no seu bolso: uma provocação
-                por dia, por 365 dias — e um app feito pra você não largar no meio.
+                por dia, por 365 dias, com um app criado pra te ajudar a voltar amanhã,
+                depois de amanhã e no dia seguinte.
               </p>
               <div style={{ display: "flex", gap: "var(--sp4)", flexWrap: "wrap", alignItems: "center" }}>
                 <a href="#oferta" className="btn btn-primary btn-lg">Quero começar hoje</a>
@@ -42,7 +43,9 @@ export default function Page() {
             </div>
 
             <div className="split-media reveal">
-              <AppMockup width={300} />
+              <div className="float-slow">
+                <AppMockup width={300} />
+              </div>
             </div>
           </div>
         </div>
@@ -51,12 +54,15 @@ export default function Page() {
       {/* ---------- BARRA DE PROVA / AUTORIDADE ---------- */}
       <section style={{ paddingTop: 0, paddingBottom: "var(--sp16)" }}>
         <div className="wrap">
-          <div className="sf-glass reveal" style={{ padding: "var(--sp6)", display: "flex", flexWrap: "wrap", gap: "var(--sp5)", justifyContent: "center", alignItems: "center" }}>
-            <span className="caption">Construído por quem vive de transformar pessoas:</span>
-            <span className="badge badge-dark">Science Play®</span>
-            <span className="badge badge-dark">Forbes Portugal</span>
-            <span className="badge badge-dark">Medicina S/A</span>
-            <span className="badge badge-dark">O Fit Feed</span>
+          <div className="sf-glass reveal" style={{ padding: "var(--sp6)", textAlign: "center" }}>
+            <span className="caption" style={{ display: "block", marginBottom: "var(--sp3)" }}>
+              Criado por Brunno Falcão, fundador da Science Play e colunista em:
+            </span>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--sp3)", justifyContent: "center" }}>
+              <span className="badge badge-dark">Forbes Portugal</span>
+              <span className="badge badge-dark">Medicina S/A</span>
+              <span className="badge badge-dark">O Fit Feed</span>
+            </div>
           </div>
         </div>
       </section>
@@ -73,6 +79,10 @@ export default function Page() {
               O problema nunca foi você ser "sem disciplina". O problema é que ninguém te
               deu um sistema pra continuar. Só conteúdo. E conteúdo parado não transforma
               ninguém.
+            </p>
+            <p className="teal" style={{ fontWeight: 600 }}>
+              O inimigo não é a falta de motivação. É o abandono silencioso. O Diariamente
+              foi criado para o ponto exato onde você costuma parar.
             </p>
           </div>
         </div>
@@ -98,7 +108,7 @@ export default function Page() {
               <p className="lead">
                 365 dias em que você parou, pensou, se moveu. Um de cada vez. Sem pressão,
                 sem culpa de estar atrasado, sem recomeçar do zero toda segunda. Não é sobre
-                virar outra pessoa amanhã. É sobre virar, <span className="teal">diariamente</span>.
+                virar outra pessoa amanhã. É sobre virar, <span className="teal live-word">diariamente</span>.
               </p>
             </div>
           </div>
@@ -119,10 +129,10 @@ export default function Page() {
           <div className="grid cols-3">
             {[
               { n: "1", t: "Provocação", d: "Todo dia, uma só. Pequena pra não dar preguiça, forte pra mexer. Te tira do automático." },
-              { n: "2", t: "Ofensiva", d: "O app transforma cada dia em sequência. E ninguém gosta de quebrar a própria corrente." },
-              { n: "3", t: "Acúmulo", d: "Conquistas, ranking e calendário mostram que o pouco de todo dia virou muito." },
+              { n: "2", t: "Constância", d: "Cada dia registrado fortalece sua sequência e mostra, visualmente, que você está construindo algo maior." },
+              { n: "3", t: "Ação", d: "A provocação não morre na reflexão: vira tarefa concreta no menu Ações. Pensar vira fazer." },
             ].map((step) => (
-              <div key={step.n} className="sf-dark" style={{ padding: "var(--sp8)" }}>
+              <div key={step.n} className="sf-dark lift" style={{ padding: "var(--sp8)" }}>
                 <div style={{ width: 52, height: 52, borderRadius: 999, background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.25)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-serif)", fontSize: 26, color: "var(--p-500)", marginBottom: "var(--sp5)" }}>
                   {step.n}
                 </div>
@@ -153,7 +163,7 @@ export default function Page() {
             </div>
             <div className="split-copy">
               <h3 className="display-sm" style={{ marginBottom: "var(--sp4)" }}>Tela HOJE</h3>
-              <p className="lead">A provocação do dia, limpa e sem distração. Você lê, reflete, marca como lido — e a sua sequência avança. Nada compete pela sua atenção.</p>
+              <p className="lead">A provocação do dia, limpa e sem distração. Você lê, reflete, registra o dia — e acompanha sua jornada de constância. Nada compete pela sua atenção.</p>
             </div>
           </div>
 
@@ -163,26 +173,95 @@ export default function Page() {
             </div>
             <div className="split-copy">
               <h3 className="display-sm" style={{ marginBottom: "var(--sp4)" }}>Tela DIAS</h3>
-              <p className="lead">Seu calendário de constância. Você enxerga, dia após dia, que não falhou com você mesmo. O progresso deixa de ser abstrato e vira imagem.</p>
+              <p className="lead">Você acompanha os dias lidos, visualiza sua evolução e percebe que o pouco de cada dia começa a formar uma jornada. O progresso deixa de ser abstrato e vira imagem.</p>
             </div>
           </div>
 
           {/* grid de features secundárias */}
           <div className="grid cols-3">
             {[
-              { t: "Ofensiva", d: "Sua sequência viva, dia após dia. A corrente que você não vai querer quebrar." },
+              { t: "Ações", d: "A provocação não para na reflexão: você envia para Ações e transforma o insight do dia em tarefa concreta. É onde pensar vira fazer." },
+              { t: "Ofensiva", d: "Sua sequência de dias, construída um por vez. Cada registro fortalece o ritmo que você está criando." },
               { t: "Conquistas", d: "Cada marco reconhecido. O esforço acumulado vira troféu." },
               { t: "Ranking", d: "Você não caminha sozinho. Tem gente fazendo junto." },
-              { t: "WhatsApp", d: "A provocação chega onde você já está. Zero esforço pra lembrar." },
-              { t: "365 provocações", d: "Um ano inteiro de conteúdo. Uma jornada, não uma leitura." },
+              { t: "Notificações por WhatsApp", d: "A provocação chega onde você já está. Zero esforço pra lembrar — o ritual te encontra." },
               { t: "Compartilhar", d: "Transforme uma provocação em story e leve sua reflexão adiante." },
             ].map((f) => (
-              <div key={f.t} className="sf-dark" style={{ padding: "var(--sp6)" }}>
+              <div key={f.t} className="sf-dark lift" style={{ padding: "var(--sp6)" }}>
                 <Logomark size={24} />
                 <div className="h2" style={{ margin: "var(--sp3) 0 var(--sp2)" }}>{f.t}</div>
                 <p className="body-sm muted">{f.d}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---------- AÇÕES (seção dedicada — grande alavanca) ---------- */}
+      <section className="reveal">
+        <div className="wrap">
+          <div className="split">
+            <div className="split-copy">
+              <span className="overline eyebrow">Onde pensar vira fazer</span>
+              <h2 className="display-md" style={{ marginBottom: "var(--sp5)" }}>
+                Não termina na leitura.
+              </h2>
+              <p className="lead" style={{ marginBottom: "var(--sp5)" }}>
+                Todo dia, depois da provocação, você transforma o insight em uma ação prática.
+                Porque reflexão sem movimento vira só pensamento bonito.
+              </p>
+              <p className="lead" style={{ color: "var(--n-0)" }}>
+                No Diariamente, cada dia termina com uma pergunta:
+                <br />
+                <span className="display-sm teal">"O que você vai fazer com isso?"</span>
+              </p>
+            </div>
+            <div className="split-media">
+              <ImageSlot tag="Screenshot" label="Tela AÇÕES — provocação vira tarefa concreta" dims="1170×2532px · print real do app" shape="portrait" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------- COMO VOCÊ USA EM 5 MINUTOS ---------- */}
+      <section className="reveal" style={{ paddingTop: 0 }}>
+        <div className="wrap">
+          <div className="center sec-head">
+            <span className="overline eyebrow">Cabe na sua rotina</span>
+            <h2 className="display-md">Como você usa em 5 minutos</h2>
+            <p className="lead sec-intro" style={{ maxWidth: "42ch", margin: "var(--sp4) auto 0" }}>
+              Você não precisa mudar tudo hoje. Só precisa voltar amanhã.
+            </p>
+          </div>
+          <div className="grid cols-3">
+            {[
+              { n: "1", t: "Abra a provocação do dia", d: "Uma só, na tela HOJE. Leitura rápida, pensada pra caber em qualquer manhã." },
+              { n: "2", t: "Reflita e registre", d: "Marque o dia e deixe a provocação trabalhar em você ao longo do dia." },
+              { n: "3", t: "Transforme em ação", d: "Envie pro menu Ações e escolha um passo concreto. Pequeno, possível, seu." },
+            ].map((s) => (
+              <div key={s.n} className="sf-dark lift" style={{ padding: "var(--sp8)" }}>
+                <div style={{ width: 44, height: 44, borderRadius: 999, background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.25)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-serif)", fontSize: 22, color: "var(--p-500)", marginBottom: "var(--sp4)" }}>
+                  {s.n}
+                </div>
+                <div className="h2" style={{ marginBottom: "var(--sp2)" }}>{s.t}</div>
+                <p className="body-sm muted">{s.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---------- NÃO É APP DE MOTIVAÇÃO ---------- */}
+      <section className="reveal" style={{ paddingTop: 0 }}>
+        <div className="wrap-content">
+          <div className="sf-dark" style={{ padding: "var(--sp10) var(--sp8)", textAlign: "center" }}>
+            <p className="display-sm" style={{ marginBottom: "var(--sp4)" }}>
+              Não é um app de motivação. É um app de <span className="teal">constância</span>.
+            </p>
+            <p className="lead muted" style={{ maxWidth: "46ch", margin: "0 auto" }}>
+              Motivação acaba na quinta-feira. Constância é o que sobra quando a vontade
+              passa — e é exatamente isso que o Diariamente foi feito pra sustentar.
+            </p>
           </div>
         </div>
       </section>
@@ -226,6 +305,7 @@ export default function Page() {
               <ImageSlot tag="Foto autor" label="Brunno Falcão — retrato" dims="1000×1000px · quadrado" shape="square" style={{ borderRadius: 0, border: "none", borderBottom: "1px solid var(--border)" }} />
               <div style={{ padding: "var(--sp6)" }}>
                 <div className="h1">{AUTORES.brunno.nome}</div>
+                <InstagramLink handle={AUTORES.brunno.instagram} />
                 <p className="body-sm muted" style={{ marginTop: "var(--sp3)" }}>{AUTORES.brunno.bio}</p>
               </div>
             </div>
@@ -233,6 +313,7 @@ export default function Page() {
               <ImageSlot tag="Foto autor" label="Roberta Carbonari — retrato" dims="1000×1000px · quadrado" shape="square" style={{ borderRadius: 0, border: "none", borderBottom: "1px solid var(--border)" }} />
               <div style={{ padding: "var(--sp6)" }}>
                 <div className="h1">{AUTORES.roberta.nome}</div>
+                <InstagramLink handle={AUTORES.roberta.instagram} />
                 <p className="body-sm muted" style={{ marginTop: "var(--sp3)" }}>{AUTORES.roberta.bio}</p>
               </div>
             </div>
@@ -247,6 +328,34 @@ export default function Page() {
       {/* ---------- OFERTA ---------- */}
       <Oferta />
 
+      {/* ---------- O QUE ACONTECE DEPOIS DA COMPRA ---------- */}
+      <section className="reveal">
+        <div className="wrap-content">
+          <div className="center sec-head">
+            <span className="overline eyebrow">Sem mistério</span>
+            <h2 className="display-md">O que acontece depois</h2>
+          </div>
+          <div className="stack">
+            {[
+              { n: "1", t: "Você recebe o e-mail de acesso", d: "Logo após a confirmação, com o passo a passo pra abrir o app." },
+              { n: "2", t: "Faz a provocação do Dia 1", d: "Sua jornada começa no momento em que você registra o primeiro dia." },
+              { n: "3", t: "O ritual te encontra todo dia", d: "Lembrete diário no WhatsApp pra você não depender da memória." },
+              { n: "4", t: "No combo, o livro chega na sua casa", d: "Com código de rastreio assim que for postado." },
+            ].map((s) => (
+              <div key={s.n} className="sf-glass" style={{ padding: "var(--sp5)", display: "flex", gap: "var(--sp4)", alignItems: "flex-start" }}>
+                <div style={{ flex: "0 0 36px", height: 36, borderRadius: 999, background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.25)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-serif)", fontSize: 18, color: "var(--p-500)" }}>
+                  {s.n}
+                </div>
+                <div>
+                  <div className="h3" style={{ marginBottom: 2 }}>{s.t}</div>
+                  <p className="body-sm muted">{s.d}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ---------- FAQ ---------- */}
       <FAQ />
 
@@ -257,7 +366,7 @@ export default function Page() {
             A transformação não vai acontecer num dia.
           </p>
           <p className="lead" style={{ marginBottom: "var(--sp8)" }}>
-            Vai acontecer <span className="teal">diariamente</span> — se você começar hoje.
+            Vai acontecer <span className="teal live-word">diariamente</span> — se você começar hoje.
           </p>
           <a href="#oferta" className="btn btn-primary btn-lg">Quero começar agora →</a>
         </div>
@@ -300,7 +409,7 @@ export default function Page() {
       {/* ---------- RODAPÉ ---------- */}
       <footer style={{ borderTop: "1px solid var(--border)", padding: "var(--sp16) 0 calc(var(--sp20) + 60px)" }}>
         <div className="wrap center stack">
-          <div style={{ display: "flex", justifyContent: "center" }}><Wordmark /></div>
+          <div style={{ display: "flex", justifyContent: "center" }}><FooterLogo height={64} /></div>
           <p className="caption" style={{ maxWidth: "40ch", margin: "var(--sp2) auto 0" }}>
             Diariamente é uma realização Science Play®. Uma provocação por dia, por 365 dias.
           </p>

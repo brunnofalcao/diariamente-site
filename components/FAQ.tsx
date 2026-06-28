@@ -14,19 +14,19 @@ const FAQ_ITEMS = [
   },
   {
     q: "Já comprei livros assim e larguei.",
-    a: "Exatamente por isso o Diariamente tem ofensiva, conquistas e ranking. Ele foi construído no ponto onde você largou antes — pra manter a sua sequência viva.",
+    a: "Exatamente por isso o Diariamente foi construído no ponto onde você largou antes. Ofensiva, conquistas e Ações existem pra te ajudar a voltar no dia seguinte — não pra te cobrar perfeição.",
   },
   {
     q: "Será que funciona pra mim?",
-    a: "Funciona pra quem aparece 5 minutos por dia. O resto o sistema segura: a sequência, o lembrete, o progresso visível.",
+    a: "Funciona pra quem aparece 5 minutos por dia. O resto o sistema apoia: o lembrete no WhatsApp, o progresso visível e a ação concreta de cada dia.",
   },
   {
     q: "Já tenho o livro físico.",
-    a: "O app é a versão que te faz usar o livro: te lembra, marca seu progresso e mantém sua sequência. Se quiser só o app, o plano Digital atende.",
+    a: "O app é a versão que te faz usar o livro: te lembra, registra seu progresso e transforma cada provocação em ação. Se quiser só o app, o plano Digital atende.",
   },
   {
     q: "Como recebo o acesso?",
-    a: "Por e-mail, logo após a confirmação. Você abre o app e já faz a provocação do dia 1 — sua ofensiva começa na hora.",
+    a: "Por e-mail, logo após a confirmação. Você abre o app e já faz a provocação do dia 1 — sua jornada começa na hora.",
   },
   {
     q: "E se eu não gostar?",

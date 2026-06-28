@@ -149,3 +149,56 @@ h3,.h3{ font-size:17px; font-weight:600; line-height:1.35; }
 .legal-body a{ color:var(--p-500); }
 .legal-note{ background:rgba(245,183,49,.06); border:1px solid rgba(245,183,49,.2); border-radius:var(--r-lg); padding:var(--sp4); }
 .legal-note p{ color:var(--a-300); font-size:14px; }
+
+/* ---------- MOVIMENTO: livro vivo ---------- */
+/* respiração suave do glow ambiente */
+@keyframes breathe {
+  0%,100% { opacity:.55; transform:translateX(-50%) scale(1); }
+  50%     { opacity:1;   transform:translateX(-50%) scale(1.08); }
+}
+body::before{ animation:breathe 9s var(--ease) infinite; }
+
+/* flutuação lenta do mockup (como um livro respirando) */
+@keyframes float {
+  0%,100% { transform:translateY(0); }
+  50%     { transform:translateY(-14px); }
+}
+.float-slow{ animation:float 6s var(--ease) infinite; }
+
+/* brilho que percorre a borda do mockup */
+@keyframes shimmer {
+  0%   { opacity:.3; }
+  50%  { opacity:.7; }
+  100% { opacity:.3; }
+}
+.shimmer-edge{ animation:shimmer 4s var(--ease) infinite; }
+
+/* página virando: traços do logomark pulsam suavemente */
+@keyframes pageturn {
+  0%,100% { transform:scaleX(1); opacity:.9; }
+  50%     { transform:scaleX(.96); opacity:1; }
+}
+
+/* sublinhado vivo na palavra "diariamente" */
+@keyframes underline-grow {
+  from { background-size:0% 2px; }
+  to   { background-size:100% 2px; }
+}
+.live-word{
+  background-image:linear-gradient(var(--p-500),var(--p-500));
+  background-repeat:no-repeat;
+  background-position:0 100%;
+  background-size:100% 2px;
+}
+.js .reveal.in .live-word{ animation:underline-grow 1s var(--ease) .3s both; }
+
+/* hover dos cards: leve elevação viva */
+.sf-dark{ transition:transform .35s var(--ease), border-color .35s var(--ease); }
+@media (hover:hover){
+  .lift:hover{ transform:translateY(-6px); border-color:rgba(39,189,190,.25); }
+}
+
+@media (prefers-reduced-motion:reduce){
+  body::before, .float-slow, .shimmer-edge{ animation:none; }
+  .live-word{ animation:none !important; }
+}

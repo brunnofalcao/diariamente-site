@@ -11,7 +11,7 @@ export const SITE = {
   dominio: "https://diariamente.club",
   appUrl: "https://app.diariamente.club",
   descricao:
-    "O livro de Brunno Falcão e Roberta Carbonari que virou um ritual diário no seu bolso: uma provocação por dia, por 365 dias — com um app feito pra você não largar no meio.",
+    "Diariamente não é um livro comum, nem um ebook. É um livro vivo: um app com uma provocação por dia, por 365 dias — criado pra te ajudar a voltar amanhã, depois de amanhã e no dia seguinte. Um ritual diário na palma da sua mão, de Brunno Falcão e Roberta Carbonari.",
   // OG image — usar o asset oficial do brandbook (Cloudinary)
   // [CONFIRMAR] mesmo cloud (dlzrfhwin); colar URL oficial do Asset_7 (OG/favicon)
   ogImage:
@@ -86,10 +86,10 @@ export const PLANOS: Plano[] = [
     preco: "147",
     parcela: "ou 12x de R$ 14,70",
     inclui: [
-      "App completo (telas HOJE e DIAS)",
-      "365 provocações — uma para cada dia",
-      "Sistema de ofensiva pra manter a constância",
-      "Conquistas e ranking",
+      "App completo: leitura do dia, calendário, Ações, ofensiva, conquistas e ranking",
+      "365 provocações — uma para cada dia do ano",
+      "Menu Ações: transforme a provocação em tarefa concreta",
+      "Acompanhamento da sua jornada de constância",
       "Lembrete diário no WhatsApp",
       "Acesso imediato por e-mail",
     ],
@@ -141,11 +141,13 @@ export const AUTORES = {
   brunno: {
     nome: "Brunno Falcão",
     bio: "Empresário, palestrante e autor best-seller. CEO e fundador da Science Play, plataforma de educação em saúde. Colunista da Forbes Portugal, Medicina S/A e O Fit Feed. Há 25 anos no setor de eventos e educação, construiu autoridade ao lado dos maiores nomes da saúde do país.",
+    instagram: "brunnofalcao",
   },
   roberta: {
     nome: "Roberta Carbonari",
     // [TROCAR] — bio/papel da Roberta no conteúdo (Brunno confirma)
     bio: "[TROCAR: 1-2 linhas de bio da Roberta + papel dela no conteúdo do Diariamente]",
+    instagram: "robertacarbonari",
   },
   selo: "Science Play®",
 };
