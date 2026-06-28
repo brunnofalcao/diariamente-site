@@ -363,7 +363,7 @@ export default function Page() {
               </div>
             </div>
             <div className="sf-dark" style={{ overflow: "hidden" }}>
-              <div className="autor-foto autor-foto-zoom">
+              <div className="autor-foto">
                 <ImageSlot tag="Foto autor" label="Roberta Carbonari — retrato" dims="1000×1000px · quadrado" shape="square" src={AUTORES.roberta.foto || undefined} alt="Roberta Carbonari" style={{ borderRadius: 0, border: "none", borderBottom: "1px solid var(--border)" }} />
               </div>
               <div style={{ padding: "var(--sp6)" }}>

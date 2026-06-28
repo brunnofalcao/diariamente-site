@@ -312,8 +312,6 @@ body::before{ animation:breathe 9s var(--ease) infinite; }
 /* a foto transparente preenche o quadrado, ancorada embaixo (fixa no box) */
 .autor-foto{ overflow:hidden; }
 .autor-foto .img-real{ object-position:center bottom; }
-/* Roberta: enquadramento mais afastado (zoom out), ainda ancorada embaixo */
-.autor-foto-zoom .img-real{ transform:scale(0.92); transform-origin:center bottom; }
 
 /* ---------- FAIXA DE STATS (prova social) ---------- */
 .stats-band{

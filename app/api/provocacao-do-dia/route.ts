@@ -21,8 +21,8 @@ import { NextResponse } from "next/server";
 //   COL_PERGUNTA=pergunta       COL_AUTOR_DIA=autor_dia
 // =====================================================================
 
-const SB_URL = process.env.SUPABASE_URL;
-const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
+const SB_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SB_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 const TABLE = process.env.SUPABASE_TABLE || "provocacoes";
 const C_MES = process.env.COL_MES || "mes";
