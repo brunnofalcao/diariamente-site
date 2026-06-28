@@ -1,4 +1,4 @@
-import { SITE, PROVA, AUTORES, SCREENSHOTS } from "@/config";
+import { SITE, PROVA, AUTORES, SCREENSHOTS, LIFESTYLE } from "@/config";
 import { Logomark, ImageSlot, OfficialLogo, FooterLogo, InstagramLink } from "@/components/Brand";
 import { HeroProvocacao } from "@/components/HeroProvocacao";
 import { StickyCTA, RevealOnScroll } from "@/components/Sticky";
@@ -99,12 +99,16 @@ export default function Page() {
         <div className="wrap">
           <div className="split reverse">
             <div className="split-media">
-              <ImageSlot
-                tag="Lifestyle"
-                label="Foto ambiente — livro aberto à meia-luz, café, mood premium"
-                dims="recomendado 1200×1500px · vertical 4:5"
-                shape="portrait"
-              />
+              <div className="lifestyle-frame">
+                <ImageSlot
+                  tag="Lifestyle"
+                  label="Foto ambiente, livro aberto à meia-luz, café, mood premium"
+                  dims="recomendado 1200×1500px · vertical 4:5"
+                  shape="portrait"
+                  src={LIFESTYLE || undefined}
+                  alt="Livro Diariamente aberto sobre a mesa ao amanhecer, com café"
+                />
+              </div>
             </div>
             <div className="split-copy">
               <span className="overline eyebrow">Agora imagine o contrário</span>

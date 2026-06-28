@@ -44,6 +44,9 @@ export const SCREENSHOTS = {
   ritmo: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664581/Tela_RITMO_Diariamente_mz9efm.png",
 };
 
+// Foto lifestyle (ambiente) — seção "virada". Foto cheia, não transparente.
+export const LIFESTYLE = "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782670073/Lifestyle_Diariamente_kjl7hu.png";
+
 // ---------------------------------------------------------------------
 // PROVA REAL (confirmada — não inventar)
 // ---------------------------------------------------------------------
