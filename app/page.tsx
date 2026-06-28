@@ -57,12 +57,12 @@ export default function Page() {
         <div className="wrap">
           <div className="sf-glass reveal" style={{ padding: "var(--sp6)", textAlign: "center" }}>
             <span className="caption" style={{ display: "block", marginBottom: "var(--sp3)" }}>
-              Criado por Brunno Falcão, fundador da Science Play e colunista em:
+              Uma realização Science Play, com mais de {PROVA.leitores} em jornada:
             </span>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--sp3)", justifyContent: "center" }}>
-              <span className="badge badge-dark">Forbes Portugal</span>
-              <span className="badge badge-dark">Medicina S/A</span>
-              <span className="badge badge-dark">O Fit Feed</span>
+              <span className="badge badge-dark">Science Play®</span>
+              <span className="badge badge-dark">Brunno Falcão</span>
+              <span className="badge badge-dark">Roberta Carbonari</span>
             </div>
           </div>
         </div>
@@ -439,17 +439,35 @@ export default function Page() {
 
       {/* ---------- RODAPÉ ---------- */}
       <footer style={{ borderTop: "1px solid var(--border)", padding: "var(--sp16) 0 calc(var(--sp20) + 60px)" }}>
-        <div className="wrap center stack">
-          <div style={{ display: "flex", justifyContent: "center" }}><FooterLogo height={64} /></div>
-          <p className="caption" style={{ maxWidth: "40ch", margin: "var(--sp2) auto 0" }}>
-            Diariamente é uma realização Science Play®. Uma provocação por dia, por 365 dias.
+        <div className="wrap center">
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "var(--sp12)" }}>
+            <FooterLogo height={64} />
+          </div>
+
+          <p className="caption" style={{ maxWidth: "42ch", margin: "0 auto" }}>
+            Diariamente é uma realização Science Play®. Provocações diárias para se desenvolver
+            profissionalmente — uma por dia, por 365 dias.
           </p>
-          <div style={{ display: "flex", gap: "var(--sp5)", justifyContent: "center", flexWrap: "wrap", marginTop: "var(--sp4)" }}>
+
+          {/* navegação legal */}
+          <div style={{ display: "flex", gap: "var(--sp5)", justifyContent: "center", flexWrap: "wrap", marginTop: "var(--sp6)" }}>
             <a className="caption" href="/termos" style={{ color: "var(--n-400)" }}>Termos de uso</a>
             <a className="caption" href="/privacidade" style={{ color: "var(--n-400)" }}>Política de privacidade</a>
             <a className="caption" href="mailto:contato@scienceplay.com" style={{ color: "var(--n-400)" }}>Suporte</a>
           </div>
-          <p className="caption" style={{ color: "var(--n-600)", marginTop: "var(--sp4)" }}>
+
+          {/* social Science Play (sutil) */}
+          <div style={{ display: "flex", gap: "var(--sp4)", justifyContent: "center", flexWrap: "wrap", marginTop: "var(--sp5)" }}>
+            <a className="caption" href="https://www.scienceplay.com" target="_blank" rel="noopener noreferrer" style={{ color: "var(--n-500)" }}>scienceplay.com</a>
+            <span style={{ color: "var(--n-700)" }}>·</span>
+            <a className="caption" href="https://instagram.com/scienceplay" target="_blank" rel="noopener noreferrer" style={{ color: "var(--n-500)" }}>Instagram @scienceplay</a>
+            <span style={{ color: "var(--n-700)" }}>·</span>
+            <a className="caption" href="https://linkedin.com/in/scienceplay" target="_blank" rel="noopener noreferrer" style={{ color: "var(--n-500)" }}>LinkedIn /scienceplay</a>
+          </div>
+
+          {/* dados da empresa (sutil) */}
+          <p className="caption" style={{ color: "var(--n-600)", marginTop: "var(--sp8)", lineHeight: 1.7 }}>
+            Science Play Cursos LTDA · CNPJ 33.612.911/0001-29<br />
             © {new Date().getFullYear()} Science Play® · {SITE.dominio.replace("https://", "")}
           </p>
         </div>

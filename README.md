@@ -20,13 +20,17 @@ npm run build    # validar produção
 ## ✅ CHECKLIST P0 — antes de publicar com tráfego (cabe a Brunno)
 Estes itens dependem de dados/decisões suas e estão marcados no código:
 1. **Links Hotmart reais** (`config.ts → HOTMART`) — Digital e Combo.
-2. **CNPJ + razão social** (`config.ts → EMPRESA`) nos legais.
-3. **Bio real da Roberta** (`config.ts → AUTORES.roberta.bio`).
-4. **Screenshots reais do app** — substituir os `ImageSlot` por prints: Tela HOJE, DIAS, AÇÕES, Ofensiva/Ritmo, Conta/WhatsApp + retratos dos autores e foto lifestyle. (Passar `src` no `ImageSlot`.)
-5. **Confirmar "+5.000 pessoas"** — prova real, documentada e defensável (`config.ts → PROVA`).
-6. **Publicar e revisar** Termos e Privacidade (modelo-base — precisa de advogado).
-7. **Página /obrigado** apontada na Hotmart (redirect pós-compra).
-8. **Conferir** que a oferta Digital/Combo bate com o que a Hotmart entrega.
+2. **Bio real da Roberta** (`config.ts → AUTORES.roberta.bio`).
+3. **Screenshots reais do app** — substituir os `ImageSlot` por prints: Tela HOJE, DIAS, AÇÕES, Ofensiva/Ritmo, Conta/WhatsApp + retratos dos autores e foto lifestyle. (Passar `src` no `ImageSlot`.)
+4. **Confirmar "+5.000 pessoas"** — prova real, documentada e defensável (`config.ts → PROVA`).
+5. **Página /obrigado** apontada na Hotmart (redirect pós-compra).
+6. **Conferir** que a oferta Digital/Combo bate com o que a Hotmart entrega.
+7. *(Opcional, recomendado)* **Endereço da empresa** nos legais (`config.ts → EMPRESA.endereco`).
+
+### ✅ Já resolvido nesta entrega
+- **Dados da empresa:** Science Play Cursos LTDA · CNPJ 33.612.911/0001-29 (no rodapé e nos legais).
+- **Termos de Uso e Política de Privacidade reais** (não mais modelo-marcação): escritos cobrindo Apple App Store 5.1.1 (dados coletados, uso, retenção, revogação de consentimento, ATT, SDKs terceiros) e LGPD (bases legais art. 7º, direitos do titular, encarregado/DPO, segurança) + CDC (art. 49, foro do consumidor). **Recomendação: revisão final por advogado antes de tráfego pesado** — o texto é sólido e válido para publicação/submissão, mas eu não sou advogado.
+- **Rodapé:** logo com espaçamento maior + site, Instagram e LinkedIn da Science Play.
 
 ### Nota sobre streak/constância (importante)
 Os testers relataram bugs no motor de constância (streak reiniciando, dias não refletindo no calendário). **Por isso, as promessas absolutas de sequência foram suavizadas** para linguagem de jornada ("acompanha sua jornada de constância", "registra o dia") em vez de garantias operacionais ("sua sequência avança"). Quando o motor estiver blindado, dá pra voltar a uma copy mais assertiva. Nos screenshots, evitar streaks exagerados que choquem com o estado atual do app.

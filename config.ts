@@ -140,13 +140,12 @@ export const ESCASSEZ = {
 export const AUTORES = {
   brunno: {
     nome: "Brunno Falcão",
-    bio: "Empresário, palestrante e autor best-seller. CEO e fundador da Science Play, plataforma de educação em saúde. Colunista da Forbes Portugal, Medicina S/A e O Fit Feed. Há 25 anos no setor de eventos e educação, construiu autoridade ao lado dos maiores nomes da saúde do país.",
+    bio: "Empresário e palestrante, é fundador e CEO da Science Play e do Nutrição Brasil, com clientes em mais de 95 países. Autor best-seller de Zona Desconforto e O Fim do Consultório, criador do Palestre•se e colunista da Forbes Portugal, Revista Medicina S/A e O Fit Feed.",
     instagram: "brunnofalcao",
   },
   roberta: {
     nome: "Roberta Carbonari",
-    // [TROCAR] — bio/papel da Roberta no conteúdo (Brunno confirma)
-    bio: "[TROCAR: 1-2 linhas de bio da Roberta + papel dela no conteúdo do Diariamente]",
+    bio: "Nutricionista, mestre em Nutrição, pós-graduada em Comportamento Alimentar e referência em Psiquiatria Nutricional. Coordenadora de pós-graduação, professora, palestrante e empresária, com formação também em Administração e Marketing.",
     instagram: "robertacarbonari",
   },
   selo: "Science Play®",
@@ -169,9 +168,12 @@ export const TRACKING = {
 // ---------------------------------------------------------------------
 export const EMPRESA = {
   marca: "Science Play",
-  razaoSocial: "[TROCAR: razão social oficial da Science Play]",
-  cnpj: "[TROCAR: CNPJ oficial]",
+  razaoSocial: "Science Play Cursos LTDA",
+  cnpj: "33.612.911/0001-29",
   suporteEmail: "contato@scienceplay.com",
-  endereco: "[TROCAR: endereço da empresa, se for incluir]",
+  site: "https://www.scienceplay.com",
+  instagram: "scienceplay",
+  linkedin: "scienceplay",
+  endereco: "[TROCAR: endereço completo da empresa — recomendado nos legais]",
   vigenciaLegal: "Junho de 2026",
 };
