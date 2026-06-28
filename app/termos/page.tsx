@@ -25,7 +25,7 @@ export default function Termos() {
 
       <h2>1. O que é o Diariamente</h2>
       <p>
-        O Diariamente é um produto de desenvolvimento pessoal que disponibiliza 365
+        O Diariamente é um produto de desenvolvimento profissional que disponibiliza 365
         provocações diárias por meio de aplicativo, com recursos de acompanhamento de
         constância (ofensiva), conquistas, ranking e lembretes. O combo inclui também o
         livro físico. O conteúdo tem finalidade reflexiva e educacional.

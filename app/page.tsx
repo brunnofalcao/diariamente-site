@@ -23,6 +23,7 @@ export default function Page() {
         <div className="wrap">
           <div className="split">
             <div className="split-copy">
+              <span className="overline eyebrow" style={{ display: "block" }}>Provocações diárias para se desenvolver profissionalmente</span>
               <span className="badge badge-primary eyebrow">De Brunno Falcão &amp; Roberta Carbonari</span>
               <h1 className="display" style={{ margin: "var(--sp4) 0 var(--sp6)" }}>
                 Você não falha por falta de vontade.{" "}
@@ -251,6 +252,36 @@ export default function Page() {
         </div>
       </section>
 
+      {/* ---------- UM DIA POR VEZ (diferencial vs livro) ---------- */}
+      <section className="reveal" style={{ paddingTop: 0 }}>
+        <div className="wrap">
+          <div className="split reverse">
+            <div className="split-media">
+              <ImageSlot tag="Screenshot" label="Tela com dia bloqueado / desbloqueio por constância" dims="1170×2532px · print real do app" shape="portrait" />
+            </div>
+            <div className="split-copy">
+              <span className="overline eyebrow">O que o livro não faz por você</span>
+              <h2 className="display-md" style={{ marginBottom: "var(--sp5)" }}>
+                Um dia por vez. <span className="teal">De propósito.</span>
+              </h2>
+              <p className="lead" style={{ marginBottom: "var(--sp4)" }}>
+                No livro, nada te impede de devorar os 365 num domingo de empolgação — e
+                esquecer todos na segunda. O atalho parece liberdade, mas é exatamente onde a
+                transformação morre.
+              </p>
+              <p className="lead" style={{ marginBottom: "var(--sp4)" }}>
+                No app é diferente: você tem o dia de hoje. Inteiro, presente, sem pressa de
+                terminar. Como deveria ser um ritual que se chama <span className="teal live-word">Diariamente</span>.
+              </p>
+              <p className="lead" style={{ color: "var(--n-0)" }}>
+                E quando bater aquela vontade de adiantar? A sua própria constância destrava o
+                próximo. Você não compra o direito de pular — você <span className="teal">conquista</span>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ---------- NÃO É APP DE MOTIVAÇÃO ---------- */}
       <section className="reveal" style={{ paddingTop: 0 }}>
         <div className="wrap-content">
@@ -380,16 +411,16 @@ export default function Page() {
             <div className="stack body-sm muted">
               <p>
                 <strong className="teal">O que é:</strong> o Diariamente é um produto de
-                desenvolvimento pessoal criado por Brunno Falcão e Roberta Carbonari. Une um
+                desenvolvimento profissional criado por Brunno Falcão e Roberta Carbonari. Une um
                 livro de provocações diárias a um aplicativo que entrega 365 provocações — uma
                 para cada dia do ano — com sistema de constância (ofensiva), conquistas, ranking
                 e lembrete diário no WhatsApp.
               </p>
               <p>
-                <strong className="teal">Para quem é:</strong> pessoas que buscam crescimento
-                pessoal e propósito e que já tentaram livros, journals ou apps de hábito, mas
-                largaram no meio. O Diariamente foi desenhado para resolver a constância, não
-                apenas entregar conteúdo.
+                <strong className="teal">Para quem é:</strong> profissionais de qualquer carreira
+                que querem evoluir de forma consistente e que já tentaram livros, journals ou apps
+                de hábito, mas largaram no meio. O Diariamente foi desenhado para resolver a
+                constância, não apenas entregar conteúdo.
               </p>
               <p>
                 <strong className="teal">Como funciona:</strong> o método tem três passos —

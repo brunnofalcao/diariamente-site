@@ -25,6 +25,10 @@ const FAQ_ITEMS = [
     a: "O app é a versão que te faz usar o livro: te lembra, registra seu progresso e transforma cada provocação em ação. Se quiser só o app, o plano Digital atende.",
   },
   {
+    q: "Posso ler tudo de uma vez?",
+    a: "Não — e isso é de propósito. No app você vive o dia de hoje, um por vez. É o que diferencia um ritual diário de um livro que você devora e esquece. Quando quiser adiantar, sua própria constância destrava o próximo dia: você conquista o direito de seguir em frente.",
+  },
+  {
     q: "Como recebo o acesso?",
     a: "Por e-mail, logo após a confirmação. Você abre o app e já faz a provocação do dia 1 — sua jornada começa na hora.",
   },

@@ -11,7 +11,8 @@ export const metadata: Metadata = {
     "Brunno Falcão",
     "Roberta Carbonari",
     "livro de provocações diárias",
-    "desenvolvimento pessoal",
+    "desenvolvimento profissional",
+    "desenvolvimento de carreira",
     "constância",
     "hábito",
     "app de propósito",
@@ -82,7 +83,15 @@ function StructuredData() {
         name: "Já comprei livros parecidos e larguei. Por que dessa vez seria diferente?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Porque o Diariamente foi construído no ponto exato onde as pessoas desistem. A ofensiva, as conquistas e o ranking existem para manter sua sequência viva — não é só conteúdo, é um sistema de constância.",
+          text: "Porque o Diariamente foi construído no ponto exato onde as pessoas desistem. A ofensiva, as conquistas e o menu Ações existem para te ajudar a voltar no dia seguinte — não é só conteúdo, é um sistema de constância.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Posso ler todas as provocações de uma vez?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Não, e isso é intencional. No app Diariamente você acessa uma provocação por dia, vivendo o dia vigente — diferente do livro físico, que permite ler tudo de uma vez e esquecer. Ao manter a constância e cumprir conquistas, você desbloqueia a possibilidade de adiantar dias.",
         },
       },
       {
