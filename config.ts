@@ -38,10 +38,10 @@ export const LOGOS = {
 // Telas reais do app: Hoje · Dias · Ações · Ritmo · Conta
 // ---------------------------------------------------------------------
 export const SCREENSHOTS = {
-  hoje: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782655991/Tela_HOJE_Diariamente_u0sikc.png",
-  dias: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782654613/Tela_DIAS_Diariamente_kxmnwc.png",
-  acoes: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782656075/Tela_ACOES_Diariamente_rto4c6.png",
-  ritmo: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782655992/Tela_RITMO_Diariamente_gxizrw.png",
+  hoje: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782662616/Tela_HOJE_Diariamente_plfwme.png",
+  dias: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782662615/Tela_DIAS_Diariamente_vy8cfk.png",
+  acoes: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782662616/Tela_ACOES_Diariamente_tsxia2.png",
+  ritmo: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782662616/Tela_RITMO_Diariamente_tzmsli.png",
 };
 
 // ---------------------------------------------------------------------
@@ -155,11 +155,13 @@ export const AUTORES = {
     nome: "Brunno Falcão",
     bio: "Empresário e palestrante, é fundador e CEO da Science Play e do Nutrição Brasil, com clientes em mais de 95 países. Autor best-seller de Zona Desconforto e O Fim do Consultório, criador do Palestre•se e colunista da Forbes Portugal, Revista Medicina S/A e O Fit Feed.",
     instagram: "brunnofalcao",
+    foto: "",  // [TROCAR] retrato PNG transparente do Brunno (URL Cloudinary)
   },
   roberta: {
     nome: "Roberta Carbonari",
     bio: "Nutricionista, mestre em Nutrição, pós-graduada em Comportamento Alimentar e referência em Psiquiatria Nutricional. Coordenadora de pós-graduação, professora, palestrante e empresária, com formação também em Administração e Marketing.",
     instagram: "robertacarbonari",
+    foto: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782662986/roberta_ityi3g.png",
   },
   selo: "Science Play®",
 };

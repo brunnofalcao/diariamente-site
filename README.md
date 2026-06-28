@@ -32,6 +32,19 @@ Estes itens dependem de dados/decisões suas e estão marcados no código:
 - **Termos de Uso e Política de Privacidade reais** (não mais modelo-marcação): escritos cobrindo Apple App Store 5.1.1 (dados coletados, uso, retenção, revogação de consentimento, ATT, SDKs terceiros) e LGPD (bases legais art. 7º, direitos do titular, encarregado/DPO, segurança) + CDC (art. 49, foro do consumidor). **Recomendação: revisão final por advogado antes de tráfego pesado** — o texto é sólido e válido para publicação/submissão, mas eu não sou advogado.
 - **Rodapé:** logo com espaçamento maior + site, Instagram e LinkedIn da Science Play.
 
+### Hero dinâmico — provocação do dia (barra de busca)
+O hero mostra uma "barra de busca" onde a provocação do dia é **digitada** (efeito typewriter) e depois fica fixa. O dia (1..365) é real, calculado pela data.
+
+**Como funciona / como conectar o Supabase:**
+- A barra consome a rota `/api/provocacao-do-dia` (roda no servidor — a chave do Supabase NUNCA vai pro navegador).
+- Enquanto o Supabase não está configurado, a rota usa um **fallback teaser** (7 provocações de marketing, que rotacionam pela data). O hero já funciona sem configurar nada.
+- Para puxar do Supabase de verdade, defina no Vercel (Settings → Environment Variables):
+  - `SUPABASE_URL` = URL do projeto
+  - `SUPABASE_SERVICE_KEY` = service role key (fica só no servidor)
+  - `SUPABASE_PROVOCACOES_TABLE` = nome da tabela (opcional; default `provocacoes`)
+- **Regra de conteúdo (importante):** o site só deve exibir provocações marcadas como públicas. Garanta na tabela uma coluna `publica boolean` e marque `true` em um pequeno conjunto (10–15). **Nunca exponha as 365 reais** — elas são o produto pago. Colunas esperadas: `{ dia int, texto text, autor text, publica bool }`.
+- Se o Supabase falhar por qualquer motivo, a rota cai automaticamente no teaser (o hero nunca quebra).
+
 ### Nota sobre streak/constância (importante)
 Os testers relataram bugs no motor de constância (streak reiniciando, dias não refletindo no calendário). **Por isso, as promessas absolutas de sequência foram suavizadas** para linguagem de jornada ("acompanha sua jornada de constância", "registra o dia") em vez de garantias operacionais ("sua sequência avança"). Quando o motor estiver blindado, dá pra voltar a uma copy mais assertiva. Nos screenshots, evitar streaks exagerados que choquem com o estado atual do app.
 

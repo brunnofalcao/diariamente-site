@@ -1,5 +1,6 @@
 import { SITE, PROVA, AUTORES, SCREENSHOTS } from "@/config";
-import { AppMockup, Logomark, ImageSlot, OfficialLogo, FooterLogo, InstagramLink } from "@/components/Brand";
+import { Logomark, ImageSlot, OfficialLogo, FooterLogo, InstagramLink } from "@/components/Brand";
+import { HeroProvocacao } from "@/components/HeroProvocacao";
 import { StickyCTA, RevealOnScroll } from "@/components/Sticky";
 import { Oferta } from "@/components/Oferta";
 import { FAQ } from "@/components/FAQ";
@@ -43,10 +44,8 @@ export default function Page() {
               </div>
             </div>
 
-            <div className="split-media reveal">
-              <div className="float-slow">
-                <AppMockup width={300} />
-              </div>
+            <div className="split-media">
+              <HeroProvocacao />
             </div>
           </div>
         </div>
@@ -342,7 +341,9 @@ export default function Page() {
 
           <div className="grid cols-2">
             <div className="sf-dark" style={{ overflow: "hidden" }}>
-              <ImageSlot tag="Foto autor" label="Brunno Falcão — retrato" dims="1000×1000px · quadrado" shape="square" style={{ borderRadius: 0, border: "none", borderBottom: "1px solid var(--border)" }} />
+              <div className="autor-foto">
+                <ImageSlot tag="Foto autor" label="Brunno Falcão — retrato" dims="1000×1000px · quadrado" shape="square" src={AUTORES.brunno.foto || undefined} alt="Brunno Falcão" style={{ borderRadius: 0, border: "none", borderBottom: "1px solid var(--border)" }} />
+              </div>
               <div style={{ padding: "var(--sp6)" }}>
                 <div className="h1">{AUTORES.brunno.nome}</div>
                 <InstagramLink handle={AUTORES.brunno.instagram} />
@@ -350,7 +351,9 @@ export default function Page() {
               </div>
             </div>
             <div className="sf-dark" style={{ overflow: "hidden" }}>
-              <ImageSlot tag="Foto autor" label="Roberta Carbonari — retrato" dims="1000×1000px · quadrado" shape="square" style={{ borderRadius: 0, border: "none", borderBottom: "1px solid var(--border)" }} />
+              <div className="autor-foto autor-foto-zoom">
+                <ImageSlot tag="Foto autor" label="Roberta Carbonari — retrato" dims="1000×1000px · quadrado" shape="square" src={AUTORES.roberta.foto || undefined} alt="Roberta Carbonari" style={{ borderRadius: 0, border: "none", borderBottom: "1px solid var(--border)" }} />
+              </div>
               <div style={{ padding: "var(--sp6)" }}>
                 <div className="h1">{AUTORES.roberta.nome}</div>
                 <InstagramLink handle={AUTORES.roberta.instagram} />
