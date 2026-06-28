@@ -1,4 +1,4 @@
-import { SITE, PROVA, AUTORES } from "@/config";
+import { SITE, PROVA, AUTORES, SCREENSHOTS } from "@/config";
 import { AppMockup, Logomark, ImageSlot, OfficialLogo, FooterLogo, InstagramLink } from "@/components/Brand";
 import { StickyCTA, RevealOnScroll } from "@/components/Sticky";
 import { Oferta } from "@/components/Oferta";
@@ -159,8 +159,10 @@ export default function Page() {
 
           {/* destaque: HOJE + DIAS em screenshots grandes */}
           <div className="split" style={{ marginBottom: "var(--sp16)" }}>
-            <div className="split-media">
-              <ImageSlot tag="Screenshot" label="Tela HOJE — provocação do dia" dims="1170×2532px · print real do app" shape="portrait" />
+            <div className="split-media media-glow reveal-media">
+              <div className="drift-inner">
+                <ImageSlot tag="Screenshot" label="Tela HOJE — provocação do dia" dims="1170×2532px · print real do app" shape="portrait" bare src={SCREENSHOTS.hoje || undefined} alt="Tela HOJE do app Diariamente" />
+              </div>
             </div>
             <div className="split-copy">
               <h3 className="display-sm" style={{ marginBottom: "var(--sp4)" }}>Tela HOJE</h3>
@@ -169,8 +171,10 @@ export default function Page() {
           </div>
 
           <div className="split reverse" style={{ marginBottom: "var(--sp16)" }}>
-            <div className="split-media">
-              <ImageSlot tag="Screenshot" label="Tela DIAS — calendário de constância" dims="1170×2532px · print real do app" shape="portrait" />
+            <div className="split-media media-glow reveal-media">
+              <div className="drift-inner">
+                <ImageSlot tag="Screenshot" label="Tela DIAS — calendário de constância" dims="1170×2532px · print real do app" shape="portrait" bare src={SCREENSHOTS.dias || undefined} alt="Tela DIAS do app Diariamente" />
+              </div>
             </div>
             <div className="split-copy">
               <h3 className="display-sm" style={{ marginBottom: "var(--sp4)" }}>Tela DIAS</h3>
@@ -217,8 +221,10 @@ export default function Page() {
                 <span className="display-sm teal">"O que você vai fazer com isso?"</span>
               </p>
             </div>
-            <div className="split-media">
-              <ImageSlot tag="Screenshot" label="Tela AÇÕES — provocação vira tarefa concreta" dims="1170×2532px · print real do app" shape="portrait" />
+            <div className="split-media media-glow reveal-media">
+              <div className="drift-inner">
+                <ImageSlot tag="Screenshot" label="Tela AÇÕES — provocação vira tarefa concreta" dims="1170×2532px · print real do app" shape="portrait" bare src={SCREENSHOTS.acoes || undefined} alt="Tela AÇÕES do app Diariamente" />
+              </div>
             </div>
           </div>
         </div>
@@ -256,8 +262,10 @@ export default function Page() {
       <section className="reveal" style={{ paddingTop: 0 }}>
         <div className="wrap">
           <div className="split reverse">
-            <div className="split-media">
-              <ImageSlot tag="Screenshot" label="Tela com dia bloqueado / desbloqueio por constância" dims="1170×2532px · print real do app" shape="portrait" />
+            <div className="split-media media-glow reveal-media">
+              <div className="drift-inner">
+                <ImageSlot tag="Screenshot" label="Tela RITMO — constância, créditos e ciclo de desbloqueios" dims="1170×2532px · print real do app" shape="portrait" bare src={SCREENSHOTS.ritmo || undefined} alt="Tela RITMO do app Diariamente" />
+              </div>
             </div>
             <div className="split-copy">
               <span className="overline eyebrow">O que o livro não faz por você</span>
@@ -274,8 +282,9 @@ export default function Page() {
                 terminar. Como deveria ser um ritual que se chama <span className="teal live-word">Diariamente</span>.
               </p>
               <p className="lead" style={{ color: "var(--n-0)" }}>
-                E quando bater aquela vontade de adiantar? A sua própria constância destrava o
-                próximo. Você não compra o direito de pular — você <span className="teal">conquista</span>.
+                E quando bater aquela vontade de adiantar? Você acumula créditos mantendo a
+                constância e cumprindo conquistas — e usa pra destravar o próximo dia. Você não
+                compra o direito de pular: você <span className="teal">conquista</span>.
               </p>
             </div>
           </div>

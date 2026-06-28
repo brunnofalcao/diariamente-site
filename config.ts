@@ -32,6 +32,19 @@ export const LOGOS = {
 };
 
 // ---------------------------------------------------------------------
+// SCREENSHOTS / MOCKUPS 3D do app (Cloudinary)
+// Cole aqui as URLs dos mockups 3D gerados a partir dos prints reais.
+// Enquanto vazio (""), o site mostra o slot de marcação no lugar.
+// Telas reais do app: Hoje · Dias · Ações · Ritmo · Conta
+// ---------------------------------------------------------------------
+export const SCREENSHOTS = {
+  hoje: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782655991/Tela_HOJE_Diariamente_u0sikc.png",
+  dias: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782654613/Tela_DIAS_Diariamente_kxmnwc.png",
+  acoes: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782656075/Tela_ACOES_Diariamente_rto4c6.png",
+  ritmo: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782655992/Tela_RITMO_Diariamente_gxizrw.png",
+};
+
+// ---------------------------------------------------------------------
 // PROVA REAL (confirmada — não inventar)
 // ---------------------------------------------------------------------
 export const PROVA = {

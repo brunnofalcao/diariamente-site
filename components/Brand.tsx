@@ -81,6 +81,7 @@ export function ImageSlot({
   shape = "",
   src,
   alt = "",
+  bare = false,
   style,
 }: {
   tag: string;
@@ -89,9 +90,21 @@ export function ImageSlot({
   shape?: "wide" | "portrait" | "square" | "tall" | "";
   src?: string;
   alt?: string;
+  bare?: boolean;
   style?: React.CSSProperties;
 }) {
   if (src) {
+    // bare = mockup já vem com fundo/glow próprios: exibe inteiro, sem moldura nem corte
+    if (bare) {
+      return (
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          style={{ width: "100%", height: "auto", display: "block", ...style }}
+        />
+      );
+    }
     return (
       <div className={`img-slot ${shape}`} style={{ border: "1px solid var(--border)", ...style }}>
         <img className="img-real" src={src} alt={alt} loading="lazy" />

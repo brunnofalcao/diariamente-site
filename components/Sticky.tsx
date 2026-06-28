@@ -44,7 +44,7 @@ export function RevealOnScroll() {
     // marca que o JS está ativo — só então os .reveal começam ocultos (progressive enhancement)
     document.documentElement.classList.add("js");
 
-    const els = Array.from(document.querySelectorAll(".reveal"));
+    const els = Array.from(document.querySelectorAll(".reveal, .reveal-media, .media-glow"));
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
