@@ -22,6 +22,18 @@ export function Wordmark({ size = 22 }: { size?: number }) {
   );
 }
 
+// Logo oficial (imagem Cloudinary) — usada centralizada no topo do site.
+export function OfficialLogo({ height = 34 }: { height?: number }) {
+  return (
+    <img
+      src="https://res.cloudinary.com/dlzrfhwin/image/upload/v1775167899/Logo_Diariamente_1_smbwdg.png"
+      alt="Diariamente"
+      height={height}
+      style={{ height, width: "auto", display: "block" }}
+    />
+  );
+}
+
 /**
  * ImageSlot — marcação visual de onde entra um asset real.
  * Para publicar a imagem real: passe `src` (e `alt`). Sem src, mostra o placeholder marcado.
@@ -76,17 +88,17 @@ export function AppMockup({ width = 264 }: { width?: number }) {
       <div style={{ borderRadius: 32, background: "var(--s-0)", overflow: "hidden", padding: "20px 18px 18px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", color: "var(--p-500)" }}>
           <Logomark size={22} />
-          <div className="badge badge-gold" style={{ fontSize: 11, padding: "5px 10px" }}>🔥 7 dias</div>
+          <div className="badge badge-gold" style={{ fontSize: 11, padding: "5px 10px" }}>🔥 47 dias</div>
         </div>
-        <div className="overline" style={{ marginTop: 24, fontSize: 11 }}>Provocação do dia · Dia 8</div>
+        <div className="overline" style={{ marginTop: 24, fontSize: 11 }}>Provocação do dia · Dia 47</div>
         <p style={{ fontFamily: "var(--font-serif)", fontSize: 23, lineHeight: 1.25, marginTop: 11, color: "var(--n-0)" }}>
           O que você está adiando que, no fundo, já sabe que precisa decidir?
         </p>
         <div style={{ marginTop: 24 }}>
           <div style={{ height: 6, borderRadius: 999, background: "rgba(255,255,255,.06)", overflow: "hidden" }}>
-            <div style={{ height: "100%", width: "32%", borderRadius: 999, background: "linear-gradient(90deg,var(--p-400),var(--p-300))" }} />
+            <div style={{ height: "100%", width: "13%", borderRadius: 999, background: "linear-gradient(90deg,var(--p-400),var(--p-300))" }} />
           </div>
-          <div className="caption" style={{ marginTop: 7 }}>8 de 363 · você não falhou nenhum dia</div>
+          <div className="caption" style={{ marginTop: 7 }}>47 de 365 · você não falhou nenhum dia</div>
         </div>
         <div style={{ marginTop: 18, background: "var(--p-500)", color: "var(--s-0)", borderRadius: 15, padding: "12px 0", textAlign: "center", fontWeight: 700, fontSize: 14 }}>
           Marcar como lido

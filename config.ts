@@ -11,20 +11,24 @@ export const SITE = {
   dominio: "https://diariamente.club",
   appUrl: "https://app.diariamente.club",
   descricao:
-    "O livro de Brunno Falcão e Roberta Carbonari que virou um ritual diário no seu bolso: uma provocação por dia, por 363 dias — com um app feito pra você não largar no meio.",
+    "O livro de Brunno Falcão e Roberta Carbonari que virou um ritual diário no seu bolso: uma provocação por dia, por 365 dias — com um app feito pra você não largar no meio.",
   // OG image — usar o asset oficial do brandbook (Cloudinary)
+  // [CONFIRMAR] mesmo cloud (dlzrfhwin); colar URL oficial do Asset_7 (OG/favicon)
   ogImage:
-    "https://res.cloudinary.com/diariamente/image/upload/Asset_7_z9hcmw.png",
+    "https://res.cloudinary.com/dlzrfhwin/image/upload/Asset_7_z9hcmw.png",
 };
 
-// Logos oficiais (Cloudinary — brandbook v1.0)
+// Logos oficiais (Cloudinary — cloud name oficial: dlzrfhwin)
 export const LOGOS = {
+  // [CONFIRMAR] URL oficial do logo principal escuro (Asset_10)
   principalEscuro:
-    "https://res.cloudinary.com/diariamente/image/upload/Asset_10_cirv6z.png",
+    "https://res.cloudinary.com/dlzrfhwin/image/upload/Asset_10_cirv6z.png",
+  // ✓ URL OFICIAL confirmada por Brunno
   horizontal:
-    "https://res.cloudinary.com/diariamente/image/upload/Logo_Diariamente_1_smbwdg.png",
+    "https://res.cloudinary.com/dlzrfhwin/image/upload/v1775167899/Logo_Diariamente_1_smbwdg.png",
+  // [CONFIRMAR] URL oficial do favicon/OG (Asset_7)
   favicon:
-    "https://res.cloudinary.com/diariamente/image/upload/Asset_7_z9hcmw.png",
+    "https://res.cloudinary.com/dlzrfhwin/image/upload/Asset_7_z9hcmw.png",
 };
 
 // ---------------------------------------------------------------------
@@ -83,7 +87,7 @@ export const PLANOS: Plano[] = [
     parcela: "ou 12x de R$ 14,70",
     inclui: [
       "App completo (telas HOJE e DIAS)",
-      "363 provocações — uma para cada dia",
+      "365 provocações — uma para cada dia",
       "Sistema de ofensiva pra manter a constância",
       "Conquistas e ranking",
       "Lembrete diário no WhatsApp",

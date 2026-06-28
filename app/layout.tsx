@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.dominio),
-  title: "Diariamente — uma provocação por dia, por 363 dias | Brunno Falcão e Roberta Carbonari",
+  title: "Diariamente — uma provocação por dia, por 365 dias | Brunno Falcão e Roberta Carbonari",
   description: SITE.descricao,
   keywords: [
     "Diariamente",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Diariamente — uma provocação por dia, por 363 dias",
+    title: "Diariamente — uma provocação por dia, por 365 dias",
     description: SITE.descricao,
     images: [SITE.ogImage],
   },
@@ -66,7 +66,7 @@ function StructuredData() {
         name: "O que é o Diariamente?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "É o livro de Brunno Falcão e Roberta Carbonari transformado em um app de provocações diárias. São 363 provocações — uma para cada dia do ano — com sistema de ofensiva, conquistas, ranking e lembrete no WhatsApp, projetado para você manter a constância e não largar no meio.",
+          text: "É o livro de Brunno Falcão e Roberta Carbonari transformado em um app de provocações diárias. São 365 provocações — uma para cada dia do ano — com sistema de ofensiva, conquistas, ranking e lembrete no WhatsApp, projetado para você manter a constância e não largar no meio.",
         },
       },
       {

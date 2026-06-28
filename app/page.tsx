@@ -1,5 +1,5 @@
 import { SITE, PROVA, AUTORES } from "@/config";
-import { Wordmark, AppMockup, Logomark, ImageSlot } from "@/components/Brand";
+import { Wordmark, AppMockup, Logomark, ImageSlot, OfficialLogo } from "@/components/Brand";
 import { StickyCTA, RevealOnScroll } from "@/components/Sticky";
 import { Oferta } from "@/components/Oferta";
 import { FAQ } from "@/components/FAQ";
@@ -9,12 +9,11 @@ export default function Page() {
     <main>
       <RevealOnScroll />
 
-      {/* ---------- TOP NAV (sticky, desktop ganha CTA) ---------- */}
+      {/* ---------- TOP — logo oficial centralizada ---------- */}
       <nav className="topnav">
-        <div className="wrap row">
-          <a href="/" style={{ textDecoration: "none" }}><Wordmark size={20} /></a>
-          <a href="#oferta" className="btn btn-primary nav-cta" style={{ padding: "10px 20px", fontSize: 14 }}>
-            Quero começar
+        <div className="wrap" style={{ display: "flex", justifyContent: "center", padding: "var(--sp4) 0" }}>
+          <a href="/" aria-label="Diariamente" style={{ textDecoration: "none" }}>
+            <OfficialLogo height={36} />
           </a>
         </div>
       </nav>
@@ -31,7 +30,7 @@ export default function Page() {
               </h1>
               <p className="lead" style={{ maxWidth: "48ch", marginBottom: "var(--sp8)" }}>
                 Diariamente é o livro que virou um ritual diário no seu bolso: uma provocação
-                por dia, por 363 dias — e um app feito pra você não largar no meio.
+                por dia, por 365 dias — e um app feito pra você não largar no meio.
               </p>
               <div style={{ display: "flex", gap: "var(--sp4)", flexWrap: "wrap", alignItems: "center" }}>
                 <a href="#oferta" className="btn btn-primary btn-lg">Quero começar hoje</a>
@@ -97,7 +96,7 @@ export default function Page() {
                 Chegar ao fim do ano sabendo que você não faltou com a pessoa mais importante: você mesmo.
               </p>
               <p className="lead">
-                363 dias em que você parou, pensou, se moveu. Um de cada vez. Sem pressão,
+                365 dias em que você parou, pensou, se moveu. Um de cada vez. Sem pressão,
                 sem culpa de estar atrasado, sem recomeçar do zero toda segunda. Não é sobre
                 virar outra pessoa amanhã. É sobre virar, <span className="teal">diariamente</span>.
               </p>
@@ -134,7 +133,7 @@ export default function Page() {
           </div>
 
           <p className="center display-sm" style={{ marginTop: "var(--sp16)", maxWidth: "20ch", marginLeft: "auto", marginRight: "auto" }}>
-            Não é motivação num dia. É constância em 363 — <span className="teal">com método</span>.
+            Não é motivação num dia. É constância em 365 — <span className="teal">com método</span>.
           </p>
         </div>
       </section>
@@ -175,7 +174,7 @@ export default function Page() {
               { t: "Conquistas", d: "Cada marco reconhecido. O esforço acumulado vira troféu." },
               { t: "Ranking", d: "Você não caminha sozinho. Tem gente fazendo junto." },
               { t: "WhatsApp", d: "A provocação chega onde você já está. Zero esforço pra lembrar." },
-              { t: "363 provocações", d: "Um ano inteiro de conteúdo. Uma jornada, não uma leitura." },
+              { t: "365 provocações", d: "Um ano inteiro de conteúdo. Uma jornada, não uma leitura." },
               { t: "Compartilhar", d: "Transforme uma provocação em story e leve sua reflexão adiante." },
             ].map((f) => (
               <div key={f.t} className="sf-dark" style={{ padding: "var(--sp6)" }}>
@@ -273,7 +272,7 @@ export default function Page() {
               <p>
                 <strong className="teal">O que é:</strong> o Diariamente é um produto de
                 desenvolvimento pessoal criado por Brunno Falcão e Roberta Carbonari. Une um
-                livro de provocações diárias a um aplicativo que entrega 363 provocações — uma
+                livro de provocações diárias a um aplicativo que entrega 365 provocações — uma
                 para cada dia do ano — com sistema de constância (ofensiva), conquistas, ranking
                 e lembrete diário no WhatsApp.
               </p>
@@ -303,7 +302,7 @@ export default function Page() {
         <div className="wrap center stack">
           <div style={{ display: "flex", justifyContent: "center" }}><Wordmark /></div>
           <p className="caption" style={{ maxWidth: "40ch", margin: "var(--sp2) auto 0" }}>
-            Diariamente é uma realização Science Play®. Uma provocação por dia, por 363 dias.
+            Diariamente é uma realização Science Play®. Uma provocação por dia, por 365 dias.
           </p>
           <div style={{ display: "flex", gap: "var(--sp5)", justifyContent: "center", flexWrap: "wrap", marginTop: "var(--sp4)" }}>
             <a className="caption" href="/termos" style={{ color: "var(--n-400)" }}>Termos de uso</a>
