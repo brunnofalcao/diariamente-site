@@ -270,6 +270,20 @@ body::before{ animation:breathe 9s var(--ease) infinite; }
   border-radius:999px; padding:4px 11px;
 }
 .hs-streak svg{ color:var(--a-500,#F5B731); }
+/* data por extenso — destaque editorial, muda todo dia (igual ao app) */
+.hs-data{
+  display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
+  margin-bottom:var(--sp4,16px);
+}
+.hs-data-dia{
+  font-family:var(--font-serif, Georgia, serif);
+  font-size:30px; line-height:1; color:#fff; letter-spacing:-.01em;
+  text-transform:lowercase;
+}
+.hs-data-semana{
+  font-size:13px; color:var(--n-400,#8A9494); font-weight:500;
+  text-transform:capitalize;
+}
 /* rótulo */
 .hs-meta{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:var(--sp3,12px); position:relative; }
 .hs-eyebrow{

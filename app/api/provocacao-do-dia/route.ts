@@ -49,24 +49,36 @@ const TEASER = [
 
 // Mês e dia atuais no fuso de Brasília (America/Sao_Paulo),
 // independente do fuso do servidor (Vercel roda em UTC).
-function mesDiaBR(): { mes: number; dia: number; diaAno: number } {
+function dataBR(): { mes: number; dia: number; diaAno: number; diaNum: number; mesNome: string; semana: string } {
+  const now = new Date();
   const fmt = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Sao_Paulo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
+    year: "numeric", month: "2-digit", day: "2-digit",
   });
-  const [y, m, d] = fmt.format(new Date()).split("-").map(Number);
+  const [y, m, d] = fmt.format(now).split("-").map(Number);
   const start = Date.UTC(y, 0, 0);
   const hoje = Date.UTC(y, m - 1, d);
-  return { mes: m, dia: d, diaAno: Math.floor((hoje - start) / 86_400_000) };
+
+  // nomes em pt-BR no fuso de Brasília
+  const mesNome = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", month: "long" }).format(now);
+  const semana = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", weekday: "long" }).format(now);
+
+  return {
+    mes: m, dia: d,
+    diaAno: Math.floor((hoje - start) / 86_400_000),
+    diaNum: d,
+    mesNome,
+    semana,
+  };
 }
 
 export const dynamic = "force-dynamic"; // recalcula a cada request
 export const revalidate = 0;
 
 export async function GET() {
-  const { mes, dia, diaAno } = mesDiaBR();
+  const { mes, dia, diaAno, diaNum, mesNome, semana } = dataBR();
+  const dataExtenso = `${diaNum} ${mesNome}`;          // ex: "28 junho"
+  const diaSemana = semana.charAt(0).toUpperCase() + semana.slice(1); // ex: "Domingo"
 
   // Sem Supabase configurado → fallback teaser (com diagnóstico claro)
   if (!SB_URL || !SB_KEY) {
@@ -80,6 +92,7 @@ export async function GET() {
       total: 365,
       fonte: "teaser",
       motivo: `variavel(eis) de ambiente ausente(s) no Vercel: ${faltando.join(", ")}`,
+      dataExtenso, diaSemana,
       ...t,
     });
   }
@@ -103,7 +116,7 @@ export async function GET() {
     const linhas: Record<string, unknown>[] = await r.json();
     if (!linhas?.length) {
       const t = TEASER[(diaAno - 1) % TEASER.length];
-      return NextResponse.json({ dia: diaAno, total: 365, fonte: "teaser", motivo: `nenhuma linha com ${C_MES}=${mes} e ${C_DIA}=${dia}`, ...t });
+      return NextResponse.json({ dia: diaAno, total: 365, fonte: "teaser", motivo: `nenhuma linha com ${C_MES}=${mes} e ${C_DIA}=${dia}`, dataExtenso, diaSemana, ...t });
     }
 
     const row = linhas[0];
@@ -118,10 +131,11 @@ export async function GET() {
       fonte: "supabase",
       texto: String(row[C_PERGUNTA] ?? ""),
       autor,
+      dataExtenso, diaSemana,
     });
   } catch (e) {
     const t = TEASER[(diaAno - 1) % TEASER.length];
-    return NextResponse.json({ dia: diaAno, total: 365, fonte: "teaser", motivo: String(e), ...t });
+    return NextResponse.json({ dia: diaAno, total: 365, fonte: "teaser", motivo: String(e), dataExtenso, diaSemana, ...t });
   }
 }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-type Prov = { dia: number; total: number; texto: string; autor: string };
+type Prov = { dia: number; total: number; texto: string; autor: string; dataExtenso?: string; diaSemana?: string };
 
 // Hero dinâmico: uma "barra de busca" onde a provocação do dia é digitada
 // (efeito typewriter) e depois fica fixa na tela. Dia real (1..365) via API.
@@ -80,6 +80,12 @@ export function HeroProvocacao() {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 4-2 5-2 8a4 4 0 008 0c0-1-1-2-1-3 2 1 3 3 3 6a8 8 0 11-16 0c0-5 5-7 8-11z"/></svg>
             {prov ? prov.dia : "·"}
           </span>
+        </div>
+
+        {/* data por extenso — muda todo dia (igual ao app: "28 junho · Domingo") */}
+        <div className="hs-data">
+          <span className="hs-data-dia">{prov?.dataExtenso ?? "Hoje"}</span>
+          {prov?.diaSemana && <span className="hs-data-semana">{prov.diaSemana}</span>}
         </div>
 
         {/* rótulo provocação do dia */}
