@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SITE, PLANOS, PROVA, GARANTIA } from "@/config";
+import { Tracking } from "@/components/Tracking";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -142,7 +143,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <StructuredData />
       </head>
-      <body>{children}</body>
+      <body>
+        <Tracking />
+        {children}
+      </body>
     </html>
   );
 }

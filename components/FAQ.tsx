@@ -22,7 +22,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Já tenho o livro físico.",
-    a: "O app é a versão que te faz usar o livro: te lembra, registra seu progresso e transforma cada provocação em ação. Se quiser só o app, o plano Digital atende.",
+    a: "O app é a versão que te faz usar o livro: te lembra, registra seu progresso e transforma cada provocação em ação. O Diariamente Club é o acesso ao app, com as 365 provocações e todo o sistema de constância.",
   },
   {
     q: "Posso ler tudo de uma vez?",

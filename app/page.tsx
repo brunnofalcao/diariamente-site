@@ -395,7 +395,7 @@ export default function Page() {
               { n: "1", t: "Você recebe o e-mail de acesso", d: "Logo após a confirmação, com o passo a passo pra abrir o app." },
               { n: "2", t: "Faz a provocação do Dia 1", d: "Sua jornada começa no momento em que você registra o primeiro dia." },
               { n: "3", t: "O ritual te encontra todo dia", d: "Lembrete diário no WhatsApp pra você não depender da memória." },
-              { n: "4", t: "No combo, o livro chega na sua casa", d: "Com código de rastreio assim que for postado." },
+              { n: "4", t: "Sua constância começa a aparecer", d: "O calendário e a ofensiva mostram sua jornada se construindo, dia após dia." },
             ].map((s) => (
               <div key={s.n} className="sf-glass" style={{ padding: "var(--sp5)", display: "flex", gap: "var(--sp4)", alignItems: "flex-start" }}>
                 <div style={{ flex: "0 0 36px", height: 36, borderRadius: 999, background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.25)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-serif)", fontSize: 18, color: "var(--p-500)" }}>
@@ -453,8 +453,9 @@ export default function Page() {
                 após a confirmação.
               </p>
               <p>
-                <strong className="teal">Planos:</strong> Digital (app, R$ 247) e Combo
-                (livro físico + app, R$ 297). Garantia de 7 dias. Realização Science Play.
+                <strong className="teal">Acesso:</strong> Diariamente Club, o app completo
+                por R$ 297 à vista (ou 12x de R$ 30,72), menos de R$ 1 por dia. Garantia de 7
+                dias. Realização Science Play.
               </p>
             </div>
           </div>

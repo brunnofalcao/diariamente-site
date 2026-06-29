@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PLANOS } from "@/config";
+import { PLANO } from "@/config";
 
 // Sticky CTA aparece depois que o usuário rola além do hero.
 export function StickyCTA() {
   const [show, setShow] = useState(false);
-  const combo = PLANOS.find((p) => p.destaque) ?? PLANOS[0];
 
   useEffect(() => {
     const onScroll = () => setShow(window.scrollY > 640);
@@ -26,8 +25,8 @@ export function StickyCTA() {
       <div className="wrap">
         <div className="row">
           <div className="price">
-            <div className="caption" style={{ marginBottom: -2 }}>a partir de</div>
-            <b className="teal">R$ {PLANOS[0].preco}</b>
+            <div className="caption" style={{ marginBottom: -2 }}>12x de</div>
+            <b className="teal">R$ 30,72</b>
           </div>
           <button className="btn btn-primary" onClick={goToOffer}>
             Quero começar hoje

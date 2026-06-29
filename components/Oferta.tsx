@@ -1,6 +1,6 @@
 "use client";
 
-import { PLANOS, PRECO_ANCORA_LIVRO, GARANTIA, ESCASSEZ } from "@/config";
+import { PLANO, GARANTIA, ESCASSEZ } from "@/config";
 
 // Anexa as UTMs da URL atual ao link de checkout (preserva origem do tráfego).
 function buildCheckoutUrl(base: string): string {
@@ -13,10 +13,21 @@ function buildCheckoutUrl(base: string): string {
 }
 
 export function Oferta() {
-  const onCheckout = (planoId: string, url: string) => {
-    (window as any).dataLayer?.push({ event: "InitiateCheckout", plano: planoId });
+  const onCheckout = () => {
+    // GA4 (via dataLayer/gtag) + Meta Pixel — evento de início de checkout
+    (window as any).dataLayer?.push({ event: "InitiateCheckout", plano: PLANO.id });
+    (window as any).gtag?.("event", "begin_checkout", {
+      currency: "BRL",
+      value: PLANO.precoNumero,
+      items: [{ item_name: PLANO.nome, price: PLANO.precoNumero }],
+    });
+    (window as any).fbq?.("track", "InitiateCheckout", {
+      currency: "BRL",
+      value: PLANO.precoNumero,
+      content_name: PLANO.nome,
+    });
+    const url = PLANO.checkoutUrl;
     if (url.startsWith("[")) {
-      // checkout ainda não configurado — evita botão morto
       alert("Checkout em configuração. Em breve disponível.");
       return;
     }
@@ -27,85 +38,62 @@ export function Oferta() {
     <section id="oferta">
       <div className="wrap-narrow">
         <div className="center sec-head">
-          {ESCASSEZ.ativa && (
-            <span className="badge badge-gold eyebrow">{ESCASSEZ.selo}</span>
-          )}
-          <h2 className="display-md">Escolha como quer começar</h2>
-          <p className="lead sec-intro" style={{ maxWidth: "46ch", margin: "var(--sp4) auto 0" }}>
-            Por menos de R$ 1 por dia, você troca a estante de livros não terminados por um
-            sistema que te traz de volta todo dia. Não é mais um conteúdo. É o que faz o
-            conteúdo virar constância.
+          <h2 className="display-md">Comece sua constância hoje</h2>
+          <p className="lead sec-intro" style={{ maxWidth: "44ch", margin: "var(--sp4) auto 0" }}>
+            Um ano inteiro de provocação diária, com o sistema que te traz de volta
+            todo dia. Não é mais um conteúdo. É o que faz o conteúdo virar constância.
           </p>
         </div>
 
-        <div className="grid cols-2" style={{ alignItems: "stretch" }}>
-          {PLANOS.map((p) => (
-            <div
-              key={p.id}
-              className="sf-dark plano-card"
-              style={{
-                padding: "var(--sp8)",
-                position: "relative",
-                display: "flex",
-                flexDirection: "column",
-                borderColor: p.destaque ? "rgba(39,189,190,.35)" : "var(--border)",
-                boxShadow: p.destaque ? "0 0 0 1px rgba(39,189,190,.15), 0 20px 60px rgba(0,0,0,.4)" : "none",
-              }}
-            >
-              {p.selo && (
-                <span
-                  className="badge badge-primary"
-                  style={{ position: "absolute", top: -12, left: "var(--sp6)" }}
-                >
-                  ★ {p.selo}
-                </span>
-              )}
+        {/* ---------- CARRINHO ÚNICO ---------- */}
+        <div className="cart-card">
+          <div className="cart-glow" aria-hidden="true" />
 
-              <h3 className="h2" style={{ marginTop: p.selo ? 8 : 0 }}>{p.nome}</h3>
+          <div className="cart-inner">
+            {ESCASSEZ.ativa && (
+              <span className="badge badge-gold cart-selo">{ESCASSEZ.selo}</span>
+            )}
 
-              {/* âncora: livro avulso só no combo */}
-              <div className="caption" style={{ marginTop: 6, minHeight: 18 }}>
-                {p.destaque ? (
-                  <>Livro avulso: <s>R$ {PRECO_ANCORA_LIVRO}</s> · aqui ele vem junto do app</>
-                ) : (
-                  <>Acesso completo ao app, por 1 ano inteiro</>
-                )}
-              </div>
-
-              {/* preço: de/por (riscado + lançamento) */}
-              <div className="preco-bloco">
-                {p.precoDe && (
-                  <span className="preco-de">de R$ {p.precoDe}</span>
-                )}
-                <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
-                  <span className="muted" style={{ fontSize: 15 }}>por R$</span>
-                  <span className="preco-num">{p.preco}</span>
-                </div>
-                {p.parcela && <div className="caption">{p.parcela}</div>}
-                {p.perDia && <div className="caption teal" style={{ marginTop: 2, fontWeight: 600 }}>{p.perDia}</div>}
-                {p.rodape && <div className="caption gold" style={{ marginTop: 4 }}>{p.rodape}</div>}
-              </div>
-
-              <ul className="check-list" style={{ margin: "var(--sp5) 0 var(--sp6)", flex: 1 }}>
-                {p.inclui.map((item, i) => (
-                  <li key={i} className="body-sm">{item}</li>
-                ))}
-              </ul>
-
-              <button
-                className={`btn btn-block ${p.destaque ? "btn-primary" : "btn-dark"}`}
-                onClick={() => onCheckout(p.id, p.checkoutUrl)}
-              >
-                {p.ctaLabel}
-              </button>
+            <div className="cart-head">
+              <span className="overline teal">Acesso anual</span>
+              <h3 className="cart-nome">{PLANO.nome}</h3>
             </div>
-          ))}
-        </div>
 
-        {/* frase de fechamento perto do carrinho */}
-        <p className="oferta-frase center">
-          O livro te provoca. O app te ajuda a voltar amanhã.
-        </p>
+            {/* preço */}
+            <div className="cart-preco">
+              <div className="cart-parcela">
+                <span className="cart-x">12x</span>
+                <span className="cart-valor">R$ 30</span>
+                <span className="cart-cents">,72</span>
+              </div>
+              <div className="cart-vista">{PLANO.precoVista}</div>
+              <div className="cart-perdia">{PLANO.perDia}</div>
+            </div>
+
+            <div className="cart-div" aria-hidden="true" />
+
+            <ul className="check-list cart-list">
+              {PLANO.inclui.map((item, i) => (
+                <li key={i} className="body-sm">{item}</li>
+              ))}
+            </ul>
+
+            <button className="btn btn-primary btn-block cart-cta" onClick={onCheckout}>
+              {PLANO.ctaLabel}
+            </button>
+
+            <div className="cart-trust">
+              <span>🔒 Pagamento seguro</span>
+              <span>·</span>
+              <span>Acesso por e-mail</span>
+              <span>·</span>
+              <span>Garantia {GARANTIA.dias} dias</span>
+            </div>
+          </div>
+
+          {/* rodapé do card */}
+          <div className="cart-rodape">{PLANO.rodape}</div>
+        </div>
 
         {/* Garantia */}
         <div className="sf-glass" style={{ padding: "var(--sp5)", marginTop: "var(--sp6)", display: "flex", gap: "var(--sp4)", alignItems: "flex-start" }}>
@@ -115,10 +103,6 @@ export function Oferta() {
             <p className="body-sm muted">{GARANTIA.texto}</p>
           </div>
         </div>
-
-        <p className="caption center" style={{ marginTop: "var(--sp5)" }}>
-          O acesso ao app é enviado por e-mail logo após a confirmação.
-        </p>
       </div>
     </section>
   );
