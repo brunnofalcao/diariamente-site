@@ -576,3 +576,16 @@ body::before{ animation:breathe 9s var(--ease) infinite; }
 @media (max-width:560px){
   .obg-card-inner{ padding:var(--sp6,24px); }
 }
+
+/* estado "aguardando" nas páginas de obrigado (selo dourado) */
+.obg-check.is-wait{
+  color:var(--a-500,#F5B731);
+  background:rgba(245,183,49,.10);
+  border-color:rgba(245,183,49,.30);
+  box-shadow:0 0 40px rgba(245,183,49,.16);
+}
+.badge-gold{
+  background:rgba(245,183,49,.10);
+  border:1px solid rgba(245,183,49,.28);
+  color:var(--a-500,#F5B731);
+}
