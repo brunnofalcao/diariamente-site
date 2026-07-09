@@ -102,6 +102,14 @@ export const LOJAS = {
   googlePlay: "https://play.google.com/store/apps/details?id=club.diariamente.app",
 };
 
+// Badges oficiais (SVG, Cloudinary). O site é dark mode, então usamos a
+// versão branca da Apple. A preta fica registrada caso surja fundo claro.
+export const LOJAS_BADGES = {
+  googlePlay: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1783609634/GetItOnGooglePlay_Badge_Web_color_Portuguese-Brazil_rl6hba.svg",
+  appStoreClaro: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1783609634/Apple_Store_Preta_usar_no_fundo_claro_u1etbw.svg",
+  appStoreEscuro: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1783609634/Apple_Store_Branca_usar_no_fundo_escuro_tp7rgw.svg",
+};
+
 // Carrinho único — Diariamente Club (só app, R$297 à vista / 12x R$30,72)
 export const PLANO: Plano = {
   id: "club",

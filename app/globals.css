@@ -461,21 +461,17 @@ body::before{ animation:breathe 9s var(--ease) infinite; }
 .store-badges{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
 .store-badges.is-left{ justify-content:flex-start; }
 
-.store-badge{
-  display:inline-flex; align-items:center; gap:10px;
-  padding:10px 16px; border-radius:var(--r-md,12px);
-  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12);
-  color:#fff; text-decoration:none;
-  transition:background .2s var(--ease), border-color .2s var(--ease), transform .2s var(--ease);
+/* badges OFICIAIS (SVG das lojas) */
+.store-oficial{
+  display:inline-flex; align-items:center;
+  border-radius:10px; overflow:hidden;
+  transition:transform .2s var(--ease), opacity .2s var(--ease);
 }
-.store-badge:hover{ background:rgba(255,255,255,.08); border-color:rgba(39,189,190,.4); }
-.store-badge:active{ transform:scale(.97); }
-.store-badge span{ display:flex; flex-direction:column; line-height:1.15; }
-.store-badge small{ font-size:9.5px; color:var(--n-400,#8A9494); text-transform:uppercase; letter-spacing:.06em; font-weight:600; }
-.store-badge strong{ font-size:14px; font-weight:600; }
-/* estado "em breve" (sem link) */
-.store-badge.is-off{ opacity:.55; cursor:default; }
-.store-badge.is-off:hover{ background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.12); }
+.store-oficial:hover{ opacity:.86; }
+.store-oficial:active{ transform:scale(.97); }
+.store-oficial img{ display:block; height:48px; width:auto; }
+/* o SVG do Google Play tem margem interna maior; compensa pra alinhar com o da Apple */
+.store-oficial-play img{ height:57px; margin:-4.5px 0 -4.5px -8px; }
 
 /* selo passivo de prova (perto do carrinho) */
 .store-prova{
