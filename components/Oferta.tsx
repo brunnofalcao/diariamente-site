@@ -1,6 +1,7 @@
 "use client";
 
 import { PLANO, GARANTIA, ESCASSEZ } from "@/config";
+import { StoreBadges } from "@/components/StoreBadges";
 
 // Anexa as UTMs da URL atual ao link de checkout (preserva origem do tráfego).
 function buildCheckoutUrl(base: string): string {
@@ -89,6 +90,9 @@ export function Oferta() {
               <span>·</span>
               <span>Garantia {GARANTIA.dias} dias</span>
             </div>
+
+            {/* prova: o app existe e está nas lojas oficiais (não é CTA) */}
+            <StoreBadges variant="prova" />
           </div>
 
           {/* rodapé do card */}

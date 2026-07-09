@@ -2,6 +2,7 @@ import { SITE, PROVA, AUTORES, SCREENSHOTS, LIFESTYLE } from "@/config";
 import { Logomark, ImageSlot, OfficialLogo, FooterLogo, InstagramLink } from "@/components/Brand";
 import { HeroProvocacao } from "@/components/HeroProvocacao";
 import { StickyCTA, RevealOnScroll } from "@/components/Sticky";
+import { StoreBadges } from "@/components/StoreBadges";
 import { Oferta } from "@/components/Oferta";
 import { FAQ } from "@/components/FAQ";
 
@@ -408,6 +409,14 @@ export default function Page() {
               </div>
             ))}
           </div>
+
+          {/* lojas oficiais — prova de credibilidade (o app existe, é sério) */}
+          <div className="lojas-bloco reveal">
+            <p className="caption center" style={{ marginBottom: "var(--sp4)" }}>
+              O app está nas lojas oficiais. Seu acesso chega por e-mail após a confirmação.
+            </p>
+            <StoreBadges variant="link" />
+          </div>
         </div>
       </section>
 
@@ -479,6 +488,11 @@ export default function Page() {
             <a className="caption" href="/termos" style={{ color: "var(--n-400)" }}>Termos de uso</a>
             <a className="caption" href="/privacidade" style={{ color: "var(--n-400)" }}>Política de privacidade</a>
             <a className="caption" href="mailto:contato@scienceplay.com" style={{ color: "var(--n-400)" }}>Suporte</a>
+          </div>
+
+          {/* lojas no rodapé (institucional) */}
+          <div style={{ marginTop: "var(--sp6)" }}>
+            <StoreBadges variant="link" />
           </div>
 
           {/* social Science Play (sutil, com ícones) */}

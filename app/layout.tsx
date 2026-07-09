@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { SITE, PLANOS, PROVA, GARANTIA } from "@/config";
+import { SITE, PLANOS, PROVA, GARANTIA, LOJAS } from "@/config";
 import { Tracking } from "@/components/Tracking";
 import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.dominio),
-  title: "Diariamente — uma provocação por dia, por 365 dias | Brunno Falcão e Roberta Carbonari",
+  title: "Diariamente · uma provocação por dia, por 365 dias | Brunno Falcão e Roberta Carbonari",
   description: SITE.descricao,
   keywords: [
     "Diariamente",
@@ -26,13 +26,13 @@ export const metadata: Metadata = {
     locale: "pt_BR",
     url: SITE.dominio,
     siteName: SITE.nome,
-    title: "Diariamente — um livro vivo, um ritual diário na palma da sua mão",
+    title: "Diariamente · um livro vivo, um ritual diário na palma da sua mão",
     description: SITE.descricao,
     images: [{ url: SITE.ogImage, width: 1200, height: 630, alt: "Diariamente" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Diariamente — um ritual diário na palma da sua mão",
+    title: "Diariamente · um ritual diário na palma da sua mão",
     description: SITE.descricao,
     images: [SITE.ogImage],
   },
@@ -59,6 +59,24 @@ function StructuredData() {
     })),
   };
 
+  // App nas lojas oficiais (ajuda SEO/GEO a entender que o app existe)
+  const appSchema = {
+    "@context": "https://schema.org",
+    "@type": "MobileApplication",
+    name: "Diariamente",
+    applicationCategory: "LifestyleApplication",
+    operatingSystem: "iOS, Android",
+    description: SITE.descricao,
+    publisher: { "@type": "Organization", name: "Science Play" },
+    installUrl: [LOJAS.appStore, LOJAS.googlePlay],
+    offers: {
+      "@type": "Offer",
+      price: PLANOS[0].precoNumero,
+      priceCurrency: "BRL",
+      url: SITE.dominio,
+    },
+  };
+
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -68,7 +86,7 @@ function StructuredData() {
         name: "O que é o Diariamente?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "É o livro de Brunno Falcão e Roberta Carbonari transformado em um app de provocações diárias. São 365 provocações — uma para cada dia do ano — com sistema de ofensiva, conquistas, ranking e lembrete no WhatsApp, projetado para você manter a constância e não largar no meio.",
+          text: "É o livro de Brunno Falcão e Roberta Carbonari transformado em um app de provocações diárias. São 365 provocações, uma para cada dia do ano, com sistema de ofensiva, conquistas, ranking e lembrete no WhatsApp, projetado para você manter a constância e não largar no meio.",
         },
       },
       {
@@ -84,7 +102,7 @@ function StructuredData() {
         name: "Já comprei livros parecidos e larguei. Por que dessa vez seria diferente?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Porque o Diariamente foi construído no ponto exato onde as pessoas desistem. A ofensiva, as conquistas e o menu Ações existem para te ajudar a voltar no dia seguinte — não é só conteúdo, é um sistema de constância.",
+          text: "Porque o Diariamente foi construído no ponto exato onde as pessoas desistem. A ofensiva, as conquistas e o menu Ações existem para te ajudar a voltar no dia seguinte. Não é só conteúdo, é um sistema de constância.",
         },
       },
       {
@@ -92,7 +110,7 @@ function StructuredData() {
         name: "Posso ler todas as provocações de uma vez?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Não, e isso é intencional. No app Diariamente você acessa uma provocação por dia, vivendo o dia vigente — diferente do livro físico, que permite ler tudo de uma vez e esquecer. Ao manter a constância e cumprir conquistas, você desbloqueia a possibilidade de adiantar dias.",
+          text: "Não, e isso é intencional. No app Diariamente você acessa uma provocação por dia, vivendo o dia vigente, diferente do livro físico, que permite ler tudo de uma vez e esquecer. Ao manter a constância e cumprir conquistas, você desbloqueia a possibilidade de adiantar dias.",
         },
       },
       {
@@ -125,6 +143,7 @@ function StructuredData() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(appSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }} />
     </>

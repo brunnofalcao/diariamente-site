@@ -88,7 +88,18 @@ export type Plano = {
 // em vez de quebrar (sem botão morto).
 // ---------------------------------------------------------------------
 export const HOTMART = {
-  club: "https://pay.hotmart.com/K105072021O?off=mm50gc4m&checkoutMode=6&bid=1782701141456",
+  club: "https://pay.hotmart.com/K105072021O?checkoutMode=10",
+};
+
+// ---------------------------------------------------------------------
+// LOJAS DE APP — o app é ENTREGA, não aquisição.
+// Só quem compra recebe o e-mail de acesso. Por isso as lojas aparecem
+// como PROVA (credibilidade), nunca como CTA concorrente na 1ª dobra.
+// Cole os links reais aqui:
+// ---------------------------------------------------------------------
+export const LOJAS = {
+  appStore: "https://apps.apple.com/br/app/diariamente/id6762151251",
+  googlePlay: "https://play.google.com/store/apps/details?id=club.diariamente.app",
 };
 
 // Carrinho único — Diariamente Club (só app, R$297 à vista / 12x R$30,72)
