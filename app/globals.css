@@ -585,3 +585,154 @@ body::before{ animation:breathe 9s var(--ease) infinite; }
   border:1px solid rgba(245,183,49,.28);
   color:var(--a-500,#F5B731);
 }
+
+/* ============ PÁGINA /ESTUDANTE ============ */
+.est{ position:relative; overflow-x:hidden; }
+.est-glow{
+  position:absolute; top:-260px; left:50%; transform:translateX(-50%);
+  width:900px; height:600px; pointer-events:none; z-index:0;
+  background:radial-gradient(ellipse 50% 50% at 50% 50%, rgba(39,189,190,.14), transparent 70%);
+}
+.est-header{ position:relative; z-index:1; padding-top:var(--sp8,32px); }
+.est-hero{ position:relative; z-index:1; padding:var(--sp10,40px) 0 var(--sp8,32px); }
+.est-titulo{
+  font-family:var(--font-serif, Georgia, serif);
+  font-size:clamp(30px, 5.4vw, 44px); line-height:1.1; color:#fff;
+  letter-spacing:-.015em; margin-bottom:var(--sp5,20px);
+}
+.est-sub{ max-width:46ch; margin:0 auto; }
+.est-sec{ position:relative; z-index:1; padding:var(--sp6,24px) 0; }
+.est-h2{
+  font-family:var(--font-serif, Georgia, serif);
+  font-size:30px; line-height:1.15; color:#fff; letter-spacing:-.01em;
+}
+
+/* lista numerada (mesma linguagem da página de obrigado) */
+.est-lista{ display:flex; flex-direction:column; gap:var(--sp3,12px); }
+.est-item{
+  display:flex; gap:var(--sp4,16px); align-items:flex-start;
+  padding:var(--sp5,20px);
+  border-radius:var(--r-2xl,24px);
+  background:rgba(255,255,255,.03); border:1px solid var(--border);
+}
+.est-num{
+  flex:0 0 32px; height:32px; border-radius:999px;
+  background:rgba(39,189,190,.10); border:1px solid rgba(39,189,190,.25);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-serif, Georgia, serif); font-size:16px; color:#27BDBE;
+}
+
+/* bloco de condição (preço pendente) */
+.est-preco{
+  text-align:center; padding:var(--sp6,24px);
+  border-radius:var(--r-2xl,24px);
+  background:rgba(39,189,190,.06); border:1px solid rgba(39,189,190,.22);
+}
+.est-preco .overline{ display:block; margin-bottom:6px; }
+.est-preco-txt{
+  font-family:var(--font-serif, Georgia, serif);
+  font-size:22px; line-height:1.3; color:#fff;
+}
+
+/* card do formulário */
+.est-card{
+  position:relative; border-radius:var(--r-3xl,28px);
+  background:var(--s-2,#181D1D); border:1px solid var(--border);
+  padding:var(--sp8,32px);
+}
+.est-card-titulo{
+  font-family:var(--font-serif, Georgia, serif);
+  font-size:24px; line-height:1.2; color:#fff; letter-spacing:-.01em;
+  margin:var(--sp2,8px) 0 var(--sp3,12px);
+}
+
+/* inputs (S3 #1F2525, borda 0.12, radius 16, foco teal) */
+.est-form{ display:flex; flex-direction:column; gap:var(--sp4,16px); }
+.est-label{
+  display:flex; flex-direction:column; gap:6px;
+  font-size:12px; font-weight:600; color:var(--n-300,#AAB2B2);
+  letter-spacing:.02em;
+}
+.est-input{
+  width:100%; height:48px; padding:0 14px;
+  background:#1F2525; color:#fff;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:16px; font-size:15px; font-family:inherit;
+  transition:border-color .15s var(--ease), box-shadow .15s var(--ease);
+  appearance:none; -webkit-appearance:none;
+}
+.est-input::placeholder{ color:var(--n-500,#6B7777); }
+.est-input:focus{
+  outline:none; border-color:rgba(39,189,190,.55);
+  box-shadow:0 0 0 3px rgba(39,189,190,.14);
+}
+.est-select{
+  background-image:url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%238A9494' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 14px center;
+  padding-right:36px; cursor:pointer;
+}
+.est-input[type="month"]{ color-scheme:dark; }
+.est-grid2{ display:grid; grid-template-columns:1fr 1fr; gap:var(--sp4,16px); }
+@media (max-width:480px){ .est-grid2{ grid-template-columns:1fr; } }
+
+/* bloco de erro (todas as mensagens) */
+.est-erro{
+  background:rgba(239,83,80,.10); border:1px solid rgba(239,83,80,.35);
+  border-radius:16px; padding:var(--sp4,16px);
+  margin-bottom:var(--sp5,20px);
+}
+.est-erro p{ color:#EF5350; font-size:13.5px; line-height:1.5; }
+.est-erro p + p{ margin-top:6px; }
+
+/* botão do formulário (52px conforme spec) */
+.est-btn{ height:52px; font-size:16px; border-radius:16px; }
+.est-btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+/* sucesso: código em destaque */
+.est-sucesso{ text-align:center; }
+.est-codigo{
+  font-family:var(--font-serif, Georgia, serif);
+  font-size:clamp(24px, 6vw, 34px); letter-spacing:.10em; color:#27BDBE;
+  background:rgba(39,189,190,.08); border:1px dashed rgba(39,189,190,.45);
+  border-radius:16px; padding:var(--sp5,20px) var(--sp4,16px);
+  margin:var(--sp5,20px) 0; user-select:all; word-break:break-all;
+}
+
+.est-frase{
+  font-family:var(--font-serif, Georgia, serif);
+  font-style:italic; font-size:18px; color:var(--n-300,#AAB2B2);
+  margin-top:var(--sp10,40px);
+  padding-top:var(--sp8,32px); border-top:1px solid var(--border);
+}
+.est-footer{
+  position:relative; z-index:1;
+  border-top:1px solid var(--border);
+  margin-top:var(--sp12,48px); padding:var(--sp10,40px) 0;
+}
+
+/* ============ CTA ESTUDANTE (home, acima do rodapé) ============ */
+.cta-est{
+  text-align:center;
+  padding:var(--sp10,40px) var(--sp8,32px);
+  border-radius:var(--r-3xl,28px);
+  background:var(--s-2,#181D1D); border:1px solid var(--border);
+}
+.cta-est-titulo{
+  font-family:var(--font-serif, Georgia, serif);
+  font-size:30px; font-weight:400; line-height:1.15; color:#fff;
+  letter-spacing:-.01em; margin-bottom:var(--sp4,16px);
+}
+.cta-est-corpo{
+  font-size:15px; color:#8A9494; line-height:1.65;
+  margin-bottom:var(--sp6,24px);
+}
+.cta-est-btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  height:52px; padding:0 28px;
+  background:#27BDBE; color:#00201F;
+  border-radius:16px; font-size:15.5px; font-weight:700;
+  text-decoration:none;
+  transition:transform .15s var(--ease), opacity .2s var(--ease);
+}
+.cta-est-btn:hover{ opacity:.9; }
+.cta-est-btn:active{ transform:scale(.96); }

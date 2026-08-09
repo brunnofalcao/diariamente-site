@@ -4,6 +4,7 @@ import { HeroProvocacao } from "@/components/HeroProvocacao";
 import { StickyCTA, RevealOnScroll } from "@/components/Sticky";
 import { StoreBadges } from "@/components/StoreBadges";
 import { Oferta } from "@/components/Oferta";
+import { CtaEstudante } from "@/components/CtaEstudante";
 import { FAQ } from "@/components/FAQ";
 
 export default function Page() {
@@ -470,6 +471,9 @@ export default function Page() {
           </div>
         </div>
       </section>
+
+      {/* ---------- CTA ESTUDANTE (acima do rodapé) ---------- */}
+      <CtaEstudante />
 
       {/* ---------- RODAPÉ ---------- */}
       <footer style={{ borderTop: "1px solid var(--border)", padding: "var(--sp16) 0 calc(var(--sp20) + 60px)" }}>
