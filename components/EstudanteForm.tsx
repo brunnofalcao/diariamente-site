@@ -20,6 +20,7 @@ const CURSOS = [
   { valor: "Odontologia", rotulo: "Odontologia" },
   { valor: "Biomedicina", rotulo: "Biomedicina" },
   { valor: "Farmacia", rotulo: "Farmácia" },
+  { valor: "EducacaoFisica", rotulo: "Educação Física" },
   { valor: "Outro", rotulo: "Outro" },
 ];
 

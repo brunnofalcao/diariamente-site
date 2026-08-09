@@ -4,7 +4,6 @@ import { HeroProvocacao } from "@/components/HeroProvocacao";
 import { StickyCTA, RevealOnScroll } from "@/components/Sticky";
 import { StoreBadges } from "@/components/StoreBadges";
 import { Oferta } from "@/components/Oferta";
-import { CtaEstudante } from "@/components/CtaEstudante";
 import { FAQ } from "@/components/FAQ";
 
 export default function Page() {
@@ -464,16 +463,14 @@ export default function Page() {
               </p>
               <p>
                 <strong className="teal">Acesso:</strong> Diariamente Club, o app completo
-                por R$ 297 à vista (ou 12x de R$ 30,72), menos de R$ 1 por dia. Garantia de 7
-                dias. Realização Science Play.
+                por R$ 197 (R$ 137,90 na condição de lançamento). Menos de R$ 1 por dia.
+                No checkout é possível adicionar o livro físico. O livro impresso também é
+                vendido separadamente. Garantia de 7 dias. Realização Science Play.
               </p>
             </div>
           </div>
         </div>
       </section>
-
-      {/* ---------- CTA ESTUDANTE (acima do rodapé) ---------- */}
-      <CtaEstudante />
 
       {/* ---------- RODAPÉ ---------- */}
       <footer style={{ borderTop: "1px solid var(--border)", padding: "var(--sp16) 0 calc(var(--sp20) + 60px)" }}>

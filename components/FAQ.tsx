@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { LIVRO_AVULSO } from "@/config";
 import { GARANTIA } from "@/config";
 
 const FAQ_ITEMS = [
@@ -19,6 +20,18 @@ const FAQ_ITEMS = [
   {
     q: "Será que funciona pra mim?",
     a: "Funciona pra quem aparece 5 minutos por dia. O resto o sistema apoia: o lembrete no WhatsApp, o progresso visível e a ação concreta de cada dia.",
+  },
+  {
+    q: "Quero só o livro impresso.",
+    a: (
+      <>
+        O livro físico Diariamente é vendido à parte.{" "}
+        <a href={LIVRO_AVULSO} target="_blank" rel="noopener noreferrer" className="teal">
+          Ele está disponível aqui
+        </a>
+        . E quando quiser transformar a leitura em ritual diário, o app te espera.
+      </>
+    ),
   },
   {
     q: "Já tenho o livro físico.",

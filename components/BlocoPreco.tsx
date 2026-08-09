@@ -5,7 +5,7 @@ export function BlocoPreco() {
   return (
     <div className="est-preco">
       <span className="overline teal">Condição exclusiva</span>
-      <p className="est-preco-txt">Condição exclusiva para estudantes de saúde</p>
+      <p className="est-preco-txt">Condição exclusiva para estudantes</p>
     </div>
   );
 }

@@ -19,7 +19,7 @@ export function CtaEstudante() {
       <div className="wrap-narrow">
         <div className="cta-est">
           <span className="overline" style={{ color: "#27BDBE", display: "block", marginBottom: "var(--sp3)" }}>
-            Estudante de saúde
+            Estudante
           </span>
           <h2 className="cta-est-titulo">
             Você ainda está na graduação.

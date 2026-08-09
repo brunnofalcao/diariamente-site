@@ -5,13 +5,13 @@ import { BlocoPreco } from "@/components/BlocoPreco";
 import { EstudanteForm } from "@/components/EstudanteForm";
 
 export const metadata: Metadata = {
-  title: "Diariamente para estudantes de saúde",
+  title: "Diariamente para estudantes",
   description:
-    "Uma provocação por dia durante toda a sua graduação. Condição exclusiva para estudantes.",
+    "Uma provocação por dia durante toda a sua graduação, em qualquer curso. Condição exclusiva para estudantes.",
   openGraph: {
-    title: "Diariamente para estudantes de saúde",
+    title: "Diariamente para estudantes",
     description:
-      "Uma provocação por dia durante toda a sua graduação. Condição exclusiva para estudantes.",
+      "Uma provocação por dia durante toda a sua graduação, em qualquer curso. Condição exclusiva para estudantes.",
     images: [{ url: SITE.ogImage }],
   },
 };
@@ -33,7 +33,7 @@ export default function Estudante() {
       <section className="est-hero">
         <div className="wrap-narrow center">
           <span className="overline teal" style={{ display: "block", marginBottom: "var(--sp3)" }}>
-            Estudante de saúde
+            Estudante
           </span>
           <h1 className="est-titulo">
             O diploma vai ser igual
@@ -43,10 +43,11 @@ export default function Estudante() {
             A constância, não.
           </h1>
           <p className="lead muted est-sub">
-            A diferença entre colegas de turma não aparece na prova. Aparece nos anos
-            seguintes, construída um dia de cada vez. O Diariamente é uma provocação por
-            dia, 365 dias por ano, pra você formar o hábito que a faculdade não ensina:
-            voltar amanhã.
+            Vale pra qualquer curso. A diferença entre colegas de turma não aparece na
+            prova. Aparece nos anos seguintes, construída um dia de cada vez. O
+            Diariamente é uma provocação por dia, 365 dias por ano, pra você se
+            desenvolver pessoal e profissionalmente formando o hábito que a faculdade
+            não ensina: voltar amanhã.
           </p>
         </div>
       </section>

@@ -25,8 +25,10 @@ export function StickyCTA() {
       <div className="wrap">
         <div className="row">
           <div className="price">
-            <div className="caption" style={{ marginBottom: -2 }}>12x de</div>
-            <b className="teal">R$ 30,72</b>
+            <div className="caption" style={{ marginBottom: -2 }}>
+              {PLANO.precoDe ? <s>R$ {PLANO.precoDe}</s> : "à vista"}
+            </div>
+            <b className="teal">R$ {PLANO.preco}</b>
           </div>
           <button className="btn btn-primary" onClick={goToOffer}>
             Quero começar hoje

@@ -83,6 +83,14 @@ function StructuredData() {
     mainEntity: [
       {
         "@type": "Question",
+        name: "Quero só o livro impresso do Diariamente.",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "O livro físico Diariamente, de Brunno Falcão e Roberta Carbonari, é vendido separadamente em https://sun.eduzz.com/2038359. O app Diariamente Club transforma a leitura em ritual diário.",
+        },
+      },
+      {
+        "@type": "Question",
         name: "O que é o Diariamente?",
         acceptedAnswer: {
           "@type": "Answer",

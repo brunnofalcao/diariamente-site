@@ -56,70 +56,82 @@ export const PROVA = {
 };
 
 // ---------------------------------------------------------------------
-// OFERTA (preços confirmados por Brunno)
-// Livro avulso R$149 entra como ÂNCORA de valor (não é plano vendável aqui).
+// OFERTA (arquitetura confirmada por Brunno em ago/2026)
+// Dois carrinhos:
+//   COMBO  — Livro físico + App: nominal R$297 → lançamento R$207,90 (30% OFF)
+//   APP    — Diariamente Club:   nominal R$197 → lançamento R$137,90 (30% OFF)
+// Estudante: NÃO divulgado no site (sem mecanismo de validação ainda).
+// Desconto founders válido durante o mês de lançamento — ao encerrar,
+// definir LANCAMENTO.ativa = false e os cards voltam ao preço nominal.
 // ---------------------------------------------------------------------
-export const PRECO_ANCORA_LIVRO = "149";
+export const LANCAMENTO = {
+  ativa: true,
+  selo: "30% OFF de lançamento",
+  // [TROCAR] data de fim da janela founders (usada só no texto, ex: "até 30/09")
+  prazoTexto: "válido apenas no mês de lançamento",
+};
 
 export type Plano = {
   id: string;
   nome: string;
   selo?: string;
   destaque: boolean;
-  precoNumero: number;
+  precoNumero: number;     // preço COBRADO agora (founders enquanto LANCAMENTO.ativa)
   preco: string;
-  precoDe?: string;       // preço original riscado (âncora de lançamento)
-  parcela?: string;
-  precoVista?: string;    // ex: "ou R$ 297 à vista"
-  perDia?: string;        // ex: "menos de R$ 1 por dia"
+  precoDe?: string;        // preço nominal riscado (âncora)
+  parcela?: string;        // [CONFIRMAR na Hotmart] — não exibir valor inventado
+  precoVista?: string;
+  perDia?: string;
   inclui: string[];
   ctaLabel: string;
+  nota?: string;          // caption abaixo do CTA (ex: order bump do livro)
   checkoutUrl: string;
   rodape?: string;
 };
 
 // ---------------------------------------------------------------------
 // CHECKOUT — HOTMART
-// Cole abaixo o link de checkout de cada produto. Formato Hotmart:
-//   https://pay.hotmart.com/XXXXXXXXX?checkoutMode=10
-// O parâmetro ?off= e UTMs são anexados automaticamente em runtime
-// (ver helper buildCheckoutUrl em components/Oferta.tsx).
-// Enquanto o link começar com "[", o botão avisa "em configuração"
-// em vez de quebrar (sem botão morto).
+// Cada preço é uma OFERTA na Hotmart (parâmetro ?off=CODIGO).
+// [TROCAR] Criar no Hotmart:
+//   1) Oferta COMBO lançamento: R$207,90 (produto com livro físico + frete)
+//   2) Oferta APP lançamento:   R$137,90
+// Enquanto o link começar com "[", o botão avisa "em configuração".
 // ---------------------------------------------------------------------
 export const HOTMART = {
-  club: "https://pay.hotmart.com/K105072021O?checkoutMode=10",
+  // Oferta única do APP (R$137,90 no lançamento). O livro físico entra como
+  // ORDER BUMP dentro do checkout Hotmart (configuração no painel, não no site).
+  app: "[TROCAR: link Hotmart oferta APP R$137,90 — ex: https://pay.hotmart.com/K105072021O?off=YYYYY&checkoutMode=10]",
 };
+
+// Livro impresso avulso (vendido à parte, via Eduzz). Link discreto na página e no FAQ.
+export const LIVRO_AVULSO = "https://sun.eduzz.com/2038359";
 
 // ---------------------------------------------------------------------
 // LOJAS DE APP — o app é ENTREGA, não aquisição.
-// Só quem compra recebe o e-mail de acesso. Por isso as lojas aparecem
-// como PROVA (credibilidade), nunca como CTA concorrente na 1ª dobra.
-// Cole os links reais aqui:
 // ---------------------------------------------------------------------
 export const LOJAS = {
   appStore: "https://apps.apple.com/br/app/diariamente/id6762151251",
   googlePlay: "https://play.google.com/store/apps/details?id=club.diariamente.app",
 };
 
-// Badges oficiais (SVG, Cloudinary). O site é dark mode, então usamos a
-// versão branca da Apple. A preta fica registrada caso surja fundo claro.
 export const LOJAS_BADGES = {
   googlePlay: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1783609634/GetItOnGooglePlay_Badge_Web_color_Portuguese-Brazil_rl6hba.svg",
   appStoreClaro: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1783609634/Apple_Store_Preta_usar_no_fundo_claro_u1etbw.svg",
   appStoreEscuro: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1783609634/Apple_Store_Branca_usar_no_fundo_escuro_tp7rgw.svg",
 };
 
-// Carrinho único — Diariamente Club (só app, R$297 à vista / 12x R$30,72)
-export const PLANO: Plano = {
+// ---------------------------------------------------------------------
+// PLANOS
+// ---------------------------------------------------------------------
+export const PLANO_APP: Plano = {
   id: "club",
   nome: "Diariamente Club",
   destaque: true,
-  precoNumero: 297,
-  preco: "297",
-  parcela: "12x de R$ 30,72",
-  precoVista: "ou R$ 297 à vista",
-  perDia: "menos de R$ 1 por dia",
+  precoNumero: 137.9,
+  preco: "137,90",
+  precoDe: "197",
+  precoVista: "R$ 137,90 à vista",
+  perDia: "menos de R$ 0,38 por dia",
   inclui: [
     "Uma provocação por dia, os 365 dias do ano",
     "Calendário de constância (acompanhe sua jornada)",
@@ -129,12 +141,16 @@ export const PLANO: Plano = {
     "Acesso imediato por e-mail",
   ],
   ctaLabel: "Quero meu acesso",
-  checkoutUrl: HOTMART.club,
+  checkoutUrl: HOTMART.app,
+  nota: "No checkout, você pode adicionar o livro físico.",
   rodape: "O livro te provoca. O app te ajuda a voltar amanhã.",
 };
 
-// Mantido como array p/ compatibilidade (JSON-LD lê PLANOS)
-export const PLANOS: Plano[] = [PLANO];
+// Compatibilidade: componentes existentes importam PLANO (singular).
+export const PLANO: Plano = PLANO_APP;
+
+// JSON-LD e tracking leem PLANOS
+export const PLANOS: Plano[] = [PLANO_APP];
 
 // ---------------------------------------------------------------------
 // GARANTIA (confirmada: 7 dias)
@@ -149,10 +165,10 @@ export const GARANTIA = {
 // ESCASSEZ / LANÇAMENTO (confirmada: combo com poucas unidades)
 // ---------------------------------------------------------------------
 export const ESCASSEZ = {
-  ativa: true,
+  ativa: false, // combo saiu; urgencia honesta vem do LANCAMENTO (30% founders)
   selo: "Condição de lançamento",
   texto:
-    "O combo com livro físico tem poucas unidades nesta condição. Quando o estoque desta leva acabar, sai do ar.",
+    "O combo com livro físico tem poucas unidades nesta condição de lançamento. Quando o estoque desta leva acabar, sai do ar.",
 };
 
 // ---------------------------------------------------------------------
