@@ -100,7 +100,7 @@ export type Plano = {
 export const HOTMART = {
   // Oferta única do APP (R$137,90 no lançamento). O livro físico entra como
   // ORDER BUMP dentro do checkout Hotmart (configuração no painel, não no site).
-  app: "[TROCAR: link Hotmart oferta APP R$137,90 — ex: https://pay.hotmart.com/K105072021O?off=YYYYY&checkoutMode=10]",
+  app: "https://pay.hotmart.com/L107085210M?checkoutMode=10",
 };
 
 // Livro impresso avulso (vendido à parte, via Eduzz). Link discreto na página e no FAQ.
