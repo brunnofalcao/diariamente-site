@@ -5,10 +5,9 @@ import { useEffect, useRef, useState } from "react";
 /**
  * EstudanteForm — formulário de solicitação do código de estudante.
  *
- * Consome POST /api/estudante/solicitar (rota criada em outro fluxo; aqui só chamamos).
+ * Consome POST /api/estudante/solicitar.
+ * O código NÃO aparece na tela: a entrega é só por WhatsApp (mensagem de utilidade).
  * Estados: idle | enviando | erro | instavel (503) | sucesso.
- * Tracking: lead_estudante_submit (GA4) + Lead (Meta) no submit;
- *           cupom_estudante_emitido (GA4) quando a tela de sucesso aparece.
  */
 
 const CURSOS = [
@@ -22,6 +21,17 @@ const CURSOS = [
   { valor: "Farmacia", rotulo: "Farmácia" },
   { valor: "EducacaoFisica", rotulo: "Educação Física" },
   { valor: "Outro", rotulo: "Outro" },
+];
+
+// UFs no MESMO formato do campo "Estado e UF" do RD (cf_estado_e_uf).
+const UFS = [
+  "Acre (AC)", "Alagoas (AL)", "Amapá (AP)", "Amazonas (AM)", "Bahia (BA)",
+  "Ceará (CE)", "Distrito Federal (DF)", "Espírito Santo (ES)", "Goiás (GO)",
+  "Maranhão (MA)", "Mato Grosso (MT)", "Mato Grosso do Sul (MS)", "Minas Gerais (MG)",
+  "Pará (PA)", "Paraíba (PB)", "Paraná (PR)", "Pernambuco (PE)", "Piauí (PI)",
+  "Rio de Janeiro (RJ)", "Rio Grande do Norte (RN)", "Rio Grande do Sul (RS)",
+  "Rondônia (RO)", "Roraima (RR)", "Santa Catarina (SC)", "São Paulo (SP)",
+  "Sergipe (SE)", "Tocantins (TO)",
 ];
 
 // ---------- máscaras ----------
@@ -54,26 +64,19 @@ function coletarUTMs(): Record<string, string> {
   return out;
 }
 
-type Sucesso = {
-  codigo: string;
-  checkout: string;
-  whatsapp_enviado: boolean;
-  expira_em?: string;
-};
-
 export function EstudanteForm() {
   const [nome, setNome] = useState("");
   const [cpf, setCpf] = useState("");
   const [whats, setWhats] = useState("");
   const [email, setEmail] = useState("");
   const [instituicao, setInstituicao] = useState("");
+  const [estado, setEstado] = useState("");
   const [curso, setCurso] = useState("");
   const [semestre, setSemestre] = useState("");
   const [conclusao, setConclusao] = useState("");
 
   const [status, setStatus] = useState<"idle" | "enviando" | "erro" | "instavel" | "sucesso">("idle");
   const [erros, setErros] = useState<string[]>([]);
-  const [ok, setOk] = useState<Sucesso | null>(null);
   const sucessoTrackeado = useRef(false);
 
   // evento: tela de sucesso exibida (uma vez)
@@ -93,6 +96,7 @@ export function EstudanteForm() {
     if (wd.length < 10 || wd.length > 11) e.push("WhatsApp deve ter DDD + número.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.push("Informe um e-mail válido.");
     if (!instituicao.trim()) e.push("Informe sua instituição de ensino.");
+    if (!estado) e.push("Selecione seu estado.");
     if (!curso) e.push("Selecione seu curso.");
     if (!semestre) e.push("Selecione seu semestre atual.");
     if (!/^\d{4}-\d{2}$/.test(conclusao)) e.push("Informe a previsão de conclusão.");
@@ -121,6 +125,7 @@ export function EstudanteForm() {
       whatsapp: "55" + whats.replace(/\D/g, ""),
       email: email.trim().toLowerCase(),
       instituicao: instituicao.trim(),
+      estado,
       curso,
       semestre: Number(semestre),
       previsao_conclusao: conclusao,
@@ -146,13 +151,7 @@ export function EstudanteForm() {
         dados = null;
       }
 
-      if (r.ok && dados?.ok && dados?.codigo) {
-        setOk({
-          codigo: String(dados.codigo),
-          checkout: String(dados.checkout || ""),
-          whatsapp_enviado: Boolean(dados.whatsapp_enviado),
-          expira_em: dados.expira_em ? String(dados.expira_em) : undefined,
-        });
+      if (r.ok && dados?.ok) {
         setStatus("sucesso");
         return;
       }
@@ -160,7 +159,7 @@ export function EstudanteForm() {
       const lista: string[] =
         Array.isArray(dados?.erros) && dados.erros.length
           ? dados.erros.map((x: unknown) => String(x))
-          : ["Não foi possível gerar seu código agora. Confira os dados e tente de novo."];
+          : ["Não foi possível processar sua solicitação agora. Confira os dados e tente de novo."];
       setErros(lista);
       setStatus("erro");
     } catch {
@@ -169,35 +168,19 @@ export function EstudanteForm() {
     }
   };
 
-  // data de expiração legível (defensivo: só exibe se parsear)
-  const expiraLegivel = (() => {
-    if (!ok?.expira_em) return null;
-    const d = new Date(ok.expira_em);
-    if (isNaN(d.getTime())) return null;
-    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-  })();
-
-  // ---------- SUCESSO ----------
-  if (status === "sucesso" && ok) {
+  // ---------- SUCESSO (código vai só por WhatsApp) ----------
+  if (status === "sucesso") {
+    const zap = whats.replace(/\D/g, "");
+    const zapMasc = zap.length >= 4 ? `final ${zap.slice(-4)}` : "seu WhatsApp";
     return (
       <div className="est-card est-sucesso">
-        <span className="overline teal">Código gerado</span>
-        <h3 className="est-card-titulo">Seu código de estudante</h3>
-
-        <div className="est-codigo">{ok.codigo}</div>
-
-        <p className="body-sm muted" style={{ marginBottom: "var(--sp5)" }}>
-          {ok.whatsapp_enviado
-            ? "Enviamos também no seu WhatsApp. Use o código na tela de pagamento pra ativar sua condição."
-            : "Guarde este código agora. Não conseguimos enviar no seu WhatsApp, então ele aparece apenas aqui. Use na tela de pagamento pra ativar sua condição."}
-          {expiraLegivel ? ` Válido até ${expiraLegivel}.` : ""}
+        <span className="overline teal">Solicitação recebida</span>
+        <h3 className="est-card-titulo">Recebemos seus dados</h3>
+        <p className="body-sm muted">
+          Sua condição de estudante está sendo processada. Em instantes você recebe
+          o código e o link de pagamento no seu WhatsApp ({zapMasc}). É só usar o
+          código no campo &quot;Cupom de desconto&quot; da tela de pagamento.
         </p>
-
-        {ok.checkout && (
-          <a href={ok.checkout} className="btn btn-primary btn-block est-btn">
-            Ativar seu acesso
-          </a>
-        )}
       </div>
     );
   }
@@ -281,17 +264,37 @@ export function EstudanteForm() {
           />
         </label>
 
-        <label className="est-label">
-          Instituição de ensino
-          <input
-            className="est-input"
-            type="text"
-            value={instituicao}
-            onChange={(e) => setInstituicao(e.target.value)}
-            placeholder="Ex: UFMG"
-            autoComplete="organization"
-          />
-        </label>
+        <div className="est-grid2">
+          <label className="est-label">
+            Instituição de ensino
+            <input
+              className="est-input"
+              type="text"
+              value={instituicao}
+              onChange={(e) => setInstituicao(e.target.value)}
+              placeholder="Ex: UFMG"
+              autoComplete="organization"
+            />
+          </label>
+
+          <label className="est-label">
+            Estado (UF)
+            <select
+              className="est-input est-select"
+              value={estado}
+              onChange={(e) => setEstado(e.target.value)}
+            >
+              <option value="" disabled>
+                Selecione
+              </option>
+              {UFS.map((uf) => (
+                <option key={uf} value={uf}>
+                  {uf}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
         <div className="est-grid2">
           <label className="est-label">
@@ -347,7 +350,7 @@ export function EstudanteForm() {
           onClick={enviar}
           disabled={status === "enviando"}
         >
-          {status === "enviando" ? "Gerando seu código..." : "Gerar meu código de estudante"}
+          {status === "enviando" ? "Enviando..." : "Solicitar meu código de estudante"}
         </button>
 
         <p className="caption" style={{ textAlign: "center", marginTop: "var(--sp3)" }}>

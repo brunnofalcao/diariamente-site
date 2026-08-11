@@ -76,6 +76,7 @@ export async function POST(req) {
     const whats = soDigitos(body.whatsapp);
     const email = String(body.email || '').trim().toLowerCase();
     const instituicao = String(body.instituicao || '').trim();
+    const estado = String(body.estado || '').trim();
     const curso = String(body.curso || '').trim();
     const semestre = parseInt(body.semestre, 10) || null;
     const conclusaoRaw = body.previsao_conclusao || null;
@@ -134,7 +135,7 @@ export async function POST(req) {
     const { data: criado, error: erroLead } = await db
       .from('leads_estudante')
       .insert({
-        nome, cpf, whatsapp: whats, email, instituicao, curso,
+        nome, cpf, whatsapp: whats, email, instituicao, estado, curso,
         semestre, previsao_conclusao: conclusao,
         email_institucional: institucional,
         ip_origem: req.headers.get('x-forwarded-for')?.split(',')[0] || null,
@@ -210,11 +211,10 @@ export async function POST(req) {
       });
     }
 
+    // O codigo NAO volta na resposta: entrega e so por WhatsApp (mensagem de
+    // utilidade). A tela so precisa saber que deu certo.
     return Response.json({
       ok: true,
-      codigo: cupom.codigo,
-      expira_em: cupom.expiraEm,
-      checkout: process.env.HOTMART_CHECKOUT_URL,
       whatsapp_enviado: whatsEnviado,
     });
 
