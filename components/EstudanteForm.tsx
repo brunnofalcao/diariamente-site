@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 /**
  * EstudanteForm — formulário de solicitação do código de estudante.
@@ -78,6 +79,7 @@ export function EstudanteForm() {
   const [status, setStatus] = useState<"idle" | "enviando" | "erro" | "instavel" | "sucesso">("idle");
   const [erros, setErros] = useState<string[]>([]);
   const sucessoTrackeado = useRef(false);
+  const router = useRouter();
 
   // evento: tela de sucesso exibida (uma vez)
   useEffect(() => {
@@ -152,7 +154,9 @@ export function EstudanteForm() {
       }
 
       if (r.ok && dados?.ok) {
-        setStatus("sucesso");
+        (window as any).gtag?.("event", "cupom_estudante_emitido");
+        (window as any).dataLayer?.push({ event: "cupom_estudante_emitido" });
+        router.push("/estudante/solicitacaorecebida");
         return;
       }
 
