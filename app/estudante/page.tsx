@@ -108,7 +108,7 @@ export default function Estudante() {
               },
               {
                 t: "Receba seu código no WhatsApp",
-                d: "Um código exclusivo, pessoal e com validade. Ele também aparece na tela.",
+                d: "Um código exclusivo, pessoal e com validade, enviado direto no seu WhatsApp.",
               },
               {
                 t: "Ative seu acesso",
