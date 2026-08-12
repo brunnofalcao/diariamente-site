@@ -216,3 +216,32 @@ export const EMPRESA = {
   endereco: "[TROCAR: endereço completo da empresa, recomendado nos legais]",
   vigenciaLegal: "Junho de 2026",
 };
+
+// ---------------------------------------------------------------------
+// ESTUDANTE — condição exclusiva (/estudante)
+// ---------------------------------------------------------------------
+// mostrarPreco = false  -> a página fala de "condição exclusiva" sem número.
+// mostrarPreco = true   -> a página exibe o preço abaixo. Vire a chave só
+//                          depois de a oferta de estudante existir na Hotmart.
+// A âncora riscada usa o preço PÚBLICO vigente (PLANO_APP), não o nominal,
+// para o desconto exibido ser sempre verdadeiro em relação ao que está à venda.
+// ---------------------------------------------------------------------
+export const ESTUDANTE = {
+  mostrarPreco: false,
+
+  precoNumero: 77,
+  preco: "77,00",
+  parcela: "", // [CONFIRMAR na Hotmart] ex: "12x de R$ 7,58"
+
+  precoDeNumero: PLANO_APP.precoNumero,
+  precoDe: PLANO_APP.preco,
+
+  perDia: "menos de R$ 0,22 por dia",
+  selo: "Condição de estudante",
+
+  // validade do código enviado por WhatsApp (espelha VALIDADE_HORAS da API)
+  validadeHoras: 48,
+
+  // um código por CPF (regra aplicada na API)
+  regra: "Um código por pessoa. Enviado só no WhatsApp informado.",
+};
