@@ -8,7 +8,7 @@
 
 export const SITE = {
   nome: "Diariamente",
-  dominio: "https://diariamente.club",
+  dominio: "https://diariamente.app",
   appUrl: "https://app.diariamente.club",
   descricao:
     "Diariamente não é um livro comum, nem um ebook. É um livro vivo: um app com uma provocação por dia, por 365 dias, para você se desenvolver profissionalmente, criado pra te ajudar a voltar amanhã, depois de amanhã e no dia seguinte. Um ritual diário na palma da sua mão, de Brunno Falcão e Roberta Carbonari.",

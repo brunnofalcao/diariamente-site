@@ -461,7 +461,7 @@ export default function Page() {
                 <li><b>Preço:</b> R$ 197 · R$ 137,90 na condição de lançamento</li>
                 <li><b>Garantia:</b> 7 dias, incondicional</li>
                 <li><b>Responsáveis:</b> Brunno Falcão e Roberta Carbonari · Science Play</li>
-                <li><b>Inscrição:</b> diariamente.club · acesso enviado por e-mail</li>
+                <li><b>Inscrição:</b> {SITE.dominio.replace("https://", "")} · acesso enviado por e-mail</li>
               </ul>
             </div>
           </div>

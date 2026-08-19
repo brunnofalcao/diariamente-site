@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { SITE } from "@/config";
 
 type Prov = { dia: number; total: number; texto: string; autor: string; dataExtenso?: string; diaSemana?: string };
 
@@ -101,7 +102,7 @@ export function HeroProvocacao() {
     const texto = prov
       ? '"' + prov.texto + '" — provocação de hoje no Diariamente.'
       : "Diariamente: uma provocação por dia, por 365 dias.";
-    const url = "https://diariamente.club/?utm_source=share&utm_medium=organic&utm_campaign=provocacao_do_dia";
+    const url = SITE.dominio + "/?utm_source=share&utm_medium=organic&utm_campaign=provocacao_do_dia";
     (window as any).gtag?.("event", "share", { method: "provocacao_hero" });
     (window as any).dataLayer?.push({ event: "share_provocacao" });
     try {
