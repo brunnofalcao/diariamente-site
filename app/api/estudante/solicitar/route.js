@@ -11,9 +11,8 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { criarCupom, gerarCodigo, apagarCupom } from '@/lib/hotmart';
+import { criarCupom, gerarCodigo, apagarCupom, offerIdsDoAmbiente } from '@/lib/hotmart';
 import { enviarLeadRD } from '@/lib/rdstation';
-import { whatsapp } from '@/lib/whatsapp';
 
 export const runtime = 'nodejs';
 
@@ -29,6 +28,9 @@ const CURSOS = [
 ];
 
 const VALIDADE_HORAS = 48;
+// Janela de conferencia antes do envio do codigo. O cron /api/cron/manutencao
+// dispara o WhatsApp quando `enviar_em` vence. Espelha ESTUDANTE.esperaMinutos.
+const ESPERA_MINUTOS = 5;
 const TETO_POR_HORA = 100;   // freio contra emissao em massa
 
 const soDigitos = s => String(s || '').replace(/\D/g, '');
@@ -148,9 +150,7 @@ export async function POST(req) {
     lead = criado;
 
     // ---------- Cupom na Hotmart ----------
-    const offerIds = process.env.HOTMART_OFFER_IDS
-      ? process.env.HOTMART_OFFER_IDS.split(',').map(n => parseInt(n.trim(), 10))
-      : undefined;
+    const offerIds = offerIdsDoAmbiente();
 
     let cupom;
     try {
@@ -171,6 +171,7 @@ export async function POST(req) {
       hotmart_coupon_id: cupom.hotmartCouponId,
       desconto,
       expira_em: cupom.expiraEm.toISOString(),
+      enviar_em: new Date(Date.now() + ESPERA_MINUTOS * 60_000).toISOString(),
     });
     if (erroCupom) {
       // Cupom existe na Hotmart mas nao foi registrado aqui -> o webhook nunca o
@@ -196,26 +197,17 @@ export async function POST(req) {
       await db.from('leads_estudante').update({ rd_erro: e.message }).eq('id', lead.id);
     }
 
-    // ---------- WhatsApp (nao bloqueia) ----------
-    let whatsEnviado = false;
-    try {
-      await whatsapp.aprovado(
-        whats, nome.split(' ')[0], cupom.codigo, process.env.HOTMART_CHECKOUT_URL
-      );
-      whatsEnviado = true;
-    } catch (e) {
-      console.error('[estudante] WhatsApp falhou:', e.message);
-      await db.from('log_estudante').insert({
-        lead_id: lead.id, acao: 'whatsapp_falhou',
-        detalhe: { erro: e.message }, ator: 'sistema',
-      });
-    }
+    // ---------- WhatsApp: AGENDADO, nao enviado aqui ----------
+    // O envio sai do caminho da requisicao. Quem dispara e o cron
+    // /api/cron/manutencao, quando `enviar_em` vence. Dois motivos:
+    //   1) a janela de conferencia que o estudante ve na tela;
+    //   2) se a Meta recusar o envio, o cron tenta de novo em vez de
+    //      queimar o CPF com o codigo preso num log.
 
-    // O codigo NAO volta na resposta: entrega e so por WhatsApp (mensagem de
-    // utilidade). A tela so precisa saber que deu certo.
     return Response.json({
       ok: true,
-      whatsapp_enviado: whatsEnviado,
+      agendado: true,
+      espera_minutos: ESPERA_MINUTOS,
     });
 
   } catch (e) {

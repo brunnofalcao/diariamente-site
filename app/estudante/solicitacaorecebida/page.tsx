@@ -30,11 +30,11 @@ function IcOk() {
 const DEPOIS = [
   {
     t: "O código chega no seu WhatsApp",
-    d: `Ele é pessoal e vale por ${ESTUDANTE.validadeHoras} horas. Se não aparecer em alguns minutos, confira se o número informado está com WhatsApp ativo.`,
+    d: `Estamos conferindo seus dados. Em até ${ESTUDANTE.esperaMinutos} minutos a mensagem chega no número informado. O código é pessoal e vale por ${ESTUDANTE.validadeHoras} horas.`,
   },
   {
-    t: "Aplique no campo de cupom",
-    d: "Na tela de pagamento existe um campo de cupom de desconto. Cole o código ali e a condição de estudante entra no valor.",
+    t: "Toque no botão da mensagem",
+    d: "O botão abre o checkout com a condição de estudante já aplicada. Você não precisa digitar nada.",
   },
   {
     t: "Abra o app e comece pelo Dia 1",
@@ -66,9 +66,9 @@ export default function SolicitacaoRecebida() {
               Agora é com o seu WhatsApp.
             </h1>
             <p className="ed-lead" style={{ margin: "0 auto" }}>
-              Sua condição de estudante está registrada. Em instantes você recebe o código no
-              número que informou. Deixe esta aba aberta se quiser, mas não precisa esperar
-              aqui.
+              Sua condição de estudante está registrada. Estamos conferindo seus dados e, em até
+              {" "}{ESTUDANTE.esperaMinutos} minutos, o código chega no número que você informou.
+              Não precisa esperar aqui.
             </p>
           </div>
         </div>

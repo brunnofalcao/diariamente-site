@@ -241,6 +241,9 @@ export const ESTUDANTE = {
   // validade do código enviado por WhatsApp (espelha VALIDADE_HORAS da API)
   validadeHoras: 48,
 
+  // tempo de conferência antes do envio do código (espelha ESPERA_MINUTOS da API)
+  esperaMinutos: 5,
+
   // um código por CPF (regra aplicada na API)
   regra: "Um código por pessoa. Enviado só no WhatsApp informado.",
 };

@@ -136,18 +136,18 @@ const PASSOS = [
   },
   {
     t: "Receba seu código no WhatsApp",
-    d: `Um código pessoal, com validade de ${ESTUDANTE.validadeHoras} horas, direto no número que você informou.`,
+    d: `Conferimos seus dados e, em até ${ESTUDANTE.esperaMinutos} minutos, o código chega no número que você informou. Ele é pessoal e vale ${ESTUDANTE.validadeHoras} horas.`,
   },
   {
     t: "Ative seu acesso",
-    d: "Use o código no campo de cupom da tela de pagamento e comece pela provocação do Dia 1 hoje mesmo.",
+    d: "Toque no botão da mensagem: a condição de estudante já entra aplicada no checkout. Comece pela provocação do Dia 1 hoje mesmo.",
   },
 ];
 
 const FAQ = [
   {
-    q: "Preciso enviar comprovante de matrícula?",
-    a: "Não. A validação é feita pelos dados que você preenche. Se você tiver e-mail da instituição, usar ele agiliza o processo.",
+    q: "Como funciona a validação?",
+    a: "O próprio formulário é a validação. Preencha com os dados corretos: o código é vinculado ao seu CPF, é pessoal e não é transferível. Dado falso invalida a condição.",
   },
   {
     q: "Serve para qualquer curso?",
@@ -155,7 +155,7 @@ const FAQ = [
   },
   {
     q: "O código chega quando?",
-    a: `Em instantes, no WhatsApp que você informar. Ele é pessoal, vale por ${ESTUDANTE.validadeHoras} horas e é aplicado no campo de cupom da tela de pagamento.`,
+    a: `Em até ${ESTUDANTE.esperaMinutos} minutos, no WhatsApp que você informar, depois da conferência dos seus dados. Ele é pessoal e vale por ${ESTUDANTE.validadeHoras} horas.`,
   },
   {
     q: "Não recebi o código. E agora?",
