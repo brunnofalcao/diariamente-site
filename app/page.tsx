@@ -171,7 +171,7 @@ export default function Page() {
           <div className="split" style={{ marginBottom: "var(--sp16)" }}>
             <div className="split-media media-glow reveal-media">
               <div className="drift-inner">
-                <ImageSlot tag="Screenshot" label="Tela HOJE — provocação do dia" dims="1170×2532px · print real do app" shape="portrait" bare src={SCREENSHOTS.hoje || undefined} alt="Tela HOJE do app Diariamente" />
+                <ImageSlot tag="Screenshot" label="Tela HOJE — provocação do dia" dims="1170×2532px · print real do app" shape="portrait" bare ratio="1170 / 2532" src={SCREENSHOTS.hoje || undefined} alt="Tela HOJE do app Diariamente" />
               </div>
             </div>
             <div className="split-copy">
@@ -183,7 +183,7 @@ export default function Page() {
           <div className="split reverse" style={{ marginBottom: "var(--sp16)" }}>
             <div className="split-media media-glow reveal-media">
               <div className="drift-inner">
-                <ImageSlot tag="Screenshot" label="Tela DIAS — calendário de constância" dims="1170×2532px · print real do app" shape="portrait" bare src={SCREENSHOTS.dias || undefined} alt="Tela DIAS do app Diariamente" />
+                <ImageSlot tag="Screenshot" label="Tela DIAS — calendário de constância" dims="1170×2532px · print real do app" shape="portrait" bare ratio="1170 / 2532" src={SCREENSHOTS.dias || undefined} alt="Tela DIAS do app Diariamente" />
               </div>
             </div>
             <div className="split-copy">
@@ -233,7 +233,7 @@ export default function Page() {
             </div>
             <div className="split-media media-glow reveal-media">
               <div className="drift-inner">
-                <ImageSlot tag="Screenshot" label="Tela AÇÕES — provocação vira tarefa concreta" dims="1170×2532px · print real do app" shape="portrait" bare src={SCREENSHOTS.acoes || undefined} alt="Tela AÇÕES do app Diariamente" />
+                <ImageSlot tag="Screenshot" label="Tela AÇÕES — provocação vira tarefa concreta" dims="1170×2532px · print real do app" shape="portrait" bare ratio="1170 / 2532" src={SCREENSHOTS.acoes || undefined} alt="Tela AÇÕES do app Diariamente" />
               </div>
             </div>
           </div>
@@ -274,7 +274,7 @@ export default function Page() {
           <div className="split reverse">
             <div className="split-media media-glow reveal-media">
               <div className="drift-inner">
-                <ImageSlot tag="Screenshot" label="Tela RITMO — constância, créditos e ciclo de desbloqueios" dims="1170×2532px · print real do app" shape="portrait" bare src={SCREENSHOTS.ritmo || undefined} alt="Tela RITMO do app Diariamente" />
+                <ImageSlot tag="Screenshot" label="Tela RITMO — constância, créditos e ciclo de desbloqueios" dims="1170×2532px · print real do app" shape="portrait" bare ratio="1170 / 2532" src={SCREENSHOTS.ritmo || undefined} alt="Tela RITMO do app Diariamente" />
               </div>
             </div>
             <div className="split-copy">

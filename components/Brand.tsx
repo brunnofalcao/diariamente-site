@@ -82,6 +82,7 @@ export function ImageSlot({
   src,
   alt = "",
   bare = false,
+  ratio = "1170 / 2532",
   style,
 }: {
   tag: string;
@@ -91,23 +92,37 @@ export function ImageSlot({
   src?: string;
   alt?: string;
   bare?: boolean;
+  /** Proporção reservada no modo bare (largura / altura). Evita salto de layout. */
+  ratio?: string;
   style?: React.CSSProperties;
 }) {
   if (src) {
     // bare = mockup já vem com fundo/glow próprios: exibe inteiro, sem moldura nem corte
+    //
+    // O wrapper existe por um motivo só: RESERVAR ESPAÇO antes de a imagem
+    // carregar. Sem ele a img nasce com 0px de altura, e quando o arquivo chega
+    // ela empurra tudo o que vem depois pra baixo. Numa página com 4 prints, isso
+    // desloca a seção de oferta em alguns milhares de pixels e quebra qualquer
+    // âncora que aponte pra baixo (#oferta, #faq).
+    //
+    // object-fit: contain garante que, se a proporção real do asset for diferente
+    // de `ratio`, a imagem nunca distorce: no máximo sobra fundo escuro.
     if (bare) {
       return (
-        <img
-          src={src}
-          alt={alt}
-          loading="lazy"
-          style={{ width: "100%", height: "auto", display: "block", ...style }}
-        />
+        <div style={{ width: "100%", aspectRatio: ratio, ...style }}>
+          <img
+            src={src}
+            alt={alt}
+            loading="lazy"
+            decoding="async"
+            style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+          />
+        </div>
       );
     }
     return (
       <div className={`img-slot ${shape} has-img`} style={{ border: "1px solid var(--border)", ...style }}>
-        <img className="img-real" src={src} alt={alt} loading="lazy" />
+        <img className="img-real" src={src} alt={alt} loading="lazy" decoding="async" />
       </div>
     );
   }
