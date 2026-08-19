@@ -81,8 +81,12 @@ export function FAQ() {
                   <span className="h3">{item.q}</span>
                   <span className="teal" style={{ flex: "0 0 auto", fontSize: 22, transition: "transform .25s", transform: isOpen ? "rotate(45deg)" : "none" }}>+</span>
                 </button>
-                <div style={{ maxHeight: isOpen ? 240 : 0, transition: "max-height .3s var(--ease)", overflow: "hidden" }}>
-                  <p className="body-sm muted" style={{ padding: "0 var(--sp5) var(--sp5)" }}>{item.a}</p>
+                {/* grid-rows anima até a altura REAL — max-height fixo cortava
+                    respostas longas no mobile */}
+                <div style={{ display: "grid", gridTemplateRows: isOpen ? "1fr" : "0fr", transition: "grid-template-rows .35s var(--ease)" }}>
+                  <div style={{ overflow: "hidden", minHeight: 0 }}>
+                    <p className="body-sm muted" style={{ padding: "0 var(--sp5) var(--sp5)" }}>{item.a}</p>
+                  </div>
                 </div>
               </div>
             );

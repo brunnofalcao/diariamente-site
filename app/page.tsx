@@ -13,10 +13,11 @@ export default function Page() {
 
       {/* ---------- TOP — logo oficial centralizada ---------- */}
       <nav className="topnav">
-        <div className="wrap" style={{ display: "flex", justifyContent: "center", padding: "var(--sp4) 0" }}>
+        <div className="wrap" style={{ display: "flex", justifyContent: "center", padding: "var(--sp2) 0", position: "relative" }}>
           <a href="/" aria-label="Diariamente" style={{ textDecoration: "none" }}>
-            <OfficialLogo height={72} />
+            <OfficialLogo height={48} />
           </a>
+          <a href="#oferta" className="btn btn-primary nav-cta">Quero começar</a>
         </div>
       </nav>
 
@@ -35,7 +36,7 @@ export default function Page() {
                 por dia, por 365 dias, com um app criado pra te ajudar a voltar amanhã,
                 depois de amanhã e no dia seguinte.
               </p>
-              <div style={{ display: "flex", gap: "var(--sp4)", flexWrap: "wrap", alignItems: "center" }}>
+              <div className="hero-ctas">
                 <a href="#oferta" className="btn btn-primary btn-lg">Quero começar hoje</a>
                 <a href="#metodo" className="btn btn-ghost">Como funciona →</a>
               </div>
@@ -153,6 +154,15 @@ export default function Page() {
             ))}
           </div>
 
+          <div className="pratica-strip reveal">
+            <span className="pratica-label">Na prática · 5 min por dia</span>
+            <span className="chip">Abra a provocação</span>
+            <span className="chip-seta" aria-hidden="true">→</span>
+            <span className="chip">Reflita e registre</span>
+            <span className="chip-seta" aria-hidden="true">→</span>
+            <span className="chip">Transforme em ação</span>
+          </div>
+
           <p className="center display-sm" style={{ marginTop: "var(--sp16)", maxWidth: "20ch", marginLeft: "auto", marginRight: "auto" }}>
             Não é motivação num dia. É constância em 365, <span className="teal">com método</span>.
           </p>
@@ -192,8 +202,8 @@ export default function Page() {
             </div>
           </div>
 
-          {/* grid de features secundárias */}
-          <div className="grid cols-3">
+          {/* grid de features secundárias — 2 colunas compactas no mobile */}
+          <div className="grid cols-3 feats">
             {[
               { t: "Ações", d: "A provocação não para na reflexão: você envia para Ações e transforma o insight do dia em tarefa concreta. É onde pensar vira fazer." },
               { t: "Ofensiva", d: "Sua sequência de dias, construída um por vez. Cada registro fortalece o ritmo que você está criando." },
@@ -236,34 +246,6 @@ export default function Page() {
                 <ImageSlot tag="Screenshot" label="Tela AÇÕES — provocação vira tarefa concreta" dims="1170×2532px · print real do app" shape="portrait" bare ratio="1170 / 2532" src={SCREENSHOTS.acoes || undefined} alt="Tela AÇÕES do app Diariamente" />
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- COMO VOCÊ USA EM 5 MINUTOS ---------- */}
-      <section className="reveal" style={{ paddingTop: 0 }}>
-        <div className="wrap">
-          <div className="center sec-head">
-            <span className="overline eyebrow">Cabe na sua rotina</span>
-            <h2 className="display-md">Como você usa em 5 minutos</h2>
-            <p className="lead sec-intro" style={{ maxWidth: "42ch", margin: "var(--sp4) auto 0" }}>
-              Você não precisa mudar tudo hoje. Só precisa voltar amanhã.
-            </p>
-          </div>
-          <div className="grid cols-3">
-            {[
-              { n: "1", t: "Abra a provocação do dia", d: "Uma só, na tela HOJE. Leitura rápida, pensada pra caber em qualquer manhã." },
-              { n: "2", t: "Reflita e registre", d: "Marque o dia e deixe a provocação trabalhar em você ao longo do dia." },
-              { n: "3", t: "Transforme em ação", d: "Envie pro menu Ações e escolha um passo concreto. Pequeno, possível, seu." },
-            ].map((s) => (
-              <div key={s.n} className="sf-dark lift" style={{ padding: "var(--sp8)" }}>
-                <div style={{ width: 44, height: 44, borderRadius: 999, background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.25)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-serif)", fontSize: 22, color: "var(--p-500)", marginBottom: "var(--sp4)" }}>
-                  {s.n}
-                </div>
-                <div className="h2" style={{ marginBottom: "var(--sp2)" }}>{s.t}</div>
-                <p className="body-sm muted">{s.d}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -314,6 +296,10 @@ export default function Page() {
               Motivação acaba na quinta-feira. Constância é o que sobra quando a vontade
               passa. É exatamente isso que o Diariamente foi feito pra sustentar.
             </p>
+            <div style={{ marginTop: "var(--sp6)", display: "flex", flexDirection: "column", gap: "var(--sp2)", alignItems: "center" }}>
+              <a href="#oferta" className="btn btn-primary">Quero começar hoje</a>
+              <span className="caption">Garantia incondicional de 7 dias</span>
+            </div>
           </div>
         </div>
       </section>
@@ -353,7 +339,7 @@ export default function Page() {
           </div>
 
           <div className="grid cols-2">
-            <div className="sf-dark" style={{ overflow: "hidden" }}>
+            <div className="sf-dark autor-card" style={{ overflow: "hidden" }}>
               <div className="autor-foto">
                 <ImageSlot tag="Foto autor" label="Brunno Falcão — retrato" dims="1000×1000px · quadrado" shape="square" src={AUTORES.brunno.foto || undefined} alt="Brunno Falcão" style={{ borderRadius: 0, border: "none", borderBottom: "1px solid var(--border)" }} />
               </div>
@@ -363,7 +349,7 @@ export default function Page() {
                 <p className="body-sm muted" style={{ marginTop: "var(--sp3)" }}>{AUTORES.brunno.bio}</p>
               </div>
             </div>
-            <div className="sf-dark" style={{ overflow: "hidden" }}>
+            <div className="sf-dark autor-card" style={{ overflow: "hidden" }}>
               <div className="autor-foto">
                 <ImageSlot tag="Foto autor" label="Roberta Carbonari — retrato" dims="1000×1000px · quadrado" shape="square" src={AUTORES.roberta.foto || undefined} alt="Roberta Carbonari" style={{ borderRadius: 0, border: "none", borderBottom: "1px solid var(--border)" }} />
               </div>
@@ -467,6 +453,16 @@ export default function Page() {
                 No checkout é possível adicionar o livro físico. O livro impresso também é
                 vendido separadamente. Garantia de 7 dias. Realização Science Play.
               </p>
+              <ul className="geo-resumo">
+                <li><b>Nome:</b> Diariamente Club</li>
+                <li><b>Categoria:</b> desenvolvimento profissional · hábito e constância</li>
+                <li><b>Formato:</b> aplicativo (iPhone e Android) + livro físico opcional</li>
+                <li><b>Duração:</b> 365 dias, uma provocação por dia</li>
+                <li><b>Preço:</b> R$ 197 · R$ 137,90 na condição de lançamento</li>
+                <li><b>Garantia:</b> 7 dias, incondicional</li>
+                <li><b>Responsáveis:</b> Brunno Falcão e Roberta Carbonari · Science Play</li>
+                <li><b>Inscrição:</b> diariamente.club · acesso enviado por e-mail</li>
+              </ul>
             </div>
           </div>
         </div>

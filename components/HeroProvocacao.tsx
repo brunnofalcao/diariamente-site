@@ -4,13 +4,20 @@ import { useEffect, useRef, useState } from "react";
 
 type Prov = { dia: number; total: number; texto: string; autor: string; dataExtenso?: string; diaSemana?: string };
 
-// Hero dinâmico: uma "barra de busca" onde a provocação do dia é digitada
-// (efeito typewriter) e depois fica fixa na tela. Dia real (1..365) via API.
+// Hero dinâmico: a provocação do dia é digitada (typewriter) e fica fixa.
+// v3 (mobile-first):
+//  1. a digitação só começa quando o card ENTRA NA VIEWPORT — no mobile ele
+//     fica abaixo da dobra e o usuário chegava com a animação já terminada;
+//  2. botão "Compartilhar" (Web Share API; fallback copia o link): a
+//     provocação do dia vira mídia orgânica, com UTM próprio pra medir.
 export function HeroProvocacao() {
   const [prov, setProv] = useState<Prov | null>(null);
   const [typed, setTyped] = useState("");
   const [done, setDone] = useState(false);
+  const [visivel, setVisivel] = useState(false);
+  const [copiado, setCopiado] = useState(false);
   const startedRef = useRef(false);
+  const frameRef = useRef<HTMLDivElement | null>(null);
 
   // 1) busca a provocação do dia (API protegida; cai em teaser se preciso)
   useEffect(() => {
@@ -34,9 +41,33 @@ export function HeroProvocacao() {
     };
   }, []);
 
-  // 2) efeito de digitação (respeita prefers-reduced-motion)
+  // 2) espera o card aparecer na tela pra começar a digitar
   useEffect(() => {
-    if (!prov || startedRef.current) return;
+    const el = frameRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setVisivel(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisivel(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.35 }
+    );
+    io.observe(el);
+    const safety = window.setTimeout(() => setVisivel(true), 6000);
+    return () => {
+      io.disconnect();
+      window.clearTimeout(safety);
+    };
+  }, []);
+
+  // 3) efeito de digitação (respeita prefers-reduced-motion)
+  useEffect(() => {
+    if (!prov || !visivel || startedRef.current) return;
     startedRef.current = true;
 
     const reduce =
@@ -55,7 +86,6 @@ export function HeroProvocacao() {
       i++;
       setTyped(full.slice(0, i));
       if (i < full.length) {
-        // velocidade levemente variável = mais humano
         const delay = 28 + (full[i - 1] === "," || full[i - 1] === "." ? 220 : Math.random() * 26);
         window.setTimeout(tick, delay);
       } else {
@@ -64,13 +94,34 @@ export function HeroProvocacao() {
     };
     const startDelay = window.setTimeout(tick, 650);
     return () => window.clearTimeout(startDelay);
-  }, [prov]);
+  }, [prov, visivel]);
+
+  // 4) compartilhar (Web Share API no mobile; desktop copia o link)
+  const compartilhar = async () => {
+    const texto = prov
+      ? '"' + prov.texto + '" — provocação de hoje no Diariamente.'
+      : "Diariamente: uma provocação por dia, por 365 dias.";
+    const url = "https://diariamente.club/?utm_source=share&utm_medium=organic&utm_campaign=provocacao_do_dia";
+    (window as any).gtag?.("event", "share", { method: "provocacao_hero" });
+    (window as any).dataLayer?.push({ event: "share_provocacao" });
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Diariamente", text: texto, url });
+      } else {
+        await navigator.clipboard.writeText(texto + " " + url);
+        setCopiado(true);
+        window.setTimeout(() => setCopiado(false), 2200);
+      }
+    } catch {
+      /* usuário cancelou o share — segue o jogo */
+    }
+  };
 
   const diaLabel = prov ? `Dia ${prov.dia} de ${prov.total}` : "Dia · de 365";
 
   return (
     <div className="hero-search reveal">
-      <div className="hs-frame media-glow">
+      <div className="hs-frame media-glow" ref={frameRef}>
         {/* topo: wordmark + selo de constância, igual ao app */}
         <div className="hs-head">
           <span className="hs-wordmark">
@@ -106,10 +157,19 @@ export function HeroProvocacao() {
           </span>
         </div>
 
-        {/* rodapé: autor + microcopy do app */}
+        {/* rodapé: autor + microcopy + compartilhar */}
         <div className="hs-foot">
           {done && prov?.autor && <span className="hs-autor">{prov.autor}</span>}
           <span className="hs-sub">Sua vez. O que você vai fazer com isso?</span>
+          <div>
+            <button type="button" className="hs-share" onClick={compartilhar} aria-label="Compartilhar a provocação do dia">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+                <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" />
+              </svg>
+              {copiado ? "Link copiado!" : "Compartilhar"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

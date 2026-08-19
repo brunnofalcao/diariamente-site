@@ -26,10 +26,10 @@ export function Wordmark({ size = 22 }: { size?: number }) {
 export function OfficialLogo({ height = 34 }: { height?: number }) {
   return (
     <img
-      src="https://res.cloudinary.com/dlzrfhwin/image/upload/v1775167899/Logo_Diariamente_1_smbwdg.png"
+      src="https://res.cloudinary.com/dlzrfhwin/image/upload/f_auto,q_auto/v1775167899/Logo_Diariamente_1_smbwdg.png"
       alt="Diariamente"
       height={height}
-      style={{ height, width: "auto", display: "block" }}
+      style={{ height: `clamp(40px, 9vw, ${height}px)`, width: "auto", display: "block" }}
     />
   );
 }
@@ -38,7 +38,7 @@ export function OfficialLogo({ height = 34 }: { height?: number }) {
 export function FooterLogo({ height = 56 }: { height?: number }) {
   return (
     <img
-      src="https://res.cloudinary.com/dlzrfhwin/image/upload/v1775400164/Asset_10_cirv6z.png"
+      src="https://res.cloudinary.com/dlzrfhwin/image/upload/f_auto,q_auto/v1775400164/Asset_10_cirv6z.png"
       alt="Diariamente"
       height={height}
       style={{ height, width: "auto", display: "block", margin: "0 auto" }}

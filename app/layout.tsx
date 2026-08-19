@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
-import { SITE, PLANOS, PROVA, GARANTIA, LOJAS } from "@/config";
+import { SITE, PLANOS, PROVA, GARANTIA, LOJAS, LOGOS, AUTORES, EMPRESA } from "@/config";
 import { Tracking } from "@/components/Tracking";
 import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.dominio),
-  title: "Diariamente · uma provocação por dia, por 365 dias | Brunno Falcão e Roberta Carbonari",
-  description: SITE.descricao,
+  title: "Diariamente · uma provocação por dia, por 365 dias",
+  // ~135 chars: o Google corta em ~155. A descrição longa segue no OG.
+  description:
+    "O livro de Brunno Falcão e Roberta Carbonari que virou app: 365 provocações, uma por dia, com lembrete no WhatsApp e 7 dias de garantia.",
   keywords: [
     "Diariamente",
     "Brunno Falcão",
@@ -28,7 +30,7 @@ export const metadata: Metadata = {
     siteName: SITE.nome,
     title: "Diariamente · um livro vivo, um ritual diário na palma da sua mão",
     description: SITE.descricao,
-    images: [{ url: SITE.ogImage, width: 1200, height: 630, alt: "Diariamente" }],
+    images: [{ url: SITE.ogImage, width: 1200, height: 630, alt: "Diariamente — uma provocação por dia, por 365 dias" }],
   },
   twitter: {
     card: "summary_large_image",
@@ -37,7 +39,7 @@ export const metadata: Metadata = {
     images: [SITE.ogImage],
   },
   robots: { index: true, follow: true },
-  icons: { icon: SITE.ogImage },
+  icons: { icon: LOGOS.favicon },
 };
 
 // ----- JSON-LD: Product + Offers + FAQ + Organization (SEO + GEO) -----
@@ -48,7 +50,7 @@ function StructuredData() {
     name: "Diariamente",
     description: SITE.descricao,
     brand: { "@type": "Brand", name: "Science Play" },
-    image: SITE.ogImage,
+    image: SITE.dominio + SITE.ogImage,
     offers: PLANOS.map((p) => ({
       "@type": "Offer",
       name: p.nome,
@@ -77,76 +79,47 @@ function StructuredData() {
     },
   };
 
+  // FAQ schema alinhado 1:1 com as perguntas VISÍVEIS (components/FAQ.tsx).
+  // Google valida a consistência entre schema e conteúdo renderizado.
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     mainEntity: [
-      {
-        "@type": "Question",
-        name: "Quero só o livro impresso do Diariamente.",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "O livro físico Diariamente, de Brunno Falcão e Roberta Carbonari, é vendido separadamente em https://sun.eduzz.com/2038359. O app Diariamente Club transforma a leitura em ritual diário.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "O que é o Diariamente?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "É o livro de Brunno Falcão e Roberta Carbonari transformado em um app de provocações diárias. São 365 provocações, uma para cada dia do ano, com sistema de ofensiva, conquistas, ranking e lembrete no WhatsApp, projetado para você manter a constância e não largar no meio.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Não tenho tempo. Quanto tempo leva por dia?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Uma provocação por dia, cerca de 5 minutos. O app ainda te lembra no WhatsApp para a provocação te encontrar onde você já está.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Já comprei livros parecidos e larguei. Por que dessa vez seria diferente?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Porque o Diariamente foi construído no ponto exato onde as pessoas desistem. A ofensiva, as conquistas e o menu Ações existem para te ajudar a voltar no dia seguinte. Não é só conteúdo, é um sistema de constância.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Posso ler todas as provocações de uma vez?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Não, e isso é intencional. No app Diariamente você acessa uma provocação por dia, vivendo o dia vigente, diferente do livro físico, que permite ler tudo de uma vez e esquecer. Ao manter a constância e cumprir conquistas, você desbloqueia a possibilidade de adiantar dias.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Como recebo o acesso?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Você recebe o e-mail de acesso logo após a confirmação, com as instruções para abrir o app e começar a primeira provocação.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Existe garantia?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: GARANTIA.texto,
-        },
-      },
+      { "@type": "Question", name: "É caro?", acceptedAnswer: { "@type": "Answer", text: "Dá menos de R$ 1 por dia por um ano inteiro de provocação diária, com um sistema feito pra você realmente usar. E tem 7 dias de garantia: se não for pra você, devolvemos." } },
+      { "@type": "Question", name: "Não tenho tempo. Quanto tempo leva por dia?", acceptedAnswer: { "@type": "Answer", text: "É uma provocação por dia, cerca de 5 minutos. O app inclusive te lembra no WhatsApp. A questão nunca foi tempo: foi constância." } },
+      { "@type": "Question", name: "Já comprei livros assim e larguei. Por que dessa vez seria diferente?", acceptedAnswer: { "@type": "Answer", text: "O Diariamente foi construído no ponto onde você largou antes. Ofensiva, conquistas e Ações existem pra te ajudar a voltar no dia seguinte, não pra te cobrar perfeição." } },
+      { "@type": "Question", name: "Será que funciona pra mim?", acceptedAnswer: { "@type": "Answer", text: "Funciona pra quem aparece 5 minutos por dia. O resto o sistema apoia: o lembrete no WhatsApp, o progresso visível e a ação concreta de cada dia." } },
+      { "@type": "Question", name: "Quero só o livro impresso.", acceptedAnswer: { "@type": "Answer", text: "O livro físico Diariamente é vendido à parte em https://sun.eduzz.com/2038359. E quando quiser transformar a leitura em ritual diário, o app te espera." } },
+      { "@type": "Question", name: "Já tenho o livro físico. O que o app acrescenta?", acceptedAnswer: { "@type": "Answer", text: "O app é a versão que te faz usar o livro: te lembra, registra seu progresso e transforma cada provocação em ação. O Diariamente Club é o acesso ao app, com as 365 provocações e todo o sistema de constância." } },
+      { "@type": "Question", name: "Posso ler todas as provocações de uma vez?", acceptedAnswer: { "@type": "Answer", text: "Não, e isso é de propósito. No app você vive o dia de hoje, um por vez. Quando quiser adiantar, sua própria constância destrava o próximo dia." } },
+      { "@type": "Question", name: "Como recebo o acesso?", acceptedAnswer: { "@type": "Answer", text: "Por e-mail, logo após a confirmação. Você abre o app e já faz a provocação do dia 1." } },
+      { "@type": "Question", name: "E se eu não gostar? Existe garantia?", acceptedAnswer: { "@type": "Answer", text: GARANTIA.texto } },
     ],
   };
 
+  // sameAs é o principal sinal de ENTIDADE para buscadores e IAs (GEO).
   const orgSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Science Play",
-    url: SITE.dominio,
-    logo: SITE.ogImage,
+    url: EMPRESA.site,
+    logo: LOGOS.horizontal,
+    sameAs: [
+      EMPRESA.site,
+      "https://instagram.com/" + EMPRESA.instagram,
+      "https://linkedin.com/in/" + EMPRESA.linkedin,
+    ],
   };
+
+  const pessoasSchema = [AUTORES.brunno, AUTORES.roberta].map((a) => ({
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: a.nome,
+    description: a.bio,
+    image: a.foto,
+    sameAs: ["https://instagram.com/" + a.instagram],
+    affiliation: { "@type": "Organization", name: "Science Play" },
+  }));
 
   return (
     <>
@@ -154,6 +127,7 @@ function StructuredData() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(appSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pessoasSchema) }} />
     </>
   );
 }

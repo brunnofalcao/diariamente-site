@@ -90,7 +90,19 @@ export function StickyCTA() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setShow(window.scrollY > 640);
+    // Aparece quando o CTA do hero sai da tela e SOME enquanto a seção de
+    // oferta está visível — antes ele cobria o próprio botão de compra.
+    const onScroll = () => {
+      const hero = document.querySelector(".hero-ctas");
+      const oferta = document.getElementById("oferta");
+      const heroFora = hero ? hero.getBoundingClientRect().bottom < 0 : window.scrollY > 640;
+      let ofertaVisivel = false;
+      if (oferta) {
+        const r = oferta.getBoundingClientRect();
+        ofertaVisivel = r.top < window.innerHeight * 0.8 && r.bottom > 120;
+      }
+      setShow(heroFora && !ofertaVisivel);
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);

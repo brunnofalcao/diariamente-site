@@ -41,7 +41,7 @@ body::before{
 .wrap-content{ max-width:var(--w-content); margin:0 auto; padding:0 var(--sp6); position:relative; z-index:1; }
 .wrap-narrow{ max-width:var(--w-narrow); margin:0 auto; padding:0 var(--sp6); position:relative; z-index:1; }
 
-section{ padding:var(--sp20) 0; }
+section{ padding:var(--sp16) 0; }
 @media (min-width:768px){ section{ padding:var(--sp32) 0; } }
 
 .display{ font-family:var(--font-serif); font-weight:400; line-height:1.04; letter-spacing:-.015em; font-size:clamp(36px,7vw,80px); }
@@ -344,9 +344,11 @@ body::before{ animation:breathe 9s var(--ease) infinite; }
 .stat-lbl{ font-size:13px; color:var(--n-400,#8A9494); }
 .stat-div{ width:1px; height:44px; background:var(--border); }
 @media (max-width:560px){
-  .stats-band{ gap:var(--sp5,20px); }
-  .stat-div{ display:none; }
-  .stat{ min-width:40%; }
+  .stats-band{ gap:var(--sp3,12px); padding:var(--sp6,24px) var(--sp2,8px); }
+  .stat{ min-width:0; flex:1; }
+  .stat-num{ font-size:26px; }
+  .stat-lbl{ font-size:11px; }
+  .stat-div{ height:36px; }
 }
 
 /* ---------- social do rodapé (com ícones) ---------- */
@@ -756,3 +758,71 @@ body::before{ animation:breathe 9s var(--ease) infinite; }
 @media (max-width:480px){
   .cart-estudante{ flex-direction:column; align-items:flex-start; }
 }
+
+
+/* =====================================================================
+   AJUSTES MOBILE-FIRST v3 — 90% do tráfego é mobile; desktop mantém o charme
+   ===================================================================== */
+
+/* topnav: CTA discreto no desktop (mobile segue só com a logo) */
+.topnav .nav-cta{ position:absolute; right:var(--sp6); top:50%; transform:translateY(-50%); padding:10px 18px; font-size:14px; border-radius:var(--r-md); }
+
+/* hero: CTA primário full-width no mobile */
+.hero-ctas{ display:flex; gap:var(--sp4); flex-wrap:wrap; align-items:center; }
+@media (max-width:767px){
+  .hero-ctas{ flex-direction:column; align-items:stretch; }
+  .hero-ctas .btn-ghost{ padding:10px; }
+}
+
+/* splits: no mobile o TEXTO sempre vem antes da imagem */
+@media (max-width:899px){
+  .split{ display:flex; flex-direction:column; gap:var(--sp8); }
+  .split .split-copy{ order:0; }
+  .split .split-media{ order:1; }
+}
+
+/* screenshots do app em escala natural no mobile (não largura total) */
+@media (max-width:899px){
+  .split .split-media .drift-inner{ width:min(64vw,250px); margin:0 auto; }
+}
+
+/* features: 2 colunas compactas no mobile (era 6 cards empilhados) */
+@media (max-width:767px){
+  .feats{ grid-template-columns:1fr 1fr; gap:var(--sp3); }
+  .feats .sf-dark{ padding:var(--sp4) !important; }
+  .feats .h2{ font-size:15px; }
+  .feats .body-sm{ font-size:12.5px; }
+}
+
+/* autores: media-object no mobile, card grande no desktop */
+@media (max-width:767px){
+  .autor-card{ display:flex; align-items:flex-start; gap:var(--sp4); padding:var(--sp4); }
+  .autor-card .autor-foto{ flex:0 0 96px; width:96px; border-radius:var(--r-xl); overflow:hidden; }
+  .autor-card .autor-foto .img-slot{ border-radius:var(--r-xl) !important; border:none !important; }
+  .autor-card > div:last-child{ padding:0 !important; flex:1; min-width:0; }
+}
+
+/* menos custo de GPU no mobile: glows estáticos, sem drift */
+@media (max-width:899px){
+  body::before{ animation:none; }
+  .js .media-glow.in::before{ animation:none; }
+  .js .reveal-media.in .drift-inner{ animation:none; }
+  .media-glow::before{ filter:blur(32px); }
+}
+
+/* faixa "na prática" (Método × "5 minutos" fundidos numa linha) */
+.pratica-strip{ display:flex; flex-wrap:wrap; gap:var(--sp2); align-items:center; justify-content:center; background:var(--glass); border:1px solid var(--border); border-radius:999px; padding:var(--sp3) var(--sp5); margin:var(--sp5) auto 0; max-width:760px; }
+.pratica-label{ font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--n-400); }
+.chip{ font-size:12.5px; font-weight:600; color:var(--n-300); background:rgba(255,255,255,.05); border:1px solid var(--border-strong); border-radius:999px; padding:5px 12px; white-space:nowrap; }
+.chip-seta{ color:var(--n-500); font-size:12px; }
+@media (max-width:560px){ .pratica-strip{ border-radius:var(--r-2xl); } }
+
+/* resumo estruturado no bloco Sobre (GEO/AEO) */
+.geo-resumo{ list-style:none; margin-top:var(--sp2); display:grid; gap:6px; padding:0; }
+.geo-resumo li{ font-size:13px; color:var(--n-400); line-height:1.55; }
+.geo-resumo b{ color:var(--p-500); font-weight:600; }
+
+/* botão compartilhar do card de provocação (hero) */
+.hs-share{ display:inline-flex; align-items:center; gap:7px; margin-top:var(--sp4); padding:9px 16px; border-radius:999px; background:rgba(39,189,190,.08); border:1px solid rgba(39,189,190,.30); color:var(--p-400,#3DCBCC); font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; transition:background .2s var(--ease), transform .15s var(--spring); }
+.hs-share:hover{ background:rgba(39,189,190,.14); }
+.hs-share:active{ transform:scale(.97); }
