@@ -979,3 +979,103 @@ html, body { overflow-x: clip; }
   .split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
 .grid > *, .split > * { min-width: 0; }
+
+
+/* =====================================================================
+   OFERTA · LAYOUT DE DESKTOP     ·  bloco aditivo, nada removido
+   ---------------------------------------------------------------------
+   A seção rodava em .wrap-narrow (560px), o container mais estreito da
+   página, enquanto todo o resto respira em .wrap (1120px). A página
+   afinava exatamente no momento do dinheiro.
+
+   Agora: grid de duas colunas a partir de 1000px.
+     esquerda  = argumento de valor (ocupa mais espaço que o preço)
+     direita   = card de compra, fixo na tela enquanto a pessoa lê
+   Abaixo de 1000px colapsa para uma coluna, na ordem valor -> preço.
+   ===================================================================== */
+
+.of-head { max-width: 720px; margin-left: auto; margin-right: auto; }
+.of-chip { max-width: 720px; margin-left: auto; margin-right: auto; }
+
+.of-grid { display: grid; gap: var(--sp8, 32px); align-items: start; }
+@media (min-width: 1000px) {
+  .of-grid {
+    grid-template-columns: minmax(0, 1.14fr) minmax(0, 0.86fr);
+    gap: 56px;
+  }
+  /* 104px = altura da .topnav sticky + respiro */
+  .of-compra { position: sticky; top: 104px; }
+}
+
+/* ---------- coluna do valor ---------- */
+.of-h3 {
+  font-family: var(--font-serif, 'Instrument Serif', Georgia, serif);
+  font-weight: 400; font-size: clamp(21px, 2.4vw, 27px); line-height: 1.2;
+  letter-spacing: -.01em; color: #fff; margin: 10px 0 var(--sp6, 24px);
+  max-width: 26ch; text-wrap: balance;
+}
+
+.of-feats { display: grid; gap: var(--sp4, 16px); }
+@media (min-width: 620px) {
+  .of-feats { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--sp5, 20px); }
+}
+.of-feat { display: flex; gap: 14px; align-items: flex-start; min-width: 0; }
+.of-feat-ic {
+  flex: 0 0 38px; width: 38px; height: 38px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(39,189,190,.09); border: 1px solid rgba(39,189,190,.22);
+  color: #27BDBE;
+}
+.of-feat-ic svg { width: 19px; height: 19px; }
+.of-feat-t { font-size: 15px; font-weight: 700; color: #fff; line-height: 1.35; }
+.of-feat-d { font-size: 13.5px; line-height: 1.55; color: var(--n-400); margin-top: 5px; }
+
+/* ---------- garantia: deixou de ser rodapé e virou argumento ---------- */
+.of-garantia {
+  display: flex; gap: 14px; align-items: flex-start;
+  margin-top: var(--sp8, 32px); padding: var(--sp5, 20px);
+  border-radius: var(--r-2xl, 24px);
+  background: rgba(255,255,255,.03); border: 1px solid var(--border);
+}
+.of-garantia-ic {
+  flex: 0 0 38px; width: 38px; height: 38px; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(39,189,190,.10); border: 1px solid rgba(39,189,190,.24);
+  color: #27BDBE;
+}
+.of-garantia-ic svg { width: 19px; height: 19px; }
+.of-garantia-t { font-size: 15px; font-weight: 700; color: #fff; }
+.of-garantia-d { font-size: 13.5px; line-height: 1.6; color: var(--n-400); margin-top: 5px; }
+
+/* ---------- prova social junto do valor, não escondida no rodapé ---------- */
+.of-prova {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+  margin-top: var(--sp6, 24px); padding-top: var(--sp5, 20px);
+  border-top: 1px solid var(--border);
+}
+.of-prova-n {
+  font-family: var(--font-serif, 'Instrument Serif', Georgia, serif);
+  font-size: 22px; color: #fff; line-height: 1;
+}
+.of-prova-l { font-size: 13px; color: var(--n-400); }
+.of-prova > *:last-child { flex-basis: 100%; margin-top: 4px; }
+
+/* ---------- coluna da compra ---------- */
+.of-livro { margin-top: var(--sp4, 16px); }
+.of-est { margin-top: var(--sp10, 40px); }
+
+/* o card de preço perdeu a lista de checks: sem ela o miolo respira mais */
+@media (min-width: 1000px) {
+  .of-compra .cart-cta { margin-top: var(--sp6, 24px); }
+}
+
+/* ---------- proteção mobile do que foi criado aqui ---------- */
+.of-feat > div, .of-garantia > div, .of-valor, .of-compra { min-width: 0; }
+@media (max-width: 480px) {
+  .of-feats { gap: var(--sp4, 16px); }
+  .of-feat-ic { flex-basis: 34px; width: 34px; height: 34px; border-radius: 10px; }
+  .of-feat-ic svg { width: 17px; height: 17px; }
+  .of-feat-t { font-size: 14.5px; }
+  .of-feat-d { font-size: 13px; }
+  .of-garantia { padding: var(--sp4, 16px); }
+}

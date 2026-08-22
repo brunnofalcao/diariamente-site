@@ -1,7 +1,36 @@
 "use client";
 
-import { PLANOS, GARANTIA, ESCASSEZ, LANCAMENTO, LIVRO_AVULSO, type Plano, ESTUDANTE } from "@/config";
+import { PLANOS, GARANTIA, ESCASSEZ, LANCAMENTO, LIVRO_AVULSO, PROVA, type Plano, ESTUDANTE } from "@/config";
 import { StoreBadges } from "@/components/StoreBadges";
+
+/* =====================================================================
+   OFERTA — layout de desktop
+   ---------------------------------------------------------------------
+   O que mudou e por quê:
+
+   1. Container. A seção usava .wrap-narrow (560px), o container MAIS
+      ESTREITO da página inteira, enquanto o resto respira em .wrap
+      (1120px). A página afinava justamente no momento do dinheiro.
+      Agora usa .wrap e um grid de duas colunas no desktop.
+
+   2. Hierarquia comercial. A proposta de valor estava DENTRO do card de
+      preço, como lista de checks de 13px. Regra de venda: o valor tem de
+      ocupar mais espaço que o preço. A lista saiu do card e virou uma
+      grade de seis blocos com ícone e microcopy na coluna da esquerda.
+
+   3. Card de preço fixo (sticky). Enquanto a pessoa lê o valor, o preço e
+      o botão continuam na tela. Padrão de produto digital: quem rola não
+      perde o CTA de vista.
+
+   4. Prova junto do valor, não escondida no rodapé do card.
+
+   Mobile: o grid colapsa para uma coluna e a ordem do DOM entrega
+   VALOR antes de PREÇO, que é a ordem correta de argumentação.
+
+   Preservado: buildCheckoutUrl, trackCheckout, ESCASSEZ, LANCAMENTO,
+   total do parcelado (CDC art. 52), chip e card de estudante, livro
+   avulso, garantia. Nada de tracking foi removido.
+   ===================================================================== */
 
 // Anexa as UTMs da URL atual ao link de checkout (preserva origem do tráfego).
 function buildCheckoutUrl(base: string): string {
@@ -27,6 +56,32 @@ function trackCheckout(plano: Plano) {
   });
 }
 
+/* ---------------------------------------------------------------------
+   Camada de apresentação dos entregáveis.
+   Os TÍTULOS continuam vindo de config.PLANO_APP.inclui (fonte da
+   verdade). Aqui entram só ícone e linha de apoio, casados por índice.
+   Se um item novo entrar no config sem par aqui, ele renderiza sem a
+   linha de apoio em vez de quebrar.
+   --------------------------------------------------------------------- */
+const ICONES = [
+  <svg key="a" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>,
+  <svg key="b" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="3" /><path d="M3 9.5h18M8 2.5v4M16 2.5v4M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" /></svg>,
+  <svg key="c" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" /></svg>,
+  <svg key="d" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c4 0 7-2.7 7-6.6 0-3.8-2.6-5.6-4-8.4-.7 1.6-1.7 2.4-2.7 3.2C10.6 5.9 12 3.4 9.5 2c.3 3-1.4 4.2-2.8 5.9C5.5 9.4 5 11 5 12.9 5 17.2 8 22 12 22z" /></svg>,
+  <svg key="e" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.4 8.4 0 01-9 8.4 8.5 8.5 0 01-4-1L3 21l2.1-5a8.4 8.4 0 01-1-4 8.5 8.5 0 018.4-9 8.5 8.5 0 018.5 8.5z" /></svg>,
+  <svg key="f" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="3" /><path d="M3 7l9 6 9-6" /></svg>,
+];
+
+const APOIO = [
+  "Uma por dia, sem antecipar e sem acumular. Dois minutos e você já cumpriu o dia.",
+  "A sequência fica visível. Você para de achar que está indo bem e passa a saber.",
+  "Refletir sem agir não muda nada. A provocação vira tarefa com prazo.",
+  "O que sustenta hábito não é vontade, é fricção baixa e sinal de progresso.",
+  "O app não espera você lembrar dele. Ele chega no horário que você escolher.",
+  "Confirmou o pagamento, recebeu o acesso. Começa hoje, não amanhã.",
+];
+
+/* ------------------------------ card de preço ------------------------------ */
 function CartCard({ plano }: { plano: Plano }) {
   const onCheckout = () => {
     trackCheckout(plano);
@@ -38,7 +93,7 @@ function CartCard({ plano }: { plano: Plano }) {
     window.location.href = buildCheckoutUrl(url);
   };
 
-  // "207,90" -> ["207", "90"]
+  // "137,90" -> ["137", "90"]
   const [reais, centavos] = plano.preco.split(",");
 
   return (
@@ -51,9 +106,7 @@ function CartCard({ plano }: { plano: Plano }) {
         )}
 
         <div className="cart-head">
-          <span className="overline teal">
-            {plano.selo ?? "Acesso anual"}
-          </span>
+          <span className="overline teal">{plano.selo ?? "Acesso anual"}</span>
           <h3 className="cart-nome">{plano.nome}</h3>
         </div>
 
@@ -79,9 +132,7 @@ function CartCard({ plano }: { plano: Plano }) {
           </div>
           <div className="cart-perdia">{plano.perDia}</div>
           {/* CDC art. 52 e Decreto 5.903: havendo acréscimo no parcelado, o
-              total pago tem de estar visível junto da parcela. Não é só
-              exigência legal: esconder isso é o tipo de coisa que o cliente
-              descobre no checkout e desiste. */}
+              total pago tem de estar visível junto da parcela. */}
           {plano.parcelaTotal && (
             <div className="caption muted" style={{ marginTop: 4 }}>
               Parcelado: total de R$ {plano.parcelaTotal} com acréscimo.
@@ -93,14 +144,6 @@ function CartCard({ plano }: { plano: Plano }) {
             </div>
           )}
         </div>
-
-        <div className="cart-div" aria-hidden="true" />
-
-        <ul className="check-list cart-list">
-          {plano.inclui.map((item, i) => (
-            <li key={i} className="body-sm">{item}</li>
-          ))}
-        </ul>
 
         <button className="btn btn-primary btn-block cart-cta" onClick={onCheckout}>
           {plano.ctaLabel}
@@ -119,8 +162,6 @@ function CartCard({ plano }: { plano: Plano }) {
           <span>·</span>
           <span>Garantia {GARANTIA.dias} dias</span>
         </div>
-
-        {plano.destaque && <StoreBadges variant="prova" />}
       </div>
 
       <div className="cart-rodape">{plano.rodape}</div>
@@ -128,13 +169,16 @@ function CartCard({ plano }: { plano: Plano }) {
   );
 }
 
+/* ------------------------------ seção ------------------------------ */
 export function Oferta() {
+  const plano = PLANOS[0];
+
   return (
     <section id="oferta">
-      <div className="wrap-narrow">
-        <div className="center sec-head">
+      <div className="wrap">
+        <div className="center sec-head of-head">
           <h2 className="display-md">Comece sua constância hoje</h2>
-          <p className="lead sec-intro" style={{ maxWidth: "44ch", margin: "var(--sp4) auto 0" }}>
+          <p className="lead sec-intro" style={{ maxWidth: "48ch", margin: "var(--sp4) auto 0" }}>
             Um ano inteiro de provocação diária, com o sistema que te traz de volta
             todo dia. Não é mais um conteúdo. É o que faz o conteúdo virar constância.
           </p>
@@ -145,7 +189,7 @@ export function Oferta() {
              página antes de descobrir que existe condição própria pra ele. */}
         <a
           href="/estudante"
-          className="cart-est-chip"
+          className="cart-est-chip of-chip"
           onClick={() => {
             (window as any).gtag?.("event", "cta_estudante_click", { location: "chip_topo" });
             (window as any).dataLayer?.push({ event: "cta_estudante_click", location: "chip_topo" });
@@ -163,18 +207,71 @@ export function Oferta() {
           </svg>
         </a>
 
-        {/* ---------- CARRINHOS (combo em destaque + app) ---------- */}
-        <div style={{ display: "grid", gap: "var(--sp6)" }}>
-          {PLANOS.map((p) => (
-            <CartCard key={p.id} plano={p} />
-          ))}
+        {/* ================= GRID PRINCIPAL: valor | compra ================= */}
+        <div className="of-grid">
+          {/* ---------- COLUNA ESQUERDA: o valor ---------- */}
+          <div className="of-valor">
+            <span className="overline teal">O que entra no seu acesso</span>
+            <h3 className="of-h3">Um sistema, não um arquivo que você baixa e esquece.</h3>
+
+            <div className="of-feats">
+              {plano.inclui.map((titulo, i) => (
+                <div className="of-feat" key={titulo}>
+                  <div className="of-feat-ic" aria-hidden="true">{ICONES[i]}</div>
+                  <div>
+                    <div className="of-feat-t">{titulo}</div>
+                    {APOIO[i] && <p className="of-feat-d">{APOIO[i]}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="of-garantia">
+              <div className="of-garantia-ic" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2l8 3.5v5.8c0 5-3.4 9.3-8 10.7-4.6-1.4-8-5.7-8-10.7V5.5L12 2z" />
+                  <path d="M9 12l2 2 4-4" />
+                </svg>
+              </div>
+              <div>
+                <div className="of-garantia-t">Garantia de {GARANTIA.dias} dias</div>
+                <p className="of-garantia-d">{GARANTIA.texto}</p>
+              </div>
+            </div>
+
+            <div className="of-prova">
+              <span className="of-prova-n">{PROVA.leitores}</span>
+              <span className="of-prova-l">já leram o Diariamente</span>
+              <StoreBadges variant="prova" />
+            </div>
+          </div>
+
+          {/* ---------- COLUNA DIREITA: a compra (fixa no desktop) ---------- */}
+          <aside className="of-compra">
+            <CartCard plano={plano} />
+
+            {/* livro impresso avulso (discreto; nao dispersa do CTA principal) */}
+            <p className="caption center of-livro">
+              Quer só o livro impresso?{" "}
+              <a
+                href={LIVRO_AVULSO}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="teal"
+                onClick={() => {
+                  (window as any).gtag?.("event", "click_livro_avulso", { location: "oferta" });
+                  (window as any).dataLayer?.push({ event: "click_livro_avulso", location: "oferta" });
+                }}
+              >
+                Ele está disponível aqui
+              </a>
+              .
+            </p>
+          </aside>
         </div>
 
-        {/* ---------- CARD ESTUDANTE (peso real, pra quem rolou até aqui) ----------
-             Saiu a borda tracejada: no sistema, tracejado significa secundário.
-             Saiu o target="_blank": /estudante é landing completa com funil
-             próprio, e abrir segunda aba no mobile é fricção sem ganho. */}
-        <div className="cart-est">
+        {/* ---------- FAIXA ESTUDANTE, LARGURA TOTAL ---------- */}
+        <div className="cart-est of-est">
           <span className="cart-est-selo">{ESTUDANTE.selo}</span>
 
           <div className="cart-est-row">
@@ -211,33 +308,6 @@ export function Oferta() {
                 <path d="M5 12h14M13 5l7 7-7 7" />
               </svg>
             </a>
-          </div>
-        </div>
-
-        {/* livro impresso avulso (discreto; nao dispersa do CTA principal) */}
-        <p className="caption center" style={{ marginTop: "var(--sp4)" }}>
-          Quer só o livro impresso?{" "}
-          <a
-            href={LIVRO_AVULSO}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="teal"
-            onClick={() => {
-              (window as any).gtag?.("event", "click_livro_avulso", { location: "oferta" });
-              (window as any).dataLayer?.push({ event: "click_livro_avulso", location: "oferta" });
-            }}
-          >
-            Ele está disponível aqui
-          </a>
-          .
-        </p>
-
-        {/* Garantia */}
-        <div className="sf-glass" style={{ padding: "var(--sp5)", marginTop: "var(--sp6)", display: "flex", gap: "var(--sp4)", alignItems: "flex-start" }}>
-          <div style={{ flex: "0 0 auto", fontSize: 22 }}>🛡️</div>
-          <div>
-            <div className="h3" style={{ marginBottom: 4 }}>Garantia de {GARANTIA.dias} dias</div>
-            <p className="body-sm muted">{GARANTIA.texto}</p>
           </div>
         </div>
       </div>
