@@ -8,13 +8,14 @@
 
 export const SITE = {
   nome: "Diariamente",
-  dominio: "https://diariamente.app",
+  dominio: "https://diariamente.club",
   appUrl: "https://app.diariamente.club",
   descricao:
     "Diariamente não é um livro comum, nem um ebook. É um livro vivo: um app com uma provocação por dia, por 365 dias, para você se desenvolver profissionalmente, criado pra te ajudar a voltar amanhã, depois de amanhã e no dia seguinte. Um ritual diário na palma da sua mão, de Brunno Falcão e Roberta Carbonari.",
-  // OG card estratégico 1200×630 (em /public/og-card.png): headline + app +
-  // oferta. Quem cola o link no WhatsApp vê a OFERTA, não um logo.
-  ogImage: "/og-card.png",
+  // OG image — usar o asset oficial do brandbook (Cloudinary)
+  // [CONFIRMAR] mesmo cloud (dlzrfhwin); colar URL oficial do Asset_7 (OG/favicon)
+  ogImage:
+    "https://res.cloudinary.com/dlzrfhwin/image/upload/Asset_7_z9hcmw.png",
 };
 
 // Logos oficiais (Cloudinary — cloud name oficial: dlzrfhwin)
@@ -24,7 +25,7 @@ export const LOGOS = {
     "https://res.cloudinary.com/dlzrfhwin/image/upload/Asset_10_cirv6z.png",
   // ✓ URL OFICIAL confirmada por Brunno
   horizontal:
-    "https://res.cloudinary.com/dlzrfhwin/image/upload/f_auto,q_auto/v1775167899/Logo_Diariamente_1_smbwdg.png",
+    "https://res.cloudinary.com/dlzrfhwin/image/upload/v1775167899/Logo_Diariamente_1_smbwdg.png",
   // [CONFIRMAR] URL oficial do favicon/OG (Asset_7)
   favicon:
     "https://res.cloudinary.com/dlzrfhwin/image/upload/Asset_7_z9hcmw.png",
@@ -37,14 +38,14 @@ export const LOGOS = {
 // Telas reais do app: Hoje · Dias · Ações · Ritmo · Conta
 // ---------------------------------------------------------------------
 export const SCREENSHOTS = {
-  hoje: "https://res.cloudinary.com/dlzrfhwin/image/upload/f_auto,q_auto/v1782664582/Tela_HOJE_Diariamente_shzi7c.png",
-  dias: "https://res.cloudinary.com/dlzrfhwin/image/upload/f_auto,q_auto/v1782664583/Tela_DIAS_Diariamente_i4dpih.png",
-  acoes: "https://res.cloudinary.com/dlzrfhwin/image/upload/f_auto,q_auto/v1782664582/Tela_ACOES_Diariamente_nr8gwf.png",
-  ritmo: "https://res.cloudinary.com/dlzrfhwin/image/upload/f_auto,q_auto/v1782664581/Tela_RITMO_Diariamente_mz9efm.png",
+  hoje: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664582/Tela_HOJE_Diariamente_shzi7c.png",
+  dias: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664583/Tela_DIAS_Diariamente_i4dpih.png",
+  acoes: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664582/Tela_ACOES_Diariamente_nr8gwf.png",
+  ritmo: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664581/Tela_RITMO_Diariamente_mz9efm.png",
 };
 
 // Foto lifestyle (ambiente) — seção "virada". Foto cheia, não transparente.
-export const LIFESTYLE = "https://res.cloudinary.com/dlzrfhwin/image/upload/f_auto,q_auto/v1782699619/Lifestyle_Diariamente_yur3mm.png";
+export const LIFESTYLE = "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782699619/Lifestyle_Diariamente_yur3mm.png";
 
 // ---------------------------------------------------------------------
 // PROVA REAL (confirmada — não inventar)
@@ -67,7 +68,7 @@ export const LANCAMENTO = {
   ativa: true,
   selo: "30% OFF de lançamento",
   // [TROCAR] data de fim da janela founders (usada só no texto, ex: "até 30/09")
-  prazoTexto: "válida apenas no mês de lançamento",
+  prazoTexto: "válido apenas no mês de lançamento",
 };
 
 export type Plano = {
@@ -78,9 +79,7 @@ export type Plano = {
   precoNumero: number;     // preço COBRADO agora (founders enquanto LANCAMENTO.ativa)
   preco: string;
   precoDe?: string;        // preço nominal riscado (âncora)
-  parcela?: string;        // valor da parcela, confirmado na Hotmart
-  parcelas?: number;       // quantidade de parcelas
-  parcelaTotal?: string;   // total pago no parcelado (obrigatório por CDC quando há acréscimo)
+  parcela?: string;        // [CONFIRMAR na Hotmart] — não exibir valor inventado
   precoVista?: string;
   perDia?: string;
   inclui: string[];
@@ -132,12 +131,6 @@ export const PLANO_APP: Plano = {
   preco: "137,90",
   precoDe: "197",
   precoVista: "R$ 137,90 à vista",
-  // Parcelamento confirmado por Brunno (ago/2026).
-  // 12 x 14,26 = 171,12 contra 137,90 à vista: há acréscimo de R$ 33,22 (24,1%).
-  // Por isso a página exibe as duas informações juntas. Ver nota no LEIA-ME.
-  parcela: "14,26",
-  parcelas: 12,
-  parcelaTotal: "171,12",
   perDia: "menos de R$ 0,38 por dia",
   inclui: [
     "Uma provocação por dia, os 365 dias do ano",
@@ -186,13 +179,13 @@ export const AUTORES = {
     nome: "Brunno Falcão",
     bio: "Empresário e palestrante, é fundador e CEO da Science Play e do Nutrição Brasil, com clientes em mais de 95 países. Autor best-seller de Zona Desconforto e O Fim do Consultório, criador do Palestre•se e colunista da Forbes Portugal, Revista Medicina S/A e O Fit Feed.",
     instagram: "brunnofalcao",
-    foto: "https://res.cloudinary.com/dlzrfhwin/image/upload/f_auto,q_auto/v1782699377/Foto_Brunno_Falca%CC%83o_-_Diariamente_Club_z7fitl.png",
+    foto: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782699377/Foto_Brunno_Falca%CC%83o_-_Diariamente_Club_z7fitl.png",
   },
   roberta: {
     nome: "Roberta Carbonari",
     bio: "Nutricionista, mestre em Nutrição, pós-graduada em Comportamento Alimentar e referência em Psiquiatria Nutricional. Coordenadora de pós-graduação, professora, palestrante e empresária, com formação também em Administração e Marketing.",
     instagram: "robertacarbonari",
-    foto: "https://res.cloudinary.com/dlzrfhwin/image/upload/f_auto,q_auto/v1782699376/Foto_Roberta_Carbonari_-_Diariamente_Club_ugcgsi.png",
+    foto: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782699376/Foto_Roberta_Carbonari_-_Diariamente_Club_ugcgsi.png",
   },
   selo: "Science Play®",
 };
