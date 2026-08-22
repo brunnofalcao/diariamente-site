@@ -531,3 +531,81 @@ html:not(.ed-js) .ed-reveal { opacity: 1; transform: none; }
   }
   .ed-reveal { opacity: 1 !important; transform: none !important; }
 }
+
+
+/* =====================================================================
+   BLINDAGEM MOBILE  ·  bloco aditivo, nada acima foi removido
+   ---------------------------------------------------------------------
+   Causa raiz de quase toda rolagem horizontal em celular: item de grid e
+   de flex nasce com min-width:auto e SE RECUSA a encolher abaixo do
+   próprio conteúdo. O container respeita o viewport, o filho não, e o
+   filho vence. Corrigir isso é mais confiável do que caçar sintoma.
+
+   Piso de teste: 320px (iPhone SE 1ª geração / Android antigo).
+   ===================================================================== */
+
+/* 1. nada dentro da rota pode ultrapassar o próprio container */
+.ed :where(img, svg, video, canvas, iframe, table) { max-width: 100%; }
+.ed :where(p, li, h1, h2, h3, span, div) { overflow-wrap: break-word; }
+
+/* 2. itens de grid e flex passam a poder encolher */
+.ed-band-item,
+.ed-card,
+.ed-step,
+.ed-compare-card,
+.ed-field,
+.ed-hero-copy,
+.ed-sticky-txt,
+.ed-review-v { min-width: 0; }
+
+/* 3. colunas: 1fr vira minmax(0,1fr), que é o 1fr que realmente encolhe */
+@media (min-width: 700px) {
+  .ed-grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 900px) {
+  .ed-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ed-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@media (min-width: 560px) {
+  .ed-row2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+/* 4. banda de prova: "iOS · Android" a 22px ocupava 129px numa coluna de
+      77px. Estourava em 320, 360 e 390. Agora encolhe e quebra em duas
+      linhas em vez de empurrar a página para o lado. */
+.ed-band { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 560px) {
+  .ed-band { padding: 18px 0; }
+  .ed-band-item { padding: 0 4px; }
+  .ed-band-n { font-size: 15px; line-height: 1.2; }
+  .ed-band-l { font-size: 10.5px; line-height: 1.3; margin-top: 3px; }
+  .ed-band-item + .ed-band-item::before { height: 26px; }
+}
+
+/* 5. legenda do print: o nowrap fazia a pílula ficar mais larga que o
+      próprio aparelho em tela estreita. */
+@media (max-width: 420px) {
+  .ed-phone-tag {
+    white-space: normal; text-align: center; max-width: 92%;
+    font-size: 11.5px; padding: 8px 14px; line-height: 1.35;
+  }
+}
+
+/* 6. alvos de toque: mínimo de 44px, recomendação da Apple e da WCAG */
+@media (max-width: 1023px) {
+  .ed-faq summary { min-height: 52px; }
+  .ed-footer nav a { display: inline-block; padding: 6px 0; }
+  .ed-topbar-logo { min-height: 44px; display: inline-flex; align-items: center; }
+}
+
+/* 7. e-mail longo no resumo não empurra a linha */
+.ed-review-v { overflow-wrap: anywhere; }
+
+/* 8. o rótulo mais longo da rota, "Receber meu código no WhatsApp", pede
+      302px com nowrap. Dentro do card, em 320px de viewport, sobram 240px.
+      Em vez de encurtar a copy, o botão passa a quebrar em duas linhas. */
+@media (max-width: 440px) {
+  .ed-btn-block { white-space: normal; line-height: 1.25; padding: 0 16px; }
+  .ed-nav .ed-back { padding: 0 16px; }
+  .ed-card-form { padding: 18px 16px; }
+}

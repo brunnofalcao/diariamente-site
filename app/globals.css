@@ -915,3 +915,67 @@ body::before{ animation:breathe 9s var(--ease) infinite; }
   .cart-est-h{ font-size:23px; }
   .cart-est-acao{ width:100%; height:54px; }
 }
+
+
+/* =====================================================================
+   BLINDAGEM MOBILE  ·  bloco aditivo, nada acima foi removido
+   ---------------------------------------------------------------------
+   Mesma lógica aplicada no /estudante: item de grid e de flex nasce com
+   min-width:auto e não encolhe abaixo do próprio conteúdo. Piso: 320px.
+   ===================================================================== */
+
+/* 1. nada ultrapassa o container */
+:where(img, svg, video, canvas, iframe, table) { max-width: 100%; }
+
+/* 2. itens que precisam poder encolher */
+.cart-est-row > *,
+.cart-est-chip > span,
+.autor-card,
+.cart-preco,
+.cart-body { min-width: 0; }
+
+/* 3. destaque de estudante em tela estreita */
+@media (max-width: 420px) {
+  .cart-est-chip {
+    border-radius: var(--r-xl, 20px); /* pílula com 3 linhas fica torta */
+    padding: 12px 14px; text-align: left; align-items: flex-start;
+  }
+  .cart-est-chip svg:first-of-type { margin-top: 2px; }
+  .cart-est-chip svg:last-of-type { display: none; } /* seta redundante no mobile */
+  .cart-est-h { font-size: 21px; }
+  .cart-est-bul { gap: 7px 14px; }
+  .cart-est-bul li { font-size: 12.5px; }
+}
+
+/* 4. o preço parcelado não pode empurrar o card */
+.cart-vista, .cart-perdia { overflow-wrap: break-word; }
+
+/* 5. alvos de toque no mobile */
+@media (max-width: 767px) {
+  .btn { min-height: 48px; }
+  .sticky-cta .btn { min-height: 48px; }
+}
+
+/* 6. rede de segurança: se algo escapar, o usuário não vê a página torta.
+      Não é substituto de layout correto, é o cinto de segurança. */
+html, body { overflow-x: clip; }
+@supports not (overflow: clip) {
+  html, body { overflow-x: hidden; }
+}
+
+/* 7. últimos grids com 1fr puro. 1fr = minmax(auto,1fr): o "auto" impede o
+      item de encolher abaixo do conteúdo. minmax(0,1fr) resolve.
+      .feats é o mais crítico: são 2 colunas NO MOBILE, cada card com 134px
+      em tela de 320px. */
+@media (max-width: 767px) {
+  .feats { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .feats > * { min-width: 0; }
+}
+@media (min-width: 768px) {
+  .cols-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 900px) {
+  .split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+.grid > *, .split > * { min-width: 0; }
