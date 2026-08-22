@@ -458,7 +458,7 @@ export default function Page() {
                 <li><b>Categoria:</b> desenvolvimento profissional · hábito e constância</li>
                 <li><b>Formato:</b> aplicativo (iPhone e Android) + livro físico opcional</li>
                 <li><b>Duração:</b> 365 dias, uma provocação por dia</li>
-                <li><b>Preço:</b> R$ 197 · R$ 137,90 na condição de lançamento</li>
+                <li><b>Preço:</b> R$ 197 · R$ 137,90 na condição de lançamento, ou 12x de R$ 14,26 no cartão (total R$ 171,12)</li>
                 <li><b>Garantia:</b> 7 dias, incondicional</li>
                 <li><b>Responsáveis:</b> Brunno Falcão e Roberta Carbonari · Science Play</li>
                 <li><b>Inscrição:</b> {SITE.dominio.replace("https://", "")} · acesso enviado por e-mail</li>

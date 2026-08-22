@@ -302,8 +302,10 @@ export function EstudanteForm() {
     setStatus("enviando");
     setErrosServidor([]);
 
+    // Tentativa de envio. O Lead do Meta NAO sai aqui: sai so quando o
+    // servidor confirma. Disparar no submit contaria quem levou erro 400
+    // como lead, inflando o volume e distorcendo o CPL.
     (window as any).gtag?.("event", "lead_estudante_submit");
-    (window as any).fbq?.("track", "Lead", { content_name: "estudante" });
     (window as any).dataLayer?.push({ event: "lead_estudante_submit" });
 
     const payload = {
@@ -339,6 +341,8 @@ export function EstudanteForm() {
       }
 
       if (r.ok && corpo?.ok) {
+        // Lead confirmado pelo servidor: agora sim vale como conversao.
+        (window as any).fbq?.("track", "Lead", { content_name: "estudante" });
         (window as any).gtag?.("event", "cupom_estudante_emitido");
         (window as any).dataLayer?.push({ event: "cupom_estudante_emitido" });
         try {

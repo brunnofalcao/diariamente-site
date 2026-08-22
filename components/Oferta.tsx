@@ -1,6 +1,6 @@
 "use client";
 
-import { PLANOS, GARANTIA, ESCASSEZ, LANCAMENTO, LIVRO_AVULSO, type Plano } from "@/config";
+import { PLANOS, GARANTIA, ESCASSEZ, LANCAMENTO, LIVRO_AVULSO, type Plano, ESTUDANTE } from "@/config";
 import { StoreBadges } from "@/components/StoreBadges";
 
 // Anexa as UTMs da URL atual ao link de checkout (preserva origem do tráfego).
@@ -71,8 +71,22 @@ function CartCard({ plano }: { plano: Plano }) {
             <span className="cart-valor">R$ {reais}</span>
             {centavos && <span className="cart-cents">,{centavos}</span>}
           </div>
-          <div className="cart-vista">à vista · ou em até 12x no checkout</div>
+          <div className="cart-vista">
+            à vista
+            {plano.parcela && plano.parcelas
+              ? ` · ou ${plano.parcelas}x de R$ ${plano.parcela} no cartão`
+              : " · ou parcelado no checkout"}
+          </div>
           <div className="cart-perdia">{plano.perDia}</div>
+          {/* CDC art. 52 e Decreto 5.903: havendo acréscimo no parcelado, o
+              total pago tem de estar visível junto da parcela. Não é só
+              exigência legal: esconder isso é o tipo de coisa que o cliente
+              descobre no checkout e desiste. */}
+          {plano.parcelaTotal && (
+            <div className="caption muted" style={{ marginTop: 4 }}>
+              Parcelado: total de R$ {plano.parcelaTotal} com acréscimo.
+            </div>
+          )}
           {LANCAMENTO.ativa && plano.precoDe && (
             <div className="caption muted" style={{ marginTop: 4 }}>
               Condição {LANCAMENTO.prazoTexto}.
@@ -126,6 +140,29 @@ export function Oferta() {
           </p>
         </div>
 
+        {/* ---------- CHIP ESTUDANTE (intercepta ANTES do preço cheio) ----------
+             Sem isto, o estudante lê R$ 137,90, conclui que não cabe e sai da
+             página antes de descobrir que existe condição própria pra ele. */}
+        <a
+          href="/estudante"
+          className="cart-est-chip"
+          onClick={() => {
+            (window as any).gtag?.("event", "cta_estudante_click", { location: "chip_topo" });
+            (window as any).dataLayer?.push({ event: "cta_estudante_click", location: "chip_topo" });
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M22 9L12 4 2 9l10 5 10-5z" />
+            <path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5" />
+          </svg>
+          <span>
+            Você ainda está na graduação? <b>Tem uma condição própria pra você.</b>
+          </span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M5 12h14M13 5l7 7-7 7" />
+          </svg>
+        </a>
+
         {/* ---------- CARRINHOS (combo em destaque + app) ---------- */}
         <div style={{ display: "grid", gap: "var(--sp6)" }}>
           {PLANOS.map((p) => (
@@ -133,30 +170,49 @@ export function Oferta() {
           ))}
         </div>
 
-        {/* ---------- BOX ESTUDANTE (leva à página própria, nova aba) ---------- */}
-        <a
-          href="/estudante"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="cart-estudante"
-          onClick={() => {
-            (window as any).gtag?.("event", "cta_estudante_click", { location: "oferta" });
-            (window as any).dataLayer?.push({ event: "cta_estudante_click", location: "oferta" });
-          }}
-        >
-          <div className="cart-estudante-txt">
-            <span className="overline teal">Estudante</span>
-            <p>
-              Ainda está na graduação? Existe uma condição exclusiva pra quem estuda.
-            </p>
+        {/* ---------- CARD ESTUDANTE (peso real, pra quem rolou até aqui) ----------
+             Saiu a borda tracejada: no sistema, tracejado significa secundário.
+             Saiu o target="_blank": /estudante é landing completa com funil
+             próprio, e abrir segunda aba no mobile é fricção sem ganho. */}
+        <div className="cart-est">
+          <span className="cart-est-selo">{ESTUDANTE.selo}</span>
+
+          <div className="cart-est-row">
+            <div>
+              <h3 className="cart-est-h">Ainda está na graduação?</h3>
+              <p className="cart-est-d">
+                {ESTUDANTE.mostrarPreco
+                  ? `O mesmo acesso de um ano por R$ ${ESTUDANTE.preco}, enquanto você ainda estuda. Solicitar não gera compromisso.`
+                  : "Existe uma condição de estudante, com valor reduzido, enquanto você ainda estuda. Solicitar não gera compromisso."}
+              </p>
+
+              <ul className="cart-est-bul">
+                {["Leva cerca de um minuto", "Código chega no WhatsApp", "Sem comprovante de matrícula"].map((b) => (
+                  <li key={b}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                    {b}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <a
+              href="/estudante"
+              className="cart-est-acao"
+              onClick={() => {
+                (window as any).gtag?.("event", "cta_estudante_click", { location: "card_oferta" });
+                (window as any).dataLayer?.push({ event: "cta_estudante_click", location: "card_oferta" });
+              }}
+            >
+              Ver minha condição
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M5 12h14M13 5l7 7-7 7" />
+              </svg>
+            </a>
           </div>
-          <span className="cart-estudante-cta">
-            Ver condição
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M5 12h14M13 5l7 7-7 7" />
-            </svg>
-          </span>
-        </a>
+        </div>
 
         {/* livro impresso avulso (discreto; nao dispersa do CTA principal) */}
         <p className="caption center" style={{ marginTop: "var(--sp4)" }}>

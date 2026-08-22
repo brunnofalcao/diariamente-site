@@ -826,3 +826,92 @@ body::before{ animation:breathe 9s var(--ease) infinite; }
 .hs-share{ display:inline-flex; align-items:center; gap:7px; margin-top:var(--sp4); padding:9px 16px; border-radius:999px; background:rgba(39,189,190,.08); border:1px solid rgba(39,189,190,.30); color:var(--p-400,#3DCBCC); font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; transition:background .2s var(--ease), transform .15s var(--spring); }
 .hs-share:hover{ background:rgba(39,189,190,.14); }
 .hs-share:active{ transform:scale(.97); }
+
+
+/* =====================================================================
+   DESTAQUE ESTUDANTE v2
+   ---------------------------------------------------------------------
+   Bloco ADITIVO: nada acima foi removido. As regras antigas de
+   .cart-estudante continuam no arquivo; estas vêm depois na cascata e
+   assumem o desenho novo.
+
+   Duas peças:
+   1. .cart-est-chip  linha fina ACIMA dos cards. Intercepta o estudante
+                      antes de ele bater no preço cheio e desistir.
+   2. .cart-est       card com peso real DEPOIS dos cards, para quem
+                      rolou até o fim.
+
+   O tracejado saiu de propósito: no sistema ele significa secundário.
+   ===================================================================== */
+
+/* ---------- 1. chip de interceptação ---------- */
+.cart-est-chip{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  margin:0 0 var(--sp5,20px); padding:11px 18px;
+  border-radius:999px; text-decoration:none;
+  background:rgba(39,189,190,.07); border:1px solid rgba(39,189,190,.26);
+  font-size:14px; color:var(--n-200,#CDD2D2); line-height:1.35; text-align:center;
+  transition:background .2s var(--ease), border-color .2s var(--ease);
+}
+.cart-est-chip b{ color:#27BDBE; font-weight:700; }
+.cart-est-chip svg{ flex:0 0 auto; color:#27BDBE; }
+.cart-est-chip:hover{ background:rgba(39,189,190,.13); border-color:rgba(39,189,190,.48); }
+@media (max-width:520px){
+  .cart-est-chip{ font-size:13.5px; padding:10px 14px; gap:8px; }
+}
+
+/* ---------- 2. card de destaque ---------- */
+.cart-est{
+  position:relative; overflow:hidden;
+  margin-top:var(--sp6,24px); padding:var(--sp6,24px);
+  border-radius:var(--r-3xl,28px);
+  background:linear-gradient(160deg, rgba(39,189,190,.12), rgba(39,189,190,.03) 58%, transparent);
+  border:1px solid rgba(39,189,190,.34);
+  box-shadow:0 20px 60px rgba(0,0,0,.30);
+}
+.cart-est::before{
+  content:""; position:absolute; top:-60%; right:-10%; width:320px; height:320px;
+  background:radial-gradient(circle, rgba(39,189,190,.16), transparent 68%);
+  pointer-events:none;
+}
+.cart-est-selo{
+  position:relative; display:inline-block; margin-bottom:14px;
+  padding:5px 13px; border-radius:999px;
+  background:#27BDBE; color:#00201F;
+  font-size:10.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase;
+}
+.cart-est-row{
+  position:relative; display:flex; align-items:center; justify-content:space-between;
+  gap:var(--sp6,24px);
+}
+.cart-est-h{
+  font-family:'Instrument Serif', Georgia, serif; font-weight:400;
+  font-size:26px; line-height:1.14; letter-spacing:-.01em; color:#fff;
+}
+.cart-est-d{
+  font-size:14.5px; line-height:1.6; color:var(--n-300,#AAB2B2);
+  margin-top:8px; max-width:46ch;
+}
+.cart-est-bul{ display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:14px; }
+.cart-est-bul li{
+  display:flex; align-items:center; gap:7px; list-style:none;
+  font-size:13px; color:var(--n-200,#CDD2D2);
+}
+.cart-est-bul svg{ flex:0 0 auto; color:#27BDBE; }
+.cart-est-acao{
+  flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  height:52px; padding:0 24px; border-radius:16px; white-space:nowrap;
+  background:#27BDBE; color:#00201F; text-decoration:none;
+  font-size:15.5px; font-weight:700;
+  box-shadow:0 10px 30px rgba(39,189,190,.26);
+  transition:background .2s var(--ease), box-shadow .25s var(--ease), transform .12s var(--spring);
+}
+.cart-est-acao:hover{ background:#3DCBCC; box-shadow:0 14px 40px rgba(39,189,190,.36); }
+.cart-est-acao:active{ transform:scale(.97); }
+
+@media (max-width:760px){
+  .cart-est{ padding:var(--sp5,20px); }
+  .cart-est-row{ flex-direction:column; align-items:stretch; gap:var(--sp5,20px); }
+  .cart-est-h{ font-size:23px; }
+  .cart-est-acao{ width:100%; height:54px; }
+}

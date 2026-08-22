@@ -78,7 +78,9 @@ export type Plano = {
   precoNumero: number;     // preço COBRADO agora (founders enquanto LANCAMENTO.ativa)
   preco: string;
   precoDe?: string;        // preço nominal riscado (âncora)
-  parcela?: string;        // [CONFIRMAR na Hotmart] — não exibir valor inventado
+  parcela?: string;        // valor da parcela, confirmado na Hotmart
+  parcelas?: number;       // quantidade de parcelas
+  parcelaTotal?: string;   // total pago no parcelado (obrigatório por CDC quando há acréscimo)
   precoVista?: string;
   perDia?: string;
   inclui: string[];
@@ -130,6 +132,12 @@ export const PLANO_APP: Plano = {
   preco: "137,90",
   precoDe: "197",
   precoVista: "R$ 137,90 à vista",
+  // Parcelamento confirmado por Brunno (ago/2026).
+  // 12 x 14,26 = 171,12 contra 137,90 à vista: há acréscimo de R$ 33,22 (24,1%).
+  // Por isso a página exibe as duas informações juntas. Ver nota no LEIA-ME.
+  parcela: "14,26",
+  parcelas: 12,
+  parcelaTotal: "171,12",
   perDia: "menos de R$ 0,38 por dia",
   inclui: [
     "Uma provocação por dia, os 365 dias do ano",
@@ -240,9 +248,6 @@ export const ESTUDANTE = {
 
   // validade do código enviado por WhatsApp (espelha VALIDADE_HORAS da API)
   validadeHoras: 48,
-
-  // tempo de conferência antes do envio do código (espelha ESPERA_MINUTOS da API)
-  esperaMinutos: 5,
 
   // um código por CPF (regra aplicada na API)
   regra: "Um código por pessoa. Enviado só no WhatsApp informado.",

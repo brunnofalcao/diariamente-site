@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ObrigadoShell } from "@/components/ObrigadoShell";
+import { PurchaseTracking } from "@/components/PurchaseTracking";
 
 export const metadata: Metadata = {
   title: "Tudo certo, seu Diariamente está a caminho",
@@ -8,5 +9,12 @@ export const metadata: Metadata = {
 };
 
 export default function ObrigadoAprovado() {
-  return <ObrigadoShell estado="aprovado" />;
+  return (
+    <>
+      {/* Purchase dispara SÓ aqui. Nas telas de boleto/Pix pendente e de
+          análise a venda ainda não existe: disparar lá inflaria o pixel. */}
+      <PurchaseTracking />
+      <ObrigadoShell estado="aprovado" />
+    </>
+  );
 }

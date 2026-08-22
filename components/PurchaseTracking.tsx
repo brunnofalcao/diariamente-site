@@ -24,7 +24,16 @@ export function PurchaseTracking() {
       params.get("hottok") ||
       undefined;
 
-    const valor = PLANO.precoNumero;
+    // Valor real da transação, quando a Hotmart o repassa na URL de retorno.
+    // Sem isso, uma compra do combo (app + livro) seria reportada ao Meta pelo
+    // preço do app, e o ROAS da campanha sairia subestimado.
+    const bruto =
+      params.get("value") ||
+      params.get("price") ||
+      params.get("full_price") ||
+      params.get("transaction_value");
+    const lido = bruto ? Number(String(bruto).replace(",", ".")) : NaN;
+    const valor = Number.isFinite(lido) && lido > 0 ? lido : PLANO.precoNumero;
 
     // Meta Pixel
     (window as any).fbq?.(
