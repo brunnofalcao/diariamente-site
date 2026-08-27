@@ -186,6 +186,7 @@ const RESUMO: [string, string][] = [
   ["Condição", "Exclusiva para estudantes de graduação"],
   ["Formato", "Aplicativo para iPhone e Android, uma provocação por dia"],
   ["Duração", "365 provocações, uma liberada a cada dia"],
+  ["Preço estudante", `R$ ${ESTUDANTE.preco} no ano (valor cheio R$ ${ESTUDANTE.precoDe})`],
   ["Entrega", "Código pessoal enviado por WhatsApp"],
   ["Público", "Estudantes de graduação de qualquer curso"],
   ["Autores", "Brunno Falcão e Roberta Carbonari"],
@@ -391,15 +392,44 @@ export default function Estudante() {
         {/* ----------------------------- OFERTA ----------------------------- */}
         <section className="ed-sec ed-defer" id="condicao">
           <div className="ed-wrap">
-            <div className="ed-sec-head" style={{ marginBottom: "clamp(28px, 4vw, 44px)" }}>
+            <div className="ed-sec-head" style={{ marginBottom: "clamp(24px, 3.5vw, 36px)" }}>
               <span className="ed-overline">Condição de estudante</span>
               <h2 className="ed-h2">
-                Uma condição que existe enquanto <em>você ainda está estudando</em>.
+                O mesmo acesso da turma toda, <em>pelo preço de quem ainda estuda</em>.
               </h2>
+              <p className="ed-sec-sub">
+                Nada é retirado da sua versão. É o app inteiro, com as 365 provocações,
+                a ofensiva, o menu Ações e o lembrete diário. O que muda é quanto você
+                paga por ele enquanto está na graduação.
+              </p>
             </div>
+
+            {/* A condição existe enquanto a pessoa é estudante. Não é escassez
+                fabricada: é a natureza da condição, e dizer isso é honesto. */}
+            <div className="ed-urg">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5.2l3.2 1.9" />
+              </svg>
+              <span>
+                Essa condição existe <b>enquanto você ainda está na graduação</b>. Depois
+                de formado, a entrada passa a ser pelo valor cheio.
+              </span>
+            </div>
+
             <div className="ed-reveal">
               <BlocoPreco />
             </div>
+
+            <div className="ed-actions" style={{ justifyContent: "center", marginTop: "clamp(28px, 4vw, 40px)" }}>
+              <a href="#formulario" className="ed-btn ed-btn-primary">
+                Solicitar meu código
+              </a>
+            </div>
+            <p className="ed-legal" style={{ marginTop: 12 }}>
+              Solicitar não é comprar e não gera compromisso. O código chega no seu
+              WhatsApp e você decide depois, com calma.
+            </p>
           </div>
         </section>
 

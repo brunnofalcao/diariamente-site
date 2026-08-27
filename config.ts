@@ -236,7 +236,10 @@ export const EMPRESA = {
 // para o desconto exibido ser sempre verdadeiro em relação ao que está à venda.
 // ---------------------------------------------------------------------
 export const ESTUDANTE = {
-  mostrarPreco: false,
+  // Ligado: a /estudante passa a exibir preço, desconto e comparativo.
+  // Vire para false se a condição ainda não existir na Hotmart: a página
+  // volta à versão sem número sem quebrar nada.
+  mostrarPreco: true,
 
   precoNumero: 77,
   preco: "77,00",
