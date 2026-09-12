@@ -101,7 +101,7 @@ export function HeroProvocacao() {
   const compartilhar = async () => {
     const texto = prov
       ? '"' + prov.texto + '" — provocação de hoje no Diariamente.'
-      : "Diariamente: uma provocação por dia, por 365 dias.";
+      : "Diariamente: uma prática diária de hábitos e bem-estar.";
     const url = SITE.dominio + "/?utm_source=share&utm_medium=organic&utm_campaign=provocacao_do_dia";
     (window as any).gtag?.("event", "share", { method: "provocacao_hero" });
     (window as any).dataLayer?.push({ event: "share_provocacao" });
@@ -160,7 +160,7 @@ export function HeroProvocacao() {
 
         {/* rodapé: autor + microcopy + compartilhar */}
         <div className="hs-foot">
-          {done && prov?.autor && <span className="hs-autor">{prov.autor}</span>}
+          
           <span className="hs-sub">Sua vez. O que você vai fazer com isso?</span>
           <div>
             <button type="button" className="hs-share" onClick={compartilhar} aria-label="Compartilhar a provocação do dia">

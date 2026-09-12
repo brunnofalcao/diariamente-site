@@ -1,98 +1,84 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { LIVRO_AVULSO } from "@/config";
-import { GARANTIA } from "@/config";
+import { useState } from "react";
+import { GARANTIA, PLANO_APP } from "@/config";
 
-const FAQ_ITEMS = [
+/* =====================================================================
+   FAQ · Brandbook 5.0
+   ---------------------------------------------------------------------
+   Reescrito contra a matriz de claims (seção 14) e as três regras de tom
+   (seção 08). Nenhuma resposta:
+     - afirma o que o leitor sente ou por que ele falhou
+     - transforma o convite em cobrança moral
+     - reduz dificuldade real a falta de atitude
+
+   Nenhuma menção a livro, a autoria individual ou a resultado clínico.
+   Verbos restritos aos permitidos (seção 09): promover, apoiar, favorecer,
+   construir, sustentar, manter, refletir, estimular, organizar, praticar,
+   repetir, voltar.
+   ===================================================================== */
+
+const PERGUNTAS: { q: string; a: string }[] = [
   {
-    q: "É caro?",
-    a: "Dá menos de R$ 1 por dia por um ano inteiro de provocação diária, com um sistema feito pra você realmente usar, não esquecer numa estante digital. E tem 7 dias de garantia: se não for pra você, devolvemos.",
+    q: "Já baixei app de hábito antes. Parei na segunda semana.",
+    a: "É o ponto exato onde o Diariamente foi construído. Ele não conta dias seguidos e não tem sequência para quebrar: conta quantas vezes você voltou, e esse número nunca zera. Faltar cinco dias não apaga as trinta voltas anteriores.",
+  },
+  {
+    q: "E se eu perder um dia?",
+    a: "O dia que você não veio fica visível, sem alarme e sem cobrança. Ele fica no meio da sua história, e a história continua depois dele. Interromper não significa abandonar.",
   },
   {
     q: "Não tenho tempo.",
-    a: "É uma provocação por dia, cerca de 5 minutos. O app inclusive te lembra no WhatsApp. A questão nunca foi tempo: foi constância.",
+    a: "São três minutos: um texto curto, uma reflexão e uma ação pequena que cabe no dia que você já tem. Não pede rotina nova, horário reservado nem disciplina que você ainda não construiu.",
   },
   {
-    q: "Já comprei livros assim e larguei.",
-    a: "Exatamente por isso o Diariamente foi construído no ponto onde você largou antes. Ofensiva, conquistas e Ações existem pra te ajudar a voltar no dia seguinte, não pra te cobrar perfeição.",
+    q: "O que exatamente eu recebo por dia?",
+    a: "Um texto autoral, escrito para ser lido em poucos minutos. Ele provoca uma reflexão e termina numa ação possível ainda hoje. Você registra a ação e volta no dia seguinte.",
   },
   {
-    q: "Será que funciona pra mim?",
-    a: "Funciona pra quem aparece 5 minutos por dia. O resto o sistema apoia: o lembrete no WhatsApp, o progresso visível e a ação concreta de cada dia.",
+    q: "Isso é terapia ou tratamento?",
+    a: "Não. O Diariamente é uma prática diária de hábitos e bem-estar. Não trata, não diagnostica e não substitui acompanhamento profissional. Se você precisa de cuidado clínico, procure um profissional de saúde.",
   },
   {
-    q: "Quero só o livro impresso.",
-    a: (
-      <>
-        O livro físico Diariamente é vendido à parte.{" "}
-        <a href={LIVRO_AVULSO} target="_blank" rel="noopener noreferrer" className="teal">
-          Ele está disponível aqui
-        </a>
-        . E quando quiser transformar a leitura em ritual diário, o app te espera.
-      </>
-    ),
-  },
-  {
-    q: "Já tenho o livro físico.",
-    a: "O app é a versão que te faz usar o livro: te lembra, registra seu progresso e transforma cada provocação em ação. O Diariamente Club é o acesso ao app, com as 365 provocações e todo o sistema de constância.",
+    q: "Funciona mesmo?",
+    a: "O ritual é construído a partir de princípios consistentes com a ciência do comportamento e da formação de hábitos: repetir a mesma ação num contexto recorrente pode favorecer que ela se torne automática, e transformar intenção em plano concreto pode aumentar a probabilidade de agir. Não existe número mágico de dias, e ninguém pode prometer prazo.",
   },
   {
     q: "Posso ler tudo de uma vez?",
-    a: "Não, e isso é de propósito. No app você vive o dia de hoje, um por vez. É o que diferencia um ritual diário de um livro que você devora e esquece. Quando quiser adiantar, sua própria constância destrava o próximo dia: você conquista o direito de seguir em frente.",
+    a: "Não. Um texto por dia, sem antecipar e sem acumular. A obrigação diária é do Diariamente, não sua: ele aparece todo dia, você volta quando puder.",
   },
   {
     q: "Como recebo o acesso?",
-    a: "Por e-mail, logo após a confirmação. Você abre o app e já faz a provocação do dia 1, e sua jornada começa na hora.",
+    a: "Por e-mail, assim que o pagamento é confirmado. O app está disponível para iPhone e Android, com o mesmo acesso nos dois.",
   },
   {
-    q: "E se eu não gostar?",
+    q: "E se não for pra mim?",
     a: GARANTIA.texto,
+  },
+  {
+    q: "Quanto custa?",
+    a: `R$ ${PLANO_APP.preco}, ${PLANO_APP.perDia} por um ano inteiro. E tem ${GARANTIA.dias} dias de garantia: se não for pra você, devolvemos.`,
   },
 ];
 
 export function FAQ() {
-  const [open, setOpen] = useState<number | null>(0);
+  const [aberta, setAberta] = useState<number | null>(0);
 
   return (
-    <section id="faq">
-      <div className="wrap-content">
-        <div className="center">
-          <span className="overline eyebrow">Perguntas frequentes</span>
-          <h2 className="display-md sec-title">Ainda em dúvida? Respondido.</h2>
+    <div className="faq">
+      {PERGUNTAS.map((item, i) => (
+        <div key={item.q} className={`faq-item ${aberta === i ? "open" : ""}`}>
+          <button
+            className="faq-q"
+            onClick={() => setAberta(aberta === i ? null : i)}
+            aria-expanded={aberta === i}
+          >
+            <span>{item.q}</span>
+            <span className="faq-ic" aria-hidden="true" />
+          </button>
+          {aberta === i && <div className="faq-a">{item.a}</div>}
         </div>
-
-        <div className="stack" style={{ marginTop: "var(--sp8)" }}>
-          {FAQ_ITEMS.map((item, i) => {
-            const isOpen = open === i;
-            return (
-              <div key={i} className="sf-dark" style={{ overflow: "hidden", borderRadius: "var(--r-2xl)" }}>
-                <button
-                  onClick={() => {
-                    setOpen(isOpen ? null : i);
-                    (window as any).dataLayer?.push({ event: "FAQClick", pergunta: item.q });
-                  }}
-                  style={{
-                    width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center",
-                    gap: "var(--sp4)", padding: "var(--sp5)", background: "transparent", border: "none",
-                    color: "var(--n-0)", cursor: "pointer", textAlign: "left", fontFamily: "var(--font-sans)",
-                  }}
-                >
-                  <span className="h3">{item.q}</span>
-                  <span className="teal" style={{ flex: "0 0 auto", fontSize: 22, transition: "transform .25s", transform: isOpen ? "rotate(45deg)" : "none" }}>+</span>
-                </button>
-                {/* grid-rows anima até a altura REAL — max-height fixo cortava
-                    respostas longas no mobile */}
-                <div style={{ display: "grid", gridTemplateRows: isOpen ? "1fr" : "0fr", transition: "grid-template-rows .35s var(--ease)" }}>
-                  <div style={{ overflow: "hidden", minHeight: 0 }}>
-                    <p className="body-sm muted" style={{ padding: "0 var(--sp5) var(--sp5)" }}>{item.a}</p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
+      ))}
+    </div>
   );
 }

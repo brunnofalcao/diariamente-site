@@ -1,52 +1,169 @@
-"use client";
+/* =====================================================================
+   MARCA · Brandbook 5.0
+   ---------------------------------------------------------------------
+   Símbolo: sete cápsulas em oito posições. A das 6h fica VAZIA — é a
+   abertura, o dia em que a pessoa não veio. O vão está no passado, e a
+   história continuou depois dele. É o desenho literal de "interromper
+   não é abandonar".
 
-// Logomark — livro aberto estilizado (brandbook 06). currentColor herda do contexto.
-export function Logomark({ size = 28 }: { size?: number }) {
+   Construção normativa (seção 17):
+     grade 100x100, centro (50,50)
+     oito posições a 45°, a de 6h vazia
+     cápsula do raio 22 ao 40 (comprimento 18), espessura 9, ponta redonda
+     hoje às 12h, opacidade 100%, SEMPRE no topo
+     gradação horária a partir de 1h30: 30 · 40 · 50 · 60 · 75 · 90 · 100%
+
+   PROIBIDO: girar, pulsar em loop, usar como indicador de carregamento,
+   fechar a abertura, acrescentar a oitava cápsula, aplicar sombra,
+   contorno, brilho, gradiente ou 3D.
+
+   O escrito é Literata Regular, caixa baixa, tracking -1%. Nunca em
+   caixa alta (em versal a palavra soa a ordem) e nunca com destaque em
+   "mente". Instrument Serif foi aposentada nesta versão.
+   ===================================================================== */
+
+const CAPSULAS: { d: string; o: number }[] = [
+  { d: "M50 28 V10", o: 1 },                 // 12h · hoje
+  { d: "M65.6 34.4 L78.3 21.7", o: 0.3 },    // 1h30
+  { d: "M72 50 H90", o: 0.4 },               // 3h
+  { d: "M65.6 65.6 L78.3 78.3", o: 0.5 },    // 4h30
+  /* 6h — A ABERTURA. Não preencher. */
+  { d: "M34.4 65.6 L21.7 78.3", o: 0.6 },    // 7h30
+  { d: "M28 50 H10", o: 0.75 },              // 9h
+  { d: "M34.4 34.4 L21.7 21.7", o: 0.9 },    // 10h30
+];
+
+/**
+ * Simbolo — isotipo isolado. Perfis, favicon, marca d'água e qualquer
+ * aplicação abaixo do tamanho mínimo do lockup. Mínimo 16px.
+ *
+ * `tom`:
+ *   "teal"   sobre fundo escuro ou claro (padrão)
+ *   "escuro" sobre teal — sobre teal as opacidades mínimas sobem para 45%
+ *   "branco" mono, sobre fotografia escura
+ */
+export function Simbolo({
+  size = 28,
+  tom = "teal",
+  title,
+}: {
+  size?: number;
+  tom?: "teal" | "escuro" | "branco";
+  title?: string;
+}) {
+  const cor = tom === "teal" ? "#27BDBE" : tom === "escuro" ? "#131918" : "#FFFFFF";
+  const piso = tom === "escuro" ? 0.45 : 0; // regra do brandbook para fundo teal
+
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden="true">
-      <path d="M24 12v26" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
-      <path d="M24 12C24 12 18 7 8 8v25c10-1 16 4 16 4" stroke="currentColor" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M24 12C24 12 30 7 40 8v25c-10-1-16 4-16 4" stroke="currentColor" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
+      role={title ? "img" : undefined}
+      aria-hidden={title ? undefined : true}
+      aria-label={title}
+      style={{ display: "block", flex: "0 0 auto" }}
+    >
+      {title && <title>{title}</title>}
+      <g fill="none" stroke={cor} strokeWidth="9" strokeLinecap="round">
+        {CAPSULAS.map((c) => (
+          <path key={c.d} d={c.d} opacity={Math.max(c.o, piso)} />
+        ))}
+      </g>
     </svg>
   );
 }
 
+/** Escrito isolado. Só em texto corrido institucional e assinatura de e-mail. */
+export function Escrito({
+  size = 22,
+  tom = "branco",
+}: {
+  size?: number;
+  tom?: "branco" | "escuro";
+}) {
+  return (
+    <span
+      style={{
+        fontFamily: "var(--font-serif)",
+        fontWeight: 400,
+        fontSize: size,
+        letterSpacing: "-0.01em",
+        lineHeight: 1,
+        color: tom === "branco" ? "#fff" : "#131918",
+        textTransform: "lowercase",
+      }}
+    >
+      diariamente
+    </span>
+  );
+}
+
+/**
+ * Lockup horizontal — uso preferencial.
+ * símbolo = 1,2x o corpo do texto · espaço = 0,3x a altura do símbolo.
+ */
+export function LockupHorizontal({
+  altura = 26,
+  tom = "escuro-fundo",
+}: {
+  /** altura do símbolo em px. Mínimo 24 no lockup horizontal. */
+  altura?: number;
+  /** "escuro-fundo" = sobre S0 · "claro-fundo" = sobre branco · "teal-fundo" = sobre P500 */
+  tom?: "escuro-fundo" | "claro-fundo" | "teal-fundo";
+}) {
+  const simbolo = tom === "teal-fundo" ? "escuro" : "teal";
+  const escrito = tom === "escuro-fundo" ? "branco" : "escuro";
+  return (
+    <span
+      style={{ display: "inline-flex", alignItems: "center", gap: altura * 0.3, lineHeight: 0 }}
+    >
+      <Simbolo size={altura} tom={simbolo} />
+      <Escrito size={altura / 1.2} tom={escrito} />
+    </span>
+  );
+}
+
+/**
+ * Lockup vertical — formatos quadrados e verticais.
+ * símbolo = 2,5x o corpo do texto · espaço = 0,15x a altura do símbolo.
+ */
+export function LockupVertical({
+  altura = 44,
+  tom = "escuro-fundo",
+}: {
+  altura?: number;
+  tom?: "escuro-fundo" | "claro-fundo" | "teal-fundo";
+}) {
+  const simbolo = tom === "teal-fundo" ? "escuro" : "teal";
+  const escrito = tom === "escuro-fundo" ? "branco" : "escuro";
+  return (
+    <span
+      style={{
+        display: "inline-flex", flexDirection: "column", alignItems: "center",
+        gap: altura * 0.15, lineHeight: 0,
+      }}
+    >
+      <Simbolo size={altura} tom={simbolo} />
+      <Escrito size={altura / 2.5} tom={escrito} />
+    </span>
+  );
+}
+
+/* --- compatibilidade: nomes antigos seguem funcionando durante a migração --- */
+export function Logomark({ size = 28 }: { size?: number }) {
+  return <Simbolo size={size} />;
+}
 export function Wordmark({ size = 22 }: { size?: number }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--p-500)" }}>
-      <Logomark size={size + 4} />
-      <span style={{ fontFamily: "var(--font-serif)", fontSize: size, color: "var(--n-0)", letterSpacing: "-0.01em" }}>
-        Diariamente
-      </span>
-    </div>
-  );
+  return <Escrito size={size} />;
+}
+export function OfficialLogo({ height = 26 }: { height?: number }) {
+  return <LockupHorizontal altura={height} />;
+}
+export function FooterLogo({ height = 44 }: { height?: number }) {
+  return <LockupVertical altura={height} />;
 }
 
-// Logo oficial (imagem Cloudinary) — usada centralizada no topo do site.
-export function OfficialLogo({ height = 34 }: { height?: number }) {
-  return (
-    <img
-      src="https://res.cloudinary.com/dlzrfhwin/image/upload/f_auto,q_auto/v1775167899/Logo_Diariamente_1_smbwdg.png"
-      alt="Diariamente"
-      height={height}
-      style={{ height: `clamp(40px, 9vw, ${height}px)`, width: "auto", display: "block" }}
-    />
-  );
-}
-
-// Logomarca para o rodapé (Asset_10 — Cloudinary oficial)
-export function FooterLogo({ height = 56 }: { height?: number }) {
-  return (
-    <img
-      src="https://res.cloudinary.com/dlzrfhwin/image/upload/f_auto,q_auto/v1775400164/Asset_10_cirv6z.png"
-      alt="Diariamente"
-      height={height}
-      style={{ height, width: "auto", display: "block", margin: "0 auto" }}
-    />
-  );
-}
-
-// Link de Instagram do autor (ícone + @handle), abre em nova aba.
 export function InstagramLink({ handle }: { handle: string }) {
   return (
     <a
@@ -164,7 +281,7 @@ export function AppMockup({ width = 264 }: { width?: number }) {
           <div className="caption" style={{ marginTop: 7 }}>47 de 365 · você não falhou nenhum dia</div>
         </div>
         <div style={{ marginTop: 18, background: "var(--p-500)", color: "var(--s-0)", borderRadius: 15, padding: "12px 0", textAlign: "center", fontWeight: 700, fontSize: 14 }}>
-          Marcar como lido
+          Voltei hoje
         </div>
         <div style={{ marginTop: 9, textAlign: "center", fontSize: 12, color: "var(--n-400)" }}>
           Sua vez. O que você vai fazer com isso?

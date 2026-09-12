@@ -1,8 +1,9 @@
-import { SITE, PROVA, AUTORES, SCREENSHOTS, LIFESTYLE } from "@/config";
-import { Logomark, ImageSlot, OfficialLogo, FooterLogo, InstagramLink } from "@/components/Brand";
+import { SITE, PROVA, SCREENSHOTS, LIFESTYLE, PLANO_APP, ESTUDANTE, CONSELHO } from "@/config";
+import { Logomark, ImageSlot, OfficialLogo } from "@/components/Brand";
 import { HeroProvocacao } from "@/components/HeroProvocacao";
 import { StickyCTA, RevealOnScroll } from "@/components/Sticky";
 import { StoreBadges } from "@/components/StoreBadges";
+import { Rodape } from "@/components/Rodape";
 import { Oferta } from "@/components/Oferta";
 import { FAQ } from "@/components/FAQ";
 
@@ -26,22 +27,25 @@ export default function Page() {
         <div className="wrap">
           <div className="split">
             <div className="split-copy">
-              <span className="badge badge-primary eyebrow">De Brunno Falcão &amp; Roberta Carbonari</span>
+              {/* Nível 2 da hierarquia de mensagens: a TESE. Abre institucional
+                  e aquisição. Nunca é substituída por linguagem genérica de
+                  bem-estar (seção 03: as cinco formulações são fixas). */}
+              <span className="badge badge-primary eyebrow">Uma prática diária de hábitos e bem-estar</span>
               <h1 className="display" style={{ margin: "var(--sp4) 0 var(--sp6)" }}>
-                Você não falha por falta de vontade.{" "}
-                <span className="teal">Falha por falta de constância.</span>
+                O mundo vende grandes recomeços.{" "}
+                <span className="teal">Nós defendemos pequenos retornos.</span>
               </h1>
               <p className="lead" style={{ maxWidth: "48ch", marginBottom: "var(--sp8)" }}>
-                Diariamente é o livro que virou um ritual diário no seu bolso: uma provocação
-                por dia, por 365 dias, com um app criado pra te ajudar a voltar amanhã,
-                depois de amanhã e no dia seguinte.
+                Um texto por dia que provoca uma reflexão e termina numa ação possível
+                ainda hoje. Três minutos. Quando você faltar, ele não cobra: ele te espera.
+                Porque interromper não significa abandonar.
               </p>
               <div className="hero-ctas">
                 <a href="#oferta" className="btn btn-primary btn-lg">Quero começar hoje</a>
-                <a href="#metodo" className="btn btn-ghost">Como funciona →</a>
+                <a href="#metodo" className="btn btn-ghost">O ritual diário →</a>
               </div>
               <div className="caption" style={{ marginTop: "var(--sp6)" }}>
-                Mais de <span className="teal" style={{ fontWeight: 700 }}>5.000 pessoas</span> impactadas · acesso por e-mail
+                Mais de <span className="teal" style={{ fontWeight: 700 }}>5.000 pessoas</span> já começaram · e hoje leram o mesmo texto que você
               </div>
             </div>
 
@@ -80,7 +84,7 @@ export default function Page() {
           <span className="overline eyebrow">O ciclo que você conhece</span>
           <h2 className="display-md" style={{ marginBottom: "var(--sp6)" }}>Você já começou. Mais de uma vez.</h2>
           <div className="stack lead">
-            <p>Comprou o livro. Baixou o app. Prometeu que dessa vez ia até o fim.</p>
+            <p>Baixou o app. Prometeu que dessa vez ia até o fim. Parou na segunda semana.</p>
             <p>E no terceiro, quarto, quinto dia… a vida engoliu.</p>
             <p>
               O problema nunca foi você ser "sem disciplina". O problema é que ninguém te
@@ -104,11 +108,11 @@ export default function Page() {
               <div className="lifestyle-frame">
                 <ImageSlot
                   tag="Lifestyle"
-                  label="Foto ambiente, livro aberto à meia-luz, café, mood premium"
+                  label="Foto ambiente, dia comum: mesa, caderno, café, luz natural"
                   dims="recomendado 1200×1500px · vertical 4:5"
                   shape="portrait"
                   src={LIFESTYLE || undefined}
-                  alt="Livro Diariamente aberto sobre a mesa ao amanhecer, com café"
+                  alt="Mesa de um dia comum ao amanhecer, com caderno aberto e café"
                 />
               </div>
             </div>
@@ -132,7 +136,7 @@ export default function Page() {
         <div className="wrap">
           <div className="center sec-head">
             <span className="overline eyebrow">Por que dessa vez funciona</span>
-            <h2 className="display-md">O Método Diariamente</h2>
+            <h2 className="display-md">O ritual diário</h2>
             <p className="lead sec-intro" style={{ maxWidth: "44ch", marginLeft: "auto", marginRight: "auto" }}>
               Construído em cima do ponto exato onde todo mundo desiste.
             </p>
@@ -174,7 +178,7 @@ export default function Page() {
         <div className="wrap">
           <div className="center sec-head">
             <span className="overline eyebrow">O que tem dentro</span>
-            <h2 className="display-md">Um app inteiro pra você não parar</h2>
+            <h2 className="display-md">Construído para a volta, <span className="teal">não para a perfeição</span></h2>
           </div>
 
           {/* destaque: HOJE + DIAS em screenshots grandes */}
@@ -206,9 +210,9 @@ export default function Page() {
           <div className="grid cols-3 feats">
             {[
               { t: "Ações", d: "A provocação não para na reflexão: você envia para Ações e transforma o insight do dia em tarefa concreta. É onde pensar vira fazer." },
-              { t: "Ofensiva", d: "Sua sequência de dias, construída um por vez. Cada registro fortalece o ritmo que você está criando." },
+              { t: "Contador de voltas", d: "O total de dias em que você voltou. Não conta dias seguidos e nunca zera: faltou um dia, a contagem continua de onde parou." },
               { t: "Conquistas", d: "Cada marco reconhecido. O esforço acumulado vira troféu." },
-              { t: "Ranking", d: "Você não caminha sozinho. Tem gente fazendo junto." },
+              { t: "A ausência aparece", d: "O dia em que você não veio fica visível, sem alarme e sem culpa. Está no meio da história, e a história continua depois dele." },
               { t: "Notificações por WhatsApp", d: "A provocação chega onde você já está. Zero esforço pra lembrar: o ritual te encontra." },
               { t: "Compartilhar", d: "Transforme uma provocação em story e leve sua reflexão adiante." },
             ].map((f) => (
@@ -250,7 +254,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ---------- UM DIA POR VEZ (diferencial vs livro) ---------- */}
+      {/* ---------- UM DIA POR VEZ ---------- */}
       <section className="reveal" style={{ paddingTop: 0 }}>
         <div className="wrap">
           <div className="split reverse">
@@ -260,23 +264,24 @@ export default function Page() {
               </div>
             </div>
             <div className="split-copy">
-              <span className="overline eyebrow">O que o livro não faz por você</span>
+              <span className="overline eyebrow">A obrigação diária é nossa</span>
               <h2 className="display-md" style={{ marginBottom: "var(--sp5)" }}>
                 Um dia por vez. <span className="teal">De propósito.</span>
               </h2>
               <p className="lead" style={{ marginBottom: "var(--sp4)" }}>
-                No livro, nada te impede de devorar os 365 num domingo de empolgação e
-                esquecer todos na segunda. O atalho parece liberdade, mas é exatamente onde a
-                transformação morre.
+                Quando dá para consumir tudo de uma vez, o domingo de empolgação come o ano
+                inteiro e a segunda-feira não sobra nada. O atalho parece liberdade, mas é
+                onde a prática morre.
               </p>
               <p className="lead" style={{ marginBottom: "var(--sp4)" }}>
-                No app é diferente: você tem o dia de hoje. Inteiro, presente, sem pressa de
-                terminar. Como deveria ser um ritual que se chama <span className="teal live-word">Diariamente</span>.
+                Aqui você tem o dia de hoje. Inteiro, presente, sem pressa de terminar.
+                <span className="teal live-word"> O Diariamente é diário. Você não precisa ser.</span>
               </p>
               <p className="lead">
-                E quando bater aquela vontade de adiantar? Você acumula créditos mantendo a
-                constância e cumprindo conquistas, e usa pra destravar o próximo dia. Você não
-                compra o direito de pular: você <span className="teal">conquista</span>.
+                São 365 textos por ano, um para cada dia. No ano seguinte, na mesma data,
+                um texto novo. <span className="teal">A prática não termina: ela recomeça.</span>
+                Você não está comprando um catálogo para consumir. Está entrando numa rotina
+                que continua enquanto você quiser voltar.
               </p>
             </div>
           </div>
@@ -311,7 +316,7 @@ export default function Page() {
             <div className="sf-dark" style={{ padding: "var(--sp8)" }}>
               <span className="badge badge-primary eyebrow">É pra você se</span>
               <ul className="check-list" style={{ marginTop: "var(--sp4)" }}>
-                <li>Já tentou e largou outros livros, journals ou apps</li>
+                <li>Já tentou e largou outros apps de hábito ou journals</li>
                 <li>Quer mudança real, mas precisa de um sistema que te segure</li>
                 <li>Prefere consistência a surto de motivação</li>
               </ul>
@@ -330,40 +335,94 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ---------- AUTORIDADE (fotos dos autores) ---------- */}
-      <section className="reveal">
+      {/* ---------- LEITURA SIMULTÂNEA ----------
+           O conteúdo é chaveado por dia do ano na API: todo mundo lê o
+           MESMO texto no mesmo dia. É o território "Quem começa junto"
+           da seção 11, e estava sem uso na página. */}
+      <section className="reveal" style={{ paddingTop: 0 }}>
+        <div className="wrap">
+          <div className="junto">
+            <div className="junto-seq" aria-hidden="true">
+              <span className="seq grad">
+                <i /><i /><i /><i /><i /><i /><i className="is-hoje" />
+              </span>
+            </div>
+            <h2 className="t-title junto-h">
+              Ninguém aqui está lendo sozinho.
+            </h2>
+            <p className="junto-d">
+              Não existe trilha individual nem ritmo separado. O texto de hoje é o
+              mesmo para todo mundo, no mesmo dia. Quem voltou depois de uma semana
+              fora encontra exatamente o mesmo ponto de quem não faltou nenhum dia.
+            </p>
+            <p className="junto-f">Você não precisa alcançar ninguém. É só voltar.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------- MANIFESTO (seção 16 do brandbook) ----------
+           Substitui a antiga seção de autoria. O brandbook credita
+           procedência por conselho editorial, nunca por nome solto — e a
+           marca fala em primeira pessoa do plural, não por trás de rostos.
+           Literata, fundo S0, um único ponto de teal. */}
+      <section className="reveal" id="manifesto">
+        <div className="wrap">
+          <div className="manifesto">
+            <div className="manifesto-marca" aria-hidden="true">
+              <Logomark size={34} />
+            </div>
+
+            <div className="manifesto-corpo">
+              <p>
+                A gente costuma esperar grandes sinais para mudar. Um novo ano.
+                Uma nova fase. Um grande recomeço.
+              </p>
+              <p>
+                Mas a vida não é construída só nos grandes momentos. Ela é
+                construída naquilo <em>para que a gente volta</em>.
+              </p>
+              <p>
+                No que você repete quando ninguém está olhando. Na ação pequena
+                que você decide executar. No dia em que quase não foi, mas voltou.
+              </p>
+              <p className="manifesto-forte">
+                Interromper não é abandonar. Perder um dia não é perder uma jornada.
+              </p>
+              <p>
+                Não tudo hoje. Não perfeito. Não para provar nada a ninguém.
+              </p>
+              <p className="manifesto-fecho">Só hoje. E amanhã de novo.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------- FRASES DE ATIVAÇÃO (seção 11: cinco territórios) ----------
+           Cada card é uma frase-mãe de campanha. Todas derivam de volta,
+           interrupção, repetição e acúmulo. Nenhuma celebra sequência
+           consecutiva nem pune a quebra. */}
+      <section className="reveal" style={{ paddingTop: 0 }}>
         <div className="wrap">
           <div className="center sec-head">
-            <span className="overline eyebrow">Quem está por trás</span>
-            <h2 className="display-md">Brunno Falcão &amp; Roberta Carbonari</h2>
+            <span className="overline eyebrow">No que a gente acredita</span>
+            <h2 className="display-md">Cinco frases que governam tudo aqui.</h2>
           </div>
 
-          <div className="grid cols-2">
-            <div className="sf-dark autor-card" style={{ overflow: "hidden" }}>
-              <div className="autor-foto">
-                <ImageSlot tag="Foto autor" label="Brunno Falcão — retrato" dims="1000×1000px · quadrado" shape="square" src={AUTORES.brunno.foto || undefined} alt="Brunno Falcão" style={{ borderRadius: 0, border: "none", borderBottom: "1px solid var(--border)" }} />
+          <div className="ativacao">
+            {[
+              { k: "Dia 1", f: "Hoje é o dia 1. De novo. E tudo bem.", d: "Recomeçar não é fracasso acumulado. É o mecanismo." },
+              { k: "Voltas acumuladas", f: "Cada volta conta. Nenhuma zera.", d: "O número que cresce mesmo nas semanas em que você faltou." },
+              { k: "Coragem", f: "Coragem não é impulso. É repetição.", d: "O que sustenta não é o dia em que deu vontade." },
+              { k: "Junto", f: "Convide quem começa junto com você. E volte junto também.", d: "Começar acompanhado é fácil. Voltar acompanhado é raro." },
+              { k: "Sem metas", f: "Esquece a meta. Escolhe o dia.", d: "Meta é promessa para o futuro. Dia é decisão para agora." },
+            ].map((a) => (
+              <div className="ativ-card" key={a.k}>
+                <span className="overline teal">{a.k}</span>
+                <p className="ativ-f">{a.f}</p>
+                <p className="ativ-d">{a.d}</p>
               </div>
-              <div style={{ padding: "var(--sp6)" }}>
-                <div className="h1">{AUTORES.brunno.nome}</div>
-                <InstagramLink handle={AUTORES.brunno.instagram} />
-                <p className="body-sm muted" style={{ marginTop: "var(--sp3)" }}>{AUTORES.brunno.bio}</p>
-              </div>
-            </div>
-            <div className="sf-dark autor-card" style={{ overflow: "hidden" }}>
-              <div className="autor-foto">
-                <ImageSlot tag="Foto autor" label="Roberta Carbonari — retrato" dims="1000×1000px · quadrado" shape="square" src={AUTORES.roberta.foto || undefined} alt="Roberta Carbonari" style={{ borderRadius: 0, border: "none", borderBottom: "1px solid var(--border)" }} />
-              </div>
-              <div style={{ padding: "var(--sp6)" }}>
-                <div className="h1">{AUTORES.roberta.nome}</div>
-                <InstagramLink handle={AUTORES.roberta.instagram} />
-                <p className="body-sm muted" style={{ marginTop: "var(--sp3)" }}>{AUTORES.roberta.bio}</p>
-              </div>
-            </div>
+            ))}
           </div>
-
-          <p className="caption center" style={{ marginTop: "var(--sp8)" }}>
-            Juntos, já impactaram {PROVA.leitores} e agora transformaram um livro num ritual diário no seu bolso.
-          </p>
         </div>
       </section>
 
@@ -382,7 +441,7 @@ export default function Page() {
               { n: "1", t: "Você recebe o e-mail de acesso", d: "Logo após a confirmação, com o passo a passo pra abrir o app." },
               { n: "2", t: "Faz a provocação do Dia 1", d: "Sua jornada começa no momento em que você registra o primeiro dia." },
               { n: "3", t: "O ritual te encontra todo dia", d: "Lembrete diário no WhatsApp pra você não depender da memória." },
-              { n: "4", t: "Sua constância começa a aparecer", d: "O calendário e a ofensiva mostram sua jornada se construindo, dia após dia." },
+              { n: "4", t: "O acúmulo começa a aparecer", d: "O contador mostra quantas vezes você voltou. É o número que cresce mesmo nas semanas em que você faltou." },
             ].map((s) => (
               <div key={s.n} className="sf-glass" style={{ padding: "var(--sp5)", display: "flex", gap: "var(--sp4)", alignItems: "flex-start" }}>
                 <div style={{ flex: "0 0 36px", height: 36, borderRadius: 999, background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.25)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-serif)", fontSize: 18, color: "var(--p-500)" }}>
@@ -422,108 +481,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ---------- GEO / SOBRE (bloco factual p/ busca e IA) ---------- */}
-      <section className="reveal" style={{ paddingTop: 0 }}>
-        <div className="wrap-content">
-          <div className="sf-glass" style={{ padding: "var(--sp8)" }}>
-            <h2 className="overline eyebrow">Sobre o Diariamente</h2>
-            <div className="stack body-sm muted">
-              <p>
-                <strong className="teal">O que é:</strong> o Diariamente é um produto de
-                desenvolvimento profissional criado por Brunno Falcão e Roberta Carbonari. Une um
-                livro de provocações diárias a um aplicativo que entrega 365 provocações, uma
-                para cada dia do ano, com sistema de constância (ofensiva), conquistas, ranking
-                e lembrete diário no WhatsApp.
-              </p>
-              <p>
-                <strong className="teal">Para quem é:</strong> profissionais de qualquer carreira
-                que querem evoluir de forma consistente e que já tentaram livros, journals ou apps
-                de hábito, mas largaram no meio. O Diariamente foi desenhado para resolver a
-                constância, não apenas entregar conteúdo.
-              </p>
-              <p>
-                <strong className="teal">Como funciona:</strong> o método tem três passos:
-                provocação (uma reflexão por dia), ofensiva (a sequência que mantém o hábito) e
-                acúmulo (conquistas e progresso visível). O acesso ao app é enviado por e-mail
-                após a confirmação.
-              </p>
-              <p>
-                <strong className="teal">Acesso:</strong> Diariamente Club, o app completo
-                por R$ 197 (R$ 137,90 na condição de lançamento). Menos de R$ 1 por dia.
-                No checkout é possível adicionar o livro físico. O livro impresso também é
-                vendido separadamente. Garantia de 7 dias. Realização Science Play.
-              </p>
-              <ul className="geo-resumo">
-                <li><b>Nome:</b> Diariamente Club</li>
-                <li><b>Categoria:</b> desenvolvimento profissional · hábito e constância</li>
-                <li><b>Formato:</b> aplicativo (iPhone e Android) + livro físico opcional</li>
-                <li><b>Duração:</b> 365 dias, uma provocação por dia</li>
-                <li><b>Preço:</b> R$ 197 · R$ 137,90 na condição de lançamento, ou 12x de R$ 14,26 no cartão (total R$ 171,12)</li>
-                <li><b>Garantia:</b> 7 dias, incondicional</li>
-                <li><b>Responsáveis:</b> Brunno Falcão e Roberta Carbonari · Science Play</li>
-                <li><b>Inscrição:</b> {SITE.dominio.replace("https://", "")} · acesso enviado por e-mail</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- RODAPÉ ---------- */}
-      <footer style={{ borderTop: "1px solid var(--border)", padding: "var(--sp16) 0 calc(var(--sp20) + 60px)" }}>
-        <div className="wrap center">
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "var(--sp12)" }}>
-            <FooterLogo height={64} />
-          </div>
-
-          <p className="caption" style={{ maxWidth: "42ch", margin: "0 auto" }}>
-            Diariamente é uma realização Science Play®. Provocações diárias para se desenvolver
-            profissionalmente. Uma por dia, por 365 dias.
-          </p>
-
-          {/* navegação legal */}
-          <div style={{ display: "flex", gap: "var(--sp5)", justifyContent: "center", flexWrap: "wrap", marginTop: "var(--sp6)" }}>
-            <a className="caption" href="/termos" style={{ color: "var(--n-400)" }}>Termos de uso</a>
-            <a className="caption" href="/privacidade" style={{ color: "var(--n-400)" }}>Política de privacidade</a>
-            <a className="caption" href="mailto:contato@scienceplay.com" style={{ color: "var(--n-400)" }}>Suporte</a>
-          </div>
-
-          {/* lojas no rodapé (institucional) */}
-          <div style={{ marginTop: "var(--sp6)" }}>
-            <StoreBadges variant="link" />
-          </div>
-
-          {/* social Science Play (sutil, com ícones) */}
-          <div style={{ display: "flex", gap: "var(--sp5)", justifyContent: "center", flexWrap: "wrap", marginTop: "var(--sp5)", alignItems: "center" }}>
-            <a className="caption foot-social" href="https://www.scienceplay.com" target="_blank" rel="noopener noreferrer">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7"/>
-                <path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18" stroke="currentColor" strokeWidth="1.7"/>
-              </svg>
-              scienceplay.com
-            </a>
-            <a className="caption foot-social" href="https://instagram.com/scienceplay" target="_blank" rel="noopener noreferrer">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.7"/>
-                <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.7"/>
-                <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/>
-              </svg>
-              @scienceplay
-            </a>
-            <a className="caption foot-social" href="https://linkedin.com/in/scienceplay" target="_blank" rel="noopener noreferrer">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M4.98 3.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zM3 9h4v12H3zM9 9h3.8v1.7h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1V21h-4v-5.4c0-1.3 0-2.95-1.8-2.95s-2.07 1.4-2.07 2.85V21H9z"/>
-              </svg>
-              /scienceplay
-            </a>
-          </div>
-
-          {/* dados da empresa (sutil) */}
-          <p className="caption" style={{ color: "var(--n-600)", marginTop: "var(--sp8)", lineHeight: 1.7 }}>
-            Science Play Cursos LTDA · CNPJ 33.612.911/0001-29<br />
-            © {new Date().getFullYear()} Science Play® · {SITE.dominio.replace("https://", "")}
-          </p>
-        </div>
-      </footer>
+      <Rodape />
 
       <StickyCTA />
     </main>

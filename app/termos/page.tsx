@@ -13,7 +13,7 @@ export default function Termos() {
       <p>
         Estes Termos de Uso ("Termos") regem o acesso e a utilização do Diariamente, produto
         digital de desenvolvimento profissional composto pelo aplicativo, pelo conteúdo de
-        provocações diárias e, no plano combo, pelo livro físico, oferecido pela{" "}
+        provocações diárias, oferecido pela{" "}
         {EMPRESA.razaoSocial}, inscrita no CNPJ nº {EMPRESA.cnpj} ("Science Play", "nós"). Ao
         adquirir e utilizar o Diariamente, você ("usuário") declara ter lido, compreendido e
         aceito integralmente estes Termos.
@@ -22,7 +22,7 @@ export default function Termos() {
       <h2>1. O que é o Diariamente</h2>
       <p>
         O Diariamente disponibiliza 365 provocações — uma para cada dia — por meio de um
-        aplicativo, com recursos de acompanhamento de constância (ofensiva), conquistas, ranking,
+        aplicativo, com recursos de acompanhamento de voltas acumuladas, conquistas,
         menu de Ações e lembretes. O conteúdo tem finalidade reflexiva e educacional, voltada ao
         desenvolvimento profissional. Os resultados dependem do engajamento individual de cada
         usuário; não prometemos resultados específicos ou garantidos.
@@ -54,8 +54,7 @@ export default function Termos() {
       <p>
         Todo o conteúdo do Diariamente — textos, provocações, identidade visual, marca, software e
         demais elementos — é protegido por direitos autorais e de propriedade intelectual,
-        pertencendo à {EMPRESA.razaoSocial} e/ou aos seus autores, Brunno Falcão e Roberta
-        Carbonari. A aquisição concede ao usuário uma licença de uso pessoal e intransferível, não
+        pertencendo à {EMPRESA.razaoSocial}. A aquisição concede ao usuário uma licença de uso pessoal e intransferível, não
         exclusiva, e não transfere a titularidade de qualquer direito sobre o conteúdo.
       </p>
 
@@ -75,18 +74,9 @@ export default function Termos() {
       <p>{GARANTIA.texto}</p>
       <p>
         O pedido de reembolso dentro do prazo pode ser feito pela plataforma de pagamento ou pelo
-        nosso canal de suporte. No plano combo, a devolução do livro físico pode estar sujeita a
+        nosso canal de suporte. A devolução pode estar sujeita a
         condições específicas, informadas no atendimento.
-      </p>
-
-      <h2>7. Entrega do livro (plano combo)</h2>
-      <p>
-        No plano combo, o livro físico é enviado ao endereço informado na compra. Prazos de envio e
-        entrega podem variar conforme a localidade e a transportadora. O código de rastreio é
-        disponibilizado após a postagem.
-      </p>
-
-      <h2>8. Disponibilidade e alterações do serviço</h2>
+      </p><h2>8. Disponibilidade e alterações do serviço</h2>
       <p>
         Empenhamo-nos para manter o aplicativo disponível e funcional, mas o serviço pode passar
         por manutenções, atualizações ou indisponibilidades temporárias. Podemos aprimorar,

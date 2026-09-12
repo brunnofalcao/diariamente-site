@@ -9,7 +9,7 @@ import { NextResponse } from "next/server";
 // >>> SCHEMA REAL (tabela `provocacoes`) <<<
 //   dia_ano  int   -> dia do ano 1..365  (qual pergunta mostrar hoje)
 //   pergunta text  -> a provocação
-//   autor_dia text -> "roberta" | "brunno"  (assinatura)
+//   autor_dia text -> slug interno. NAO e exposto publicamente.
 //   dia, mes int   -> data de referência (disponíveis se precisar)
 //
 // Variáveis de ambiente (Vercel → Settings → Environment Variables):
@@ -30,13 +30,12 @@ const C_DIA = process.env.COL_DIA || "dia";
 const C_PERGUNTA = process.env.COL_PERGUNTA || "pergunta";
 const C_AUTOR_DIA = process.env.COL_AUTOR_DIA || "autor_dia";
 
-// autor_dia (slug) -> nome de exibição
-const AUTOR_NOME: Record<string, string> = {
-  brunno: "Brunno Falcão",
-  roberta: "Roberta Carbonari",
-};
+// A autoria individual NAO e exposta publicamente. O brandbook credita a
+// procedencia pelo conselho editorial, nunca por nome solto na interface.
+// A assinatura publica e sempre a marca.
+const ASSINATURA_PUBLICA = "Diariamente";
 
-// Fallback teaser (marketing-safe — NÃO são as provocações reais do livro)
+// Fallback teaser (marketing-safe — NAO sao os textos reais do produto)
 const TEASER = [
   { texto: "O que você está adiando que, no fundo, já sabe que precisa decidir?", autor: "Diariamente" },
   { texto: "Se hoje fosse a única chance de começar, você começaria, ou esperaria estar pronto?", autor: "Diariamente" },
@@ -121,7 +120,7 @@ export async function GET() {
 
     const row = linhas[0];
     const slug = String(row[C_AUTOR_DIA] ?? "").toLowerCase().trim();
-    const autor = AUTOR_NOME[slug] || "Diariamente";
+    const autor = ASSINATURA_PUBLICA;
     // usa o dia_ano do banco (numeração oficial do produto), com fallback no calculado
     const diaLabel = Number(row["dia_ano"]) || diaAno;
 
@@ -154,7 +153,7 @@ export async function GET() {
 //    role ignora RLS por padrão.
 //
 // 3) Redeploy. O hero passa a mostrar a `pergunta` do dia real (dia_ano),
-//    assinada por Brunno Falcão / Roberta Carbonari (via autor_dia).
+//    assinada pela marca. A autoria individual nunca e exposta.
 //    Teste em /api/provocacao-do-dia — campo "fonte" dirá "supabase".
 //    Se algo falhar, cai sozinho no teaser (nunca quebra).
 // =====================================================================

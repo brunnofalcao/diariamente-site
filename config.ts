@@ -8,27 +8,40 @@
 
 export const SITE = {
   nome: "Diariamente",
-  dominio: "https://diariamente.club",
+  // Domínio oficial (Brandbook 5.0, seção 29 · papelaria: diariamente.app).
+  // Alimenta metadataBase, canonical, openGraph.url, schemas, sitemap,
+  // robots e o rodapé visível.
+  // PRÉ-CONDIÇÃO: diariamente.club precisa fazer 301 permanente para cá,
+  // e os dois domínios precisam estar no Search Console. Sem isso, o sinal
+  // fica dividido entre os dois.
+  dominio: "https://diariamente.app",
   appUrl: "https://app.diariamente.club",
+
+  // Rede social DA MARCA. O Diariamente fala por si: as redes da Science
+  // Play são da realizadora, não do produto, e misturar as duas dilui a
+  // entidade que os buscadores precisam reconhecer.
+  instagram: "diariamente.app",
   descricao:
-    "Diariamente não é um livro comum, nem um ebook. É um livro vivo: um app com uma provocação por dia, por 365 dias, para você se desenvolver profissionalmente, criado pra te ajudar a voltar amanhã, depois de amanhã e no dia seguinte. Um ritual diário na palma da sua mão, de Brunno Falcão e Roberta Carbonari.",
-  // OG image — usar o asset oficial do brandbook (Cloudinary)
-  // [CONFIRMAR] mesmo cloud (dlzrfhwin); colar URL oficial do Asset_7 (OG/favicon)
-  ogImage:
-    "https://res.cloudinary.com/dlzrfhwin/image/upload/Asset_7_z9hcmw.png",
+    "Uma prática diária de hábitos e bem-estar. Um texto por dia que provoca uma reflexão e termina numa ação possível ainda hoje. Três minutos. Quando você falta, ele não cobra: te espera. Porque interromper não significa abandonar.",
+  // OG image gerada a partir do kit oficial da marca, servida pelo próprio
+  // domínio via convenção de arquivo do Next (app/opengraph-image.png).
+  // Sem dependência de Cloudinary: o card de compartilhamento não quebra
+  // se o asset for movido ou renomeado lá.
+  ogImage: "/opengraph-image.png",
 };
 
-// Logos oficiais (Cloudinary — cloud name oficial: dlzrfhwin)
+// Logos · Brandbook 5.0
+// Os PNG antigos do Cloudinary (Asset_7, Asset_10, Logo_Diariamente_1) eram
+// a MARCA ANTERIOR e saíram de circulação. O símbolo agora é SVG inline em
+// components/Brand.tsx, e os arquivos de ícone são servidos pelo próprio
+// domínio através das convenções do Next:
+//   app/icon.svg            favicon vetorial
+//   app/icon.png            512px, símbolo a 66% sobre S0
+//   app/apple-icon.png      180px, idem
+//   app/opengraph-image.png 1200x630, lockup horizontal + a sequência
 export const LOGOS = {
-  // [CONFIRMAR] URL oficial do logo principal escuro (Asset_10)
-  principalEscuro:
-    "https://res.cloudinary.com/dlzrfhwin/image/upload/Asset_10_cirv6z.png",
-  // ✓ URL OFICIAL confirmada por Brunno
-  horizontal:
-    "https://res.cloudinary.com/dlzrfhwin/image/upload/v1775167899/Logo_Diariamente_1_smbwdg.png",
-  // [CONFIRMAR] URL oficial do favicon/OG (Asset_7)
-  favicon:
-    "https://res.cloudinary.com/dlzrfhwin/image/upload/Asset_7_z9hcmw.png",
+  // usado no schema Organization, que exige URL absoluta
+  schemaLogo: "/icon.png",
 };
 
 // ---------------------------------------------------------------------
@@ -51,15 +64,38 @@ export const LIFESTYLE = "https://res.cloudinary.com/dlzrfhwin/image/upload/v178
 // PROVA REAL (confirmada — não inventar)
 // ---------------------------------------------------------------------
 export const PROVA = {
+  // O numero vem de quem ja passou pela pratica. Nao afirmamos que sao
+  // usuarios ativos diarios hoje: isso seria claim quantitativo nao
+  // verificavel. "Ja comecaram" e verdade, honra quem participou e monta
+  // exatamente a tensao que a marca vende: comecar e comum, voltar nao.
   leitores: "+5.000 pessoas",
   leitoresNumero: 5000,
+  frase: "já começaram",
+
+  // Todo mundo le o MESMO texto no mesmo dia (conteudo chaveado por
+  // dia_ano na API). E o territorio "Quem comeca junto" da secao 11.
+  simultaneidade: "Hoje, todas elas leram o mesmo texto que você.",
 };
+
+// ---------------------------------------------------------------------
+// CONSELHO EDITORIAL
+// ---------------------------------------------------------------------
+// A frase "conteudo autoral, escrito e revisado por profissionais de
+// saude" e a formulacao oficial da secao 10 — e ela EXIGE conselho
+// editorial nomeado, com credencial publica e processo de revisao
+// documentado. Sem isso, a frase nao pode ir ao ar.
+//
+// Preencha com os nomes e credenciais quando o conselho existir
+// publicamente. Enquanto o array estiver vazio, a pagina NAO exibe a
+// frase de procedencia — ela simplesmente nao renderiza.
+export const CONSELHO: { nome: string; credencial: string; registro?: string }[] = [
+  // { nome: "[NOME]", credencial: "[Psicologa | Nutricionista | Medica...]", registro: "[CRP/CRN/CRM 00000]" },
+];
 
 // ---------------------------------------------------------------------
 // OFERTA (arquitetura confirmada por Brunno em ago/2026)
 // Dois carrinhos:
-//   COMBO  — Livro físico + App: nominal R$297 → lançamento R$207,90 (30% OFF)
-//   APP    — Diariamente Club:   nominal R$197 → lançamento R$137,90 (30% OFF)
+//   APP    — Diariamente App:   nominal R$197 → lançamento R$137,90 (30% OFF)
 // Estudante: NÃO divulgado no site (sem mecanismo de validação ainda).
 // Desconto founders válido durante o mês de lançamento — ao encerrar,
 // definir LANCAMENTO.ativa = false e os cards voltam ao preço nominal.
@@ -86,7 +122,7 @@ export type Plano = {
   perDia?: string;
   inclui: string[];
   ctaLabel: string;
-  nota?: string;          // caption abaixo do CTA (ex: order bump do livro)
+  nota?: string;          // caption abaixo do CTA
   checkoutUrl: string;
   rodape?: string;
 };
@@ -95,18 +131,16 @@ export type Plano = {
 // CHECKOUT — HOTMART
 // Cada preço é uma OFERTA na Hotmart (parâmetro ?off=CODIGO).
 // [TROCAR] Criar no Hotmart:
-//   1) Oferta COMBO lançamento: R$207,90 (produto com livro físico + frete)
 //   2) Oferta APP lançamento:   R$137,90
 // Enquanto o link começar com "[", o botão avisa "em configuração".
 // ---------------------------------------------------------------------
 export const HOTMART = {
-  // Oferta única do APP (R$137,90 no lançamento). O livro físico entra como
-  // ORDER BUMP dentro do checkout Hotmart (configuração no painel, não no site).
+  // Oferta única do APP. ATENCAO: se houver order bump de produto fisico
+  // configurado no painel da Hotmart, ele precisa ser REMOVIDO la — o site
+  // nao controla o conteudo do checkout.
   app: "https://pay.hotmart.com/L107085210M?checkoutMode=10",
 };
 
-// Livro impresso avulso (vendido à parte, via Eduzz). Link discreto na página e no FAQ.
-export const LIVRO_AVULSO = "https://sun.eduzz.com/2038359";
 
 // ---------------------------------------------------------------------
 // LOJAS DE APP — o app é ENTREGA, não aquisição.
@@ -127,7 +161,7 @@ export const LOJAS_BADGES = {
 // ---------------------------------------------------------------------
 export const PLANO_APP: Plano = {
   id: "club",
-  nome: "Diariamente Club",
+  nome: "Diariamente App",
   destaque: true,
   precoNumero: 137.9,
   preco: "137,90",
@@ -145,14 +179,14 @@ export const PLANO_APP: Plano = {
     "Uma provocação por dia, os 365 dias do ano",
     "Calendário de constância (acompanhe sua jornada)",
     "Menu Ações: transforme a provocação em tarefa concreta",
-    "Ofensiva, conquistas e ranking",
+    "Contador de voltas: cada dia que você volta conta, e nunca zera",
     "Lembrete diário no WhatsApp",
     "Acesso imediato por e-mail",
   ],
   ctaLabel: "Quero meu acesso",
   checkoutUrl: HOTMART.app,
-  nota: "No checkout, você pode adicionar o livro físico.",
-  rodape: "O livro te provoca. O app te ajuda a voltar amanhã.",
+  nota: "Acesso liberado por e-mail assim que o pagamento for confirmado.",
+  rodape: "Comece hoje. Volte amanhã.",
 };
 
 // Compatibilidade: componentes existentes importam PLANO (singular).
@@ -177,7 +211,7 @@ export const ESCASSEZ = {
   ativa: false, // combo saiu; urgencia honesta vem do LANCAMENTO (30% founders)
   selo: "Condição de lançamento",
   texto:
-    "O combo com livro físico tem poucas unidades nesta condição de lançamento. Quando o estoque desta leva acabar, sai do ar.",
+    "Esta é a condição de lançamento. Quando a janela fechar, o valor passa a ser o oficial.",
 };
 
 // ---------------------------------------------------------------------
@@ -189,12 +223,6 @@ export const AUTORES = {
     bio: "Empresário e palestrante, é fundador e CEO da Science Play e do Nutrição Brasil, com clientes em mais de 95 países. Autor best-seller de Zona Desconforto e O Fim do Consultório, criador do Palestre•se e colunista da Forbes Portugal, Revista Medicina S/A e O Fit Feed.",
     instagram: "brunnofalcao",
     foto: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782699377/Foto_Brunno_Falca%CC%83o_-_Diariamente_Club_z7fitl.png",
-  },
-  roberta: {
-    nome: "Roberta Carbonari",
-    bio: "Nutricionista, mestre em Nutrição, pós-graduada em Comportamento Alimentar e referência em Psiquiatria Nutricional. Coordenadora de pós-graduação, professora, palestrante e empresária, com formação também em Administração e Marketing.",
-    instagram: "robertacarbonari",
-    foto: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782699376/Foto_Roberta_Carbonari_-_Diariamente_Club_ugcgsi.png",
   },
   selo: "Science Play®",
 };
@@ -218,7 +246,10 @@ export const EMPRESA = {
   marca: "Science Play",
   razaoSocial: "Science Play Cursos LTDA",
   cnpj: "33.612.911/0001-29",
-  suporteEmail: "contato@scienceplay.com",
+  // Dois canais, papéis distintos: contato para institucional e imprensa,
+  // suporte para quem já é assinante e precisa de ajuda.
+  contatoEmail: "contato@scienceplay.com",
+  suporteEmail: "suporte@scienceplay.com",
   site: "https://www.scienceplay.com",
   instagram: "scienceplay",
   linkedin: "scienceplay",

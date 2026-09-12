@@ -1,6 +1,6 @@
 "use client";
 
-import { PLANOS, GARANTIA, ESCASSEZ, LANCAMENTO, LIVRO_AVULSO, PROVA, type Plano, ESTUDANTE } from "@/config";
+import { PLANOS, GARANTIA, ESCASSEZ, LANCAMENTO, PROVA, type Plano, ESTUDANTE } from "@/config";
 import { StoreBadges } from "@/components/StoreBadges";
 
 /* =====================================================================
@@ -28,8 +28,8 @@ import { StoreBadges } from "@/components/StoreBadges";
    VALOR antes de PREÇO, que é a ordem correta de argumentação.
 
    Preservado: buildCheckoutUrl, trackCheckout, ESCASSEZ, LANCAMENTO,
-   total do parcelado (CDC art. 52), chip e card de estudante, livro
-   avulso, garantia. Nada de tracking foi removido.
+   total do parcelado (CDC art. 52), chip e card de estudante e
+   garantia. Nada de tracking de checkout foi removido.
    ===================================================================== */
 
 // Anexa as UTMs da URL atual ao link de checkout (preserva origem do tráfego).
@@ -241,7 +241,7 @@ export function Oferta() {
 
             <div className="of-prova">
               <span className="of-prova-n">{PROVA.leitores}</span>
-              <span className="of-prova-l">já leram o Diariamente</span>
+              <span className="of-prova-l">{PROVA.frase} · assinatura anual, conteúdo novo a cada ciclo</span>
               <StoreBadges variant="prova" />
             </div>
           </div>
@@ -250,23 +250,9 @@ export function Oferta() {
           <aside className="of-compra">
             <CartCard plano={plano} />
 
-            {/* livro impresso avulso (discreto; nao dispersa do CTA principal) */}
-            <p className="caption center of-livro">
-              Quer só o livro impresso?{" "}
-              <a
-                href={LIVRO_AVULSO}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="teal"
-                onClick={() => {
-                  (window as any).gtag?.("event", "click_livro_avulso", { location: "oferta" });
-                  (window as any).dataLayer?.push({ event: "click_livro_avulso", location: "oferta" });
-                }}
-              >
-                Ele está disponível aqui
-              </a>
-              .
-            </p>
+            {/* Assinatura de marca fechando a coluna de compra. Nivel 1 da
+                hierarquia: nada compete com ela, e ela nunca e botao. */}
+            <p className="assinatura center of-assinatura">Volte amanhã.</p>
           </aside>
         </div>
 

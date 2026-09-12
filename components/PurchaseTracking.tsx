@@ -25,7 +25,7 @@ export function PurchaseTracking() {
       undefined;
 
     // Valor real da transação, quando a Hotmart o repassa na URL de retorno.
-    // Sem isso, uma compra do combo (app + livro) seria reportada ao Meta pelo
+    // Sem isso, uma compra com adicional seria reportada ao Meta pelo
     // preço do app, e o ROAS da campanha sairia subestimado.
     const bruto =
       params.get("value") ||

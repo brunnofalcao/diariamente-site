@@ -182,7 +182,7 @@ export function ObrigadoShell({ estado }: { estado: Estado }) {
               ? [
                   { t: "O e-mail de acesso", d: "Chega logo após a confirmação, com o passo a passo pra entrar no app." },
                   { t: "O lembrete diário", d: "Todo dia, no WhatsApp. Você não precisa lembrar de nada, o ritual te encontra." },
-                  { t: "Sua jornada de constância", d: "O calendário e a ofensiva mostram sua sequência se construindo, dia após dia." },
+                  { t: "O acúmulo fica visível", d: "O contador mostra o total de dias em que você voltou. Ele nunca zera." },
                 ]
               : [
                   { t: "A confirmação do pagamento", d: "Você recebe um aviso assim que for compensado. Não precisa ficar conferindo." },
@@ -201,7 +201,7 @@ export function ObrigadoShell({ estado }: { estado: Estado }) {
           </div>
 
           <p className="obg-frase center">
-            O livro te provoca. O app te ajuda a voltar amanhã.
+            Volte amanhã.
           </p>
 
           <p className="caption center" style={{ marginTop: "var(--sp8)" }}>

@@ -14,7 +14,7 @@ export default function Privacidade() {
         Esta Política de Privacidade descreve como a {EMPRESA.razaoSocial}, inscrita no
         CNPJ nº {EMPRESA.cnpj} ("Science Play", "nós"), coleta, utiliza, armazena, compartilha
         e protege os dados pessoais dos usuários ("você") do produto Diariamente, composto pelo
-        aplicativo, pelo site e, no plano combo, pelo livro físico. Este documento está em
+        aplicativo e pelo site. Este documento está em
         conformidade com a Lei nº 13.709/2018 (Lei Geral de Proteção de Dados — LGPD) e com as
         diretrizes de privacidade das lojas de aplicativos (Apple App Store e Google Play).
       </p>
@@ -44,11 +44,11 @@ export default function Privacidade() {
           você opta por receber os lembretes diários.
         </li>
         <li>
-          <strong>Endereço de entrega:</strong> apenas no plano combo, para envio do livro físico.
+          <strong>Dados de pagamento:</strong> processados pela plataforma de checkout; não armazenamos dados de cartão.
         </li>
         <li>
           <strong>Dados de uso do aplicativo:</strong> provocações lidas, progresso, sequência
-          (ofensiva), conquistas e ações registradas — necessários para o funcionamento do produto.
+          (voltas acumuladas), conquistas e ações registradas — necessários para o funcionamento do produto.
         </li>
         <li>
           <strong>Dados de pagamento:</strong> processados diretamente pela plataforma Hotmart.
@@ -73,7 +73,7 @@ export default function Privacidade() {
       <ul>
         <li>
           <strong>Execução de contrato (art. 7º, V):</strong> entregar o acesso ao app, processar
-          o pedido, enviar o livro no combo e dar suporte.
+          o pedido e dar suporte.
         </li>
         <li>
           <strong>Consentimento (art. 7º, I):</strong> envio de lembretes por WhatsApp e
@@ -100,7 +100,7 @@ export default function Privacidade() {
         <li><strong>Meta (WhatsApp / Cloud API)</strong> — envio dos lembretes diários.</li>
         <li><strong>Provedores de infraestrutura e banco de dados</strong> — hospedagem segura dos dados do app.</li>
         <li><strong>Ferramentas de medição</strong> — como Google Analytics e Meta Pixel, quando ativas, para entender o uso da página e das campanhas.</li>
-        <li><strong>Transportadora</strong> — apenas no combo, para entrega do livro físico.</li>
+        
       </ul>
       <p>
         Eventuais transferências internacionais de dados (por uso de provedores fora do Brasil)

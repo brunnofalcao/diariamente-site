@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     "estudante de nutrição",
     "constância na faculdade",
     "Brunno Falcão",
-    "Roberta Carbonari",
+    "",
   ],
   openGraph: {
     type: "website",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     siteName: SITE.nome,
     title: TITULO,
     description: DESCRICAO,
-    images: [{ url: SITE.ogImage, width: 1200, height: 630, alt: "Diariamente" }],
+    images: [{ url: SITE.ogImage, width: 1200, height: 630, alt: "diariamente — uma prática diária de hábitos e bem-estar" }],
   },
   twitter: { card: "summary_large_image", title: TITULO, description: DESCRICAO, images: [SITE.ogImage] },
   robots: { index: true, follow: true },
@@ -125,7 +125,7 @@ const RECEBE = [
   {
     ic: <IcFlame />,
     t: "Constância medida",
-    d: "Ofensiva, conquistas e ranking mostram sua sequência se construindo. Você vê o hábito existindo, não só a intenção.",
+    d: "O contador mostra quantas vezes você voltou, e nunca zera. Faltar um dia não apaga nada do que você já construiu.",
   },
 ];
 
@@ -174,22 +174,22 @@ const FAQ = [
     a: GARANTIA.texto,
   },
   {
-    q: "Só quero ler, não quero app.",
-    a: "O livro físico Diariamente existe e é vendido à parte. O app é o que te faz voltar amanhã: ele lembra, registra e transforma cada provocação em ação.",
+    q: "Isso é terapia ou tratamento?",
+    a: "Não. O Diariamente é uma prática diária de hábitos e bem-estar. Não trata, não diagnostica e não substitui acompanhamento profissional.",
   },
 ];
 
 /* Bloco de resumo estruturado: ajuda leitor apressado e mecanismo generativo
    a extrair os fatos da oferta sem depender de interpretação. */
 const RESUMO: [string, string][] = [
-  ["Produto", "Diariamente Club, aplicativo de provocações diárias"],
+  ["Produto", "Diariamente App, aplicativo de provocações diárias"],
   ["Condição", "Exclusiva para estudantes de graduação"],
   ["Formato", "Aplicativo para iPhone e Android, uma provocação por dia"],
   ["Duração", "365 provocações, uma liberada a cada dia"],
   ["Preço estudante", `R$ ${ESTUDANTE.preco} no ano (valor cheio R$ ${ESTUDANTE.precoDe})`],
   ["Entrega", "Código pessoal enviado por WhatsApp"],
   ["Público", "Estudantes de graduação de qualquer curso"],
-  ["Autores", "Brunno Falcão e Roberta Carbonari"],
+  ["Autores", "Science Play"],
   ["Responsável", `${EMPRESA.marca}, ${EMPRESA.razaoSocial}`],
   ["Garantia", `${GARANTIA.dias} dias`],
 ];
@@ -399,7 +399,7 @@ export default function Estudante() {
               </h2>
               <p className="ed-sec-sub">
                 Nada é retirado da sua versão. É o app inteiro, com as 365 provocações,
-                a ofensiva, o menu Ações e o lembrete diário. O que muda é quanto você
+                o contador de voltas, o menu Ações e o lembrete diário. O que muda é quanto você
                 paga por ele enquanto está na graduação.
               </p>
             </div>

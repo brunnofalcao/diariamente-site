@@ -38,7 +38,7 @@ const INCLUI = [
   "As 365 provocações, uma liberada por dia",
   "Calendário de constância pra acompanhar sua jornada",
   "Menu Ações: a reflexão do dia vira tarefa concreta",
-  "Ofensiva, conquistas e ranking pra sustentar a sequência",
+  "Contador de voltas: cada volta conta, e nenhuma zera",
   "Lembrete diário no WhatsApp, no horário que você escolher",
   "App no iPhone e no Android, com o mesmo acesso",
 ];
