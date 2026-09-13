@@ -1,15 +1,12 @@
-import type { Metadata } from "next";
+import { metadataDaPagina } from "@/lib/seo";
 import { EMPRESA, SITE } from "@/config";
 import { LegalShell } from "@/components/LegalShell";
 
-export const metadata: Metadata = {
-  title: "Política de Privacidade — Diariamente",
-  robots: { index: true, follow: true },
-};
+export const metadata = metadataDaPagina("privacidade", "pt");
 
 export default function Privacidade() {
   return (
-    <LegalShell titulo="Política de Privacidade" atualizado={EMPRESA.vigenciaLegal}>
+    <LegalShell lang="pt" titulo="Política de Privacidade" atualizado={EMPRESA.vigenciaLegal}>
       <p>
         Esta Política de Privacidade descreve como a {EMPRESA.razaoSocial}, inscrita no
         CNPJ nº {EMPRESA.cnpj} ("Science Play", "nós"), coleta, utiliza, armazena, compartilha

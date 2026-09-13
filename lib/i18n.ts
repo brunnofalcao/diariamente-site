@@ -229,7 +229,27 @@ export function cld(url: string, tx: string): string {
   return url.replace("/upload/", `/upload/${tx}/`);
 }
 
-export const IMG = {
+/* =====================================================================
+   ATIVOS POR IDIOMA
+   ---------------------------------------------------------------------
+   Cada idioma tem o SEU conjunto de imagens e links. Trocar a foto, a
+   ficha da loja ou o checkout do site espanhol nao encosta no portugues.
+
+   Hoje o espanhol aponta para os mesmos arquivos do portugues: e o
+   estado de partida, nao a intencao final. Conforme forem produzidos os
+   prints com a interface em espanhol, a foto de estilo de vida e a
+   oferta em outra moeda, basta trocar AQUI, no bloco `es`.
+
+   ATENCAO nos links de loja:
+     - `appStore` termina em /br/ no portugues. Para o espanhol, troque
+       pelo mercado certo (/es/, /mx/, /ar/...), ou o usuario cai numa
+       ficha em portugues.
+     - `googlePlay` aceita &hl=es para a ficha sair traduzida.
+     - `checkout` provavelmente precisa de OUTRA oferta na Hotmart, em
+       moeda local. Enquanto for a mesma, o espanhol paga em real.
+   ===================================================================== */
+
+const IMG_PT = {
   hoje: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664582/Tela_HOJE_Diariamente_shzi7c.png",
   dias: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664583/Tela_DIAS_Diariamente_i4dpih.png",
   acoes: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664582/Tela_ACOES_Diariamente_nr8gwf.png",
@@ -239,7 +259,7 @@ export const IMG = {
   googlePlay: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1783609634/GetItOnGooglePlay_Badge_Web_color_Portuguese-Brazil_rl6hba.svg",
 };
 
-export const LINKS = {
+const LINKS_PT = {
   checkout: "https://pay.hotmart.com/L107085210M?checkoutMode=10",
   appStore: "https://apps.apple.com/br/app/diariamente/id6762151251",
   googlePlay: "https://play.google.com/store/apps/details?id=club.diariamente.app",
@@ -247,3 +267,24 @@ export const LINKS = {
   suporte: "mailto:suporte@scienceplay.com",
   contato: "mailto:contato@scienceplay.com",
 };
+
+export const ATIVOS: Record<Lang, { img: typeof IMG_PT; links: typeof LINKS_PT }> = {
+  pt: { img: IMG_PT, links: LINKS_PT },
+  es: {
+    img: {
+      ...IMG_PT,
+      // [TROCAR] prints com a interface em espanhol
+      // [TROCAR] badge da Google Play em espanhol
+    },
+    links: {
+      ...LINKS_PT,
+      // [TROCAR] mercado da App Store: /es/, /mx/, /ar/...
+      // [TROCAR] &hl=es na Google Play
+      // [TROCAR] oferta da Hotmart em moeda local
+    },
+  },
+};
+
+// Compatibilidade: qualquer import antigo continua funcionando em pt.
+export const IMG = IMG_PT;
+export const LINKS = LINKS_PT;

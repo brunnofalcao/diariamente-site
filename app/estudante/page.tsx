@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { metadataDaPagina } from "@/lib/seo";
 import { SITE, EMPRESA, PROVA, GARANTIA, SCREENSHOTS, ESTUDANTE } from "@/config";
 import { OfficialLogo } from "@/components/Brand";
 import { BlocoPreco } from "@/components/BlocoPreco";
@@ -28,10 +28,8 @@ const TITULO = "Diariamente para estudantes · condição exclusiva de graduaç�
 const DESCRICAO =
   "Uma provocação por dia durante toda a sua graduação, em qualquer curso. Condição exclusiva para estudantes: solicite seu código e receba no WhatsApp.";
 
-export const metadata: Metadata = {
-  title: TITULO,
-  description: DESCRICAO,
-  alternates: { canonical: `${SITE.dominio}/estudante` },
+export const metadata = {
+  ...metadataDaPagina("estudante", "pt"),
   keywords: [
     "Diariamente estudante",
     "desconto estudante",
@@ -42,17 +40,6 @@ export const metadata: Metadata = {
     "Brunno Falcão",
     "",
   ],
-  openGraph: {
-    type: "website",
-    locale: "pt_BR",
-    url: `${SITE.dominio}/estudante`,
-    siteName: SITE.nome,
-    title: TITULO,
-    description: DESCRICAO,
-    images: [{ url: SITE.ogImage, width: 1200, height: 630, alt: "diariamente — uma prática diária de hábitos e bem-estar" }],
-  },
-  twitter: { card: "summary_large_image", title: TITULO, description: DESCRICAO, images: [SITE.ogImage] },
-  robots: { index: true, follow: true },
 };
 
 /* Cloudinary: formato e qualidade automáticos + largura sob medida.

@@ -1,15 +1,12 @@
-import type { Metadata } from "next";
+import { metadataDaPagina } from "@/lib/seo";
 import { EMPRESA, SITE, GARANTIA } from "@/config";
 import { LegalShell } from "@/components/LegalShell";
 
-export const metadata: Metadata = {
-  title: "Termos de Uso — Diariamente",
-  robots: { index: true, follow: true },
-};
+export const metadata = metadataDaPagina("termos", "pt");
 
 export default function Termos() {
   return (
-    <LegalShell titulo="Termos de Uso" atualizado={EMPRESA.vigenciaLegal}>
+    <LegalShell lang="pt" titulo="Termos de Uso" atualizado={EMPRESA.vigenciaLegal}>
       <p>
         Estes Termos de Uso ("Termos") regem o acesso e a utilização do Diariamente, produto
         digital de desenvolvimento profissional composto pelo aplicativo, pelo conteúdo de

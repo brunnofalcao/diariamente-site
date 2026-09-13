@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { metadataDaPagina } from "@/lib/seo";
 import { SITE, EMPRESA, PLANO_APP, ESTUDANTE } from "@/config";
 import { LockupHorizontal } from "@/components/Brand";
 
@@ -28,13 +28,7 @@ const TITULO = "Informações gerais · Diariamente";
 const DESCRICAO =
   "O que é o Diariamente, para quem é, como funciona, o que não é e como funciona o acesso. Informações factuais sobre a prática diária de hábitos e bem-estar da Science Play.";
 
-export const metadata: Metadata = {
-  title: TITULO,
-  description: DESCRICAO,
-  alternates: { canonical: `${SITE.dominio}/sobre` },
-  openGraph: { type: "article", locale: "pt_BR", url: `${SITE.dominio}/sobre`, title: TITULO, description: DESCRICAO },
-  robots: { index: true, follow: true },
-};
+export const metadata = metadataDaPagina("sobre", "pt");
 
 export default function Sobre() {
   return (
