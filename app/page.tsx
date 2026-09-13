@@ -267,8 +267,8 @@ export default function Home() {
                 <span style={{ display: "inline-flex", alignItems: "center", height: 20, padding: "0 8px", borderRadius: 999, background: C.p500, color: C.onAccent, fontSize: 11, fontWeight: 700, letterSpacing: ".04em" }}>{t.new}</span>
                 {t.badge}
               </span>
-              <h1 data-h1="1" style={{ fontFamily: C.serif, fontWeight: 400, fontSize: "clamp(36px,5.2vw,62px)", lineHeight: 1.04, letterSpacing: "-.018em", margin: "22px 0 0", maxWidth: "15ch", textWrap: "balance" as never }}>{t.h1}</h1>
-              <p data-lead="1" style={{ fontSize: "clamp(17px,1.5vw,19px)", lineHeight: 1.6, color: C.n300, maxWidth: "50ch", margin: "20px 0 0", textWrap: "pretty" as never }}>{t.lead}</p>
+              <h1 data-h1="1" style={{ fontFamily: C.serif, fontWeight: 400, fontSize: "clamp(36px,5.2vw,62px)", lineHeight: 1.04, letterSpacing: "-.018em", marginTop: 22, maxWidth: "15ch", textWrap: "balance" as never }}>{t.h1}</h1>
+              <p data-lead="1" style={{ fontSize: "clamp(17px,1.5vw,19px)", lineHeight: 1.6, color: C.n300, maxWidth: "50ch", marginTop: 20, textWrap: "pretty" as never }}>{t.lead}</p>
               <div data-ctas="1" style={{ marginTop: 32 }}>
                 <a href="#preco" data-herocta="1" style={btnPrimary}>{t.cta}</a>
                 <a href="#como-funciona" style={btnGhost}>
