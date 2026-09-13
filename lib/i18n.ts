@@ -118,7 +118,7 @@ export const I18N = {
     sign: "Volte amanhã.",
     ftTag: "Uma prática diária de hábitos e bem-estar. Não trata, não diagnostica e não substitui acompanhamento profissional.",
     ftInst: "Institucional", ftAbout: "Sobre o Diariamente", ftTerms: "Termos de uso", ftPriv: "Privacidade",
-    ftTalk: "Falar com a gente", ftSupport: "Suporte", ftApp: "Baixar o app",
+    ftTalk: "Falar com a gente", ftSupport: "Suporte", ftContact: "Contato", ftApp: "Baixar o app",
     stickyNote: "1 ano · 7 dias de garantia",
   },
   es: {
@@ -217,7 +217,7 @@ export const I18N = {
     sign: "Vuelve mañana.",
     ftTag: "Una práctica diaria de hábitos y bienestar. No trata, no diagnostica y no sustituye el acompañamiento profesional.",
     ftInst: "Institucional", ftAbout: "Sobre Diariamente", ftTerms: "Términos de uso", ftPriv: "Privacidad",
-    ftTalk: "Habla con nosotros", ftSupport: "Soporte", ftApp: "Descargar la app",
+    ftTalk: "Habla con nosotros", ftSupport: "Soporte", ftContact: "Contacto", ftApp: "Descargar la app",
     stickyNote: "1 año · 7 días de garantía",
   },
 } as const;

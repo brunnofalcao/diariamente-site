@@ -35,7 +35,16 @@ const C_AUTOR_DIA = process.env.COL_AUTOR_DIA || "autor_dia";
 // A assinatura publica e sempre a marca.
 const ASSINATURA_PUBLICA = "Diariamente";
 
-// Fallback teaser (marketing-safe — NAO sao os textos reais do produto)
+// Fallback teaser (marketing-safe — NAO sao os textos reais do produto).
+//
+// ATENCAO, e a causa de um bug real: quando o Supabase falha, este array
+// entra no lugar do texto do dia e o hero continua exibindo data, dia do
+// ano e tudo mais como se estivesse certo. O visitante ve "13 setembro ·
+// Dia 256 de 365" com um texto que NAO e o do dia. A falha e invisivel.
+//
+// Por isso a resposta agora carrega `fonte` e `ok`, e o front deixa de
+// exibir data e numeracao quando fonte !== "supabase". Melhor mostrar
+// menos do que mostrar errado com cara de certo.
 const TEASER = [
   { texto: "O que você está adiando que, no fundo, já sabe que precisa decidir?", autor: "Diariamente" },
   { texto: "Se hoje fosse a única chance de começar, você começaria, ou esperaria estar pronto?", autor: "Diariamente" },
@@ -89,7 +98,7 @@ export async function GET() {
     return NextResponse.json({
       dia: diaAno,
       total: 365,
-      fonte: "teaser",
+      fonte: "teaser", ok: false, ehDoDia: false,
       motivo: `variavel(eis) de ambiente ausente(s) no Vercel: ${faltando.join(", ")}`,
       dataExtenso, diaSemana,
       ...t,
@@ -115,7 +124,7 @@ export async function GET() {
     const linhas: Record<string, unknown>[] = await r.json();
     if (!linhas?.length) {
       const t = TEASER[(diaAno - 1) % TEASER.length];
-      return NextResponse.json({ dia: diaAno, total: 365, fonte: "teaser", motivo: `nenhuma linha com ${C_MES}=${mes} e ${C_DIA}=${dia}`, dataExtenso, diaSemana, ...t });
+      return NextResponse.json({ dia: diaAno, total: 365, fonte: "teaser", ok: false, ehDoDia: false, motivo: `nenhuma linha com ${C_MES}=${mes} e ${C_DIA}=${dia}`, dataExtenso, diaSemana, ...t });
     }
 
     const row = linhas[0];
@@ -127,14 +136,14 @@ export async function GET() {
     return NextResponse.json({
       dia: diaLabel,
       total: 365,
-      fonte: "supabase",
+      fonte: "supabase", ok: true, ehDoDia: true,
       texto: String(row[C_PERGUNTA] ?? ""),
       autor,
       dataExtenso, diaSemana,
     });
   } catch (e) {
     const t = TEASER[(diaAno - 1) % TEASER.length];
-    return NextResponse.json({ dia: diaAno, total: 365, fonte: "teaser", motivo: String(e), dataExtenso, diaSemana, ...t });
+    return NextResponse.json({ dia: diaAno, total: 365, fonte: "teaser", ok: false, ehDoDia: false, motivo: String(e), dataExtenso, diaSemana, ...t });
   }
 }
 

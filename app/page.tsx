@@ -34,11 +34,15 @@ const CSS = `
 [data-hero]{display:grid;gap:40px;grid-template-columns:minmax(0,1fr);text-align:center}
 [data-hero] [data-ctas]{justify-content:center}
 [data-hero] [data-lead],[data-hero] [data-h1]{margin-left:auto;margin-right:auto}
-[data-hscard]{margin:-48px auto 0;position:relative;z-index:2;width:100%;max-width:430px}
+/* O card subia 48px e cobria a linha de prova logo acima ("+5.000 pessoas
+   ja comecaram - Garantia de 7 dias"). A sobreposicao era proposital para
+   dar profundidade, mas comia texto. Agora encosta sem cobrir. */
+[data-hscard]{margin:0 auto;position:relative;z-index:2;width:100%;max-width:430px}
+[data-hero]{gap:28px}
 @media (min-width:900px){[data-hero]{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center;text-align:left}[data-hero] [data-ctas]{justify-content:flex-start}[data-hero] [data-lead],[data-hero] [data-h1]{margin-left:0}[data-hero] [data-badges]{justify-content:flex-start}[data-phone]{width:300px;margin:0 0 0 auto}[data-hscard]{margin:0;max-width:430px}}
-[data-trust]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 24px;justify-items:center;text-align:center}
-[data-trust] [data-rule]{display:none}
-@media (min-width:1040px){[data-trust]{display:flex;flex-wrap:nowrap;justify-content:center;align-items:center;gap:28px}[data-trust] [data-rule]{display:block}}
+[data-trust]{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+
+@media (min-width:1040px){[data-trust]{gap:10px}}
 [data-ctas]{display:flex;flex-direction:column;align-items:stretch;gap:12px}
 @media (min-width:560px){[data-ctas]{flex-direction:row;align-items:center;gap:14px}}
 [data-strip]{display:grid;gap:16px;grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -133,7 +137,46 @@ export default function Home() {
 
   const now = new Date();
   const dia = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000);
-  const texto = TEASER[lang][(dia - 1) % TEASER[lang].length];
+
+  // ------------------------------------------------------------------
+  // TEXTO DO DIA — fonte da verdade
+  // ------------------------------------------------------------------
+  // Antes: o hero exibia TEASER[lang][(dia-1) % 7], um array de sete
+  // frases de marketing rotativas, AO LADO da data real e do "Dia N de
+  // 365". Resultado: em 13/09 a pagina mostrava "Dia 256 de 365" com um
+  // texto que nao era o do dia 256. A rota /api/provocacao-do-dia existia
+  // e ninguem a chamava; o HeroProvocacao.tsx, que chamava, estava orfao.
+  //
+  // Agora o texto vem da API (Supabase). O teaser continua como ponte
+  // visual ate a resposta chegar, mas a data e a numeracao SO aparecem
+  // quando `ehDoDia` for verdadeiro. Melhor mostrar menos do que mostrar
+  // errado com cara de certo.
+  const [prov, setProv] = useState<{ texto: string; dia: number; ehDoDia: boolean } | null>(null);
+
+  useEffect(() => {
+    let vivo = true;
+    fetch("/api/provocacao-do-dia", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        if (!vivo) return;
+        if (d?.ehDoDia && d?.texto) {
+          setProv({ texto: String(d.texto), dia: Number(d.dia) || dia, ehDoDia: true });
+        } else {
+          // Falha silenciosa nunca mais: o motivo vai para o console.
+          console.warn("[diariamente] texto do dia indisponivel:", d?.motivo ?? "sem motivo");
+          setProv({ texto: TEASER[lang][(dia - 1) % TEASER[lang].length], dia, ehDoDia: false });
+        }
+      })
+      .catch((e) => {
+        if (!vivo) return;
+        console.warn("[diariamente] falha ao buscar o texto do dia:", e);
+        setProv({ texto: TEASER[lang][(dia - 1) % TEASER[lang].length], dia, ehDoDia: false });
+      });
+    return () => { vivo = false; };
+  }, [lang, dia]);
+
+  const texto = prov?.texto ?? TEASER[lang][(dia - 1) % TEASER[lang].length];
+  const ehDoDia = prov?.ehDoDia ?? false;
   const mes = new Intl.DateTimeFormat(t.locale, { month: "long" }).format(now);
   const semana = new Intl.DateTimeFormat(t.locale, { weekday: "long" }).format(now).replace("-feira", "");
   const dataExtenso = lang === "es" ? `${now.getDate()} de ${mes}` : `${now.getDate()} ${mes}`;
@@ -250,16 +293,19 @@ export default function Home() {
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
                     <Lockup size={20} font={16.7} />
                     <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 700, color: C.ret, background: "rgba(245,183,49,.10)", border: "1px solid rgba(245,183,49,.30)", borderRadius: 999, padding: "4px 11px" }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 4-2 5-2 8a4 4 0 008 0c0-1-1-2-1-3 2 1 3 3 3 6a8 8 0 11-16 0c0-5 5-7 8-11z" /></svg>{dia}
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 4-2 5-2 8a4 4 0 008 0c0-1-1-2-1-3 2 1 3 3 3 6a8 8 0 11-16 0c0-5 5-7 8-11z" /></svg>{prov?.dia ?? dia}
                     </span>
                   </div>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-                    <span style={{ fontFamily: C.serif, fontSize: 28, lineHeight: 1.1, letterSpacing: "-.01em", textTransform: "lowercase", whiteSpace: "nowrap" }}>{dataExtenso}</span>
-                    <span style={{ fontSize: 13, color: C.n400, fontWeight: 500, textTransform: "capitalize", whiteSpace: "nowrap" }}>{semana}</span>
-                  </div>
+                  {/* Data so aparece quando o texto e comprovadamente o do dia. */}
+                  {ehDoDia && (
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+                      <span style={{ fontFamily: C.serif, fontSize: 28, lineHeight: 1.1, letterSpacing: "-.01em", textTransform: "lowercase", whiteSpace: "nowrap" }}>{dataExtenso}</span>
+                      <span style={{ fontSize: 13, color: C.n400, fontWeight: 500, textTransform: "capitalize", whiteSpace: "nowrap" }}>{semana}</span>
+                    </div>
+                  )}
                   <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
                     <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".09em", textTransform: "uppercase", color: C.p500, whiteSpace: "nowrap" }}>{t.cardEyebrow}</span>
-                    <span style={{ fontSize: 12, color: C.n400, fontWeight: 500, whiteSpace: "nowrap" }}>{t.dayOf.replace("{n}", String(dia))}</span>
+                    {ehDoDia && <span style={{ fontSize: 12, color: C.n400, fontWeight: 500, whiteSpace: "nowrap" }}>{t.dayOf.replace("{n}", String(prov?.dia ?? dia))}</span>}
                   </div>
                   <div role="img" aria-label={texto} style={{ display: "flex", alignItems: "flex-start", gap: 12, background: "rgba(255,255,255,.035)", border: "1px solid rgba(255,255,255,.10)", borderRadius: 16, padding: 20, minHeight: 150 }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ color: C.p500, flex: "0 0 18px", marginTop: 6, opacity: .8 }}><circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" /><path d="M20 20l-3.2-3.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
@@ -295,11 +341,40 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <div data-trust="1" style={{ marginTop: 20, fontSize: 12, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", color: C.n400 }}>
-            <span>{t.tr1}</span><span data-rule="1" aria-hidden="true" style={rule} />
-            <span>{t.tr2}</span><span data-rule="1" aria-hidden="true" style={rule} />
-            <span>iPhone · Android</span><span data-rule="1" aria-hidden="true" style={rule} />
-            <span>{t.tr4}</span>
+          {/* FAIXA DE CONFIANÇA
+              Antes: quatro blocos em CAIXA ALTA, mesmo peso, quebrando em
+              duas linhas no celular. Caixa alta em quatro células vira
+              ruído: o olho não sabe onde pousar e nada é lido.
+
+              Agora: ícone + rótulo em caixa mista, um por selo, em pílulas
+              com hairline. Mesma informação, lida em um passe. A caixa alta
+              some porque o brandbook (§21) reserva versal para overline
+              curto, não para bloco de texto. */}
+          <div data-trust="1" style={{ marginTop: 22 }}>
+            {[
+              { ic: "selo", txt: t.tr1 },
+              { ic: "cadeado", txt: t.tr2 },
+              { ic: "celular", txt: "iPhone · Android" },
+              { ic: "escudo", txt: t.tr4 },
+            ].map(({ ic, txt }) => (
+              <span
+                key={txt}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  padding: "9px 15px", borderRadius: 999,
+                  border: `1px solid ${C.line}`, background: "rgba(255,255,255,.02)",
+                  fontSize: 13, fontWeight: 500, color: C.n300, whiteSpace: "nowrap",
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.p500} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: "0 0 auto" }}>
+                  {ic === "selo" && <><circle cx="12" cy="9" r="6" /><path d="M8.5 14.5L7 22l5-2.6L17 22l-1.5-7.5" /></>}
+                  {ic === "cadeado" && <><rect x="4" y="10.5" width="16" height="10.5" rx="2.5" /><path d="M8 10.5V7a4 4 0 018 0v3.5" /></>}
+                  {ic === "celular" && <><rect x="6.5" y="2.5" width="11" height="19" rx="3" /><path d="M11 18.5h2" /></>}
+                  {ic === "escudo" && <><path d="M12 2.5l7.5 3.2v5.4c0 4.7-3.2 8.7-7.5 10-4.3-1.3-7.5-5.3-7.5-10V5.7L12 2.5z" /><path d="M9.3 12l2 2 3.6-3.7" /></>}
+                </svg>
+                {txt}
+              </span>
+            ))}
           </div>
         </div>
       </section>
@@ -624,19 +699,19 @@ export default function Home() {
               <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.n400, maxWidth: "38ch" }}>{t.ftTag}</p>
             </div>
             <nav aria-label={t.ftInst} style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
-              <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: C.n400, marginBottom: 4 }}>{t.ftInst}</span>
+              <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: C.p500, marginBottom: 4 }}>{t.ftInst}</span>
               {[["/sobre", t.ftAbout], ["/termos", t.ftTerms], ["/privacidade", t.ftPriv]].map(([href, label]) => (
                 <a key={href} href={href} style={{ fontSize: 15, color: C.n300, textDecoration: "none", minHeight: 28, display: "inline-flex", alignItems: "center" }}>{label}</a>
               ))}
             </nav>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
-              <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: C.n400, marginBottom: 4 }}>{t.ftTalk}</span>
+              <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: C.p500, marginBottom: 4 }}>{t.ftTalk}</span>
               <a href={LINKS.suporte} style={{ fontSize: 15, color: C.n300, textDecoration: "none", minHeight: 28, display: "inline-flex", alignItems: "center" }}>{t.ftSupport}</a>
-              <a href={LINKS.contato} style={{ fontSize: 15, color: C.n300, textDecoration: "none", minHeight: 28, display: "inline-flex", alignItems: "center" }}>contato@scienceplay.com</a>
+              <a href={LINKS.contato} style={{ fontSize: 15, color: C.n300, textDecoration: "none", minHeight: 28, display: "inline-flex", alignItems: "center" }}>{t.ftContact}</a>
               <a href={LINKS.instagram} target="_blank" rel="noopener noreferrer" style={{ fontSize: 15, color: C.n300, textDecoration: "none", minHeight: 28, display: "inline-flex", alignItems: "center" }}>@diariamente.app</a>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
-              <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: C.n400, marginBottom: 4 }}>{t.ftApp}</span>
+              <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: C.p500, marginBottom: 4 }}>{t.ftApp}</span>
               <a href={LINKS.appStore} target="_blank" rel="noopener noreferrer" style={{ fontSize: 15, color: C.n300, textDecoration: "none", minHeight: 28, display: "inline-flex", alignItems: "center" }}>App Store</a>
               <a href={LINKS.googlePlay} target="_blank" rel="noopener noreferrer" style={{ fontSize: 15, color: C.n300, textDecoration: "none", minHeight: 28, display: "inline-flex", alignItems: "center" }}>Google Play</a>
             </div>
