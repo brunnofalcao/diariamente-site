@@ -55,11 +55,35 @@ export default function Termos() {
         exclusiva, e não transfere a titularidade de qualquer direito sobre o conteúdo.
       </p>
 
-      <h2>5. Pagamento</h2>
+      <h2>5. Garantia e direito de arrependimento</h2>
       <p>
-        As transações são processadas pela plataforma Hotmart, responsável pelo processamento de
-        pagamento, parcelamento, emissão de documentos fiscais e cobrança, conforme os termos da
-        própria plataforma. Os preços e condições vigentes são os exibidos no momento da compra.
+        Oferecemos garantia de {GARANTIA.dias} dias contados da confirmação da compra. Dentro
+        desse prazo você pode solicitar a devolução integral do valor pago, escrevendo para{" "}
+        <a href={`mailto:${EMPRESA.suporteEmail}`}>{EMPRESA.suporteEmail}</a>, sem
+        necessidade de justificativa.
+      </p>
+      <p>
+        <strong>Se você está no Brasil:</strong> aplica-se o art. 49 do Código de Defesa do
+        Consumidor, que garante 7 dias de arrependimento em compras fora do estabelecimento.
+        Nossa garantia de {GARANTIA.dias} dias já contempla esse prazo.
+      </p>
+      <p>
+        <strong>Se você está na União Europeia:</strong> a Diretiva 2011/83/UE garante{" "}
+        <strong>14 dias</strong> de direito de retratação, sem necessidade de justificativa.
+        Esse prazo prevalece sobre a nossa garantia contratual sempre que for mais favorável
+        a você.
+      </p>
+      <p>
+        Atenção, e isto é do seu interesse saber: para conteúdo digital fornecido de imediato,
+        o art. 16(m) da mesma Diretiva permite que o fornecedor exija consentimento expresso
+        para o início imediato da execução, com reconhecimento de que isso faz perder o
+        direito de retratação. <strong>Nós não fazemos isso.</strong> Você mantém o prazo
+        integral mesmo tendo acessado o conteúdo.
+      </p>
+      <p>
+        Para exercer, basta escrever para{" "}
+        <a href={`mailto:${EMPRESA.suporteEmail}`}>{EMPRESA.suporteEmail}</a>. O reembolso é
+        feito pelo mesmo meio de pagamento, em até 14 dias da comunicação.
       </p>
 
       <h2>6. Direito de arrependimento e garantia</h2>

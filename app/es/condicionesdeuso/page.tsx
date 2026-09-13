@@ -78,19 +78,35 @@ export default function CondicionesDeUso() {
         transacción internacional.
       </p>
 
-      <h2>5. Garantía y desistimiento</h2>
+      <h2>5. Garantía y derecho de desistimiento</h2>
       <p>
         Ofrecemos garantía de {GARANTIA.dias} días contados desde la confirmación de la
-        compra. Dentro de ese plazo puedes solicitar la devolución íntegra del valor pagado,
+        compra. Dentro de ese plazo puedes solicitar la devolución íntegra del importe pagado,
         escribiendo a{" "}
         <a href={`mailto:${EMPRESA.suporteEmail}`}>{EMPRESA.suporteEmail}</a>, sin necesidad
         de justificación.
       </p>
       <p>
-        Este plazo corresponde al derecho de arrepentimiento previsto en el artículo 49 del
-        Código de Defensa del Consumidor brasileño, aplicable por tratarse de una venta
-        realizada desde Brasil. Si la legislación de tu país de residencia previera un plazo
-        más favorable, prevalecerá el plazo más favorable al consumidor.
+        <strong>Si estás en la Unión Europea:</strong> la Directiva 2011/83/UE te garantiza{" "}
+        <strong>14 días</strong> de derecho de desistimiento, sin justificación. Ese plazo
+        prevalece sobre nuestra garantía contractual siempre que te sea más favorable.
+      </p>
+      <p>
+        Conviene que lo sepas: para contenido digital suministrado de inmediato, el art. 16(m)
+        de esa misma Directiva permite al proveedor exigir consentimiento expreso para iniciar
+        la ejecución, con reconocimiento de que ello hace perder el derecho de desistimiento.{" "}
+        <strong>Nosotros no lo hacemos.</strong> Conservas el plazo íntegro aunque ya hayas
+        accedido al contenido.
+      </p>
+      <p>
+        <strong>Si estás en América Latina fuera de Brasil:</strong> se aplica la legislación
+        de consumo de tu país de residencia cuando te sea más favorable que estas Condiciones.
+      </p>
+      <p>
+        Para ejercerlo, escribe a{" "}
+        <a href={`mailto:${EMPRESA.suporteEmail}`}>{EMPRESA.suporteEmail}</a>. El reembolso se
+        realiza por el mismo medio de pago, en un plazo máximo de 14 días desde la
+        comunicación.
       </p>
 
       <h2>6. Conducta del usuario</h2>
