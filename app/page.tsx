@@ -465,8 +465,18 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ---------- FAQ ---------- */}
-      <FAQ />
+      {/* ---------- FAQ ----------
+           Estava sem <section>, sem container e sem heading: entrava na
+           página como uma lista de botões soltos logo antes do CTA final. */}
+      <section className="reveal" id="faq">
+        <div className="wrap">
+          <div className="center sec-head">
+            <span className="overline eyebrow">Antes de decidir</span>
+            <h2 className="display-md">O que as pessoas perguntam</h2>
+          </div>
+          <FAQ />
+        </div>
+      </section>
 
       {/* ---------- CTA FINAL ---------- */}
       <section className="reveal">

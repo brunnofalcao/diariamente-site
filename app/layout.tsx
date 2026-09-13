@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SITE, PLANOS, PROVA, GARANTIA, LOJAS, LOGOS, EMPRESA } from "@/config";
+import { PERGUNTAS } from "@/lib/faq";
 import { Tracking } from "@/components/Tracking";
 import "./globals.css";
 
@@ -79,18 +80,18 @@ function StructuredData() {
 
   // FAQ schema alinhado 1:1 com as perguntas VISÍVEIS (components/FAQ.tsx).
   // Google valida a consistência entre schema e conteúdo renderizado.
+  // FONTE ÚNICA. O schema declarava 7 perguntas antigas ("É caro?"...)
+  // enquanto a página mostrava 10 outras. Duas listas mantidas à mão
+  // divergem sempre: o Google via um FAQ e o visitante via outro, com
+  // risco de perder o rich result por inconsistência.
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: [
-      { "@type": "Question", name: "É caro?", acceptedAnswer: { "@type": "Answer", text: "Dá menos de R$ 1 por dia por um ano inteiro de provocação diária, com um sistema feito pra você realmente usar. E tem 7 dias de garantia: se não for pra você, devolvemos." } },
-      { "@type": "Question", name: "Não tenho tempo. Quanto tempo leva por dia?", acceptedAnswer: { "@type": "Answer", text: "Três minutos: um texto curto, uma reflexão e uma ação pequena que cabe no dia que você já tem. O app te lembra no horário que você escolher." } },
-      { "@type": "Question", name: "Já baixei app de hábito antes e parei. Por que dessa vez seria diferente?", acceptedAnswer: { "@type": "Answer", text: "O Diariamente foi construído no ponto onde você largou antes. O contador conta as voltas, não os dias seguidos: ele nunca zera. Faltar não apaga o que você já construiu." } },
-      { "@type": "Question", name: "Será que funciona pra mim?", acceptedAnswer: { "@type": "Answer", text: "Funciona pra quem aparece 5 minutos por dia. O resto o sistema apoia: o lembrete no WhatsApp, o progresso visível e a ação concreta de cada dia." } },
-      { "@type": "Question", name: "Posso ler todas as provocações de uma vez?", acceptedAnswer: { "@type": "Answer", text: "Não, e isso é de propósito. No app você vive o dia de hoje, um por vez. Quando quiser adiantar, sua própria constância destrava o próximo dia." } },
-      { "@type": "Question", name: "Como recebo o acesso?", acceptedAnswer: { "@type": "Answer", text: "Por e-mail, logo após a confirmação. Você abre o app e já faz a provocação do dia 1." } },
-      { "@type": "Question", name: "E se eu não gostar? Existe garantia?", acceptedAnswer: { "@type": "Answer", text: GARANTIA.texto } },
-    ],
+    mainEntity: PERGUNTAS.map((p) => ({
+      "@type": "Question",
+      name: p.q,
+      acceptedAnswer: { "@type": "Answer", text: p.a },
+    })),
   };
 
   // sameAs é o principal sinal de ENTIDADE para buscadores e IAs (GEO).

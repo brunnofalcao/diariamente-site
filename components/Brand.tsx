@@ -191,6 +191,20 @@ export function InstagramLink({ handle }: { handle: string }) {
  * Para publicar a imagem real: passe `src` (e `alt`). Sem src, mostra o placeholder marcado.
  * shape: "wide" | "portrait" | "square" | "tall" | "" (default ~240px)
  */
+/* ---------------------------------------------------------------------
+   Cloudinary: formato e qualidade automáticos + largura sob medida.
+   Sem isto, os PNG originais somam cerca de 29 MB na home — 7 MB por
+   print. Com 90% do tráfego em celular, isso é o LCP e o plano de dados
+   da pessoa. A rota /estudante já fazia certo; a home não.
+   --------------------------------------------------------------------- */
+function cld(url: string, t: string): string {
+  return url.includes("/upload/") ? url.replace("/upload/", `/upload/${t}/`) : url;
+}
+
+function setDeLarguras(url: string, larguras: number[]): string {
+  return larguras.map((w) => `${cld(url, `f_auto,q_auto,w_${w}`)} ${w}w`).join(", ");
+}
+
 export function ImageSlot({
   tag,
   label,
@@ -200,6 +214,7 @@ export function ImageSlot({
   alt = "",
   bare = false,
   ratio = "1170 / 2532",
+  sizes,
   style,
 }: {
   tag: string;
@@ -211,6 +226,8 @@ export function ImageSlot({
   bare?: boolean;
   /** Proporção reservada no modo bare (largura / altura). Evita salto de layout. */
   ratio?: string;
+  /** Dica de largura para o browser escolher no srcset. */
+  sizes?: string;
   style?: React.CSSProperties;
 }) {
   if (src) {
@@ -228,7 +245,9 @@ export function ImageSlot({
       return (
         <div style={{ width: "100%", aspectRatio: ratio, ...style }}>
           <img
-            src={src}
+            src={cld(src, "f_auto,q_auto,w_560")}
+            srcSet={setDeLarguras(src, [320, 560, 840])}
+            sizes={sizes ?? "(min-width: 900px) 420px, 88vw"}
             alt={alt}
             loading="lazy"
             decoding="async"
@@ -239,7 +258,15 @@ export function ImageSlot({
     }
     return (
       <div className={`img-slot ${shape} has-img`} style={{ border: "1px solid var(--border)", ...style }}>
-        <img className="img-real" src={src} alt={alt} loading="lazy" decoding="async" />
+        <img
+          className="img-real"
+          src={cld(src, "f_auto,q_auto,w_840")}
+          srcSet={setDeLarguras(src, [480, 840, 1200])}
+          sizes={sizes ?? "(min-width: 900px) 640px, 92vw"}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+        />
       </div>
     );
   }

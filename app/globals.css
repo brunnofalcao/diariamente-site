@@ -1417,3 +1417,76 @@ html, body { overflow-x: clip; }
 .rp-ig { display: inline-flex; align-items: center; gap: 9px; min-height: 40px; }
 .rp-ig svg { flex: 0 0 auto; color: var(--n-500); transition: color var(--t-avancar) var(--ease-io); }
 .rp-ig:hover svg { color: var(--accent); }
+
+
+/* =====================================================================
+   FAQ  ·  CORREÇÃO DE QUEBRA
+   ---------------------------------------------------------------------
+   components/FAQ.tsx sempre usou .faq / .faq-q / .faq-a, e NENHUMA dessas
+   regras existia no CSS. Resultado: dez botões nativos cinza, colados na
+   borda, imediatamente antes do CTA final — o pior lugar possível para a
+   página parecer quebrada.
+
+   Verificado com grep antes de escrever: 0 regras para cada classe.
+   ===================================================================== */
+
+.faq { max-width: 720px; margin: 0 auto; display: grid; gap: 10px; }
+
+.faq-item {
+  border-radius: 16px;                        /* §33: card = 16px */
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.025);
+  transition: border-color var(--t-avancar) var(--ease-io),
+              background var(--t-avancar) var(--ease-io);
+}
+.faq-item.open { border-color: rgba(39,189,190,.24); background: rgba(39,189,190,.04); }
+
+.faq-q {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 18px 20px; min-height: 56px;
+  background: none; border: 0; cursor: pointer; text-align: left;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 15.5px; font-weight: 600; line-height: 1.4; color: #fff;
+}
+.faq-q:hover { color: var(--p-300); }
+
+/* Chevron em traço, alinhado à iconografia oficial (Lucide, 2px). */
+.faq-ic {
+  flex: 0 0 10px; width: 10px; height: 10px;
+  border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform var(--t-avancar) var(--ease-io);
+}
+.faq-item.open .faq-ic { transform: rotate(-135deg) translate(-2px, -2px); }
+
+.faq-a {
+  padding: 0 20px 20px;
+  font-size: 14.5px; line-height: 1.7; color: var(--n-300);
+  animation: aparecer var(--t-aparecer) var(--ease-out) both;
+}
+.faq-a a { color: var(--accent); }
+
+@media (max-width: 480px) {
+  .faq-q { padding: 16px; font-size: 15px; }
+  .faq-a { padding: 0 16px 16px; font-size: 14px; }
+}
+
+/* =====================================================================
+   CONTRASTE  ·  WCAG 2.2 AA
+   ---------------------------------------------------------------------
+   Medido sobre S0 #0A0E0E:
+     N600 #4E5858  2,64:1  reprova
+     N500 #6B7777  4,19:1  reprova
+     N400 #8A9494  6,23:1  passa
+   Texto legal e CNPJ estavam em N600 a 12,5px. Além de ilegível, é o
+   texto que identifica o fornecedor.
+   ===================================================================== */
+.rp-hint  { color: var(--n-400); font-size: 12.5px; }
+.rp-base p { color: var(--n-400); font-size: 13px; }
+.rp-aviso { color: var(--n-400) !important; }
+.rp-t     { color: var(--n-400); }
+.rp-ig svg { color: var(--n-400); }
+
+/* Instrument Serif foi aposentada (§23) e não é carregada: esta regra
+   caía silenciosamente em Georgia. */
+.cart-est-h { font-family: var(--font-serif); }
