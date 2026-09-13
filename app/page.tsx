@@ -1,499 +1,669 @@
-import { SITE, PROVA, SCREENSHOTS, LIFESTYLE, PLANO_APP, ESTUDANTE, CONSELHO } from "@/config";
-import { Logomark, ImageSlot, OfficialLogo } from "@/components/Brand";
-import { HeroProvocacao } from "@/components/HeroProvocacao";
-import { StickyCTA, RevealOnScroll } from "@/components/Sticky";
-import { StoreBadges } from "@/components/StoreBadges";
-import { Rodape } from "@/components/Rodape";
-import { Oferta } from "@/components/Oferta";
-import { FAQ } from "@/components/FAQ";
+"use client";
 
-export default function Page() {
+import { useEffect, useRef, useState } from "react";
+import { I18N, TEASER, IMG, LINKS, cld, type Lang, type Dict } from "@/lib/i18n";
+
+/* ─────────────────────────────────────────────────────────────
+   Home · Diariamente (redesign v3, padrão internacional PT/ES)
+   Tokens Brandbook 5.0. Estilos inline + um bloco de media
+   queries (nada depende de globals.css).
+   ───────────────────────────────────────────────────────────── */
+
+const C = {
+  s0: "#0A0E0E", s1: "#111616", s2: "#181D1D",
+  line: "rgba(255,255,255,.07)",
+  text: "#fff", n300: "#AAB2B2", n400: "#8A9494", n200: "#CDD2D2",
+  p500: "#27BDBE", p400: "#3DCBCC", p300: "#5DD8D8", onAccent: "#131918",
+  absence: "#106667", ret: "#F5B731",
+  serif: "'Literata',Georgia,serif",
+};
+
+const CSS = `
+:root{color-scheme:dark}
+#dm-root a{color:${C.p500}}#dm-root a:hover{color:${C.p400}}
+#dm-root :where(a,button,summary):focus-visible{outline:2px solid ${C.p300};outline-offset:2px}
+#dm-root summary{list-style:none}#dm-root summary::-webkit-details-marker{display:none}
+@keyframes dm-caret{0%,50%{opacity:1}50.01%,100%{opacity:0}}
+@keyframes dm-glow{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:.95;transform:scale(1.07)}}
+@media (prefers-reduced-motion:reduce){#dm-root *{transition:none!important;animation:none!important}}
+[data-desk]{display:none}[data-menu]{display:none}[data-menu] a{white-space:nowrap}
+[data-navrow]{justify-content:center}
+[data-navright]{position:absolute;right:clamp(16px,3vw,24px);top:50%;transform:translateY(-50%)}
+@media (min-width:1040px){[data-menu]{display:flex}}
+@media (min-width:900px){[data-desk]{display:flex}[data-sticky]{display:none}[data-navrow]{justify-content:space-between}[data-navright]{position:static;transform:none}}
+[data-hero]{display:grid;gap:40px;grid-template-columns:minmax(0,1fr);text-align:center}
+[data-hero] [data-ctas]{justify-content:center}
+[data-hero] [data-lead],[data-hero] [data-h1]{margin-left:auto;margin-right:auto}
+[data-hscard]{margin:-48px auto 0;position:relative;z-index:2;width:100%;max-width:430px}
+@media (min-width:900px){[data-hero]{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center;text-align:left}[data-hero] [data-ctas]{justify-content:flex-start}[data-hero] [data-lead],[data-hero] [data-h1]{margin-left:0}[data-hero] [data-badges]{justify-content:flex-start}[data-phone]{width:300px;margin:0 0 0 auto}[data-hscard]{margin:0;max-width:430px}}
+[data-trust]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 24px;justify-items:center;text-align:center}
+[data-trust] [data-rule]{display:none}
+@media (min-width:1040px){[data-trust]{display:flex;flex-wrap:nowrap;justify-content:center;align-items:center;gap:28px}[data-trust] [data-rule]{display:block}}
+[data-ctas]{display:flex;flex-direction:column;align-items:stretch;gap:12px}
+@media (min-width:560px){[data-ctas]{flex-direction:row;align-items:center;gap:14px}}
+[data-strip]{display:grid;gap:16px;grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (min-width:900px){[data-strip]{grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}}
+[data-split]{display:grid;gap:32px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:900px){[data-split]{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:72px;align-items:center}}
+[data-steps]{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:768px){[data-steps]{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}}
+[data-tour]{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 20px 12px;margin:0 -20px;scrollbar-width:none}
+[data-tour]::-webkit-scrollbar{display:none}
+[data-tour]>*{flex:0 0 min(70vw,260px);scroll-snap-align:center}
+@media (min-width:900px){[data-tour]{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;overflow:visible;padding:0;margin:0}[data-tour]>*{flex:none}}
+[data-cols2]{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:768px){[data-cols2]{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}
+[data-price]{display:grid;gap:24px;grid-template-areas:"card" "value";grid-template-columns:minmax(0,1fr)}
+[data-price]>[data-area=card]{grid-area:card;min-width:0}
+[data-price]>[data-area=value]{grid-area:value;min-width:0}
+@media (min-width:1000px){[data-price]{grid-template-areas:"value card";grid-template-columns:minmax(0,1fr) 440px;gap:56px;align-items:start}[data-price]>[data-area=card]{position:sticky;top:88px}}
+[data-rpgrid]{display:grid;gap:28px}
+@media (min-width:560px){[data-rpgrid]{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:940px){[data-rpgrid]{grid-template-columns:2fr 1fr 1fr 1fr;gap:24px}}
+[data-faq] details[open]{border-color:rgba(39,189,190,.26)}
+[data-faq] details[open] [data-chev]{transform:rotate(180deg)}
+`;
+
+const wrap: React.CSSProperties = { maxWidth: 1160, margin: "0 auto", padding: "0 clamp(20px,3vw,24px)" };
+const sec: React.CSSProperties = { padding: "clamp(56px,8vw,104px) 0", borderTop: `1px solid ${C.line}` };
+const eyebrow: React.CSSProperties = { display: "block", fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: C.p500, marginBottom: 14 };
+const h2: React.CSSProperties = { fontFamily: C.serif, fontWeight: 400, fontSize: "clamp(28px,3.6vw,42px)", lineHeight: 1.12, letterSpacing: "-.012em", color: C.text, margin: 0, textWrap: "balance" as never };
+const card: React.CSSProperties = { background: C.s1, border: `1px solid ${C.line}`, borderRadius: 16, padding: "clamp(20px,2.5vw,28px)", minWidth: 0 };
+const btnPrimary: React.CSSProperties = { display: "inline-flex", alignItems: "center", justifyContent: "center", height: 54, padding: "0 30px", borderRadius: 999, border: "none", background: C.p500, color: C.onAccent, fontSize: 16, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap", cursor: "pointer", fontFamily: "inherit", transition: "background .3s" };
+const btnGhost: React.CSSProperties = { display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, height: 54, padding: "0 20px", borderRadius: 999, border: "1.5px solid rgba(255,255,255,.16)", color: C.text, fontSize: 15, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" };
+const numChip: React.CSSProperties = { display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 28, height: 28, padding: "0 10px", borderRadius: 999, background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.25)", fontFamily: C.serif, fontSize: 15, color: C.p500 };
+const iconCircle: React.CSSProperties = { flex: "0 0 40px", width: 40, height: 40, borderRadius: 999, display: "inline-flex", alignItems: "center", justifyContent: "center", background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.22)", color: C.p500 };
+const rule: React.CSSProperties = { width: 1, height: 14, background: "rgba(255,255,255,.14)" };
+
+function Mark({ size = 28 }: { size?: number }) {
   return (
-    <main>
-      <RevealOnScroll />
+    <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true" style={{ display: "block", flex: "0 0 auto" }}>
+      <g fill="none" stroke={C.p500} strokeWidth={9} strokeLinecap="round">
+        <path d="M50 28 V10" /><path d="M65.6 34.4 L78.3 21.7" opacity=".3" /><path d="M72 50 H90" opacity=".4" />
+        <path d="M65.6 65.6 L78.3 78.3" opacity=".5" /><path d="M34.4 65.6 L21.7 78.3" opacity=".6" />
+        <path d="M28 50 H10" opacity=".75" /><path d="M34.4 34.4 L21.7 21.7" opacity=".9" />
+      </g>
+    </svg>
+  );
+}
 
-      {/* ---------- TOP — logo oficial centralizada ---------- */}
-      <nav className="topnav">
-        <div className="wrap" style={{ display: "flex", justifyContent: "center", padding: "var(--sp2) 0", position: "relative" }}>
-          <a href="/" aria-label="Diariamente" style={{ textDecoration: "none" }}>
-            <OfficialLogo height={48} />
-          </a>
-          <a href="#oferta" className="btn btn-primary nav-cta">Quero começar</a>
+function Lockup({ size = 28, font = 23.3 }: { size?: number; font?: number }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: size * 0.3, lineHeight: 0 }}>
+      <Mark size={size} />
+      <span style={{ fontFamily: C.serif, fontSize: font, letterSpacing: "-0.01em", lineHeight: 1, color: C.text }}>diariamente</span>
+    </span>
+  );
+}
+
+const Check = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.p500} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: "0 0 auto", marginTop: 3 }}><path d="M20 6L9 17l-5-5" /></svg>
+);
+const Dash = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B7777" strokeWidth={2} strokeLinecap="round" aria-hidden="true" style={{ flex: "0 0 auto", marginTop: 3 }}><path d="M6 12h12" /></svg>
+);
+const Shield = ({ s = 20 }: { s?: number }) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2l8 3.5v5.8c0 5-3.4 9.3-8 10.7-4.6-1.4-8-5.7-8-10.7V5.5L12 2z" /><path d="M9 12l2 2 4-4" /></svg>
+);
+
+function Img({ src, alt, widths, sizes, priority }: { src: string; alt: string; widths: number[]; sizes: string; priority?: boolean }) {
+  return (
+    <img
+      src={cld(src, `f_auto,q_auto,w_${widths[1] ?? widths[0]}`)}
+      srcSet={widths.map((w) => `${cld(src, `f_auto,q_auto,w_${w}`)} ${w}w`).join(", ")}
+      sizes={sizes}
+      alt={alt}
+      loading={priority ? "eager" : "lazy"}
+      // eslint-disable-next-line @next/next/no-img-element
+      decoding="async"
+      style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+    />
+  );
+}
+
+export default function Home() {
+  const [lang, setLang] = useState<Lang>("pt");
+  const [typed, setTyped] = useState("");
+  const [done, setDone] = useState(false);
+  const [copiado, setCopiado] = useState(false);
+  const [sticky, setSticky] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const t = I18N[lang] as unknown as Dict;
+
+  const now = new Date();
+  const dia = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000);
+  const texto = TEASER[lang][(dia - 1) % TEASER[lang].length];
+  const mes = new Intl.DateTimeFormat(t.locale, { month: "long" }).format(now);
+  const semana = new Intl.DateTimeFormat(t.locale, { weekday: "long" }).format(now).replace("-feira", "");
+  const dataExtenso = lang === "es" ? `${now.getDate()} de ${mes}` : `${now.getDate()} ${mes}`;
+
+  useEffect(() => {
+    if (timer.current) clearTimeout(timer.current);
+    setTyped(""); setDone(false);
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) { setTyped(texto); setDone(true); return; }
+    let i = 0;
+    const tick = () => {
+      i++; setTyped(texto.slice(0, i));
+      if (i < texto.length) timer.current = setTimeout(tick, 28 + (/[,.?]/.test(texto[i - 1]) ? 220 : Math.random() * 26));
+      else setDone(true);
+    };
+    timer.current = setTimeout(tick, 650);
+    return () => { if (timer.current) clearTimeout(timer.current); };
+  }, [texto]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const hero = document.querySelector("[data-herocta]");
+      const of = document.getElementById("preco");
+      const fora = hero ? hero.getBoundingClientRect().bottom < 0 : window.scrollY > 600;
+      let vis = false;
+      if (of) { const r = of.getBoundingClientRect(); vis = r.top < window.innerHeight * 0.8 && r.bottom > 120; }
+      setSticky(fora && !vis);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const share = async () => {
+    const txt = `\u201C${texto}\u201D \u2014 Diariamente.`;
+    const url = "https://diariamente.app/?utm_source=share&utm_medium=organic&utm_campaign=provocacao_do_dia";
+    try {
+      if (navigator.share) await navigator.share({ title: "Diariamente", text: txt, url });
+      else { await navigator.clipboard.writeText(`${txt} ${url}`); setCopiado(true); setTimeout(() => setCopiado(false), 2200); }
+    } catch { /* cancelado */ }
+  };
+
+  const goToOffer = () => {
+    const el = document.getElementById("preco");
+    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: "smooth" });
+  };
+
+  const langBtn = (on: boolean): React.CSSProperties => ({
+    height: 26, padding: "0 10px", borderRadius: 999, border: "none", fontFamily: "inherit", fontSize: 12,
+    fontWeight: 700, cursor: "pointer", letterSpacing: ".04em", transition: "background .2s",
+    background: on ? C.p500 : "transparent", color: on ? C.onAccent : C.n300,
+  });
+
+  const faqSchema = {
+    "@context": "https://schema.org", "@type": "FAQPage",
+    mainEntity: t.faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })),
+  };
+
+  return (
+    <div id="dm-root" lang={lang} style={{ background: C.s0, color: C.text, fontFamily: "Inter,system-ui,-apple-system,sans-serif", fontSize: 16, lineHeight: 1.6, overflowX: "clip" }}>
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+
+      {/* NAV */}
+      <nav aria-label="Principal" style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(10,14,14,.84)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: `1px solid ${C.line}` }}>
+        <div data-navrow="1" style={{ ...wrap, height: 64, display: "flex", alignItems: "center", gap: 24, position: "relative" }}>
+          <a href="#" aria-label="Diariamente" style={{ textDecoration: "none", flex: "0 0 auto" }}><Lockup /></a>
+          <div data-menu="1" style={{ alignItems: "center", gap: 22, fontSize: 14, fontWeight: 500 }}>
+            {[["#como-funciona", t.navHow], ["#app", t.navApp], ["#ciencia", t.navScience], ["#preco", t.navPrice], ["#faq", "FAQ"]].map(([href, label]) => (
+              <a key={href} href={href} style={{ color: C.n300, textDecoration: "none" }}>{label}</a>
+            ))}
+          </div>
+          <div data-navright="1" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div role="group" aria-label="Idioma / Idioma" style={{ display: "inline-flex", alignItems: "center", height: 32, padding: 2, borderRadius: 999, border: "1px solid rgba(255,255,255,.12)", background: "rgba(255,255,255,.03)" }}>
+              <button type="button" onClick={() => setLang("pt")} aria-pressed={lang === "pt"} style={langBtn(lang === "pt")}>PT</button>
+              <button type="button" onClick={() => setLang("es")} aria-pressed={lang === "es"} style={langBtn(lang === "es")}>ES</button>
+            </div>
+            <a href="#preco" data-desk="1" style={{ alignItems: "center", justifyContent: "center", height: 40, padding: "0 18px", borderRadius: 999, background: C.p500, color: C.onAccent, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>{t.cta}</a>
+          </div>
         </div>
       </nav>
 
-      {/* ---------- HERO ---------- */}
-      <section style={{ paddingTop: "var(--sp16)", paddingBottom: "var(--sp20)" }}>
-        <div className="wrap">
-          <div className="split">
-            <div className="split-copy">
-              {/* Nível 2 da hierarquia de mensagens: a TESE. Abre institucional
-                  e aquisição. Nunca é substituída por linguagem genérica de
-                  bem-estar (seção 03: as cinco formulações são fixas). */}
-              <span className="badge badge-primary eyebrow">Uma prática diária de hábitos e bem-estar</span>
-              <h1 className="display" style={{ margin: "var(--sp4) 0 var(--sp6)" }}>
-                O mundo vende grandes recomeços.{" "}
-                <span className="teal">Nós defendemos pequenos retornos.</span>
-              </h1>
-              <p className="lead" style={{ maxWidth: "48ch", marginBottom: "var(--sp8)" }}>
-                Um texto por dia que provoca uma reflexão e termina numa ação possível
-                ainda hoje. Três minutos. Quando você faltar, ele não cobra: ele te espera.
-                Porque interromper não significa abandonar.
-              </p>
-              <div className="hero-ctas">
-                <a href="#oferta" className="btn btn-primary btn-lg">Quero começar hoje</a>
-                <a href="#metodo" className="btn btn-ghost">O ritual diário →</a>
-              </div>
-              <div className="caption" style={{ marginTop: "var(--sp6)" }}>
-                Mais de <span className="teal" style={{ fontWeight: 700 }}>5.000 pessoas</span> já começaram · e hoje leram o mesmo texto que você
-              </div>
-            </div>
-
-            <div className="split-media">
-              <HeroProvocacao />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- FAIXA DE PROVA (mini-stats) ---------- */}
-      <section style={{ paddingTop: 0, paddingBottom: "var(--sp16)" }}>
-        <div className="wrap">
-          <div className="stats-band reveal">
-            <div className="stat">
-              <div className="stat-num">365</div>
-              <div className="stat-lbl">provocações, uma por dia</div>
-            </div>
-            <div className="stat-div" aria-hidden="true" />
-            <div className="stat">
-              <div className="stat-num">+5.000</div>
-              <div className="stat-lbl">pessoas impactadas</div>
-            </div>
-            <div className="stat-div" aria-hidden="true" />
-            <div className="stat">
-              <div className="stat-num">7 dias</div>
-              <div className="stat-lbl">de garantia incondicional</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- DOR ---------- */}
-      <section className="reveal">
-        <div className="wrap-content">
-          <span className="overline eyebrow">O ciclo que você conhece</span>
-          <h2 className="display-md" style={{ marginBottom: "var(--sp6)" }}>Você já começou. Mais de uma vez.</h2>
-          <div className="stack lead">
-            <p>Baixou o app. Prometeu que dessa vez ia até o fim. Parou na segunda semana.</p>
-            <p>E no terceiro, quarto, quinto dia… a vida engoliu.</p>
-            <p>
-              O problema nunca foi você ser "sem disciplina". O problema é que ninguém te
-              deu um sistema pra continuar. Só conteúdo. E conteúdo parado não transforma
-              ninguém.
-            </p>
-            <p>
-              O inimigo não é a falta de motivação. É o{" "}
-              <span className="teal" style={{ fontWeight: 600 }}>abandono silencioso</span>.
-              O Diariamente foi criado para o ponto exato onde você costuma parar.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- VIRADA / TRANSFORMAÇÃO (split com imagem) ---------- */}
-      <section className="reveal" style={{ paddingTop: 0 }}>
-        <div className="wrap">
-          <div className="split reverse">
-            <div className="split-media">
-              <div className="lifestyle-frame">
-                <ImageSlot
-                  tag="Lifestyle"
-                  label="Foto ambiente, dia comum: mesa, caderno, café, luz natural"
-                  dims="recomendado 1200×1500px · vertical 4:5"
-                  shape="portrait"
-                  src={LIFESTYLE || undefined}
-                  alt="Mesa de um dia comum ao amanhecer, com caderno aberto e café"
-                />
-              </div>
-            </div>
-            <div className="split-copy">
-              <span className="overline eyebrow">Agora imagine o contrário</span>
-              <p className="display-md" style={{ marginBottom: "var(--sp5)" }}>
-                Chegar ao fim do ano sabendo que você não faltou com a pessoa mais importante: você mesmo.
-              </p>
-              <p className="lead">
-                365 dias em que você parou, pensou, se moveu. Um de cada vez. Sem pressão,
-                sem culpa de estar atrasado, sem recomeçar do zero toda segunda. Não é sobre
-                virar outra pessoa amanhã. É sobre virar, <span className="teal live-word">diariamente</span>.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- MECANISMO ÚNICO ---------- */}
-      <section className="reveal" id="metodo">
-        <div className="wrap">
-          <div className="center sec-head">
-            <span className="overline eyebrow">Por que dessa vez funciona</span>
-            <h2 className="display-md">O ritual diário</h2>
-            <p className="lead sec-intro" style={{ maxWidth: "44ch", marginLeft: "auto", marginRight: "auto" }}>
-              Construído em cima do ponto exato onde todo mundo desiste.
-            </p>
-          </div>
-
-          <div className="grid cols-3">
-            {[
-              { n: "1", t: "Provocação", d: "Todo dia, uma só. Pequena pra não dar preguiça, forte pra mexer. Te tira do automático." },
-              { n: "2", t: "Constância", d: "Cada dia registrado fortalece sua sequência e mostra, visualmente, que você está construindo algo maior." },
-              { n: "3", t: "Ação", d: "A provocação não morre na reflexão: vira tarefa concreta no menu Ações. Pensar vira fazer." },
-            ].map((step) => (
-              <div key={step.n} className="sf-dark lift" style={{ padding: "var(--sp8)" }}>
-                <div style={{ width: 52, height: 52, borderRadius: 999, background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.25)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-serif)", fontSize: 26, color: "var(--p-500)", marginBottom: "var(--sp5)" }}>
-                  {step.n}
-                </div>
-                <div className="h2" style={{ marginBottom: "var(--sp2)" }}>{step.t}</div>
-                <p className="muted">{step.d}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="pratica-strip reveal">
-            <span className="pratica-label">Na prática · 5 min por dia</span>
-            <span className="chip">Abra a provocação</span>
-            <span className="chip-seta" aria-hidden="true">→</span>
-            <span className="chip">Reflita e registre</span>
-            <span className="chip-seta" aria-hidden="true">→</span>
-            <span className="chip">Transforme em ação</span>
-          </div>
-
-          <p className="center display-sm" style={{ marginTop: "var(--sp16)", maxWidth: "20ch", marginLeft: "auto", marginRight: "auto" }}>
-            Não é motivação num dia. É constância em 365, <span className="teal">com método</span>.
-          </p>
-        </div>
-      </section>
-
-      {/* ---------- TOUR DO APP (showcase com screenshots) ---------- */}
-      <section className="reveal">
-        <div className="wrap">
-          <div className="center sec-head">
-            <span className="overline eyebrow">O que tem dentro</span>
-            <h2 className="display-md">Construído para a volta, <span className="teal">não para a perfeição</span></h2>
-          </div>
-
-          {/* destaque: HOJE + DIAS em screenshots grandes */}
-          <div className="split" style={{ marginBottom: "var(--sp16)" }}>
-            <div className="split-media media-glow reveal-media">
-              <div className="drift-inner">
-                <ImageSlot tag="Screenshot" label="Tela HOJE — provocação do dia" dims="1170×2532px · print real do app" shape="portrait" bare ratio="1170 / 2532" src={SCREENSHOTS.hoje || undefined} alt="Tela HOJE do app Diariamente" />
-              </div>
-            </div>
-            <div className="split-copy">
-              <h3 className="display-sm" style={{ marginBottom: "var(--sp4)" }}>Tela HOJE</h3>
-              <p className="lead">A provocação do dia, limpa e sem distração. Você lê, reflete, registra o dia e acompanha sua jornada de constância. Nada compete pela sua atenção.</p>
-            </div>
-          </div>
-
-          <div className="split reverse" style={{ marginBottom: "var(--sp16)" }}>
-            <div className="split-media media-glow reveal-media">
-              <div className="drift-inner">
-                <ImageSlot tag="Screenshot" label="Tela DIAS — calendário de constância" dims="1170×2532px · print real do app" shape="portrait" bare ratio="1170 / 2532" src={SCREENSHOTS.dias || undefined} alt="Tela DIAS do app Diariamente" />
-              </div>
-            </div>
-            <div className="split-copy">
-              <h3 className="display-sm" style={{ marginBottom: "var(--sp4)" }}>Tela DIAS</h3>
-              <p className="lead">Você acompanha os dias lidos, visualiza sua evolução e percebe que o pouco de cada dia começa a formar uma jornada. O progresso deixa de ser abstrato e vira imagem.</p>
-            </div>
-          </div>
-
-          {/* grid de features secundárias — 2 colunas compactas no mobile */}
-          <div className="grid cols-3 feats">
-            {[
-              { t: "Ações", d: "A provocação não para na reflexão: você envia para Ações e transforma o insight do dia em tarefa concreta. É onde pensar vira fazer." },
-              { t: "Contador de voltas", d: "O total de dias em que você voltou. Não conta dias seguidos e nunca zera: faltou um dia, a contagem continua de onde parou." },
-              { t: "Conquistas", d: "Cada marco reconhecido. O esforço acumulado vira troféu." },
-              { t: "A ausência aparece", d: "O dia em que você não veio fica visível, sem alarme e sem culpa. Está no meio da história, e a história continua depois dele." },
-              { t: "Notificações por WhatsApp", d: "A provocação chega onde você já está. Zero esforço pra lembrar: o ritual te encontra." },
-              { t: "Compartilhar", d: "Transforme uma provocação em story e leve sua reflexão adiante." },
-            ].map((f) => (
-              <div key={f.t} className="sf-dark lift" style={{ padding: "var(--sp6)" }}>
-                <Logomark size={24} />
-                <div className="h2" style={{ margin: "var(--sp3) 0 var(--sp2)" }}>{f.t}</div>
-                <p className="body-sm muted">{f.d}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- AÇÕES (seção dedicada — grande alavanca) ---------- */}
-      <section className="reveal">
-        <div className="wrap">
-          <div className="split">
-            <div className="split-copy">
-              <span className="overline eyebrow">Onde pensar vira fazer</span>
-              <h2 className="display-md" style={{ marginBottom: "var(--sp5)" }}>
-                Não termina na leitura.
-              </h2>
-              <p className="lead" style={{ marginBottom: "var(--sp5)" }}>
-                Todo dia, depois da provocação, você transforma o insight em uma ação prática.
-                Porque reflexão sem movimento vira só pensamento bonito.
-              </p>
-              <p className="lead">
-                No Diariamente, cada dia termina com uma pergunta:
-                <br />
-                <span className="display-sm teal">"O que você vai fazer com isso?"</span>
-              </p>
-            </div>
-            <div className="split-media media-glow reveal-media">
-              <div className="drift-inner">
-                <ImageSlot tag="Screenshot" label="Tela AÇÕES — provocação vira tarefa concreta" dims="1170×2532px · print real do app" shape="portrait" bare ratio="1170 / 2532" src={SCREENSHOTS.acoes || undefined} alt="Tela AÇÕES do app Diariamente" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- UM DIA POR VEZ ---------- */}
-      <section className="reveal" style={{ paddingTop: 0 }}>
-        <div className="wrap">
-          <div className="split reverse">
-            <div className="split-media media-glow reveal-media">
-              <div className="drift-inner">
-                <ImageSlot tag="Screenshot" label="Tela RITMO — constância, créditos e ciclo de desbloqueios" dims="1170×2532px · print real do app" shape="portrait" bare ratio="1170 / 2532" src={SCREENSHOTS.ritmo || undefined} alt="Tela RITMO do app Diariamente" />
-              </div>
-            </div>
-            <div className="split-copy">
-              <span className="overline eyebrow">A obrigação diária é nossa</span>
-              <h2 className="display-md" style={{ marginBottom: "var(--sp5)" }}>
-                Um dia por vez. <span className="teal">De propósito.</span>
-              </h2>
-              <p className="lead" style={{ marginBottom: "var(--sp4)" }}>
-                Quando dá para consumir tudo de uma vez, o domingo de empolgação come o ano
-                inteiro e a segunda-feira não sobra nada. O atalho parece liberdade, mas é
-                onde a prática morre.
-              </p>
-              <p className="lead" style={{ marginBottom: "var(--sp4)" }}>
-                Aqui você tem o dia de hoje. Inteiro, presente, sem pressa de terminar.
-                <span className="teal live-word"> O Diariamente é diário. Você não precisa ser.</span>
-              </p>
-              <p className="lead">
-                São 365 textos por ano, um para cada dia. No ano seguinte, na mesma data,
-                um texto novo. <span className="teal">A prática não termina: ela recomeça.</span>
-                Você não está comprando um catálogo para consumir. Está entrando numa rotina
-                que continua enquanto você quiser voltar.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- NÃO É APP DE MOTIVAÇÃO ---------- */}
-      <section className="reveal" style={{ paddingTop: 0 }}>
-        <div className="wrap-content">
-          <div className="sf-dark" style={{ padding: "var(--sp10) var(--sp8)", textAlign: "center" }}>
-            <p className="display-sm" style={{ marginBottom: "var(--sp4)" }}>
-              Não é um app de motivação.
-              <br />
-              É um app de <span className="teal">constância</span>.
-            </p>
-            <p className="lead muted" style={{ maxWidth: "46ch", margin: "0 auto" }}>
-              Motivação acaba na quinta-feira. Constância é o que sobra quando a vontade
-              passa. É exatamente isso que o Diariamente foi feito pra sustentar.
-            </p>
-            <div style={{ marginTop: "var(--sp6)", display: "flex", flexDirection: "column", gap: "var(--sp2)", alignItems: "center" }}>
-              <a href="#oferta" className="btn btn-primary">Quero começar hoje</a>
-              <span className="caption">Garantia incondicional de 7 dias</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- PARA QUEM É / NÃO É ---------- */}
-      <section className="reveal" style={{ paddingTop: 0 }}>
-        <div className="wrap">
-          <div className="grid cols-2">
-            <div className="sf-dark" style={{ padding: "var(--sp8)" }}>
-              <span className="badge badge-primary eyebrow">É pra você se</span>
-              <ul className="check-list" style={{ marginTop: "var(--sp4)" }}>
-                <li>Já tentou e largou outros apps de hábito ou journals</li>
-                <li>Quer mudança real, mas precisa de um sistema que te segure</li>
-                <li>Prefere consistência a surto de motivação</li>
-              </ul>
-            </div>
-            <div className="sf-dark" style={{ padding: "var(--sp8)" }}>
-              <span className="badge badge-dark eyebrow">Não é pra você se</span>
-              <ul style={{ listStyle: "none", marginTop: "var(--sp4)" }}>
-                {["Procura solução mágica da noite pro dia", "Não está disposto a 5 minutos por dia", "Quer só mais um PDF pra estante digital"].map((t) => (
-                  <li key={t} className="muted" style={{ display: "flex", gap: "var(--sp3)", padding: "var(--sp2) 0" }}>
-                    <span style={{ color: "var(--n-500)" }}>·</span> {t}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- LEITURA SIMULTÂNEA ----------
-           O conteúdo é chaveado por dia do ano na API: todo mundo lê o
-           MESMO texto no mesmo dia. É o território "Quem começa junto"
-           da seção 11, e estava sem uso na página. */}
-      <section className="reveal" style={{ paddingTop: 0 }}>
-        <div className="wrap">
-          <div className="junto">
-            <div className="junto-seq" aria-hidden="true">
-              <span className="seq grad">
-                <i /><i /><i /><i /><i /><i /><i className="is-hoje" />
+      {/* HERO */}
+      <section style={{ padding: "clamp(40px,6vw,72px) 0 clamp(40px,5vw,64px)" }}>
+        <div style={wrap}>
+          <div data-hero="1">
+            <div style={{ minWidth: 0 }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8, minHeight: 30, padding: "4px 14px 4px 6px", borderRadius: 999, background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.25)", color: C.p300, fontSize: 12.5, fontWeight: 600, lineHeight: 1.35, textAlign: "left" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", height: 20, padding: "0 8px", borderRadius: 999, background: C.p500, color: C.onAccent, fontSize: 11, fontWeight: 700, letterSpacing: ".04em" }}>{t.new}</span>
+                {t.badge}
               </span>
+              <h1 data-h1="1" style={{ fontFamily: C.serif, fontWeight: 400, fontSize: "clamp(36px,5.2vw,62px)", lineHeight: 1.04, letterSpacing: "-.018em", margin: "22px 0 0", maxWidth: "15ch", textWrap: "balance" as never }}>{t.h1}</h1>
+              <p data-lead="1" style={{ fontSize: "clamp(17px,1.5vw,19px)", lineHeight: 1.6, color: C.n300, maxWidth: "50ch", margin: "20px 0 0", textWrap: "pretty" as never }}>{t.lead}</p>
+              <div data-ctas="1" style={{ marginTop: 32 }}>
+                <a href="#preco" data-herocta="1" style={btnPrimary}>{t.cta}</a>
+                <a href="#como-funciona" style={btnGhost}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>{t.cta2}
+                </a>
+              </div>
+              <div data-badges="1" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: "10px 18px", marginTop: 22 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={IMG.appStore} alt="App Store" width={108} height={36} style={{ display: "block", height: 36, width: "auto", opacity: .92 }} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={IMG.googlePlay} alt="Google Play" width={130} height={43} style={{ display: "block", height: 43, width: "auto", margin: "-3px 0 -3px -6px", opacity: .92 }} />
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 500, color: C.n400 }}>{t.proof}</span>
+              </div>
             </div>
-            <h2 className="t-title junto-h">
-              Ninguém aqui está lendo sozinho.
-            </h2>
-            <p className="junto-d">
-              Não existe trilha individual nem ritmo separado. O texto de hoje é o
-              mesmo para todo mundo, no mesmo dia. Quem voltou depois de uma semana
-              fora encontra exatamente o mesmo ponto de quem não faltou nenhum dia.
-            </p>
-            <p className="junto-f">Você não precisa alcançar ninguém. É só voltar.</p>
+
+            <div data-visual="1" style={{ minWidth: 0, position: "relative" }}>
+              <div data-hscard="1" style={{ background: C.s2, border: `1px solid ${C.line}`, borderRadius: 28, padding: 24, boxShadow: "0 30px 80px -30px rgba(0,0,0,.75),0 0 0 1px rgba(39,189,190,.05)", textAlign: "left" }}>
+                <div aria-hidden="true" style={{ position: "absolute", inset: "2% 4%", zIndex: 0, background: "radial-gradient(ellipse 60% 55% at 50% 45%,rgba(39,189,190,.28),transparent 72%),radial-gradient(ellipse 80% 70% at 50% 60%,rgba(39,189,190,.10),transparent 75%)", filter: "blur(48px)", opacity: .85, pointerEvents: "none", animation: "dm-glow 6s cubic-bezier(.4,0,.2,1) infinite" }} />
+                <div style={{ position: "relative", zIndex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                    <Lockup size={20} font={16.7} />
+                    <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 700, color: C.ret, background: "rgba(245,183,49,.10)", border: "1px solid rgba(245,183,49,.30)", borderRadius: 999, padding: "4px 11px" }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 4-2 5-2 8a4 4 0 008 0c0-1-1-2-1-3 2 1 3 3 3 6a8 8 0 11-16 0c0-5 5-7 8-11z" /></svg>{dia}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+                    <span style={{ fontFamily: C.serif, fontSize: 28, lineHeight: 1.1, letterSpacing: "-.01em", textTransform: "lowercase", whiteSpace: "nowrap" }}>{dataExtenso}</span>
+                    <span style={{ fontSize: 13, color: C.n400, fontWeight: 500, textTransform: "capitalize", whiteSpace: "nowrap" }}>{semana}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".09em", textTransform: "uppercase", color: C.p500, whiteSpace: "nowrap" }}>{t.cardEyebrow}</span>
+                    <span style={{ fontSize: 12, color: C.n400, fontWeight: 500, whiteSpace: "nowrap" }}>{t.dayOf.replace("{n}", String(dia))}</span>
+                  </div>
+                  <div role="img" aria-label={texto} style={{ display: "flex", alignItems: "flex-start", gap: 12, background: "rgba(255,255,255,.035)", border: "1px solid rgba(255,255,255,.10)", borderRadius: 16, padding: 20, minHeight: 150 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ color: C.p500, flex: "0 0 18px", marginTop: 6, opacity: .8 }}><circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" /><path d="M20 20l-3.2-3.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+                    <span style={{ fontFamily: C.serif, fontSize: 22, lineHeight: 1.42, letterSpacing: "-.01em" }}>
+                      {typed}
+                      <span aria-hidden="true" style={{ display: "inline-block", width: 2, height: "1.02em", marginLeft: 3, background: C.p500, verticalAlign: -2, transform: "translateY(4px)", animation: done ? "dm-caret 1.1s steps(1) infinite" : undefined }} />
+                    </span>
+                  </div>
+                  <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 6 }}>
+                    <span style={{ fontSize: 13, color: C.n400, fontStyle: "italic" }}>{t.cardSub}</span>
+                    <div>
+                      <button type="button" onClick={share} style={{ display: "inline-flex", alignItems: "center", gap: 7, marginTop: 12, padding: "9px 16px", borderRadius: 999, background: "rgba(39,189,190,.08)", border: "1px solid rgba(39,189,190,.30)", color: C.p400, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
+                        {copiado ? t.copied : t.share}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ---------- MANIFESTO (seção 16 do brandbook) ----------
-           Substitui a antiga seção de autoria. O brandbook credita
-           procedência por conselho editorial, nunca por nome solto — e a
-           marca fala em primeira pessoa do plural, não por trás de rostos.
-           Literata, fundo S0, um único ponto de teal. */}
-      <section className="reveal" id="manifesto">
-        <div className="wrap">
-          <div className="manifesto">
-            <div className="manifesto-marca" aria-hidden="true">
-              <Logomark size={34} />
-            </div>
-
-            <div className="manifesto-corpo">
-              <p>
-                A gente costuma esperar grandes sinais para mudar. Um novo ano.
-                Uma nova fase. Um grande recomeço.
-              </p>
-              <p>
-                Mas a vida não é construída só nos grandes momentos. Ela é
-                construída naquilo <em>para que a gente volta</em>.
-              </p>
-              <p>
-                No que você repete quando ninguém está olhando. Na ação pequena
-                que você decide executar. No dia em que quase não foi, mas voltou.
-              </p>
-              <p className="manifesto-forte">
-                Interromper não é abandonar. Perder um dia não é perder uma jornada.
-              </p>
-              <p>
-                Não tudo hoje. Não perfeito. Não para provar nada a ninguém.
-              </p>
-              <p className="manifesto-fecho">Só hoje. E amanhã de novo.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- FRASES DE ATIVAÇÃO (seção 11: cinco territórios) ----------
-           Cada card é uma frase-mãe de campanha. Todas derivam de volta,
-           interrupção, repetição e acúmulo. Nenhuma celebra sequência
-           consecutiva nem pune a quebra. */}
-      <section className="reveal" style={{ paddingTop: 0 }}>
-        <div className="wrap">
-          <div className="center sec-head">
-            <span className="overline eyebrow">No que a gente acredita</span>
-            <h2 className="display-md">Cinco frases que governam tudo aqui.</h2>
-          </div>
-
-          <div className="ativacao">
-            {[
-              { k: "Dia 1", f: "Hoje é o dia 1. De novo. E tudo bem.", d: "Recomeçar não é fracasso acumulado. É o mecanismo." },
-              { k: "Voltas acumuladas", f: "Cada volta conta. Nenhuma zera.", d: "O número que cresce mesmo nas semanas em que você faltou." },
-              { k: "Coragem", f: "Coragem não é impulso. É repetição.", d: "O que sustenta não é o dia em que deu vontade." },
-              { k: "Junto", f: "Convide quem começa junto com você. E volte junto também.", d: "Começar acompanhado é fácil. Voltar acompanhado é raro." },
-              { k: "Sem metas", f: "Esquece a meta. Escolhe o dia.", d: "Meta é promessa para o futuro. Dia é decisão para agora." },
-            ].map((a) => (
-              <div className="ativ-card" key={a.k}>
-                <span className="overline teal">{a.k}</span>
-                <p className="ativ-f">{a.f}</p>
-                <p className="ativ-d">{a.d}</p>
+      {/* PROVA */}
+      <section style={{ padding: "0 0 clamp(48px,6vw,72px)" }}>
+        <div style={wrap}>
+          <div data-strip="1" style={{ padding: "clamp(20px,3vw,28px) 0", borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}` }}>
+            {[["+5.000", t.s1], ["365", t.s2], ["3 min", t.s3], [t.s4n, t.s4]].map(([n, l]) => (
+              <div key={l} style={{ minWidth: 0 }}>
+                <div style={{ fontFamily: C.serif, fontSize: "clamp(26px,3vw,34px)", lineHeight: 1 }}>{n}</div>
+                <div style={{ marginTop: 6, fontSize: 13, color: C.n400 }}>{l}</div>
               </div>
             ))}
           </div>
+          <div data-trust="1" style={{ marginTop: 20, fontSize: 12, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", color: C.n400 }}>
+            <span>{t.tr1}</span><span data-rule="1" aria-hidden="true" style={rule} />
+            <span>{t.tr2}</span><span data-rule="1" aria-hidden="true" style={rule} />
+            <span>iPhone · Android</span><span data-rule="1" aria-hidden="true" style={rule} />
+            <span>{t.tr4}</span>
+          </div>
         </div>
       </section>
 
-      {/* ---------- OFERTA ---------- */}
-      <Oferta />
-
-      {/* ---------- O QUE ACONTECE DEPOIS DA COMPRA ---------- */}
-      <section className="reveal">
-        <div className="wrap-content">
-          <div className="center sec-head">
-            <span className="overline eyebrow">Sem mistério</span>
-            <h2 className="display-md">O que acontece depois</h2>
+      {/* PROBLEMA + VIRADA */}
+      <section style={sec}>
+        <div style={wrap}>
+          <div data-split="1">
+            <div style={{ minWidth: 0 }}>
+              <span style={eyebrow}>{t.pEyebrow}</span>
+              <h2 style={{ ...h2, marginBottom: 20 }}>{t.pH2}</h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14, fontFamily: C.serif, fontSize: "clamp(18px,1.7vw,20px)", lineHeight: 1.6, color: C.n200, maxWidth: "58ch" }}>
+                <p style={{ margin: 0 }}>{t.p1}</p><p style={{ margin: 0 }}>{t.p2}</p><p style={{ margin: 0, color: C.text }}>{t.p3}</p>
+              </div>
+              <div style={{ marginTop: 28, paddingTop: 24, borderTop: `1px solid ${C.line}` }}>
+                <span style={{ ...eyebrow, color: C.n400, marginBottom: 10 }}>{t.vEyebrow}</span>
+                <p style={{ margin: 0, fontFamily: C.serif, fontSize: "clamp(20px,2.2vw,24px)", lineHeight: 1.35, maxWidth: "34ch", textWrap: "pretty" as never }}>{t.vText}</p>
+              </div>
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ borderRadius: 16, overflow: "hidden", border: `1px solid ${C.line}`, aspectRatio: "4/5", background: C.s1 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={cld(IMG.lifestyle, "f_auto,q_auto,w_900")} srcSet={[600, 900, 1200].map((w) => `${cld(IMG.lifestyle, `f_auto,q_auto,w_${w}`)} ${w}w`).join(", ")} sizes="(min-width:900px) 520px, 92vw" alt={t.photoAlt} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              </div>
+            </div>
           </div>
-          <div className="stack">
-            {[
-              { n: "1", t: "Você recebe o e-mail de acesso", d: "Logo após a confirmação, com o passo a passo pra abrir o app." },
-              { n: "2", t: "Faz a provocação do Dia 1", d: "Sua jornada começa no momento em que você registra o primeiro dia." },
-              { n: "3", t: "O ritual te encontra todo dia", d: "Lembrete diário no WhatsApp pra você não depender da memória." },
-              { n: "4", t: "O acúmulo começa a aparecer", d: "O contador mostra quantas vezes você voltou. É o número que cresce mesmo nas semanas em que você faltou." },
-            ].map((s) => (
-              <div key={s.n} className="sf-glass" style={{ padding: "var(--sp5)", display: "flex", gap: "var(--sp4)", alignItems: "flex-start" }}>
-                <div style={{ flex: "0 0 36px", height: 36, borderRadius: 999, background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.25)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-serif)", fontSize: 18, color: "var(--p-500)" }}>
-                  {s.n}
+        </div>
+      </section>
+
+      {/* COMO FUNCIONA */}
+      <section id="como-funciona" style={{ ...sec, scrollMarginTop: 64 }}>
+        <div style={wrap}>
+          <div style={{ textAlign: "center", maxWidth: 680, margin: "0 auto clamp(32px,4vw,48px)" }}>
+            <span style={eyebrow}>{t.navHow}</span>
+            <h2 style={h2}>{t.hH2}</h2>
+            <p style={{ margin: "14px auto 0", fontSize: 16, color: C.n400, maxWidth: "46ch" }}>{t.hSub}</p>
+          </div>
+          <div data-steps="1">
+            {t.steps.map(([title, desc], i) => (
+              <div key={title} style={card}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                  <span style={numChip}>{i + 1}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: C.n400 }}>~1 min</span>
                 </div>
-                <div>
-                  <div className="h3" style={{ marginBottom: 2 }}>{s.t}</div>
-                  <p className="body-sm muted">{s.d}</p>
-                </div>
+                <h3 style={{ fontWeight: 600, fontSize: 20, lineHeight: 1.2, letterSpacing: "-.02em", margin: "18px 0 8px" }}>{title}</h3>
+                <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: C.n400 }}>{desc}</p>
               </div>
             ))}
           </div>
-
-          {/* lojas oficiais — prova de credibilidade (o app existe, é sério) */}
-          <div className="lojas-bloco reveal">
-            <p className="caption center" style={{ marginBottom: "var(--sp4)" }}>
-              O app está nas lojas oficiais. Seu acesso chega por e-mail após a confirmação.
-            </p>
-            <StoreBadges variant="link" />
+          <div style={{ ...card, background: C.s2, marginTop: 16, display: "flex", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: "24px 40px" }}>
+            <div style={{ minWidth: 0, flex: "1 1 260px" }}>
+              <span style={{ ...eyebrow, marginBottom: 10 }}>{t.cEyebrow}</span>
+              <div style={{ fontFamily: C.serif, fontSize: "clamp(28px,3vw,36px)", lineHeight: 1.1, letterSpacing: "-.01em" }}>{t.cNum}</div>
+              <div style={{ marginTop: 6, fontSize: 13, fontWeight: 500, color: C.n400 }}>{t.cMeta}</div>
+              <p style={{ margin: "14px 0 0", fontSize: 15, lineHeight: 1.6, color: C.n300, maxWidth: "44ch" }}>{t.cP}</p>
+            </div>
+            <div style={{ minWidth: 0, flex: "1 1 320px" }}>
+              <div aria-hidden="true" style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                {[.3, .36, .42, .48, .54, .6, .66, .72].map((o, i) => <i key={i} style={{ display: "block", width: 14, height: 6, borderRadius: 999, background: C.p500, opacity: o }} />)}
+                <i style={{ display: "block", width: 14, height: 6, borderRadius: 999, background: C.absence }} />
+                <i style={{ display: "block", width: 14, height: 6, borderRadius: 999, background: C.ret }} />
+                <i style={{ display: "block", width: 14, height: 6, borderRadius: 999, background: C.p500, opacity: .86 }} />
+                <i style={{ display: "block", width: 14, height: 6, borderRadius: 999, background: C.p500, opacity: .93 }} />
+                <i style={{ display: "block", width: 28, height: 6, borderRadius: 999, background: C.p500 }} />
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 16px", marginTop: 14, fontSize: 13, fontWeight: 500, color: C.n400 }}>
+                {[[C.absence, t.cL1, 12], [C.ret, t.cL2, 12], [C.p500, t.cL3, 20]].map(([bg, label, w]) => (
+                  <span key={String(label)} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <i aria-hidden="true" style={{ display: "block", width: w as number, height: 5, borderRadius: 999, background: bg as string }} />{label}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ---------- FAQ ----------
-           Estava sem <section>, sem container e sem heading: entrava na
-           página como uma lista de botões soltos logo antes do CTA final. */}
-      <section className="reveal" id="faq">
-        <div className="wrap">
-          <div className="center sec-head">
-            <span className="overline eyebrow">Antes de decidir</span>
-            <h2 className="display-md">O que as pessoas perguntam</h2>
+      {/* O APP */}
+      <section id="app" style={{ ...sec, scrollMarginTop: 64 }}>
+        <div style={wrap}>
+          <div style={{ textAlign: "center", maxWidth: 720, margin: "0 auto clamp(32px,4vw,48px)" }}>
+            <span style={eyebrow}>{t.aEyebrow}</span>
+            <h2 style={h2}>{t.aH2}</h2>
           </div>
-          <FAQ />
+          <div data-tour="1">
+            {[[IMG.hoje, t.t1t, t.t1d], [IMG.dias, t.t2t, t.t2d], [IMG.acoes, t.t3t, t.t3d], [IMG.ritmo, t.t4t, t.t4d]].map(([src, title, desc]) => (
+              <figure key={title} style={{ margin: 0, minWidth: 0 }}>
+                <div style={{ width: "100%", aspectRatio: "1170/2532" }}>
+                  <Img src={src} alt={title} widths={[360, 560, 800]} sizes="(min-width:900px) 250px, 70vw" />
+                </div>
+                <figcaption style={{ marginTop: 12 }}>
+                  <div style={{ fontWeight: 600, fontSize: 17, lineHeight: 1.3, letterSpacing: "-.01em" }}>{title}</div>
+                  <p style={{ margin: "4px 0 0", fontSize: 14, lineHeight: 1.55, color: C.n400 }}>{desc}</p>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+          <div data-split="1" style={{ marginTop: "clamp(40px,5vw,64px)", paddingTop: "clamp(32px,4vw,48px)", borderTop: `1px solid ${C.line}`, alignItems: "start" }}>
+            <h3 style={{ ...h2, fontSize: "clamp(26px,3.4vw,38px)", minWidth: 0 }}>{t.oneH}</h3>
+            <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 14, fontSize: 16, lineHeight: 1.6, color: C.n300 }}>
+              <p style={{ margin: 0 }}>{t.oneP1}</p>
+              <p style={{ margin: 0 }}>{t.oneP2} <strong style={{ color: C.text, fontWeight: 600 }}>{t.oneStrong}</strong></p>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ---------- CTA FINAL ---------- */}
-      <section className="reveal">
-        <div className="wrap-content center">
-          <p className="display" style={{ marginBottom: "var(--sp6)" }}>
-            A transformação não vai acontecer num dia.
-          </p>
-          <p className="lead" style={{ marginBottom: "var(--sp8)" }}>
-            Vai acontecer <span className="teal live-word">diariamente</span>, se você começar hoje.
-          </p>
-          <a href="#oferta" className="btn btn-primary btn-lg">Quero começar agora →</a>
+      {/* BASE CIENTÍFICA */}
+      <section id="ciencia" style={{ ...sec, scrollMarginTop: 64 }}>
+        <div style={wrap}>
+          <div data-split="1" style={{ alignItems: "start", marginBottom: "clamp(28px,4vw,40px)" }}>
+            <div style={{ minWidth: 0 }}><span style={eyebrow}>{t.navScience}</span><h2 style={h2}>{t.scH2}</h2></div>
+            <div style={{ minWidth: 0, fontSize: 16, lineHeight: 1.65, color: C.n300, display: "flex", flexDirection: "column", gap: 12 }}>
+              <p style={{ margin: 0 }}>{t.scP1}</p><p style={{ margin: 0, fontSize: 14, color: C.n400 }}>{t.scP2}</p>
+            </div>
+          </div>
+          <div data-steps="1">
+            {t.refs.map(([lvl, claim, ref]) => (
+              <div key={claim} style={{ ...card, padding: 20 }}>
+                <span style={{ display: "inline-flex", height: 22, alignItems: "center", padding: "0 9px", borderRadius: 999, background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.25)", color: C.p300, fontSize: 11, fontWeight: 700, letterSpacing: ".06em" }}>{lvl}</span>
+                <p style={{ margin: "12px 0 6px", fontSize: 15, lineHeight: 1.5, fontWeight: 600 }}>{claim}</p>
+                <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: C.n400 }}>{ref}</p>
+              </div>
+            ))}
+          </div>
+          <div style={{ ...card, background: C.s2, marginTop: 16, display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "12px 24px", padding: "18px clamp(20px,2.5vw,28px)" }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 15, fontWeight: 600 }}>{t.spT}</div>
+              <div style={{ fontSize: 14, color: C.n400, lineHeight: 1.5 }}>{t.spD}</div>
+            </div>
+            <a href="/sobre" style={{ fontSize: 14, fontWeight: 600, color: C.p500, textDecoration: "none", whiteSpace: "nowrap" }}>{t.spLink}</a>
+          </div>
         </div>
       </section>
 
-      <Rodape />
+      {/* CRENÇA */}
+      <section style={sec}>
+        <div style={{ maxWidth: 880, margin: "0 auto", padding: "0 clamp(20px,3vw,24px)", textAlign: "center" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 22 }}><Mark size={34} /></div>
+          <p style={{ margin: 0, fontFamily: C.serif, fontSize: "clamp(26px,3.6vw,42px)", lineHeight: 1.2, letterSpacing: "-.012em", textWrap: "balance" as never }}>{t.belief}</p>
+          <p style={{ margin: "22px auto 0", fontSize: 16, lineHeight: 1.6, color: C.n400, maxWidth: "54ch" }}>{t.beliefP}</p>
+        </div>
+      </section>
 
-      <StickyCTA />
-    </main>
+      {/* PARA QUEM É */}
+      <section style={{ padding: "0 0 clamp(56px,8vw,104px)" }}>
+        <div style={wrap}>
+          <div data-cols2="1">
+            <div style={card}>
+              <span style={{ display: "inline-flex", alignItems: "center", height: 28, padding: "0 12px", borderRadius: 999, background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.25)", color: C.p300, fontSize: 12, fontWeight: 600 }}>{t.yesL}</span>
+              <ul style={{ listStyle: "none", margin: "16px 0 0", padding: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+                {t.yes.map((y) => <li key={y} style={{ display: "flex", gap: 12, alignItems: "flex-start", fontSize: 16, lineHeight: 1.5 }}><Check />{y}</li>)}
+              </ul>
+            </div>
+            <div style={card}>
+              <span style={{ display: "inline-flex", alignItems: "center", height: 28, padding: "0 12px", borderRadius: 999, background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.10)", color: C.n300, fontSize: 12, fontWeight: 600 }}>{t.noL}</span>
+              <ul style={{ listStyle: "none", margin: "16px 0 0", padding: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+                {t.no.map((n) => <li key={n} style={{ display: "flex", gap: 12, alignItems: "flex-start", fontSize: 16, lineHeight: 1.5, color: C.n300 }}><Dash />{n}</li>)}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PREÇO */}
+      <section id="preco" style={{ ...sec, scrollMarginTop: 64 }}>
+        <div style={wrap}>
+          <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto clamp(32px,4vw,48px)" }}>
+            <span style={eyebrow}>{t.prEyebrow}</span>
+            <h2 style={h2}>{t.prH2}</h2>
+            <p style={{ margin: "14px auto 0", fontSize: 16, color: C.n400, maxWidth: "46ch" }}>{t.prSub}</p>
+          </div>
+          <div data-price="1">
+            <div data-area="card">
+              <div style={{ background: C.s2, border: "1px solid rgba(39,189,190,.32)", borderRadius: 16, overflow: "hidden" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px clamp(20px,3vw,28px)", background: "rgba(39,189,190,.08)", borderBottom: "1px solid rgba(39,189,190,.2)" }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: C.p500 }}>{t.prCond}</span>
+                  <span style={{ display: "inline-flex", alignItems: "center", height: 24, padding: "0 10px", borderRadius: 999, background: "rgba(245,183,49,.12)", border: "1px solid rgba(245,183,49,.3)", color: C.ret, fontSize: 12, fontWeight: 700 }}>30% OFF</span>
+                </div>
+                <div style={{ padding: "clamp(20px,3vw,28px)" }}>
+                  <h3 style={{ fontFamily: C.serif, fontWeight: 400, fontSize: 26, lineHeight: 1.1, letterSpacing: "-.01em", margin: 0 }}>{t.prName}</h3>
+                  <div style={{ marginTop: 18, display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 15, color: C.n400 }}><s>R$ 197</s></span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: C.p500 }}>{t.prSave}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 4 }}>
+                    <span style={{ fontFamily: C.serif, fontSize: "clamp(48px,5vw,56px)", lineHeight: 1, letterSpacing: "-.02em" }}>R$ 137</span>
+                    <span style={{ fontFamily: C.serif, fontSize: 26, lineHeight: 1 }}>,90</span>
+                  </div>
+                  <div style={{ marginTop: 8, fontSize: 14, lineHeight: 1.55, color: C.n300 }}>{t.prTerms}</div>
+                  <div style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 8, height: 30, padding: "0 12px", borderRadius: 999, background: C.s0, border: "1px solid rgba(255,255,255,.1)", fontSize: 13, fontWeight: 600 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.p500} strokeWidth={2.2} strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5.2l3.2 1.9" /></svg>{t.prDay}
+                  </div>
+                  <a href={LINKS.checkout} target="_blank" rel="noopener noreferrer" style={{ ...btnPrimary, marginTop: 22, width: "100%" }}>{t.cta}</a>
+                  <p style={{ margin: "12px 0 0", textAlign: "center", fontSize: 13, lineHeight: 1.45, color: C.n400 }}>{t.prNote}</p>
+                  <ul style={{ listStyle: "none", margin: "18px 0 0", padding: "18px 0 0", borderTop: `1px solid ${C.line}`, display: "grid", gap: 10, fontSize: 14, color: C.n200 }}>
+                    {[t.prT1, t.prT2, t.prT3].map((x) => (
+                      <li key={x} style={{ display: "flex", gap: 10, alignItems: "center" }}><span style={{ color: C.p500, display: "inline-flex" }}><Shield s={16} /></span>{x}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div data-area="value">
+              <span style={eyebrow}>{t.vaEyebrow}</span>
+              <h3 style={{ fontFamily: C.serif, fontWeight: 400, fontSize: "clamp(24px,2.6vw,32px)", lineHeight: 1.18, letterSpacing: "-.01em", margin: "0 0 24px", maxWidth: "26ch", textWrap: "balance" as never }}>{t.vaH3}</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                {[[t.v1t, t.v1d], [t.v2t, t.v2d], [t.v3t, t.v3d], [t.v4t, t.v4d], [t.v5t, t.v5d], [t.v6t, t.v6d]].map(([title, desc]) => (
+                  <div key={title} style={{ display: "flex", gap: 14, alignItems: "flex-start", minWidth: 0 }}>
+                    <span aria-hidden="true" style={iconCircle}><Check /></span>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.35 }}>{title}</div>
+                      <p style={{ margin: "4px 0 0", fontSize: 14.5, lineHeight: 1.55, color: C.n400 }}>{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginTop: 28, padding: 20, borderRadius: 16, background: C.s1, border: `1px solid ${C.line}` }}>
+                <span aria-hidden="true" style={iconCircle}><Shield /></span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.35 }}>{t.gT}</div>
+                  <p style={{ margin: "4px 0 0", fontSize: 14.5, lineHeight: 1.6, color: C.n400 }}>{t.gD}</p>
+                </div>
+              </div>
+              <div style={{ ...card, marginTop: 16 }}>
+                <span style={{ display: "inline-flex", alignItems: "center", height: 26, padding: "0 12px", borderRadius: 999, background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.25)", color: C.p300, fontSize: 11, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase" }}>{t.stBadge}</span>
+                <p style={{ margin: "12px 0 0", fontFamily: C.serif, fontSize: "clamp(20px,2vw,24px)", lineHeight: 1.3 }}>{t.stH}</p>
+                <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: C.n400 }}>{t.stD}</p>
+                <a href="/estudante" style={{ marginTop: 18, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, height: 48, padding: "0 22px", borderRadius: 999, border: `1.5px solid ${C.p500}`, color: C.p500, fontSize: 15, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
+                  {t.stCta}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" /></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* DEPOIS */}
+      <section style={sec}>
+        <div style={{ maxWidth: 680, margin: "0 auto", padding: "0 clamp(20px,3vw,24px)" }}>
+          <div style={{ textAlign: "center", marginBottom: "clamp(28px,4vw,40px)" }}>
+            <span style={eyebrow}>{t.afEyebrow}</span><h2 style={h2}>{t.afH2}</h2>
+          </div>
+          <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+            {t.after.map(([title, desc], i) => (
+              <li key={title} style={{ display: "flex", gap: 16, alignItems: "flex-start", padding: "18px 20px", borderRadius: 16, background: C.s1, border: `1px solid ${C.line}` }}>
+                <span aria-hidden="true" style={{ ...numChip, flex: "0 0 32px", height: 32 }}>{i + 1}</span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.35 }}>{title}</div>
+                  <p style={{ margin: "3px 0 0", fontSize: 14, lineHeight: 1.55, color: C.n400 }}>{desc}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <div style={{ marginTop: 28, paddingTop: 24, borderTop: `1px solid ${C.line}`, textAlign: "center" }}>
+            <p style={{ margin: "0 0 16px", fontSize: 13, fontWeight: 500, lineHeight: 1.4, color: C.n400 }}>{t.afStores}</p>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", alignItems: "center" }}>
+              <a href={LINKS.appStore} target="_blank" rel="noopener noreferrer" aria-label="App Store" style={{ display: "inline-flex", borderRadius: 8, overflow: "hidden" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={IMG.appStore} alt="App Store" width={144} height={48} style={{ display: "block", height: 48, width: "auto" }} />
+              </a>
+              <a href={LINKS.googlePlay} target="_blank" rel="noopener noreferrer" aria-label="Google Play" style={{ display: "inline-flex", borderRadius: 8, overflow: "hidden" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={IMG.googlePlay} alt="Google Play" width={180} height={57} style={{ display: "block", height: 57, width: "auto", margin: "-4.5px 0 -4.5px -8px" }} />
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" style={{ ...sec, scrollMarginTop: 64 }}>
+        <div style={wrap}>
+          <div data-split="1" style={{ alignItems: "start" }}>
+            <div style={{ minWidth: 0 }}>
+              <span style={eyebrow}>FAQ</span>
+              <h2 style={{ ...h2, marginBottom: 14 }}>{t.fqH2}</h2>
+              <p style={{ margin: 0, fontSize: 15, color: C.n400, maxWidth: "40ch" }}>
+                {t.fqHelp} <a href={LINKS.suporte} style={{ textDecoration: "none" }}>suporte@scienceplay.com</a>.
+              </p>
+            </div>
+            <div data-faq="1" style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
+              {t.faq.map(([q, a], i) => (
+                <details key={q} open={i === 0} style={{ background: C.s1, border: `1px solid ${C.line}`, borderRadius: 16, transition: "border-color .3s" }}>
+                  <summary style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, minHeight: 56, padding: "14px 20px", cursor: "pointer", fontSize: 16, fontWeight: 600, lineHeight: 1.4 }}>
+                    <span>{q}</span>
+                    <svg data-chev="1" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.p500} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: "0 0 auto", transition: "transform .3s" }}><path d="M6 9l6 6 6-6" /></svg>
+                  </summary>
+                  <div style={{ padding: "0 20px 18px", fontSize: 15, lineHeight: 1.7, color: C.n300 }}>{a}</div>
+                </details>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA FINAL */}
+      <section style={{ ...sec, padding: "clamp(56px,8vw,104px) 0 0" }}>
+        <div style={wrap}>
+          <div style={{ background: C.s1, border: `1px solid ${C.line}`, borderRadius: "16px 16px 0 0", padding: "clamp(40px,6vw,72px) clamp(20px,4vw,48px) 0", textAlign: "center", overflow: "hidden" }}>
+            <p style={{ fontFamily: C.serif, fontWeight: 400, fontSize: "clamp(30px,4.4vw,50px)", lineHeight: 1.08, letterSpacing: "-.015em", margin: "0 auto", maxWidth: "22ch", textWrap: "balance" as never }}>{t.fin}</p>
+            <div style={{ marginTop: 28, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+              <a href={LINKS.checkout} target="_blank" rel="noopener noreferrer" style={btnPrimary}>{t.cta}</a>
+              <span style={{ fontSize: 13, fontWeight: 500, color: C.n400 }}>{t.finNote}</span>
+            </div>
+            <div style={{ width: "min(72vw,300px)", margin: "clamp(32px,4vw,48px) auto -22%", aspectRatio: "1170/2532" }}>
+              <Img src={IMG.dias} alt="" widths={[400, 600]} sizes="(min-width:900px) 300px, 72vw" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* RODAPÉ */}
+      <footer style={{ borderTop: `1px solid ${C.line}`, padding: "clamp(44px,6vw,64px) 0 calc(clamp(32px,4vw,48px) + 72px)" }}>
+        <div style={wrap}>
+          <div data-rpgrid="1">
+            <div style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
+              <Lockup />
+              <p style={{ margin: 0, fontFamily: C.serif, fontSize: 22, lineHeight: 1.2, color: C.p500 }}>{t.sign}</p>
+              <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.n400, maxWidth: "38ch" }}>{t.ftTag}</p>
+            </div>
+            <nav aria-label={t.ftInst} style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
+              <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: C.n400, marginBottom: 4 }}>{t.ftInst}</span>
+              {[["/sobre", t.ftAbout], ["/termos", t.ftTerms], ["/privacidade", t.ftPriv]].map(([href, label]) => (
+                <a key={href} href={href} style={{ fontSize: 15, color: C.n300, textDecoration: "none", minHeight: 28, display: "inline-flex", alignItems: "center" }}>{label}</a>
+              ))}
+            </nav>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
+              <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: C.n400, marginBottom: 4 }}>{t.ftTalk}</span>
+              <a href={LINKS.suporte} style={{ fontSize: 15, color: C.n300, textDecoration: "none", minHeight: 28, display: "inline-flex", alignItems: "center" }}>{t.ftSupport}</a>
+              <a href={LINKS.contato} style={{ fontSize: 15, color: C.n300, textDecoration: "none", minHeight: 28, display: "inline-flex", alignItems: "center" }}>contato@scienceplay.com</a>
+              <a href={LINKS.instagram} target="_blank" rel="noopener noreferrer" style={{ fontSize: 15, color: C.n300, textDecoration: "none", minHeight: 28, display: "inline-flex", alignItems: "center" }}>@diariamente.app</a>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
+              <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: C.n400, marginBottom: 4 }}>{t.ftApp}</span>
+              <a href={LINKS.appStore} target="_blank" rel="noopener noreferrer" style={{ fontSize: 15, color: C.n300, textDecoration: "none", minHeight: 28, display: "inline-flex", alignItems: "center" }}>App Store</a>
+              <a href={LINKS.googlePlay} target="_blank" rel="noopener noreferrer" style={{ fontSize: 15, color: C.n300, textDecoration: "none", minHeight: 28, display: "inline-flex", alignItems: "center" }}>Google Play</a>
+            </div>
+          </div>
+          <hr style={{ height: 1, border: 0, background: C.line, margin: "clamp(32px,5vw,44px) 0 20px" }} />
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "12px 24px" }}>
+            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.n400 }}>© 2026 Science Play® · Science Play Cursos LTDA · CNPJ 33.612.911/0001-29 · diariamente.app</p>
+            <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+              {[.3, .4, .5, .6, .75, .9].map((o, i) => <i key={i} style={{ display: "block", width: 10, height: 4, borderRadius: 999, background: C.p500, opacity: o }} />)}
+              <i style={{ display: "block", width: 22, height: 4, borderRadius: 999, background: C.p500 }} />
+            </span>
+          </div>
+        </div>
+      </footer>
+
+      {/* STICKY CTA MOBILE */}
+      <div data-sticky="1" aria-hidden={!sticky} style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 50, padding: "10px 0 calc(10px + env(safe-area-inset-bottom))", background: "rgba(10,14,14,.94)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderTop: `1px solid ${C.line}`, transition: "transform .3s cubic-bezier(.16,1,.3,1)", transform: sticky ? "translateY(0)" : "translateY(110%)" }}>
+        <div style={{ maxWidth: 1160, margin: "0 auto", padding: "0 20px", display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontFamily: C.serif, fontSize: 20, lineHeight: 1 }}>
+              <s style={{ fontSize: 13, color: C.n400, fontFamily: "Inter,system-ui,sans-serif", marginRight: 6 }}>R$ 197</s>R$ 137,90
+            </div>
+            <div style={{ marginTop: 4, fontSize: 12, fontWeight: 500, color: C.n400, whiteSpace: "nowrap" }}>{t.stickyNote}</div>
+          </div>
+          <button type="button" tabIndex={sticky ? 0 : -1} onClick={goToOffer} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", height: 48, padding: "0 18px", borderRadius: 999, border: "none", background: C.p500, color: C.onAccent, fontFamily: "inherit", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>{t.cta}</button>
+        </div>
+      </div>
+    </div>
   );
 }
