@@ -18,6 +18,7 @@ import type { Lang } from "@/lib/i18n";
 
 export type Chave =
   | "home"
+  | "vendas"
   | "estudante"
   | "sobre"
   | "termos"
@@ -25,6 +26,10 @@ export type Chave =
 
 const SLUGS: Record<Chave, Record<Lang, string>> = {
   home:        { pt: "/",              es: "/es" },
+  // Site de vendas em construção. Fora do sitemap e com noindex até o
+  // lançamento: é endereço de trabalho, não de busca. Na virada, basta
+  // trocar o que as rotas "/" e "/es" renderizam.
+  vendas:      { pt: "/embreve",       es: "/es/embreve" },
   estudante:   { pt: "/estudante",     es: "/es/estudiantes" },
   sobre:       { pt: "/sobre",         es: "/es/acerca-de" },
   termos:      { pt: "/termos",        es: "/es/condicionesdeuso" },
@@ -41,8 +46,11 @@ export function parDeIdiomas(chave: Chave): Record<Lang, string> {
   return SLUGS[chave];
 }
 
-/** Todas as chaves, para o sitemap. */
+/** Todas as chaves. */
 export const CHAVES = Object.keys(SLUGS) as Chave[];
+
+/** Chaves privadas: noindex e fora do sitemap. */
+export const PRIVADAS: Chave[] = ["vendas"];
 
 /** Dado um caminho, descobre chave e idioma. Usado pelo seletor. */
 export function identificar(pathname: string): { chave: Chave; lang: Lang } {

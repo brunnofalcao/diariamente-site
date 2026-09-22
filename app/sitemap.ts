@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE } from "@/config";
-import { CHAVES, parDeIdiomas } from "@/lib/rotas";
+import { CHAVES, PRIVADAS, parDeIdiomas } from "@/lib/rotas";
 
 /* =====================================================================
    SITEMAP
@@ -16,7 +16,7 @@ import { CHAVES, parDeIdiomas } from "@/lib/rotas";
    ===================================================================== */
 
 const PRIORIDADE: Record<string, number> = {
-  home: 1, estudante: 0.8, sobre: 0.6, termos: 0.3, privacidade: 0.3,
+  vendas: 0, home: 1, estudante: 0.8, sobre: 0.6, termos: 0.3, privacidade: 0.3,
 };
 const FREQUENCIA: Record<string, "weekly" | "monthly" | "yearly"> = {
   home: "weekly", estudante: "monthly", sobre: "monthly", termos: "yearly", privacidade: "yearly",
@@ -27,7 +27,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   const abs = (p: string) => base + (p === "/" ? "" : p);
 
-  return CHAVES.flatMap((chave) => {
+  return CHAVES.filter((c) => !PRIVADAS.includes(c)).flatMap((chave) => {
     const par = parDeIdiomas(chave);
     const languages = { "pt-BR": abs(par.pt), es: abs(par.es), "x-default": abs(par.pt) };
 

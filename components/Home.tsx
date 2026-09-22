@@ -282,8 +282,8 @@ export function Home({ lang }: { lang: Lang }) {
                 nova aba, e o navegador registra a escolha num cookie de um ano
                 para o middleware nao redirecionar de novo na proxima visita. */}
             <div role="group" aria-label="Idioma / Idioma" style={{ display: "inline-flex", alignItems: "center", height: 32, padding: 2, borderRadius: 999, border: "1px solid rgba(255,255,255,.12)", background: "rgba(255,255,255,.03)" }}>
-              <a href={caminho("home", "pt")} hrefLang="pt-BR" onClick={fixarIdioma("pt")} aria-current={lang === "pt" ? "page" : undefined} style={{ ...langBtn(lang === "pt"), textDecoration: "none" }}>PT</a>
-              <a href={caminho("home", "es")} hrefLang="es" onClick={fixarIdioma("es")} aria-current={lang === "es" ? "page" : undefined} style={{ ...langBtn(lang === "es"), textDecoration: "none" }}>ES</a>
+              <a href={caminho("vendas", "pt")} hrefLang="pt-BR" onClick={fixarIdioma("pt")} aria-current={lang === "pt" ? "page" : undefined} style={{ ...langBtn(lang === "pt"), textDecoration: "none" }}>PT</a>
+              <a href={caminho("vendas", "es")} hrefLang="es" onClick={fixarIdioma("es")} aria-current={lang === "es" ? "page" : undefined} style={{ ...langBtn(lang === "es"), textDecoration: "none" }}>ES</a>
             </div>
             <a href="#preco" data-desk="1" style={{ alignItems: "center", justifyContent: "center", height: 40, padding: "0 18px", borderRadius: 999, background: C.p500, color: C.onAccent, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>{t.cta}</a>
           </div>

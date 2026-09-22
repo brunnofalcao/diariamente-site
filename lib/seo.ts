@@ -27,15 +27,19 @@ type Texto = { title: string; description: string };
 const TEXTOS: Record<Chave, Record<Lang, Texto>> = {
   home: {
     pt: {
-      title: "Diariamente · uma prática diária de hábitos e bem-estar",
+      title: "Diariamente · em breve",
       description:
-        "Uma provocação por dia que termina numa ação possível ainda hoje. Quando você faltar, o Diariamente não cobra: ele te espera. Porque interromper não significa abandonar.",
+        "Uma prática diária de hábitos e bem-estar. Ainda não é hoje, mas está perto. Deixe seu contato e avisamos no dia em que abrir.",
     },
     es: {
-      title: "Diariamente · una práctica diaria de hábitos y bienestar",
+      title: "Diariamente · próximamente",
       description:
-        "Una provocación por día que termina en una acción posible hoy mismo. Cuando faltes, Diariamente no te reclama: te espera. Porque interrumpir no significa abandonar.",
+        "Una práctica diaria de hábitos y bienestar. Todavía no es hoy, pero está cerca. Déjanos tu contacto y te avisamos el día que abra.",
     },
+  },
+  vendas: {
+    pt: { title: "Diariamente · uma prática diária de hábitos e bem-estar", description: "Página de vendas em construção." },
+    es: { title: "Diariamente · una práctica diaria de hábitos y bienestar", description: "Página de ventas en construcción." },
   },
   estudante: {
     pt: {
@@ -98,5 +102,27 @@ export function metadataDaPagina(chave: Chave, lang: Lang): Metadata {
     },
     twitter: { card: "summary_large_image", title, description },
     robots: { index: true, follow: true },
+  };
+}
+
+/**
+ * Metadata de página PRIVADA: noindex, nofollow, sem canonical e sem
+ * hreflang. Usado no site de vendas enquanto ele é estruturado em
+ * /embreve. Canonical apontando para "/" aqui faria o Google tratar a
+ * home "em breve" como cópia do site de vendas.
+ */
+export function metadataPrivada(chave: Chave, lang: Lang): Metadata {
+  const { title, description } = TEXTOS[chave][lang];
+  const proprio = SITE.dominio + parDeIdiomas(chave)[lang];
+  return {
+    title,
+    description,
+    // O layout raiz declara canonical "/" e hreflang para a home. Next
+    // mescla metadata do layout nas páginas filhas, então SEM esta linha
+    // /embreve herdaria canonical "/" e diria ao Google que a home é
+    // cópia do site de vendas. Sobrescrever `alternates` inteiro zera
+    // também o hreflang herdado.
+    alternates: { canonical: proprio },
+    robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
   };
 }

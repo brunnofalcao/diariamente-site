@@ -74,7 +74,9 @@ async function enviarRD(lead) {
       name: lead.nome,
       email: lead.email,
       mobile_phone: `+${lead.whatsapp}`,
-      tags: ["lista-espera", "em-breve", ...(lead.consent_parceiros ? ["aceita-parceiros"] : [])],
+      // idioma-pt / idioma-es: na abertura, cada lista recebe a mensagem
+      // no idioma em que se inscreveu, sem ninguém precisar adivinhar.
+      tags: ["lista-espera", "em-breve", `idioma-${lead.idioma}`, ...(lead.consent_parceiros ? ["aceita-parceiros"] : [])],
       traffic_source: lead.utm?.utm_source,
       traffic_medium: lead.utm?.utm_medium,
       traffic_campaign: lead.utm?.utm_campaign,
@@ -122,8 +124,11 @@ export async function POST(req) {
     user_agent: limpar(req.headers.get("user-agent"), 300),
     utm: body.utm && typeof body.utm === "object" ? body.utm : null,
   };
+  // idioma vai só para o RD (tag). Fora do objeto gravado no Supabase
+  // para não exigir coluna nova na tabela.
+  const idioma = c.idioma === "es" ? "es" : "pt";
 
-  const [sb, rd] = await Promise.allSettled([gravarSupabase(lead), enviarRD(lead)]);
+  const [sb, rd] = await Promise.allSettled([gravarSupabase(lead), enviarRD({ ...lead, idioma })]);
   if (sb.status === "rejected") console.error("[lista-espera] supabase:", sb.reason?.message ?? sb.reason);
   if (rd.status === "rejected") console.error("[lista-espera] rd:", rd.reason?.message ?? rd.reason);
 
