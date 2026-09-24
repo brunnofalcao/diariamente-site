@@ -263,7 +263,7 @@ const LINKS_PT = {
   checkout: "https://pay.hotmart.com/L107085210M?checkoutMode=10",
   appStore: "https://apps.apple.com/br/app/diariamente/id6762151251",
   googlePlay: "https://play.google.com/store/apps/details?id=club.diariamente.app",
-  instagram: "https://instagram.com/diariamente.app",
+  instagram: "https://instagram.com/diariamente",
   suporte: "mailto:suporte@scienceplay.com",
   contato: "mailto:contato@scienceplay.com",
 };
