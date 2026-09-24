@@ -20,7 +20,12 @@ export const SITE = {
   // Rede social DA MARCA. O Diariamente fala por si: as redes da Science
   // Play são da realizadora, não do produto, e misturar as duas dilui a
   // entidade que os buscadores precisam reconhecer.
-  instagram: "diariamente.app",
+  // Perfil oficial: @diariamente (confirmado por Brunno, set/2026).
+  // NÃO é @diariamente.app. Este valor alimenta o rodapé visível E o
+  // sameAs do schema Organization, que é o principal sinal de entidade
+  // para buscadores: handle errado aqui ensina o Google a associar a
+  // marca a um perfil que não é o seu.
+  instagram: "diariamente",
   descricao:
     "Uma prática diária de hábitos e bem-estar. Um texto por dia que provoca uma reflexão e termina numa ação possível ainda hoje. Três minutos. Quando você falta, ele não cobra: te espera. Porque interromper não significa abandonar.",
   // OG image gerada a partir do kit oficial da marca, servida pelo próprio
