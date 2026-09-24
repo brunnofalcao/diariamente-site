@@ -5,6 +5,10 @@ import { NextResponse, type NextRequest } from "next/server";
    ---------------------------------------------------------------------
    Comportamento, na ordem em que as regras são avaliadas:
 
+   0. `/?lang=pt` ou `/?lang=es` grava a escolha no cookie `dm_lang` e
+      redireciona para a home daquele idioma. É o que o seletor PT | ES
+      no topo do site chama. Escolha explícita vence tudo.
+
    1. Só age na RAIZ (`/`). Quem pede `/es` recebe `/es`, quem pede
       qualquer outra rota é deixado em paz. Redirecionar a partir de
       qualquer caminho quebra link direto e campanha.
@@ -23,6 +27,9 @@ import { NextResponse, type NextRequest } from "next/server";
 
    O padrão é português. Espanhol é desvio, não destino.
    ===================================================================== */
+
+const COOKIE = "dm_lang";
+const UM_ANO = 60 * 60 * 24 * 365;
 
 const ROBOS = /bot|crawl|spider|slurp|bingpreview|facebookexternalhit|whatsapp|telegram|lighthouse|headless/i;
 
@@ -49,14 +56,30 @@ function idiomaPreferido(cabecalho: string | null): "pt" | "es" | null {
 }
 
 export function middleware(req: NextRequest) {
+  // 0. Escolha manual via seletor PT | ES: grava cookie e redireciona.
+  //    Funciona em qualquer rota, para o seletor poder existir em todas as páginas.
+  const forcado = req.nextUrl.searchParams.get("lang");
+  if (forcado === "pt" || forcado === "es") {
+    const url = req.nextUrl.clone();
+    url.searchParams.delete("lang");
+    url.pathname = forcado === "es" ? "/es" : "/";
+    const r = NextResponse.redirect(url);
+    r.cookies.set(COOKIE, forcado, { maxAge: UM_ANO, path: "/", sameSite: "lax" });
+    return r;
+  }
+
+  // 1. Só decide na raiz.
   if (req.nextUrl.pathname !== "/") return NextResponse.next();
 
+  // 4. Robô vê o português como ele é.
   if (ROBOS.test(req.headers.get("user-agent") ?? "")) return NextResponse.next();
 
-  const escolhido = req.cookies.get("dm_lang")?.value;
+  // 2. Escolha anterior vence.
+  const escolhido = req.cookies.get(COOKIE)?.value;
   if (escolhido === "pt") return NextResponse.next();
   if (escolhido === "es") return NextResponse.redirect(new URL("/es", req.url));
 
+  // 3. Primeira visita: idioma do navegador.
   if (idiomaPreferido(req.headers.get("accept-language")) === "es") {
     const r = NextResponse.redirect(new URL("/es", req.url));
     // Vary avisa cache e CDN de que a resposta depende do idioma pedido.
