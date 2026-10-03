@@ -101,7 +101,7 @@ export function HeroProvocacao() {
   // 4) compartilhar (Web Share API no mobile; desktop copia o link)
   const compartilhar = async () => {
     const texto = prov
-      ? '"' + prov.texto + '" — provocação de hoje no Diariamente.'
+      ? 'Provocação de hoje no Diariamente: "' + prov.texto + '"'
       : "Diariamente: uma prática diária de hábitos e bem-estar.";
     const url = SITE.dominio + "/?utm_source=share&utm_medium=organic&utm_campaign=provocacao_do_dia";
     (window as any).gtag?.("event", "share", { method: "provocacao_hero" });

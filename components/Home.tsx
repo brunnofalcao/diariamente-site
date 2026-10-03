@@ -246,7 +246,7 @@ export function Home({ lang }: { lang: Lang }) {
   }, []);
 
   const share = async () => {
-    const txt = `\u201C${texto}\u201D \u2014 Diariamente.`;
+    const txt = `\u201C${texto}\u201D \u00B7 Diariamente`;
     const url = "https://diariamente.app/?utm_source=share&utm_medium=organic&utm_campaign=provocacao_do_dia";
     try {
       if (navigator.share) await navigator.share({ title: "Diariamente", text: txt, url });

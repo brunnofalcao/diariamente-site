@@ -15,6 +15,9 @@ export const SITE = {
   // e os dois domínios precisam estar no Search Console. Sem isso, o sinal
   // fica dividido entre os dois.
   dominio: "https://diariamente.app",
+  // Parte protegida (app, login, API e banco). O domínio .club é só
+  // endereço técnico: a marca é "Diariamente" / "Diariamente App", nunca
+  // "Diariamente Club". O site comercial não tem login: só aponta para cá.
   appUrl: "https://app.diariamente.club",
 
   // Rede social DA MARCA. O Diariamente fala por si: as redes da Science
