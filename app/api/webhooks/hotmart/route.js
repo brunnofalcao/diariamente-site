@@ -8,10 +8,15 @@
  * O caminho do coupon_code no payload precisa ser confirmado no primeiro
  * disparo real. Por isso a busca e recursiva, e funciona em qualquer
  * estrutura que a Hotmart mandar.
+ *
+ * Auth: cabecalho X-HOTMART-HOTTOK igual a HOTMART_HOTTOK, comparado em
+ * tempo constante (lib/seguranca.js). Sem HOTMART_HOTTOK configurado, a
+ * rota recusa tudo.
  */
 
 import { createClient } from '@supabase/supabase-js';
 import { apagarCupom } from '@/lib/hotmart';
+import { segredoConfere } from '@/lib/seguranca';
 
 export const runtime = 'nodejs';
 
@@ -36,8 +41,8 @@ function extrairCodigoCupom(payload) {
 
 export async function POST(req) {
   try {
-    const hottok = req.headers.get('x-hotmart-hottok');
-    if (!hottok || hottok !== process.env.HOTMART_HOTTOK) {
+    const hottok = req.headers.get('x-hotmart-hottok') || '';
+    if (!segredoConfere(hottok, process.env.HOTMART_HOTTOK)) {
       console.warn('[webhook hotmart] hottok invalido');
       return Response.json({ ok: false }, { status: 401 });
     }

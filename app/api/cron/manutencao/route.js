@@ -11,13 +11,18 @@
  *   4. LIMPAR   apagar na Hotmart cupons marcados como delete_pendente
  *
  * Auth: a Vercel manda `Authorization: Bearer ${CRON_SECRET}` sozinha quando
- * a variavel CRON_SECRET existe. Para rodar na mao, use ?key=CRON_SECRET.
+ * a variavel CRON_SECRET existe. So o cabecalho vale: segredo na URL
+ * (?key=) fica gravado em log de acesso, historico e proxy, e por isso
+ * deixou de ser aceito. Comparacao em tempo constante (lib/seguranca.js).
+ * Para rodar na mao:
+ *   curl -H "Authorization: Bearer $CRON_SECRET" https://diariamente.app/api/cron/manutencao
  */
 
 import { createClient } from '@supabase/supabase-js';
 import { apagarCupom } from '@/lib/hotmart';
 import { enviarLeadRD } from '@/lib/rdstation';
 import { whatsapp } from '@/lib/whatsapp';
+import { segredoConfere } from '@/lib/seguranca';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,8 +41,7 @@ function autorizado(req) {
   const segredo = process.env.CRON_SECRET;
   if (!segredo) return false;
   const header = req.headers.get('authorization') || '';
-  if (header === `Bearer ${segredo}`) return true;
-  return new URL(req.url).searchParams.get('key') === segredo;
+  return segredoConfere(header, `Bearer ${segredo}`);
 }
 
 /* ------------------------------------------------------------------ */
