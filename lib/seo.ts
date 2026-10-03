@@ -75,10 +75,37 @@ const TEXTOS: Record<Chave, Record<Lang, Texto>> = {
   },
 };
 
+/* ---------------------------------------------------------------------
+   IMAGEM DA PRÉVIA POR IDIOMA
+   As imagens moram em app/opengraph-image.png (português) e em
+   app/es/opengraph-image.tsx (espanhol). O Next só as coloca sozinho em
+   "/" e "/es": nas outras páginas, o `openGraph` declarado aqui SUBSTITUI
+   o do segmento de cima, imagem inclusive, e /sobre, /es/acerca-de etc.
+   saíam sem imagem nenhuma. Por isso a imagem vai explícita, no idioma
+   da página. O texto alternativo é o mesmo dos arquivos.
+   Endereço fixo, sem o código que o Next acrescenta: se a imagem mudar
+   um dia, acrescentar ?v=2 aqui para Facebook e WhatsApp buscarem de novo.
+   --------------------------------------------------------------------- */
+const IMAGEM_DA_PREVIA: Record<Lang, { url: string; width: number; height: number; alt: string }> = {
+  pt: {
+    url: "/opengraph-image.png",
+    width: 1200,
+    height: 630,
+    alt: "diariamente · uma prática diária de hábitos e bem-estar",
+  },
+  es: {
+    url: "/es/opengraph-image",
+    width: 1200,
+    height: 630,
+    alt: "diariamente · una práctica diaria de hábitos y bienestar",
+  },
+};
+
 export function metadataDaPagina(chave: Chave, lang: Lang): Metadata {
   const { title, description } = TEXTOS[chave][lang];
   const par = parDeIdiomas(chave);
   const abs = (p: string) => SITE.dominio + (p === "/" ? "" : p);
+  const imagem = IMAGEM_DA_PREVIA[lang];
 
   return {
     title,
@@ -93,14 +120,17 @@ export function metadataDaPagina(chave: Chave, lang: Lang): Metadata {
     },
     openGraph: {
       type: "website",
-      locale: lang === "pt" ? "pt_BR" : "es_ES",
-      alternateLocale: lang === "pt" ? "es_ES" : "pt_BR",
+      // es_LA, e não es_ES: o público do espanhol é a América Latina, e é o
+      // código que o Facebook usa para o espanhol latino-americano.
+      locale: lang === "pt" ? "pt_BR" : "es_LA",
+      alternateLocale: lang === "pt" ? "es_LA" : "pt_BR",
       url: abs(par[lang]),
       siteName: SITE.nome,
       title,
       description,
+      images: [imagem],
     },
-    twitter: { card: "summary_large_image", title, description },
+    twitter: { card: "summary_large_image", title, description, images: [imagem] },
     robots: { index: true, follow: true },
   };
 }
