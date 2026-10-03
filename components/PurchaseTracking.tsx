@@ -18,10 +18,12 @@ export function PurchaseTracking() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     // Hotmart costuma mandar identificadores; usamos como event_id (dedupe)
+    // hottok NÃO entra: é o segredo do webhook da Hotmart. Usado como id de evento, ia
+    // para o Meta Pixel, o GA4 e o dataLayer, e, por ser constante, fazia o Meta tratar
+    // compras diferentes como a mesma.
     const transacao =
       params.get("transaction") ||
       params.get("transaction_id") ||
-      params.get("hottok") ||
       undefined;
 
     // Valor real da transação, quando a Hotmart o repassa na URL de retorno.

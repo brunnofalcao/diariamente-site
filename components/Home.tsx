@@ -182,17 +182,26 @@ export function Home({ lang }: { lang: Lang }) {
   // errado com cara de certo.
   const [prov, setProv] = useState<{ texto: string; dia: number; ehDoDia: boolean } | null>(null);
 
+  // O idioma vai na URL: sem ele a API devolve português. Desde 03/10 a
+  // tabela tem uma linha por idioma, e a /es mostrava a pergunta errada.
+  // A API devolve `lang`; se vier outro idioma ou vier SEM `lang` (deploy
+  // antigo, rollback, cache), o texto NAO entra: cai no teaser do idioma da
+  // pagina, sem data. A API anterior nao filtrava idioma nem devolvia `lang`,
+  // entao aceitar resposta sem o campo era aceitar a pergunta errada.
+  const langApi = lang === "es" ? "es" : "pt-BR";
+
   useEffect(() => {
     let vivo = true;
-    fetch("/api/provocacao-do-dia", { cache: "no-store" })
+    fetch(`/api/provocacao-do-dia?lang=${langApi}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
         if (!vivo) return;
-        if (d?.ehDoDia && d?.texto) {
+        const idiomaCerto = d?.lang === langApi;
+        if (d?.ehDoDia && d?.texto && idiomaCerto) {
           setProv({ texto: String(d.texto), dia: Number(d.dia) || dia, ehDoDia: true });
         } else {
           // Falha silenciosa nunca mais: o motivo vai para o console.
-          console.warn("[diariamente] texto do dia indisponivel:", d?.motivo ?? "sem motivo");
+          console.warn("[diariamente] texto do dia indisponivel:", idiomaCerto ? (d?.motivo ?? "sem motivo") : `idioma ${d?.lang ?? "ausente"} em vez de ${langApi}`);
           setProv({ texto: TEASER[lang][(dia - 1) % TEASER[lang].length], dia, ehDoDia: false });
         }
       })
@@ -202,7 +211,7 @@ export function Home({ lang }: { lang: Lang }) {
         setProv({ texto: TEASER[lang][(dia - 1) % TEASER[lang].length], dia, ehDoDia: false });
       });
     return () => { vivo = false; };
-  }, [lang, dia]);
+  }, [lang, langApi, dia]);
 
   const texto = prov?.texto ?? TEASER[lang][(dia - 1) % TEASER[lang].length];
   const ehDoDia = prov?.ehDoDia ?? false;
@@ -239,7 +248,7 @@ export function Home({ lang }: { lang: Lang }) {
   }, []);
 
   const share = async () => {
-    const txt = `\u201C${texto}\u201D \u2014 Diariamente.`;
+    const txt = `\u201C${texto}\u201D \u00B7 Diariamente`;
     const url = "https://diariamente.app/?utm_source=share&utm_medium=organic&utm_campaign=provocacao_do_dia";
     try {
       if (navigator.share) await navigator.share({ title: "Diariamente", text: txt, url });
