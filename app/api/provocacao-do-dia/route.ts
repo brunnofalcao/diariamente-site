@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { TEASER } from "@/lib/i18n";
 
 // =====================================================================
 // API: provocação do dia  (hero dinâmico — barra de busca)
@@ -11,6 +12,13 @@ import { NextResponse } from "next/server";
 //   pergunta text  -> a provocação
 //   autor_dia text -> slug interno. NAO e exposto publicamente.
 //   dia, mes int   -> data de referência (disponíveis se precisar)
+//   lang     text  -> 'pt-BR' ou 'es'. Desde 03/10/2026 cada dia tem UMA
+//                     linha em cada idioma (366 + 366).
+//
+// IDIOMA: `?lang=es` devolve a pergunta em espanhol. Sem parâmetro, ou com
+// qualquer outro valor ('pt', 'pt-BR', lixo), devolve português. O valor
+// nunca é repassado cru ao Supabase: só existem os dois literais abaixo.
+// A resposta traz `lang` para o front conferir o que recebeu.
 //
 // Variáveis de ambiente (Vercel → Settings → Environment Variables):
 //   SUPABASE_URL          = https://xycwmtsicuqjswfiohbc.supabase.co
@@ -45,19 +53,23 @@ const ASSINATURA_PUBLICA = "Diariamente";
 // Por isso a resposta agora carrega `fonte` e `ok`, e o front deixa de
 // exibir data e numeracao quando fonte !== "supabase". Melhor mostrar
 // menos do que mostrar errado com cara de certo.
-const TEASER = [
-  { texto: "O que você está adiando que, no fundo, já sabe que precisa decidir?", autor: "Diariamente" },
-  { texto: "Se hoje fosse a única chance de começar, você começaria, ou esperaria estar pronto?", autor: "Diariamente" },
-  { texto: "O que você faria diferente se ninguém estivesse olhando o resultado?", autor: "Diariamente" },
-  { texto: "Qual conversa você está evitando que mudaria o seu próximo ano?", autor: "Diariamente" },
-  { texto: "O que te trouxe até aqui é o mesmo que vai te levar adiante?", autor: "Diariamente" },
-  { texto: "Onde você está confundindo conforto com segurança?", autor: "Diariamente" },
-  { texto: "O que você constrói quando ninguém te cobra nada?", autor: "Diariamente" },
-];
+//
+// Os textos vêm de lib/i18n (TEASER), a mesma lista que o front usa como
+// ponte visual: servidor e navegador caem no MESMO texto, nos dois idiomas.
+function teaser(lang: LangApi, diaAno: number): { texto: string; autor: string } {
+  const lista = TEASER[lang === "es" ? "es" : "pt"];
+  return { texto: lista[(diaAno - 1) % lista.length], autor: ASSINATURA_PUBLICA };
+}
+
+// Só estes dois valores chegam ao banco. Qualquer outra coisa vira pt-BR.
+type LangApi = "pt-BR" | "es";
+function idiomaPedido(valor: string | null): LangApi {
+  return (valor ?? "").trim().toLowerCase() === "es" ? "es" : "pt-BR";
+}
 
 // Mês e dia atuais no fuso de Brasília (America/Sao_Paulo),
 // independente do fuso do servidor (Vercel roda em UTC).
-function dataBR(): { mes: number; dia: number; diaAno: number; diaNum: number; mesNome: string; semana: string } {
+function dataBR(lang: LangApi): { mes: number; dia: number; diaAno: number; diaNum: number; mesNome: string; semana: string } {
   const now = new Date();
   const fmt = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Sao_Paulo",
@@ -67,9 +79,9 @@ function dataBR(): { mes: number; dia: number; diaAno: number; diaNum: number; m
   const start = Date.UTC(y, 0, 0);
   const hoje = Date.UTC(y, m - 1, d);
 
-  // nomes em pt-BR no fuso de Brasília
-  const mesNome = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", month: "long" }).format(now);
-  const semana = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", weekday: "long" }).format(now);
+  // nomes no idioma pedido, sempre no fuso de Brasília (a data do produto)
+  const mesNome = new Intl.DateTimeFormat(lang, { timeZone: "America/Sao_Paulo", month: "long" }).format(now);
+  const semana = new Intl.DateTimeFormat(lang, { timeZone: "America/Sao_Paulo", weekday: "long" }).format(now);
 
   return {
     mes: m, dia: d,
@@ -83,14 +95,16 @@ function dataBR(): { mes: number; dia: number; diaAno: number; diaNum: number; m
 export const dynamic = "force-dynamic"; // recalcula a cada request
 export const revalidate = 0;
 
-export async function GET() {
-  const { mes, dia, diaAno, diaNum, mesNome, semana } = dataBR();
-  const dataExtenso = `${diaNum} ${mesNome}`;          // ex: "28 junho"
+export async function GET(req: Request) {
+  const lang = idiomaPedido(new URL(req.url).searchParams.get("lang"));
+  const { mes, dia, diaAno, diaNum, mesNome, semana } = dataBR(lang);
+  // ex: "28 junho" | "28 de junio" (o mesmo formato que a Home usa)
+  const dataExtenso = lang === "es" ? `${diaNum} de ${mesNome}` : `${diaNum} ${mesNome}`;
   const diaSemana = semana.charAt(0).toUpperCase() + semana.slice(1); // ex: "Domingo"
 
   // Sem Supabase configurado → fallback teaser (com diagnóstico claro)
   if (!SB_URL || !SB_KEY) {
-    const t = TEASER[(diaAno - 1) % TEASER.length];
+    const t = teaser(lang, diaAno);
     const faltando = [
       !SB_URL ? "SUPABASE_URL" : null,
       !SB_KEY ? "SUPABASE_SERVICE_KEY" : null,
@@ -98,6 +112,7 @@ export async function GET() {
     return NextResponse.json({
       dia: diaAno,
       total: 365,
+      lang,
       fonte: "teaser", ok: false, ehDoDia: false,
       motivo: `variavel(eis) de ambiente ausente(s) no Vercel: ${faltando.join(", ")}`,
       dataExtenso, diaSemana,
@@ -106,13 +121,16 @@ export async function GET() {
   }
 
   try {
-    // Busca a pergunta de hoje por MÊS + DIA (imune a qualquer offset de dia_ano)
+    // Busca a pergunta de hoje por MÊS + DIA + IDIOMA (imune a qualquer offset de dia_ano).
+    // Sem o filtro de idioma o limit=1 pegava a linha que viesse primeiro, e
+    // desde 03/10 o site em português passou a mostrar a pergunta em espanhol.
     const select = encodeURIComponent(`${C_PERGUNTA},${C_AUTOR_DIA},dia_ano`);
     const endpoint =
       `${SB_URL}/rest/v1/${TABLE}` +
       `?select=${select}` +
       `&${C_MES}=eq.${mes}` +
       `&${C_DIA}=eq.${dia}` +
+      `&lang=eq.${encodeURIComponent(lang)}` +
       `&limit=1`;
 
     const r = await fetch(endpoint, {
@@ -123,8 +141,8 @@ export async function GET() {
 
     const linhas: Record<string, unknown>[] = await r.json();
     if (!linhas?.length) {
-      const t = TEASER[(diaAno - 1) % TEASER.length];
-      return NextResponse.json({ dia: diaAno, total: 365, fonte: "teaser", ok: false, ehDoDia: false, motivo: `nenhuma linha com ${C_MES}=${mes} e ${C_DIA}=${dia}`, dataExtenso, diaSemana, ...t });
+      const t = teaser(lang, diaAno);
+      return NextResponse.json({ dia: diaAno, total: 365, lang, fonte: "teaser", ok: false, ehDoDia: false, motivo: `nenhuma linha com ${C_MES}=${mes}, ${C_DIA}=${dia} e lang=${lang}`, dataExtenso, diaSemana, ...t });
     }
 
     const row = linhas[0];
@@ -136,14 +154,15 @@ export async function GET() {
     return NextResponse.json({
       dia: diaLabel,
       total: 365,
+      lang,
       fonte: "supabase", ok: true, ehDoDia: true,
       texto: String(row[C_PERGUNTA] ?? ""),
       autor,
       dataExtenso, diaSemana,
     });
   } catch (e) {
-    const t = TEASER[(diaAno - 1) % TEASER.length];
-    return NextResponse.json({ dia: diaAno, total: 365, fonte: "teaser", ok: false, ehDoDia: false, motivo: String(e), dataExtenso, diaSemana, ...t });
+    const t = teaser(lang, diaAno);
+    return NextResponse.json({ dia: diaAno, total: 365, lang, fonte: "teaser", ok: false, ehDoDia: false, motivo: String(e), dataExtenso, diaSemana, ...t });
   }
 }
 

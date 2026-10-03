@@ -23,7 +23,8 @@ export function HeroProvocacao() {
   // 1) busca a provocação do dia (API protegida; cai em teaser se preciso)
   useEffect(() => {
     let alive = true;
-    fetch("/api/provocacao-do-dia")
+    // Componente so em portugues: pede pt-BR explicito (a API filtra por idioma).
+    fetch("/api/provocacao-do-dia?lang=pt-BR")
       .then((r) => r.json())
       .then((d: Prov) => {
         if (alive) setProv(d);
