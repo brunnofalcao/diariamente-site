@@ -24,7 +24,8 @@ import { createClient } from "@supabase/supabase-js";
         sujeito à troca de dados descrita acima: rodar o SQL resolve.
 
    Os campos que vêm do navegador são saneados (caractere de controle,
-   data inválida, utm fora da lista) para que um envio malicioso não
+   data inválida ou longe da hora do servidor, utm fora da lista) para
+   que um envio malicioso não
    consiga derrubar a gravação no banco de propósito e, assim, forçar o
    caminho (b).
 
@@ -72,10 +73,21 @@ function limparUtm(utm) {
   return Object.keys(out).length ? out : null;
 }
 
-/** Data do aceite enviada pelo navegador; se não for uma data válida, vale a do servidor. */
+/**
+ * Data do aceite enviada pelo navegador. Só vale se cair perto da hora do
+ * servidor (até 1 dia antes, até 5 minutos depois); fora disso, vale a do
+ * servidor. Não basta ser "data válida" para o JavaScript: "0000-01-01",
+ * "+010000-01-01" e anos negativos passam no new Date(), mas o Postgres
+ * recusa (conferido com pg_input_is_valid). A gravação cairia, e o envio
+ * iria direto ao RD, que é justamente o caminho que a limpeza fecha.
+ */
+const UM_DIA_MS = 24 * 60 * 60 * 1000;
+const CINCO_MIN_MS = 5 * 60 * 1000;
 function dataDoAceite(v) {
-  const d = typeof v === "string" ? new Date(v) : null;
-  return d && !Number.isNaN(d.getTime()) ? d.toISOString() : new Date().toISOString();
+  const agora = Date.now();
+  const t = typeof v === "string" ? new Date(v).getTime() : NaN;
+  const plausivel = Number.isFinite(t) && t >= agora - UM_DIA_MS && t <= agora + CINCO_MIN_MS;
+  return new Date(plausivel ? t : agora).toISOString();
 }
 
 async function hashear(texto) {
