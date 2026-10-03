@@ -1,0 +1,20 @@
+# Dependências e saída de build: geradas pelo npm ci e pelo next build,
+# nunca versionadas.
+node_modules/
+.next/
+out/
+
+# Variáveis de ambiente: segredos ficam na Vercel, nunca no repositório
+# (que é público). Vale para .env, .env.local, .env.production etc.
+.env*
+# O modelo sem valores pode (e deve) ser versionado.
+!.env.example
+
+# Pasta local da CLI da Vercel (vercel link / vercel pull grava o id do
+# projeto e pode baixar variáveis para cá).
+.vercel/
+
+# Lixo de sistema e de depuração
+.DS_Store
+*.tsbuildinfo
+npm-debug.log*
