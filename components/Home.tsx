@@ -184,8 +184,10 @@ export function Home({ lang }: { lang: Lang }) {
 
   // O idioma vai na URL: sem ele a API devolve português. Desde 03/10 a
   // tabela tem uma linha por idioma, e a /es mostrava a pergunta errada.
-  // A API devolve `lang`; se vier outro idioma (deploy antigo, cache), o
-  // texto NAO entra: cai no teaser do idioma da pagina, sem data.
+  // A API devolve `lang`; se vier outro idioma ou vier SEM `lang` (deploy
+  // antigo, rollback, cache), o texto NAO entra: cai no teaser do idioma da
+  // pagina, sem data. A API anterior nao filtrava idioma nem devolvia `lang`,
+  // entao aceitar resposta sem o campo era aceitar a pergunta errada.
   const langApi = lang === "es" ? "es" : "pt-BR";
 
   useEffect(() => {
@@ -194,12 +196,12 @@ export function Home({ lang }: { lang: Lang }) {
       .then((r) => r.json())
       .then((d) => {
         if (!vivo) return;
-        const idiomaCerto = !d?.lang || d.lang === langApi;
+        const idiomaCerto = d?.lang === langApi;
         if (d?.ehDoDia && d?.texto && idiomaCerto) {
           setProv({ texto: String(d.texto), dia: Number(d.dia) || dia, ehDoDia: true });
         } else {
           // Falha silenciosa nunca mais: o motivo vai para o console.
-          console.warn("[diariamente] texto do dia indisponivel:", idiomaCerto ? (d?.motivo ?? "sem motivo") : `idioma ${d?.lang} em vez de ${langApi}`);
+          console.warn("[diariamente] texto do dia indisponivel:", idiomaCerto ? (d?.motivo ?? "sem motivo") : `idioma ${d?.lang ?? "ausente"} em vez de ${langApi}`);
           setProv({ texto: TEASER[lang][(dia - 1) % TEASER[lang].length], dia, ehDoDia: false });
         }
       })
