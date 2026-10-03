@@ -113,7 +113,7 @@ Resumo das entregas anteriores incluídas:
 | | O quê |
 | --- | --- |
 | **P0** | `EMPRESA.endereco` ainda é `[TROCAR]`, e as políticas o exibem |
-| **P0** | Rodar o SQL de `lista_espera` (topo de `app/api/lista-espera/route.js`) |
+| **P0** | Rodar `sql/2026-10-03-lista-espera.sql` (a tabela não existe em 03/10/2026: hoje a lista de espera vive só no RD Station) |
 | **P0** | Banner de cookies com opt-in: as políticas dizem que medição só roda com consentimento |
-| **P1** | Rodar o SQL de `estudante_interesse` |
+| **P1** | Rodar `sql/2026-10-03-estudante-interesse.sql` (sem a tabela, o formulário de estudante fora do Brasil dá erro para todo envio) |
 | **P1** | Abrir `diariamente.app/api/provocacao-do-dia` e ler o `motivo` |
