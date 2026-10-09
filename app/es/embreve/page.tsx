@@ -1,10 +1,9 @@
-import { Home } from "@/components/Home";
-import { metadataPrivada } from "@/lib/seo";
+import { redirect } from "next/navigation";
 
-/* /es/embreve · SITE DE VENDAS EM CONSTRUÇÃO · ESPANHOL */
+/* /es/embreve mostrava o site de vendas em espanhol, com preço em real e
+   o checkout brasileiro. Até o espanhol ter preço, checkout e lojas
+   próprios, quem chega aqui vai para /es ("próximamente"). */
 
-export const metadata = metadataPrivada("vendas", "es");
-
-export default function VentasEs() {
-  return <Home lang="es" />;
+export default function Page() {
+  redirect("/es");
 }

@@ -1,12 +1,10 @@
-import { Home } from "@/components/Home";
-import { metadataPrivada } from "@/lib/seo";
+import { redirect } from "next/navigation";
 
-/* /embreve · SITE DE VENDAS EM CONSTRUÇÃO · PORTUGUÊS
-   noindex, nofollow, fora do sitemap. Endereço de trabalho, não de
-   busca. Quem tiver o link acessa normalmente. */
+/* /embreve foi o endereço de trabalho do site de vendas enquanto a home
+   era a lista de espera. Desde a virada, o site de vendas é a própria
+   home: qualquer link que já tenha saído com /embreve cai em "/", e não
+   sobra uma segunda cópia da página. */
 
-export const metadata = metadataPrivada("vendas", "pt");
-
-export default function Vendas() {
-  return <Home lang="pt" />;
+export default function Page() {
+  redirect("/");
 }

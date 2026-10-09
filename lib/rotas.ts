@@ -26,9 +26,9 @@ export type Chave =
 
 const SLUGS: Record<Chave, Record<Lang, string>> = {
   home:        { pt: "/",              es: "/es" },
-  // Site de vendas em construção. Fora do sitemap e com noindex até o
-  // lançamento: é endereço de trabalho, não de busca. Na virada, basta
-  // trocar o que as rotas "/" e "/es" renderizam.
+  // Antigo endereço de trabalho do site de vendas. Desde a virada, o site
+  // de vendas é "/" e estes dois caminhos só redirecionam ("/embreve" para
+  // "/", "/es/embreve" para "/es"). Continuam fora do sitemap.
   vendas:      { pt: "/embreve",       es: "/es/embreve" },
   estudante:   { pt: "/estudante",     es: "/es/estudiantes" },
   sobre:       { pt: "/sobre",         es: "/es/acerca-de" },
