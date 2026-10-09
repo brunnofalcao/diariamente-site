@@ -2,7 +2,7 @@ import Script from "next/script";
 import { TRACKING } from "@/config";
 
 /**
- * Tracking — GA4 + Meta Pixel.
+ * Tracking — GA4 (uma ou mais propriedades) + Meta Pixel.
  * Carrega os scripts só quando TRACKING.ativo === true e o ID existe.
  * Os eventos de conversão (InitiateCheckout) são disparados no clique do
  * botão de checkout (ver components/Oferta.tsx), tanto pro dataLayer (GA4)
@@ -11,16 +11,20 @@ import { TRACKING } from "@/config";
 export function Tracking() {
   if (!TRACKING.ativo) return null;
 
-  const ga = TRACKING.ga4Id;
+  const gas = (TRACKING.ga4Ids ?? []).filter(Boolean);
   const pixel = TRACKING.metaPixelId;
 
   return (
     <>
-      {/* ---------- Google Analytics 4 (gtag) ---------- */}
-      {ga && (
+      {/* ---------- Google Analytics 4 (gtag) ----------
+           Duas propriedades medindo em paralelo. A biblioteca gtag.js é
+           carregada UMA vez, com o primeiro ID, e cada propriedade recebe
+           o seu próprio gtag('config'). Carregar o script duas vezes
+           duplicaria o PageView em ambas. */}
+      {gas.length > 0 && (
         <>
           <Script
-            src={`https://www.googletagmanager.com/gtag/js?id=${ga}`}
+            src={`https://www.googletagmanager.com/gtag/js?id=${gas[0]}`}
             strategy="afterInteractive"
           />
           <Script id="ga4-init" strategy="afterInteractive">
@@ -28,7 +32,7 @@ export function Tracking() {
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', '${ga}');
+              ${gas.map((id) => `gtag('config', '${id}');`).join("\n              ")}
             `}
           </Script>
         </>
