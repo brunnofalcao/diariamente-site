@@ -18,7 +18,7 @@ export default function Termos() {
 
       <h2>1. O que é o Diariamente</h2>
       <p>
-        O Diariamente disponibiliza 365 provocações — uma para cada dia — por meio de um
+        O Diariamente disponibiliza 365 provocações, uma para cada dia, por meio de um
         aplicativo, com recursos de acompanhamento de voltas acumuladas, conquistas,
         menu de Ações e lembretes. O conteúdo tem finalidade reflexiva e educacional, voltada ao
         desenvolvimento profissional. Os resultados dependem do engajamento individual de cada
@@ -49,23 +49,32 @@ export default function Termos() {
 
       <h2>4. Propriedade intelectual</h2>
       <p>
-        Todo o conteúdo do Diariamente — textos, provocações, identidade visual, marca, software e
-        demais elementos — é protegido por direitos autorais e de propriedade intelectual,
+        Todo o conteúdo do Diariamente (textos, provocações, identidade visual, marca, software e
+        demais elementos) é protegido por direitos autorais e de propriedade intelectual,
         pertencendo à {EMPRESA.razaoSocial}. A aquisição concede ao usuário uma licença de uso pessoal e intransferível, não
         exclusiva, e não transfere a titularidade de qualquer direito sobre o conteúdo.
       </p>
 
+      {/* Uma seção só para garantia e arrependimento. Antes eram duas (5 e
+          6) dizendo coisas diferentes, e a 6 falava em "condições
+          específicas" para a devolução, contra a garantia incondicional
+          prometida na página de vendas. TEXTO SUJEITO À APROVAÇÃO DO DONO. */}
       <h2>5. Garantia e direito de arrependimento</h2>
       <p>
-        Oferecemos garantia de {GARANTIA.dias} dias contados da confirmação da compra. Dentro
-        desse prazo você pode solicitar a devolução integral do valor pago, escrevendo para{" "}
-        <a href={`mailto:${EMPRESA.suporteEmail}`}>{EMPRESA.suporteEmail}</a>, sem
-        necessidade de justificativa.
+        Oferecemos <strong>garantia incondicional de {GARANTIA.dias} dias</strong>, contados da
+        confirmação da compra. Dentro desse prazo, você pode pedir a devolução integral do valor
+        pago, sem precisar justificar.
       </p>
       <p>
-        <strong>Se você está no Brasil:</strong> aplica-se o art. 49 do Código de Defesa do
-        Consumidor, que garante 7 dias de arrependimento em compras fora do estabelecimento.
-        Nossa garantia de {GARANTIA.dias} dias já contempla esse prazo.
+        <strong>Como pedir:</strong> pela própria plataforma de pagamento ou escrevendo para{" "}
+        <a href={`mailto:${EMPRESA.suporteEmail}`}>{EMPRESA.suporteEmail}</a>. O reembolso é
+        feito pelo mesmo meio de pagamento, em até 14 dias da comunicação.
+      </p>
+      <p>
+        <strong>Se você está no Brasil:</strong> o art. 49 do Código de Defesa do Consumidor (Lei
+        nº 8.078/1990) garante 7 dias para desistir de compras feitas fora do estabelecimento
+        comercial, contados da confirmação da compra ou do recebimento do produto. Nossa garantia
+        de {GARANTIA.dias} dias já contempla esse prazo.
       </p>
       <p>
         <strong>Se você está na União Europeia:</strong> a Diretiva 2011/83/UE garante{" "}
@@ -80,24 +89,8 @@ export default function Termos() {
         direito de retratação. <strong>Nós não fazemos isso.</strong> Você mantém o prazo
         integral mesmo tendo acessado o conteúdo.
       </p>
-      <p>
-        Para exercer, basta escrever para{" "}
-        <a href={`mailto:${EMPRESA.suporteEmail}`}>{EMPRESA.suporteEmail}</a>. O reembolso é
-        feito pelo mesmo meio de pagamento, em até 14 dias da comunicação.
-      </p>
 
-      <h2>6. Direito de arrependimento e garantia</h2>
-      <p>
-        Nos termos do art. 49 do Código de Defesa do Consumidor (Lei nº 8.078/1990), em compras
-        realizadas fora do estabelecimento comercial, você pode desistir da contratação no prazo de
-        7 (sete) dias a contar da confirmação da compra ou do recebimento do produto.
-      </p>
-      <p>{GARANTIA.texto}</p>
-      <p>
-        O pedido de reembolso dentro do prazo pode ser feito pela plataforma de pagamento ou pelo
-        nosso canal de suporte. A devolução pode estar sujeita a
-        condições específicas, informadas no atendimento.
-      </p><h2>8. Disponibilidade e alterações do serviço</h2>
+      <h2>6. Disponibilidade e alterações do serviço</h2>
       <p>
         Empenhamo-nos para manter o aplicativo disponível e funcional, mas o serviço pode passar
         por manutenções, atualizações ou indisponibilidades temporárias. Podemos aprimorar,
@@ -105,7 +98,7 @@ export default function Termos() {
         produto adquirido.
       </p>
 
-      <h2>9. Limitação de responsabilidade</h2>
+      <h2>7. Limitação de responsabilidade</h2>
       <p>
         O Diariamente é uma ferramenta de reflexão e desenvolvimento profissional, e não substitui
         aconselhamento profissional especializado (jurídico, médico, psicológico, financeiro ou de
@@ -114,20 +107,20 @@ export default function Termos() {
         uso do produto.
       </p>
 
-      <h2>10. Proteção de dados</h2>
+      <h2>8. Proteção de dados</h2>
       <p>
         O tratamento de dados pessoais relacionado ao Diariamente é regido pela nossa{" "}
         <a href="/privacidade">Política de Privacidade</a>, parte integrante destes Termos.
       </p>
 
-      <h2>11. Alterações dos Termos</h2>
+      <h2>9. Alterações dos Termos</h2>
       <p>
         Podemos atualizar estes Termos a qualquer momento. A versão vigente estará sempre
         disponível nesta página, com a data de atualização. O uso continuado após alterações
         implica concordância com a versão atualizada.
       </p>
 
-      <h2>12. Foro e contato</h2>
+      <h2>10. Foro e contato</h2>
       <p>
         Estes Termos são regidos pelas leis brasileiras. Fica eleito o foro do domicílio do
         consumidor para dirimir eventuais controvérsias, conforme o Código de Defesa do Consumidor.

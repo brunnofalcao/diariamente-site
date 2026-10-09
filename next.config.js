@@ -31,6 +31,12 @@ const CABECALHOS_DE_PROTECAO = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Endereço fictício SÓ para teste (ver scripts/checar-endereco.js). O
+  // `env` do Next grava o valor no servidor e no navegador no momento do
+  // build; vazio, o config.ts usa ENDERECO_DA_EMPRESA.
+  env: {
+    DM_ENDERECO_TESTE: (process.env.DM_ENDERECO_TESTE || "").trim(),
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },
@@ -41,4 +47,27 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+/* =====================================================================
+   TRAVA DE PUBLICAÇÃO: ENDEREÇO DA EMPRESA
+   ---------------------------------------------------------------------
+   `next build` para com uma mensagem clara enquanto ENDERECO_DA_EMPRESA,
+   em config.ts, ainda tiver o marcador "[TROCAR". Em `next dev` e
+   `next start` só avisa no terminal, para não travar o trabalho local.
+   Detalhes e teste em scripts/checar-endereco.js.
+   ===================================================================== */
+const { PHASE_PRODUCTION_BUILD } = require("next/constants");
+const { checarEnderecoDoProjeto } = require("./scripts/checar-endereco");
+
+module.exports = (phase) => {
+  const r = checarEnderecoDoProjeto(process.env);
+  if (!r.ok) {
+    if (phase === PHASE_PRODUCTION_BUILD) {
+      console.error("\n[diariamente] BUILD BLOQUEADO: " + r.mensagem + "\n");
+      throw new Error("Endereço da empresa pendente em config.ts (ENDERECO_DA_EMPRESA).");
+    }
+    console.warn("\n[diariamente] Aviso: " + r.mensagem + "\n");
+  } else if (r.teste) {
+    console.warn("\n[diariamente] Aviso: " + r.mensagem + "\n");
+  }
+  return nextConfig;
+};

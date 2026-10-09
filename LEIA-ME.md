@@ -1,5 +1,28 @@
 # Diariamente · pacote consolidado
 
+> **Virada de lançamento (out/2026, branch `claude/site-lancamento`).**
+> A partir dela, o que vale é esta caixa; o resto do arquivo é o histórico
+> da entrega "em breve".
+>
+> | URL | Mostra |
+> | --- | --- |
+> | `diariamente.app` | **site de vendas** (PT), indexável |
+> | `diariamente.app/es` | **Próximamente** (ES), sem mudança |
+> | `/embreve` | redireciona para `/` |
+> | `/es/embreve` | redireciona para `/es` |
+>
+> - **Endereço da empresa:** fica só em `ENDERECO_DA_EMPRESA`, no
+>   `config.ts`. Enquanto ele tiver `[TROCAR` em qualquer parte, o `npm run build`
+>   falha de propósito, com a explicação. Para testar o build sem o
+>   endereço real: `DM_ENDERECO_TESTE="Rua de Teste, 123" npm run build`
+>   (recusado em produção na Vercel). `npm test` roda os testes da trava.
+> - **Cookies:** aviso com Aceitar e Recusar (`components/Consentimento.tsx`).
+>   GA4, Pixel da Meta e o evento de Purchase só carregam depois do
+>   Aceitar; a escolha fica 6 meses no cookie `dm_cookies`. A Política
+>   (seção 8, pt e es) descreve exatamente isso.
+> - **Para voltar à lista de espera:** Vercel, Deployments, deploy anterior,
+>   Instant Rollback (ou reverter os commits da virada).
+
 **30 arquivos.** Tudo o que mudou desde o ZIP-base que você me mandou
 (`diariamente-site-main__4_`). `tsc` limpo, `next build` com 29 rotas.
 
@@ -57,7 +80,12 @@ errado é pior que nenhum.
 
 ---
 
-## NO DIA DO LANÇAMENTO
+## NO DIA DO LANÇAMENTO (histórico: já feito na virada, ver a caixa no topo)
+
+O passo abaixo era o plano original. Na virada, o `app/es/page.tsx`
+**ficou** "próximamente" de propósito (o espanhol ainda não tem preço,
+checkout nem lojas próprios), e mudaram também o título de venda em
+`lib/seo.ts`, o seletor PT | ES e os redirecionamentos de `/embreve`.
 
 Duas trocas, uma linha cada:
 
@@ -112,8 +140,7 @@ Resumo das entregas anteriores incluídas:
 
 | | O quê |
 | --- | --- |
-| **P0** | `EMPRESA.endereco` ainda é `[TROCAR]`, e as políticas o exibem |
+| **P0** | Preencher `ENDERECO_DA_EMPRESA` no `config.ts` (o build de produção não passa sem ele) |
 | **P0** | Rodar `sql/2026-10-03-lista-espera.sql` (a tabela não existe em 03/10/2026: hoje a lista de espera vive só no RD Station) |
-| **P0** | Banner de cookies com opt-in: as políticas dizem que medição só roda com consentimento |
 | **P1** | Rodar `sql/2026-10-03-estudante-interesse.sql` (sem a tabela, o formulário de estudante fora do Brasil dá erro para todo envio) |
 | **P1** | Abrir `diariamente.app/api/provocacao-do-dia` e ler o `motivo` |

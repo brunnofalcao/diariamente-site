@@ -44,9 +44,13 @@ export function LegalShell({
           <div className="legal-body stack">{children}</div>
 
           <div className="divider" />
+          {/* Identificação com endereço físico (Decreto 7.962/2013, art. 2º).
+              O endereço vem de ENDERECO_DA_EMPRESA, no config.ts. */}
           <p className="caption muted">
             {EMPRESA.marca} · {EMPRESA.razaoSocial} · CNPJ {EMPRESA.cnpj} ·{" "}
             <a href={`mailto:${EMPRESA.suporteEmail}`} className="teal">{EMPRESA.suporteEmail}</a>
+            <br />
+            {EMPRESA.endereco}
           </p>
         </div>
       </section>

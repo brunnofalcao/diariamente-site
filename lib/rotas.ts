@@ -26,9 +26,9 @@ export type Chave =
 
 const SLUGS: Record<Chave, Record<Lang, string>> = {
   home:        { pt: "/",              es: "/es" },
-  // Site de vendas em construção. Fora do sitemap e com noindex até o
-  // lançamento: é endereço de trabalho, não de busca. Na virada, basta
-  // trocar o que as rotas "/" e "/es" renderizam.
+  // Antigo endereço de trabalho do site de vendas. Desde a virada, o site
+  // de vendas é "/" e estes dois caminhos só redirecionam ("/embreve" para
+  // "/", "/es/embreve" para "/es"). Continuam fora do sitemap.
   vendas:      { pt: "/embreve",       es: "/es/embreve" },
   estudante:   { pt: "/estudante",     es: "/es/estudiantes" },
   sobre:       { pt: "/sobre",         es: "/es/acerca-de" },
@@ -61,4 +61,22 @@ export function identificar(pathname: string): { chave: Chave; lang: Lang } {
     }
   }
   return { chave: "home", lang: limpo.startsWith("/es") ? "es" : "pt" };
+}
+
+/**
+ * Destino de redirecionamento mantendo os parâmetros da URL original
+ * (utm_*, fbclid, gclid...). Anúncio ou link antigo que apontava para
+ * /embreve continua chegando com a origem do tráfego intacta.
+ */
+export function comParametros(
+  destino: string,
+  parametros: Record<string, string | string[] | undefined> = {}
+): string {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(parametros)) {
+    if (Array.isArray(v)) v.forEach((x) => q.append(k, x));
+    else if (v !== undefined) q.append(k, v);
+  }
+  const s = q.toString();
+  return s ? `${destino}?${s}` : destino;
 }

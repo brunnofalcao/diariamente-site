@@ -26,10 +26,13 @@ type Texto = { title: string; description: string };
 
 const TEXTOS: Record<Chave, Record<Lang, Texto>> = {
   home: {
+    // Desde a virada, "/" é o site de vendas: título e descrição são os de
+    // venda (os mesmos do app/layout.tsx). O bloco es continua "próximamente"
+    // porque /es continua sendo a lista de espera.
     pt: {
-      title: "Diariamente · em breve",
+      title: "Diariamente · uma prática diária de hábitos e bem-estar",
       description:
-        "Uma prática diária de hábitos e bem-estar. Ainda não é hoje, mas está perto. Deixe seu contato e avisamos no dia em que abrir.",
+        "Uma prática diária de hábitos e bem-estar. Um texto por dia que provoca uma reflexão e termina numa ação possível ainda hoje. Interromper não significa abandonar.",
     },
     es: {
       title: "Diariamente · próximamente",

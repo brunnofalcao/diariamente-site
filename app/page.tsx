@@ -1,22 +1,28 @@
-import { EmBreve } from "@/components/EmBreve";
+import { Home } from "@/components/Home";
 import { metadataDaPagina } from "@/lib/seo";
 
 /* =====================================================================
-   HOME · PORTUGUÊS · "em breve"
+   HOME · PORTUGUÊS · site de vendas
    ---------------------------------------------------------------------
-   Enquanto o site de vendas é estruturado em /embreve, a home pública é
-   a lista de espera.
+   Virada de lançamento: "/" deixou de ser a lista de espera e passou a
+   mostrar o site de vendas. O que mudou junto, e precisa continuar
+   coerente se alguém voltar atrás:
 
-   NA VIRADA DE LANÇAMENTO, troque as duas linhas abaixo por:
+   1. lib/seo.ts, bloco home/pt: título e descrição de venda (sem isso o
+      Google e a prévia de link continuam dizendo "em breve").
+   2. components/Home.tsx: o seletor PT | ES aponta para "/" e "/es".
+   3. app/embreve e app/es/embreve: só redirecionam para "/" e "/es",
+      para não sobrar cópia da home nem venda em espanhol com preço em real.
 
-     import { Home } from "@/components/Home";
-     export default function Page() { return <Home lang="pt" />; }
+   app/es/page.tsx continua "próximamente" de propósito: o espanhol ainda
+   não tem preço, checkout nem lojas próprios.
 
-   e faça o mesmo em app/es/page.tsx. Nada mais precisa mudar.
+   Para voltar à lista de espera: reverter o commit da virada (ou, na
+   Vercel, Instant Rollback para o deploy anterior).
    ===================================================================== */
 
 export const metadata = metadataDaPagina("home", "pt");
 
 export default function Page() {
-  return <EmBreve lang="pt" />;
+  return <Home lang="pt" />;
 }

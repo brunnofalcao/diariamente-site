@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { I18N, TEASER, ATIVOS, cld, type Lang, type Dict } from "@/lib/i18n";
 import { caminho } from "@/lib/rotas";
+import { EMPRESA, PLANO } from "@/config";
+import { registrarInicioDeCheckout } from "@/lib/medicao";
 
 /* ─────────────────────────────────────────────────────────────
    Home · Diariamente (redesign v3, padrão internacional PT/ES)
@@ -256,6 +258,10 @@ export function Home({ lang }: { lang: Lang }) {
     } catch { /* cancelado */ }
   };
 
+  // InitiateCheckout no clique dos dois botões que abrem a Hotmart (cartão
+  // de preço e oferta final). Só sai com "Aceitar" no aviso de cookies.
+  const inicioDeCheckout = () => registrarInicioDeCheckout(PLANO);
+
   const goToOffer = () => {
     const el = document.getElementById("preco");
     if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: "smooth" });
@@ -291,8 +297,8 @@ export function Home({ lang }: { lang: Lang }) {
                 nova aba, e o navegador registra a escolha num cookie de um ano
                 para o middleware nao redirecionar de novo na proxima visita. */}
             <div role="group" aria-label="Idioma / Idioma" style={{ display: "inline-flex", alignItems: "center", height: 32, padding: 2, borderRadius: 999, border: "1px solid rgba(255,255,255,.12)", background: "rgba(255,255,255,.03)" }}>
-              <a href={caminho("vendas", "pt")} hrefLang="pt-BR" onClick={fixarIdioma("pt")} aria-current={lang === "pt" ? "page" : undefined} style={{ ...langBtn(lang === "pt"), textDecoration: "none" }}>PT</a>
-              <a href={caminho("vendas", "es")} hrefLang="es" onClick={fixarIdioma("es")} aria-current={lang === "es" ? "page" : undefined} style={{ ...langBtn(lang === "es"), textDecoration: "none" }}>ES</a>
+              <a href={caminho("home", "pt")} hrefLang="pt-BR" onClick={fixarIdioma("pt")} aria-current={lang === "pt" ? "page" : undefined} style={{ ...langBtn(lang === "pt"), textDecoration: "none" }}>PT</a>
+              <a href={caminho("home", "es")} hrefLang="es" onClick={fixarIdioma("es")} aria-current={lang === "es" ? "page" : undefined} style={{ ...langBtn(lang === "es"), textDecoration: "none" }}>ES</a>
             </div>
             <a href="#preco" data-desk="1" style={{ alignItems: "center", justifyContent: "center", height: 40, padding: "0 18px", borderRadius: 999, background: C.p500, color: C.onAccent, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>{t.cta}</a>
           </div>
@@ -609,7 +615,7 @@ export function Home({ lang }: { lang: Lang }) {
                   <div style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 8, height: 30, padding: "0 12px", borderRadius: 999, background: C.s0, border: "1px solid rgba(255,255,255,.1)", fontSize: 13, fontWeight: 600 }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.p500} strokeWidth={2.2} strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5.2l3.2 1.9" /></svg>{t.prDay}
                   </div>
-                  <a href={LINKS.checkout} target="_blank" rel="noopener noreferrer" style={{ ...btnPrimary, marginTop: 22, width: "100%" }}>{t.cta}</a>
+                  <a href={LINKS.checkout} target="_blank" rel="noopener noreferrer" onClick={inicioDeCheckout} style={{ ...btnPrimary, marginTop: 22, width: "100%" }}>{t.cta}</a>
                   <p style={{ margin: "12px 0 0", textAlign: "center", fontSize: 13, lineHeight: 1.45, color: C.n400 }}>{t.prNote}</p>
                   <ul style={{ listStyle: "none", margin: "18px 0 0", padding: "18px 0 0", borderTop: `1px solid ${C.line}`, display: "grid", gap: 10, fontSize: 14, color: C.n200 }}>
                     {[t.prT1, t.prT2, t.prT3].map((x) => (
@@ -720,7 +726,7 @@ export function Home({ lang }: { lang: Lang }) {
           <div style={{ background: C.s1, border: `1px solid ${C.line}`, borderRadius: "16px 16px 0 0", padding: "clamp(40px,6vw,72px) clamp(20px,4vw,48px) 0", textAlign: "center", overflow: "hidden" }}>
             <p style={{ fontFamily: C.serif, fontWeight: 400, fontSize: "clamp(30px,4.4vw,50px)", lineHeight: 1.08, letterSpacing: "-.015em", margin: "0 auto", maxWidth: "22ch", textWrap: "balance" as never }}>{t.fin}</p>
             <div style={{ marginTop: 28, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-              <a href={LINKS.checkout} target="_blank" rel="noopener noreferrer" style={btnPrimary}>{t.cta}</a>
+              <a href={LINKS.checkout} target="_blank" rel="noopener noreferrer" onClick={inicioDeCheckout} style={btnPrimary}>{t.cta}</a>
               <span style={{ fontSize: 13, fontWeight: 500, color: C.n400 }}>{t.finNote}</span>
             </div>
             <div style={{ width: "min(72vw,300px)", margin: "clamp(32px,4vw,48px) auto -22%", aspectRatio: "1170/2532" }}>
@@ -759,7 +765,14 @@ export function Home({ lang }: { lang: Lang }) {
           </div>
           <hr style={{ height: 1, border: 0, background: C.line, margin: "clamp(32px,5vw,44px) 0 20px" }} />
           <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "12px 24px" }}>
-            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.n400 }}>© 2026 Science Play® · Science Play Cursos LTDA · CNPJ 33.612.911/0001-29 · diariamente.app</p>
+            {/* Identificação da empresa com endereço físico (Decreto 7.962/2013,
+                art. 2º). Tudo vem do config.ts: o endereço é ENDERECO_DA_EMPRESA,
+                e o build não passa enquanto ele for "[TROCAR". */}
+            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.n400 }}>
+              © 2026 {EMPRESA.marca}® · {EMPRESA.razaoSocial} · CNPJ {EMPRESA.cnpj} · diariamente.app
+              <br />
+              {EMPRESA.endereco}
+            </p>
             <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
               {[.3, .4, .5, .6, .75, .9].map((o, i) => <i key={i} style={{ display: "block", width: 10, height: 4, borderRadius: 999, background: C.p500, opacity: o }} />)}
               <i style={{ display: "block", width: 22, height: 4, borderRadius: 999, background: C.p500 }} />
