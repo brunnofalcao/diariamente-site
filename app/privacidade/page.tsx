@@ -2,6 +2,7 @@ import { EMPRESA, SITE } from "@/config";
 import { LegalShell } from "@/components/LegalShell";
 import { metadataDaPagina } from "@/lib/seo";
 import { caminho } from "@/lib/rotas";
+import { RevisarCookies } from "@/components/RevisarCookies";
 
 /* =====================================================================
    POLÍTICA DE PRIVACIDADE · PT
@@ -74,7 +75,8 @@ export default function Privacidade() {
       </p>
       <p>
         <strong>Dados de uso:</strong> páginas visitadas, origem do acesso, dispositivo e
-        interações, coletados por cookies e ferramentas de medição.
+        interações, coletados por cookies e ferramentas de medição somente se você aceitar
+        no aviso de cookies (seção 8).
       </p>
       <p>
         <strong>Dados do aplicativo:</strong> registros de leitura, ações registradas e
@@ -117,6 +119,11 @@ export default function Privacidade() {
             <td>Segurança, prevenção a fraude e abuso</td>
             <td>Interesse legítimo<br /><small>RGPD 6(1)(f) · LGPD 7º, IX</small></td>
             <td>Sim, por oposição fundamentada</td>
+          </tr>
+          <tr>
+            <td>Medir as visitas ao site e os resultados dos anúncios (cookies de medição e publicidade)</td>
+            <td>Consentimento<br /><small>RGPD 6(1)(a) · LGPD 7º, I</small></td>
+            <td><strong>Sim, no aviso de cookies, e dá para mudar depois</strong> (seção 8)</td>
           </tr>
           <tr>
             <td>Comunicações sobre o próprio Diariamente</td>
@@ -232,12 +239,61 @@ export default function Privacidade() {
 
       <h2>8. Cookies e medição</h2>
       <p>
-        Usamos cookies estritamente necessários ao funcionamento do site e cookies de medição
-        e publicidade. Os de medição e publicidade{" "}
-        <strong>só são ativados mediante seu consentimento</strong>, manifestado no aviso
-        exibido no primeiro acesso, e podem ser revistos a qualquer momento. Cookies
-        estritamente necessários não dependem de consentimento e não podem ser desativados
-        sem inviabilizar o site.
+        No primeiro acesso, o site mostra um aviso com dois botões, <strong>Aceitar</strong> e{" "}
+        <strong>Recusar</strong>. Enquanto você não escolhe, nenhuma ferramenta de medição ou de
+        publicidade é carregada, e o site funciona normalmente.
+      </p>
+      <p>
+        <strong>Necessários</strong>, sempre ativos e sem depender de consentimento, porque só
+        guardam escolhas que você mesmo fez ou protegem o site:
+      </p>
+      <ul>
+        <li>
+          <strong>dm_cookies</strong>: guarda a sua resposta ao aviso (aceitou ou recusou) por
+          6 meses. Depois desse prazo, o aviso aparece de novo.
+        </li>
+        <li>
+          <strong>dm_lang</strong>: guarda o idioma escolhido no seletor PT | ES, por 1 ano.
+        </li>
+        <li>
+          No formulário de estudante, um rascunho do que você digitou, sem o CPF, fica guardado
+          só nesta aba do navegador, para não se perder se a página recarregar. Ele some quando
+          a aba é fechada.
+        </li>
+        <li>
+          Cookies técnicos de segurança da hospedagem, gravados só quando ela precisa confirmar
+          que o acesso não é automatizado.
+        </li>
+      </ul>
+      <p>
+        <strong>Medição e publicidade</strong>, que só funcionam se você clicar em Aceitar:
+      </p>
+      <ul>
+        <li>
+          <strong>Google Analytics 4</strong> (Google): conta as visitas e mostra como o site é
+          usado. Cookies <code>_ga</code> e <code>_ga_*</code>.
+        </li>
+        <li>
+          <strong>Pixel da Meta</strong> (Facebook e Instagram): mede os resultados dos anúncios
+          e permite mostrar anúncios do Diariamente a quem visitou o site. Cookie{" "}
+          <code>_fbp</code> e, quando você chega por um anúncio, <code>_fbc</code>.
+        </li>
+      </ul>
+      <p>
+        Se você clicar em <strong>Recusar</strong>, essas duas ferramentas não são carregadas em
+        nenhuma página do site. Se clicar em <strong>Aceitar</strong>, elas passam a funcionar a
+        partir desse momento, em todas as páginas, até a sua escolha vencer ou você mudar de
+        ideia.
+      </p>
+      <p>
+        Você pode mudar de ideia a qualquer momento pelo botão abaixo. Ao usá-lo, apagamos do seu
+        navegador a sua escolha e os cookies de medição deste site, e a página é recarregada com
+        o aviso de novo.
+      </p>
+      <RevisarCookies lang="pt" />
+      <p>
+        O pagamento acontece no checkout da Hotmart, em outro endereço, que segue a política de
+        privacidade e de cookies da própria Hotmart.
       </p>
 
       <h2>9. Segurança</h2>

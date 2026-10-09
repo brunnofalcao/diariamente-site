@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { SITE, PLANOS, PROVA, GARANTIA, LOJAS, LOGOS, EMPRESA } from "@/config";
 import { PERGUNTAS } from "@/lib/faq";
-import { Tracking } from "@/components/Tracking";
+import { Consentimento } from "@/components/Consentimento";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -142,8 +142,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <StructuredData />
       </head>
       <body>
-        <Tracking />
-        {children}
+        {/* GA4 e Pixel da Meta NÃO entram aqui direto: o Consentimento mostra
+            o aviso de cookies e só monta o <Tracking /> depois do Aceitar.
+            Recusar, ou não escolher, não carrega nada (política, seção 8). */}
+        <Consentimento>{children}</Consentimento>
       </body>
     </html>
   );

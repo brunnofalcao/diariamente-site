@@ -286,7 +286,9 @@ export const EMPRESA = {
   // DM_ENDERECO_TESTE só existe em build de teste (a trava recusa em
   // produção na Vercel). Em build normal vem vazia e vale o endereço real.
   endereco: process.env.DM_ENDERECO_TESTE || ENDERECO_DA_EMPRESA,
-  vigenciaLegal: "Junho de 2026",
+  // Data exibida como "Última atualização" nos Termos e na Política. Mudou
+  // em out/2026: aviso de cookies (Política, seção 8) e garantia (Termos).
+  vigenciaLegal: "Outubro de 2026",
 };
 
 // ---------------------------------------------------------------------

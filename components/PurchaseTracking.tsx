@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { PLANO } from "@/config";
+import { useConsentimento } from "@/components/Consentimento";
+import { quandoPronto } from "@/lib/medicao";
 
 /**
- * PurchaseTracking — dispara o evento de compra no Meta Pixel e GA4
- * quando a página de obrigado carrega.
+ * PurchaseTracking: dispara o evento de compra no Meta Pixel e GA4
+ * quando a página de obrigado carrega, SE houver aceite no aviso de cookies.
  *
  * IMPORTANTE: isto é um BACKUP do evento que o Hotmart envia via pixel/API.
  * O evento oficial e confiável é o do Hotmart (server-side, pega boleto/Pix
@@ -15,7 +17,16 @@ import { PLANO } from "@/config";
  * pra deduplicar. Sem isso, o Meta pode contar a mesma venda duas vezes.
  */
 export function PurchaseTracking() {
+  // Só com o "Aceitar" do aviso de cookies. Recusou ou ainda não escolheu:
+  // nada sai. Se a pessoa aceitar aqui mesmo, na página de obrigado, o
+  // evento sai nesse momento, uma vez só.
+  const consentimento = useConsentimento();
+  const enviado = useRef(false);
+
   useEffect(() => {
+    if (consentimento !== "aceito" || enviado.current) return;
+    enviado.current = true;
+
     const params = new URLSearchParams(window.location.search);
     // Hotmart costuma mandar identificadores; usamos como event_id (dedupe)
     // hottok NÃO entra: é o segredo do webhook da Hotmart. Usado como id de evento, ia
@@ -38,29 +49,32 @@ export function PurchaseTracking() {
     const valor = Number.isFinite(lido) && lido > 0 ? lido : PLANO.precoNumero;
 
     // Meta Pixel
-    (window as any).fbq?.(
-      "track",
-      "Purchase",
-      { currency: "BRL", value: valor, content_name: PLANO.nome },
-      transacao ? { eventID: transacao } : undefined
+    quandoPronto("fbq", (fbq) =>
+      fbq(
+        "track",
+        "Purchase",
+        { currency: "BRL", value: valor, content_name: PLANO.nome },
+        transacao ? { eventID: transacao } : undefined
+      )
     );
 
-    // GA4
-    (window as any).gtag?.("event", "purchase", {
-      currency: "BRL",
-      value: valor,
-      transaction_id: transacao,
-      items: [{ item_name: PLANO.nome, price: valor, quantity: 1 }],
+    // GA4 e dataLayer (caso use GTM no futuro). O dataLayer nasce junto
+    // com o gtag, no script de início do GA4.
+    quandoPronto("gtag", (gtag) => {
+      gtag("event", "purchase", {
+        currency: "BRL",
+        value: valor,
+        transaction_id: transacao,
+        items: [{ item_name: PLANO.nome, price: valor, quantity: 1 }],
+      });
+      (window as any).dataLayer?.push({
+        event: "Purchase",
+        plano: PLANO.id,
+        valor,
+        transacao,
+      });
     });
-
-    // dataLayer (caso use GTM no futuro)
-    (window as any).dataLayer?.push({
-      event: "Purchase",
-      plano: PLANO.id,
-      valor,
-      transacao,
-    });
-  }, []);
+  }, [consentimento]);
 
   return null;
 }

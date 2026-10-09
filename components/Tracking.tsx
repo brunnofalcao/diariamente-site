@@ -2,11 +2,20 @@ import Script from "next/script";
 import { TRACKING } from "@/config";
 
 /**
- * Tracking — GA4 (uma ou mais propriedades) + Meta Pixel.
+ * Tracking: GA4 (uma ou mais propriedades) + Meta Pixel.
+ *
+ * SÓ É MONTADO PELO components/Consentimento.tsx, DEPOIS DO "ACEITAR" no
+ * aviso de cookies. Não coloque este componente direto no layout nem numa
+ * página: sem o aceite, nenhum desses scripts pode carregar (é o que a
+ * Política de Privacidade, seção 8, promete). Como ele só existe no
+ * navegador depois do aceite, nada daqui vai no HTML do servidor.
+ *
  * Carrega os scripts só quando TRACKING.ativo === true e o ID existe.
- * Os eventos de conversão (InitiateCheckout) são disparados no clique do
- * botão de checkout (ver components/Oferta.tsx), tanto pro dataLayer (GA4)
- * quanto pro fbq (Meta). Aqui ficam apenas a base e o PageView.
+ * Aqui ficam apenas a base e o PageView; os eventos de conversão saem de
+ * lib/medicao.ts e do PurchaseTracking, também só com aceite.
+ *
+ * Sem <noscript> do Pixel: sem JavaScript não há como aceitar o aviso, e
+ * a imagem de rastreio carregaria sem consentimento.
  */
 export function Tracking() {
   if (!TRACKING.ativo) return null;
@@ -55,15 +64,6 @@ export function Tracking() {
               fbq('track', 'PageView');
             `}
           </Script>
-          <noscript>
-            <img
-              height="1"
-              width="1"
-              style={{ display: "none" }}
-              src={`https://www.facebook.com/tr?id=${pixel}&ev=PageView&noscript=1`}
-              alt=""
-            />
-          </noscript>
         </>
       )}
     </>
