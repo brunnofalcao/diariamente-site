@@ -262,7 +262,7 @@ export const TRACKING = {
 // home e no rodapé das páginas legais. Obrigatório em loja on-line
 // (Decreto 7.962/2013, art. 2º).
 //
-// Enquanto começar com "[TROCAR", o `next build` FALHA de propósito,
+// Enquanto tiver "[TROCAR" em qualquer parte, o `next build` FALHA de propósito,
 // com mensagem explicando o que fazer (scripts/checar-endereco.js,
 // chamado pelo next.config.js). Não remova a trava: preencha o endereço.
 const ENDERECO_DA_EMPRESA = "[TROCAR: endereço completo da Science Play Cursos LTDA, igual ao cartão CNPJ]";

@@ -6,9 +6,10 @@
    rodapé da home e no rodapé das páginas legais. Ele mora num lugar só:
    a constante ENDERECO_DA_EMPRESA em config.ts.
 
-   Enquanto essa constante começar com "[TROCAR", o `next build` FALHA de
-   propósito (ver next.config.js). Assim ninguém publica o site com o
-   marcador aparecendo para o cliente, nem sem endereço nenhum.
+   Enquanto essa constante tiver "[TROCAR" (em qualquer posição) ou estiver
+   vazia, o `next build` FALHA de propósito (ver next.config.js). Assim
+   ninguém publica o site com o marcador aparecendo para o cliente, nem sem
+   endereço nenhum.
 
    Para testar o build na sua máquina sem o endereço real, existe a
    variável DM_ENDERECO_TESTE (por exemplo, DM_ENDERECO_TESTE="Rua de
@@ -79,7 +80,9 @@ function checarEndereco({ textoDoConfig, env = {} }) {
     };
   }
 
-  if (!valor || valor.toUpperCase().startsWith(MARCADOR)) {
+  // "[TROCAR" em QUALQUER posição bloqueia, não só no começo: quem preenche
+  // a rua e deixa "CEP [TROCAR]" no fim também não pode publicar.
+  if (!valor || valor.toUpperCase().includes(MARCADOR)) {
     return {
       ok: false,
       teste: false,

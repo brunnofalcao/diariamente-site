@@ -12,7 +12,7 @@
 > | `/es/embreve` | redireciona para `/es` |
 >
 > - **Endereço da empresa:** fica só em `ENDERECO_DA_EMPRESA`, no
->   `config.ts`. Enquanto ele começar com `[TROCAR`, o `npm run build`
+>   `config.ts`. Enquanto ele tiver `[TROCAR` em qualquer parte, o `npm run build`
 >   falha de propósito, com a explicação. Para testar o build sem o
 >   endereço real: `DM_ENDERECO_TESTE="Rua de Teste, 123" npm run build`
 >   (recusado em produção na Vercel). `npm test` roda os testes da trava.

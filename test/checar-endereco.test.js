@@ -24,6 +24,16 @@ test("com o marcador [TROCAR, a trava bloqueia e explica o que fazer", () => {
   assert.match(r.mensagem, /config\.ts/);
 });
 
+test("endereço preenchido pela metade, com [TROCAR no meio ou no fim, bloqueia", () => {
+  for (const v of [
+    "Rua Exemplo, 100, Centro, Cidade/UF, CEP [TROCAR]",
+    "Rua Exemplo, [trocar: número], Centro, Cidade/UF",
+  ]) {
+    const r = checarEndereco({ textoDoConfig: `const ENDERECO_DA_EMPRESA = "${v}";`, env: {} });
+    assert.equal(r.ok, false, v);
+  }
+});
+
 test("vazio também bloqueia", () => {
   const r = checarEndereco({ textoDoConfig: 'const ENDERECO_DA_EMPRESA = "  ";', env: {} });
   assert.equal(r.ok, false);
