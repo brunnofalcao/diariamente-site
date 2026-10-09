@@ -239,8 +239,17 @@ export const AUTORES = {
 // TRACKING / PIXELS — slots prontos, IDs a preencher na fase técnica
 // ---------------------------------------------------------------------
 export const TRACKING = {
-  metaPixelId: "460696430970324",
-  ga4Id: "G-NJNEY6KY7L",
+  // Pixel do portfólio "Diariamente App" (confirmado por Brunno, out/2026).
+  // Substitui 460696430970324, que era do portfólio da Science Play.
+  metaPixelId: "1427972145950859",
+  // GA4 · as duas propriedades medem ao mesmo tempo (dual tagging).
+  // A primeira é a do produto, a segunda a herdada da Science Play.
+  // O gtag.js é carregado UMA vez e recebe um config por ID: é assim
+  // que o Google manda fazer, e evita baixar a biblioteca duas vezes.
+  //
+  // Para medir só numa delas, apague o ID da outra. A lista aceita
+  // quantos forem necessários, e IDs vazios são ignorados.
+  ga4Ids: ["G-2BVYXFENP8", "G-NJNEY6KY7L"],
   gtmId: "", // opcional — se um dia usar GTM, cole aqui
   ativo: true,
 };
