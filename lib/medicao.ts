@@ -6,6 +6,8 @@
    window.gtag não existem e nenhum evento sai.
    ===================================================================== */
 
+import { lerEscolha } from "@/lib/cookies";
+
 type Ferramenta = (...args: unknown[]) => void;
 
 /**
@@ -23,4 +25,26 @@ export function quandoPronto(nome: "fbq" | "gtag", fn: (f: Ferramenta) => void, 
   }
   if (tentativas <= 0) return;
   setTimeout(() => quandoPronto(nome, fn, tentativas - 1), 250);
+}
+
+/**
+ * InitiateCheckout (Pixel) e begin_checkout (GA4) no clique dos botões que
+ * abrem o checkout da Hotmart. Só com "Aceitar" gravado: sem aceite, sai
+ * daqui sem chamar nada, mesmo que alguma coisa tenha criado um fbq.
+ * Os botões abrem o checkout em outra aba, então a página continua viva
+ * para o evento sair.
+ */
+export function registrarInicioDeCheckout(plano: { id: string; nome: string; precoNumero: number }): void {
+  if (typeof window === "undefined" || lerEscolha() !== "aceito") return;
+  const w = window as unknown as { fbq?: Ferramenta; gtag?: Ferramenta };
+  w.fbq?.("track", "InitiateCheckout", {
+    currency: "BRL",
+    value: plano.precoNumero,
+    content_name: plano.nome,
+  });
+  w.gtag?.("event", "begin_checkout", {
+    currency: "BRL",
+    value: plano.precoNumero,
+    items: [{ item_id: plano.id, item_name: plano.nome, price: plano.precoNumero, quantity: 1 }],
+  });
 }

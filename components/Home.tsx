@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { I18N, TEASER, ATIVOS, cld, type Lang, type Dict } from "@/lib/i18n";
 import { caminho } from "@/lib/rotas";
-import { EMPRESA } from "@/config";
+import { EMPRESA, PLANO } from "@/config";
+import { registrarInicioDeCheckout } from "@/lib/medicao";
 
 /* ─────────────────────────────────────────────────────────────
    Home · Diariamente (redesign v3, padrão internacional PT/ES)
@@ -256,6 +257,10 @@ export function Home({ lang }: { lang: Lang }) {
       else { await navigator.clipboard.writeText(`${txt} ${url}`); setCopiado(true); setTimeout(() => setCopiado(false), 2200); }
     } catch { /* cancelado */ }
   };
+
+  // InitiateCheckout no clique dos dois botões que abrem a Hotmart (cartão
+  // de preço e oferta final). Só sai com "Aceitar" no aviso de cookies.
+  const inicioDeCheckout = () => registrarInicioDeCheckout(PLANO);
 
   const goToOffer = () => {
     const el = document.getElementById("preco");
@@ -610,7 +615,7 @@ export function Home({ lang }: { lang: Lang }) {
                   <div style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 8, height: 30, padding: "0 12px", borderRadius: 999, background: C.s0, border: "1px solid rgba(255,255,255,.1)", fontSize: 13, fontWeight: 600 }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.p500} strokeWidth={2.2} strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5.2l3.2 1.9" /></svg>{t.prDay}
                   </div>
-                  <a href={LINKS.checkout} target="_blank" rel="noopener noreferrer" style={{ ...btnPrimary, marginTop: 22, width: "100%" }}>{t.cta}</a>
+                  <a href={LINKS.checkout} target="_blank" rel="noopener noreferrer" onClick={inicioDeCheckout} style={{ ...btnPrimary, marginTop: 22, width: "100%" }}>{t.cta}</a>
                   <p style={{ margin: "12px 0 0", textAlign: "center", fontSize: 13, lineHeight: 1.45, color: C.n400 }}>{t.prNote}</p>
                   <ul style={{ listStyle: "none", margin: "18px 0 0", padding: "18px 0 0", borderTop: `1px solid ${C.line}`, display: "grid", gap: 10, fontSize: 14, color: C.n200 }}>
                     {[t.prT1, t.prT2, t.prT3].map((x) => (
@@ -721,7 +726,7 @@ export function Home({ lang }: { lang: Lang }) {
           <div style={{ background: C.s1, border: `1px solid ${C.line}`, borderRadius: "16px 16px 0 0", padding: "clamp(40px,6vw,72px) clamp(20px,4vw,48px) 0", textAlign: "center", overflow: "hidden" }}>
             <p style={{ fontFamily: C.serif, fontWeight: 400, fontSize: "clamp(30px,4.4vw,50px)", lineHeight: 1.08, letterSpacing: "-.015em", margin: "0 auto", maxWidth: "22ch", textWrap: "balance" as never }}>{t.fin}</p>
             <div style={{ marginTop: 28, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-              <a href={LINKS.checkout} target="_blank" rel="noopener noreferrer" style={btnPrimary}>{t.cta}</a>
+              <a href={LINKS.checkout} target="_blank" rel="noopener noreferrer" onClick={inicioDeCheckout} style={btnPrimary}>{t.cta}</a>
               <span style={{ fontSize: 13, fontWeight: 500, color: C.n400 }}>{t.finNote}</span>
             </div>
             <div style={{ width: "min(72vw,300px)", margin: "clamp(32px,4vw,48px) auto -22%", aspectRatio: "1170/2532" }}>
