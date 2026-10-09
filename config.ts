@@ -254,6 +254,20 @@ export const TRACKING = {
 };
 
 // ---------------------------------------------------------------------
+// ENDEREÇO DA EMPRESA · FONTE ÚNICA · PREENCHER ANTES DE PUBLICAR
+// ---------------------------------------------------------------------
+// Troque o texto abaixo pelo endereço completo do cartão CNPJ da
+// Science Play Cursos LTDA (rua, número, complemento, bairro, cidade/UF,
+// CEP). Ele aparece na Política de Privacidade (pt e es), no rodapé da
+// home e no rodapé das páginas legais. Obrigatório em loja on-line
+// (Decreto 7.962/2013, art. 2º).
+//
+// Enquanto começar com "[TROCAR", o `next build` FALHA de propósito,
+// com mensagem explicando o que fazer (scripts/checar-endereco.js,
+// chamado pelo next.config.js). Não remova a trava: preencha o endereço.
+const ENDERECO_DA_EMPRESA = "[TROCAR: endereço completo da Science Play Cursos LTDA, igual ao cartão CNPJ]";
+
+// ---------------------------------------------------------------------
 // EMPRESA / SUPORTE / LEGAL
 // CNPJ e razão social: [TROCAR] pelo documento oficial da Science Play.
 // Não inventar número de documento — tem peso jurídico.
@@ -269,7 +283,9 @@ export const EMPRESA = {
   site: "https://www.scienceplay.com",
   instagram: "scienceplay",
   linkedin: "scienceplay",
-  endereco: "[TROCAR: endereço completo da empresa, recomendado nos legais]",
+  // DM_ENDERECO_TESTE só existe em build de teste (a trava recusa em
+  // produção na Vercel). Em build normal vem vazia e vale o endereço real.
+  endereco: process.env.DM_ENDERECO_TESTE || ENDERECO_DA_EMPRESA,
   vigenciaLegal: "Junho de 2026",
 };
 
