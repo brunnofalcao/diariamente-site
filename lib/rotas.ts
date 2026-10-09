@@ -62,3 +62,21 @@ export function identificar(pathname: string): { chave: Chave; lang: Lang } {
   }
   return { chave: "home", lang: limpo.startsWith("/es") ? "es" : "pt" };
 }
+
+/**
+ * Destino de redirecionamento mantendo os parâmetros da URL original
+ * (utm_*, fbclid, gclid...). Anúncio ou link antigo que apontava para
+ * /embreve continua chegando com a origem do tráfego intacta.
+ */
+export function comParametros(
+  destino: string,
+  parametros: Record<string, string | string[] | undefined> = {}
+): string {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(parametros)) {
+    if (Array.isArray(v)) v.forEach((x) => q.append(k, x));
+    else if (v !== undefined) q.append(k, v);
+  }
+  const s = q.toString();
+  return s ? `${destino}?${s}` : destino;
+}
