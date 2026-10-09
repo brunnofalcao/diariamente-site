@@ -281,7 +281,8 @@ export default function Privacidade() {
       </ul>
       <p>
         Se você clicar em <strong>Recusar</strong>, essas duas ferramentas não são carregadas em
-        nenhuma página do site. Se clicar em <strong>Aceitar</strong>, elas passam a funcionar a
+        nenhuma página do site, e os cookies delas que tenham ficado de um aceite anterior são
+        apagados. Se clicar em <strong>Aceitar</strong>, elas passam a funcionar a
         partir desse momento, em todas as páginas, até a sua escolha vencer ou você mudar de
         ideia.
       </p>

@@ -265,7 +265,8 @@ export default function Privacidad() {
       </ul>
       <p>
         Si haces clic en <strong>Rechazar</strong>, esas dos herramientas no se cargan en ninguna
-        página del sitio. Si haces clic en <strong>Aceptar</strong>, empiezan a funcionar desde
+        página del sitio, y se borran sus cookies que hayan quedado de una aceptación anterior.
+        Si haces clic en <strong>Aceptar</strong>, empiezan a funcionar desde
         ese momento, en todas las páginas, hasta que tu elección venza o cambies de opinión.
       </p>
       <p>

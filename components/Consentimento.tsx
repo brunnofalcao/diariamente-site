@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import { usePathname } from "next/navigation";
 import { Tracking } from "@/components/Tracking";
 import { caminho } from "@/lib/rotas";
-import { gravarEscolha, lerEscolha, type Escolha } from "@/lib/cookies";
+import { apagarCookiesDeMedicao, gravarEscolha, lerEscolha, type Escolha } from "@/lib/cookies";
 import type { Lang } from "@/lib/i18n";
 
 /* =====================================================================
@@ -48,6 +48,10 @@ export function Consentimento({ children }: { children: React.ReactNode }) {
 
   const escolher = useCallback((escolha: Escolha) => {
     gravarEscolha(escolha);
+    // Recusar também limpa _ga, _ga_*, _fbp e _fbc que tenham sobrado de um
+    // aceite antigo (escolha vencida ou de versão anterior do aviso). Sem
+    // isso, quem recusou ficava com os identificadores de medição gravados.
+    if (escolha === "recusado") apagarCookiesDeMedicao();
     setEstado(escolha);
   }, []);
 
