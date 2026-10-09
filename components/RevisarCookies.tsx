@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { apagarCookiesDeMedicao, apagarEscolha, lerEscolha, type Escolha } from "@/lib/cookies";
+import { useConsentimento } from "@/components/Consentimento";
+import { apagarCookiesDeMedicao, apagarEscolha } from "@/lib/cookies";
 import type { Lang } from "@/lib/i18n";
 
 /* Botão da Política de Privacidade (seção 8) para mudar de ideia sobre os
@@ -28,12 +28,11 @@ const TEXTO: Record<Lang, { atual: string; aceito: string; recusado: string; nen
 
 export function RevisarCookies({ lang }: { lang: Lang }) {
   const t = TEXTO[lang];
-  // undefined até ler o cookie no navegador (o servidor não sabe a escolha).
-  const [escolha, setEscolha] = useState<Escolha | null | undefined>(undefined);
-
-  useEffect(() => {
-    setEscolha(lerEscolha());
-  }, []);
+  // Mesmo estado do aviso (components/Consentimento.tsx), e não uma leitura
+  // própria do cookie: se a pessoa clicar em Aceitar ou Recusar no aviso
+  // aqui mesmo, na Política, o texto acompanha na hora. "carregando" é o
+  // servidor e o primeiro desenho, quando ainda não se sabe a escolha.
+  const escolha = useConsentimento();
 
   const rever = () => {
     apagarEscolha();
@@ -43,7 +42,7 @@ export function RevisarCookies({ lang }: { lang: Lang }) {
 
   return (
     <p>
-      {escolha !== undefined && (
+      {escolha !== "carregando" && (
         <>
           {t.atual} {escolha === "aceito" ? t.aceito : escolha === "recusado" ? t.recusado : t.nenhuma}
           <br />
