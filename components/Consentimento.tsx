@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Tracking } from "@/components/Tracking";
 import { caminho } from "@/lib/rotas";
@@ -28,6 +28,17 @@ import type { Lang } from "@/lib/i18n";
    O aviso não é modal: não escurece a página, não prende o foco e não
    impede rolar, ler ou clicar. Recusar e Aceitar têm o mesmo tamanho e
    ficam lado a lado.
+
+   Acessibilidade de um aviso fixo no rodapé da tela:
+   - Ele vem ANTES da página no documento (mesmo aparecendo embaixo): quem
+     navega por teclado ou leitor de tela encontra o aviso primeiro, e não
+     depois de passar por todos os links da home. Depois do clique, o foco
+     volta para o começo da página, que é onde o aviso estava.
+   - Enquanto ele está na tela, o html ganha scroll-padding-bottom da
+     altura medida do aviso (técnica C43 da WCAG para o critério 2.4.11):
+     o link ou botão que recebe foco pelo Tab rola para cima do aviso, em
+     vez de ficar escondido atrás dele. O espaço no fim da página usa a
+     mesma altura, para o rodapé inteiro aparecer acima do aviso.
    ===================================================================== */
 
 type Estado = Escolha | "pendente" | "carregando";
@@ -58,8 +69,10 @@ export function Consentimento({ children }: { children: React.ReactNode }) {
   return (
     <ContextoConsentimento.Provider value={estado}>
       {estado === "aceito" && <Tracking />}
-      {children}
       {estado === "pendente" && <AvisoCookies onEscolha={escolher} />}
+      {children}
+      {/* Espaço no fim da página para o rodapé não ficar atrás do aviso. */}
+      {estado === "pendente" && <div className="dm-ck-espaco" aria-hidden="true" />}
     </ContextoConsentimento.Provider>
   );
 }
@@ -97,8 +110,8 @@ const CSS = `
 .dm-ck-aceitar{background:#27BDBE;color:#131918;border:1.5px solid #27BDBE}
 .dm-ck-aceitar:hover{background:#3DCBCC;border-color:#3DCBCC}
 .dm-ck a:focus-visible,.dm-ck button:focus-visible{outline:2px solid #5DD8D8;outline-offset:2px}
-.dm-ck-espaco{height:200px}
-@media (min-width:640px){.dm-ck-espaco{height:120px}}
+.dm-ck-espaco{height:calc(var(--dm-ck-h,220px) + 32px + env(safe-area-inset-bottom))}
+html{scroll-padding-bottom:calc(var(--dm-ck-h,220px) + 32px + env(safe-area-inset-bottom))}
 @media (max-width:560px){.dm-ck{padding:14px 16px}.dm-ck-acoes{width:100%}.dm-ck button{flex:1;min-width:0}}
 @media (prefers-reduced-motion:reduce){.dm-ck button{transition:none}}
 `;
@@ -112,13 +125,34 @@ function idiomaDaRota(pathname: string | null): Lang {
 function AvisoCookies({ onEscolha }: { onEscolha: (e: Escolha) => void }) {
   const lang = idiomaDaRota(usePathname());
   const t = TEXTO[lang];
+  const caixa = useRef<HTMLDivElement>(null);
+
+  // Altura real do aviso em --dm-ck-h (o texto quebra em mais ou menos
+  // linhas conforme a largura da tela). Usada pelo espaço no fim da página
+  // e pelo scroll-padding-bottom. Some junto com o aviso.
+  useEffect(() => {
+    const el = caixa.current;
+    const raiz = document.documentElement;
+    if (!el || !raiz || !raiz.style) return;
+    const medir = () => {
+      const altura = el.offsetHeight;
+      if (altura > 0) raiz.style.setProperty("--dm-ck-h", `${altura}px`);
+    };
+    medir();
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(medir) : null;
+    ro?.observe(el);
+    window.addEventListener("resize", medir);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener("resize", medir);
+      raiz.style.removeProperty("--dm-ck-h");
+    };
+  }, []);
 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
-      {/* Espaço no fim da página para o rodapé não ficar escondido atrás do aviso. */}
-      <div className="dm-ck-espaco" aria-hidden="true" />
-      <div className="dm-ck" role="region" aria-labelledby="dm-ck-titulo" lang={lang === "es" ? "es" : "pt-BR"}>
+      <div ref={caixa} className="dm-ck" role="region" aria-labelledby="dm-ck-titulo" lang={lang === "es" ? "es" : "pt-BR"}>
         <div className="dm-ck-corpo">
           <p id="dm-ck-titulo" className="dm-ck-t">{t.titulo}</p>
           <p className="dm-ck-x">
