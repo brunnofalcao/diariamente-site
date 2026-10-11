@@ -94,7 +94,7 @@ export const I18N = {
     v6t: "Acesso imediato por e-mail", v6d: "Confirmou o pagamento, recebeu o acesso. Começa hoje, não amanhã.",
     gT: "Garantia de 7 dias",
     gD: "Você tem 7 dias para experimentar. Se sentir que o Diariamente não é pra você, devolvemos o seu investimento. Sem letra miúda.",
-    stBadge: "Condição de estudante", stH: "Ainda está na graduação? O mesmo acesso de um ano por R$ 77,00.",
+    stBadge: "Condição de estudante", stH: "Ainda está na graduação? O mesmo acesso de um ano por {preco}.",
     stD: "Leva cerca de um minuto. O código chega no WhatsApp. Solicitar não gera compromisso.", stCta: "Ver minha condição",
     afEyebrow: "Sem mistério", afH2: "O que acontece depois",
     after: [
@@ -193,7 +193,7 @@ export const I18N = {
     v6t: "Acceso inmediato por e-mail", v6d: "Confirmaste el pago, recibiste el acceso. Empiezas hoy, no mañana.",
     gT: "Garantía de 7 días",
     gD: "Tienes 7 días para probar. Si sientes que Diariamente no es para ti, te devolvemos tu inversión. Sin letra pequeña.",
-    stBadge: "Condición de estudiante", stH: "¿Sigues en la universidad? El mismo acceso de un año por R$ 77,00.",
+    stBadge: "Condición de estudiante", stH: "¿Sigues en la universidad? El mismo acceso de un año por {preco}.",
     stD: "Toma cerca de un minuto. El código llega por WhatsApp. Solicitar no genera compromiso.", stCta: "Ver mi condición",
     afEyebrow: "Sin misterio", afH2: "Qué pasa después",
     after: [
@@ -288,3 +288,114 @@ export const ATIVOS: Record<Lang, { img: typeof IMG_PT; links: typeof LINKS_PT }
 // Compatibilidade: qualquer import antigo continua funcionando em pt.
 export const IMG = IMG_PT;
 export const LINKS = LINKS_PT;
+
+/* =====================================================================
+   PORTUGUÊS DE PORTUGAL
+   ---------------------------------------------------------------------
+   Sobreposição parcial do dicionário pt. Só as chaves que mudam: o
+   resto é herdado, e assim uma frase nova em pt não fica faltando aqui.
+
+   DECISÕES DE REGISTO E VOCABULÁRIO
+
+   Tratamento por TU. É o registo de app de consumo em Portugal, e é o
+   que a marca pede: direta sem ser fria. Misturar "você" e "tu" na
+   mesma página é pior que não traduzir, por isso a conversão é
+   completa nas frases que falam com a pessoa.
+
+   Vocabulário trocado:
+     tela          -> ecrã
+     compartilhar  -> partilhar
+     contato       -> contacto
+     baixar o app  -> transferir a app
+     arquivo       -> ficheiro
+     "pra"         -> "para"
+     "com a gente" -> "connosco"
+
+   E duas correções que não são de estilo, são de fato:
+     LGPD -> RGPD. Portugal é União Europeia; citar a lei brasileira
+       numa página portuguesa é informação errada.
+     Pix e boleto saíram do meio de pagamento (ver confianca em
+       config/pricing.ts): não existem em Portugal.
+   ===================================================================== */
+// Dict é inferido com os literais do dicionário pt, então um Partial<Dict>
+// recusaria qualquer frase diferente. Tipagem larga aqui e uma conversão
+// na função abaixo: as chaves continuam conferidas pelo uso no componente.
+const PT_PT: Record<string, unknown> = {
+  locale: "pt-PT",
+  navApp: "A app",
+  cta: "Quero o meu acesso", cta2: "Ver como funciona",
+  badge: "Disponível na App Store e no Google Play",
+  h1: "Três minutos por dia. Um ano inteiro de volta.",
+  lead: "Uma provocação por dia que termina numa ação possível ainda hoje. Quando faltares, o Diariamente não cobra: espera por ti. Porque interromper não significa abandonar.",
+  proof: "+5.000 pessoas já começaram · Garantia de 7 dias",
+  phoneAlt: "Ecrã Hoje da app Diariamente",
+  cardSub: "É a tua vez. O que vais fazer com isto?",
+  share: "Partilhar", copied: "Ligação copiada!",
+  tr4: "Dados protegidos · RGPD",
+  pEyebrow: "O ciclo que já conheces", pH2: "Já começaste. Mais do que uma vez.",
+  p1: "Transferiste a app. Prometeste que desta vez ias até ao fim. Paraste na segunda semana. E a vida engoliu o resto.",
+  p2: "O problema nunca foi disciplina. É que ninguém te deu um sistema para continuar: só conteúdo. E conteúdo parado não muda ninguém.",
+  p3: "O inimigo não é a falta de motivação. É o abandono silencioso. O Diariamente foi construído no ponto exato onde costumas parar.",
+  vText: "Chegar ao fim do ano sem teres faltado à pessoa mais importante: tu. Um dia de cada vez, sem recomeçar do zero todas as segundas.",
+  photoAlt: "Mesa de um dia comum ao amanhecer, com caderno aberto e café",
+  hSub: "Sempre a mesma estrutura. O que muda é o texto, e o que fazes com ele.",
+  steps: [
+    ["Provocação", "Um texto curto que interrompe o automático. Todos os dias, um só. Sem antecipar, sem acumular."],
+    ["Reflexão", "Uma pergunta honesta, sem resposta pronta. É a tua vez: o que vais fazer com isto?"],
+    ["Ação", "Uma decisão possível ainda hoje. Registas, levas para o dia e voltas amanhã."],
+  ],
+  cP: "O contador não conta dias seguidos: conta quantas vezes voltaste. Nunca volta a zero. Faltar um dia não apaga o que já construíste.",
+  t1d: "A provocação do dia, limpa. Nada compete pela tua atenção.",
+  t2d: "Os dias em que vieste. E aqueles em que não vieste, sem alarme e sem culpa.",
+  t4d: "As tuas voltas acumuladas e o lembrete diário no WhatsApp.",
+  oneP1: "Quando dá para consumir tudo de uma vez, o domingo de entusiasmo come o ano inteiro e a segunda-feira fica sem nada. Aqui tens o dia de hoje. Inteiro, sem pressa de terminar.",
+  oneStrong: "O Diariamente é diário. Tu não precisas de ser.",
+  scP2: "As referências sustentam afirmações sobre o fenómeno, não sobre o produto. Não existe número mágico de dias, e ninguém pode prometer prazos. O Diariamente não trata, não diagnostica e não substitui acompanhamento profissional.",
+  spD: "Empresa de educação em saúde com clientes em mais de 95 países. Conteúdo autoral, assinado pela marca.",
+  belief: "Interromper não é abandonar. Perder um dia não é perder um caminho. Constância não é nunca cair: é continuar a voltar.",
+  beliefP: "Aqui ninguém lê sozinho. O texto de hoje é o mesmo para toda a gente, no mesmo dia. Não precisas de alcançar ninguém. É só voltares.",
+  yesL: "É para ti se",
+  yes: ["Já experimentaste e deixaste outras apps de hábitos ou diários", "Queres mudança a sério, mas precisas de um sistema que te segure", "Preferes constância a surtos de motivação"],
+  noL: "Não é para ti se",
+  no: ["Procuras solução mágica de um dia para o outro", "Não estás disposto a três minutos por dia", "Queres só mais um PDF para a estante digital"],
+  prH2: "Começa hoje. Volta amanhã.",
+  prSub: "Menos do que um café por semana, por um ano inteiro de prática.",
+  vaH3: "Um sistema, não um ficheiro que transferes e esqueces.",
+  v1d: "Sem antecipar e sem acumular. Três minutos e o dia está cumprido.",
+  v2d: "Os dias em que vieste ficam visíveis. Deixas de achar e passas a saber.",
+  v3d: "A provocação torna-se tarefa concreta, com prazo. Refletir sem agir não muda nada.",
+  v4d: "Cada dia em que voltas conta. Faltaste um dia? A contagem continua de onde parou.",
+  v5d: "A app não espera que te lembres dela. Chega à hora que escolheres.",
+  v6d: "Confirmaste o pagamento, recebeste o acesso. Começa hoje, não amanhã.",
+  gD: "Tens 7 dias para experimentar. Se sentires que o Diariamente não é para ti, devolvemos o teu investimento. Sem letra miúda.",
+  after: [
+    ["Recebes o e-mail de acesso", "Logo após a confirmação, com o passo a passo para abrir a app."],
+    ["Fazes a provocação do Dia 1", "O teu caminho começa quando registas o primeiro dia."],
+    ["O ritual encontra-te todos os dias", "Lembrete diário no WhatsApp. O contador mostra quantas vezes voltaste."],
+  ],
+  afStores: "A app está nas lojas oficiais. O teu acesso chega por e-mail após a confirmação.",
+  fqHelp: "Não encontraste a tua? Escreve para",
+  faq: [
+    ["Já transferi apps de hábitos antes. Parei na segunda semana.", "É o ponto exato onde o Diariamente foi construído. Não conta dias seguidos e não tem sequência para quebrar: conta quantas vezes voltaste, e esse número nunca volta a zero."],
+    ["E se perder um dia?", "O dia em que não vieste fica visível, sem alarme e sem cobrança. Fica no meio da tua história, e a história continua depois dele."],
+    ["Não tenho tempo.", "São três minutos: um texto curto, uma reflexão e uma ação pequena que cabe no dia que já tens. Não pede rotina nova nem horário reservado."],
+    ["Posso ler tudo de uma vez?", "Não. Um texto por dia, sem antecipar e sem acumular. A obrigação diária é do Diariamente, não tua: ele aparece todos os dias, tu voltas quando puderes."],
+    ["Como recebo o acesso?", "Por e-mail, assim que o pagamento for confirmado. A app está disponível para iPhone e Android, com o mesmo acesso em ambos."],
+    ["Isto é terapia ou tratamento?", "Não. O Diariamente é uma prática diária de hábitos e bem-estar. Não trata, não diagnostica e não substitui acompanhamento profissional."],
+    ["E se não for para mim?", "Tens 7 dias para experimentar. Se sentires que o Diariamente não é para ti, devolvemos o teu investimento. Sem letra miúda."],
+  ],
+  fin: "A transformação não vai acontecer num dia. Vai acontecer diariamente.",
+  sign: "Volta amanhã.",
+  ftTalk: "Falar connosco", ftContact: "Contacto", ftApp: "Transferir a app",
+  ftAbout: "Sobre o Diariamente", ftTerms: "Termos de utilização", ftPriv: "Privacidade",
+  stickyNote: "1 ano · 7 dias de garantia",
+};
+
+/**
+ * Dicionário do mercado. Portugal recebe pt com a sobreposição pt-PT;
+ * os outros recebem o dicionário do idioma, sem alteração.
+ */
+export function dicionario(lang: Lang, mercado?: string): Dict {
+  const base = I18N[lang] as unknown as Dict;
+  return mercado === "pt" ? ({ ...base, ...PT_PT } as unknown as Dict) : base;
+}

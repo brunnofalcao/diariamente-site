@@ -74,12 +74,12 @@ const TEXTOS: Record<Chave, Record<Lang, Texto>> = {
     },
   },
   termos: {
-    pt: { title: "Termos de Uso · Diariamente", description: "Termos de uso do Diariamente." },
-    es: { title: "Condiciones de Uso · Diariamente", description: "Condiciones de uso de Diariamente." },
+    pt: { title: "Termos de Uso · Diariamente", description: "Condições de acesso, licença de uso, pagamento, garantia de 7 dias e direito de arrependimento do Diariamente, prática diária de hábitos e bem-estar." },
+    es: { title: "Condiciones de Uso · Diariamente", description: "Condiciones de acceso, licencia de uso, pago, garantía de 7 días y derecho de desistimiento de Diariamente, práctica diaria de hábitos y bienestar." },
   },
   privacidade: {
-    pt: { title: "Política de Privacidade · Diariamente", description: "Como tratamos seus dados." },
-    es: { title: "Política de Privacidad · Diariamente", description: "Cómo tratamos tus datos." },
+    pt: { title: "Política de Privacidade · Diariamente", description: "Quais dados tratamos, com que base legal, com quem compartilhamos, por quanto tempo guardamos e como exercer seus direitos, pela LGPD e pelo RGPD." },
+    es: { title: "Política de Privacidad · Diariamente", description: "Qué datos tratamos, con qué base jurídica, con quién los compartimos, cuánto los conservamos y cómo ejercer tus derechos, según la LGPD y el RGPD." },
   },
 };
 

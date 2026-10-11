@@ -50,6 +50,9 @@ export type Oferta = {
     prazo?: string;
     estudante?: string;
   };
+  /** Três linhas de confiança sob o botão. Meio de pagamento muda por
+      mercado: Pix e boleto não existem fora do Brasil. */
+  confianca: string[];
 };
 
 export const MERCADOS: Record<Mercado, Oferta> = {
@@ -85,6 +88,11 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       prazo: "Preço de lançamento até",
       estudante: "Sou estudante",
     },
+    confianca: [
+      "Garantia incondicional de 7 dias",
+      "Pagamento seguro via Hotmart · Pix, cartão ou boleto",
+      "iPhone e Android, o mesmo acesso nos dois",
+    ],
   },
 
   /* -------------------------------------------------------------- LATAM */
@@ -110,6 +118,11 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       mes: "/mes",
       impostoNota: "En algunos países se agregan impuestos locales en el pago.",
     },
+    confianca: [
+      "Garantía incondicional de 7 días",
+      "Pago seguro vía Hotmart",
+      "iPhone y Android, el mismo acceso en ambos",
+    ],
   },
 
   /* ------------------------------------------------------------ ESPANHA */
@@ -134,6 +147,11 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       mes: "/mes",
       impostoNota: "IVA incluido",
     },
+    confianca: [
+      "Garantía incondicional de 7 días",
+      "Pago seguro vía Hotmart · Tarjeta",
+      "iPhone y Android, el mismo acceso en ambos",
+    ],
   },
 
   /* ----------------------------------------------------------- PORTUGAL */
@@ -158,6 +176,11 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       mes: "/mês",
       impostoNota: "IVA incluído",
     },
+    confianca: [
+      "Garantia incondicional de 7 dias",
+      "Pagamento seguro via Hotmart · Cartão",
+      "iPhone e Android, o mesmo acesso nos dois",
+    ],
   },
 
   /* ------------------------------------------------------ RESTO DO MUNDO */
@@ -181,6 +204,11 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       renovacao: "Renova a cada ano pelo mesmo valor. Cancele quando quiser.",
       mes: "/mês",
     },
+    confianca: [
+      "Garantia incondicional de 7 dias",
+      "Pagamento seguro via Hotmart · Cartão",
+      "iPhone e Android, o mesmo acesso nos dois",
+    ],
   },
 };
 
@@ -224,6 +252,17 @@ export function linkCheckout(m: Mercado): string {
   if (!o.lancamento?.ativo || o.checkout.startsWith("[")) return o.checkout;
   const sep = o.checkout.includes("?") ? "&" : "?";
   return `${o.checkout}${sep}off=${encodeURIComponent(o.lancamento.codigo)}`;
+}
+
+/**
+ * CONDIÇÃO DE ESTUDANTE · cupom de 40% sobre o plano BRL (handoff,
+ * seção 1). Existe só no Brasil: a validação usa CPF e o cobro é em
+ * real. Piso interno de R$ 47, nunca público.
+ */
+export const ESTUDANTE_DESCONTO = 40;
+
+export function precoEstudante(): number {
+  return Math.round(MERCADOS.br.anual * (1 - ESTUDANTE_DESCONTO / 100) * 100) / 100;
 }
 
 /** Preço cheio riscado: só existe onde há cupom ativo. */

@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { I18N, TEASER, ATIVOS, cld, type Lang, type Dict } from "@/lib/i18n";
+import { TEASER, ATIVOS, cld, dicionario, type Lang, type Dict } from "@/lib/i18n";
 import { caminho } from "@/lib/rotas";
 import { BlocoOferta } from "@/components/BlocoOferta";
-import { formatar, precoFinal, precoCheio, linkCheckout, MERCADOS, type Mercado } from "@/config/pricing";
+import { formatar, precoFinal, precoCheio, linkCheckout, precoEstudante, MERCADOS, type Mercado } from "@/config/pricing";
 
 /* ─────────────────────────────────────────────────────────────
    Home · Diariamente (redesign v3, padrão internacional PT/ES)
@@ -163,7 +163,7 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
   const [sticky, setSticky] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const t = I18N[lang] as unknown as Dict;
+  const t = dicionario(lang, mkt);
   // Imagens e links do idioma corrente. Trocar a foto ou a loja do site
   // espanhol nao encosta no portugues.
   const IMG = ATIVOS[lang].img;
@@ -215,7 +215,8 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
         console.warn("[diariamente] falha ao buscar o texto do dia:", e);
         setProv({ texto: TEASER[lang][(dia - 1) % TEASER[lang].length], dia, ehDoDia: false });
       });
-    return () => { vivo = false; };
+  
+  return () => { vivo = false; };
   }, [lang, langApi, dia]);
 
   const texto = prov?.texto ?? TEASER[lang][(dia - 1) % TEASER[lang].length];
@@ -274,12 +275,20 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
 
   const faqSchema = {
     "@context": "https://schema.org", "@type": "FAQPage",
+    // inLanguage: sem isto, o mesmo FAQ em quatro idiomas parece o
+    // mesmo conteúdo repetido para o buscador.
+    inLanguage: MERCADOS[mkt].locale,
     mainEntity: t.faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })),
   };
 
   return (
-    <div id="dm-root" lang={lang} style={{ background: C.s0, color: C.text, fontFamily: "Inter,system-ui,-apple-system,sans-serif", fontSize: 16, lineHeight: 1.6, overflowX: "clip" }}>
+    <div id="dm-root" lang={lang} style={{ background: C.s0, color: C.text, fontFamily: "var(--f-sans), Inter, system-ui, -apple-system, sans-serif", fontSize: 16, lineHeight: 1.6, overflowX: "clip" }}>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
+
+      {/* Pular para o conteúdo. Invisível até receber foco pelo teclado. */}
+      <a href="#conteudo" className="dm-skip">
+        {lang === "es" ? "Ir al contenido" : "Saltar para o conteúdo"}
+      </a>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       {/* NAV */}
@@ -305,6 +314,10 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
       </nav>
 
       {/* HERO */}
+      {/* <main> · a página não tinha landmark nenhum. Sem ele, leitor de
+          tela não oferece "pular para o conteúdo principal", e é falha
+          de auditoria em qualquer ferramenta. */}
+      <main id="conteudo">
       <section style={{ padding: "clamp(40px,6vw,72px) 0 clamp(40px,5vw,64px)" }}>
         <div style={wrap}>
           <div data-hero="1">
@@ -622,15 +635,23 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
                   <p style={{ margin: "4px 0 0", fontSize: 14.5, lineHeight: 1.6, color: C.n400 }}>{t.gD}</p>
                 </div>
               </div>
+              {/* CONDIÇÃO DE ESTUDANTE · só no Brasil.
+                  A validação usa CPF com dígito verificador e o cobro é
+                  em real. Mostrar este bloco em /es, /pt-pt ou /es-es
+                  colocava "R$ 77,00" numa página de dólar e de euro, que
+                  é o pior tipo de erro: preço de outra moeda na frente de
+                  quem não pode comprar naquela moeda. */}
+              {mkt === "br" && (
               <div style={{ ...card, marginTop: 16 }}>
                 <span style={{ display: "inline-flex", alignItems: "center", height: 26, padding: "0 12px", borderRadius: 999, background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.25)", color: C.p300, fontSize: 11, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase" }}>{t.stBadge}</span>
-                <p style={{ margin: "12px 0 0", fontFamily: C.serif, fontSize: "clamp(20px,2vw,24px)", lineHeight: 1.3 }}>{t.stH}</p>
+                <p style={{ margin: "12px 0 0", fontFamily: C.serif, fontSize: "clamp(20px,2vw,24px)", lineHeight: 1.3 }}>{t.stH.replace("{preco}", formatar("br", precoEstudante()))}</p>
                 <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: C.n400 }}>{t.stD}</p>
                 <a href={caminho("estudante", lang)} style={{ marginTop: 18, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, height: 48, padding: "0 22px", borderRadius: 999, border: `1.5px solid ${C.p500}`, color: C.p500, fontSize: 15, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
                   {t.stCta}
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" /></svg>
                 </a>
               </div>
+              )}
             </div>
           </div>
         </div>
@@ -712,6 +733,8 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
       </section>
 
       {/* RODAPÉ */}
+      </main>
+
       <footer style={{ borderTop: `1px solid ${C.line}`, padding: "clamp(44px,6vw,64px) 0 calc(clamp(32px,4vw,48px) + 72px)" }}>
         <div style={wrap}>
           <div data-rpgrid="1">
@@ -788,7 +811,7 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
                 /pt-pt e /es-es ainda mostravam R$ 197 e R$ 137,90. */}
             <div style={{ fontFamily: C.serif, fontSize: 20, lineHeight: 1 }}>
               {precoCheio(mkt) && (
-                <s style={{ fontSize: 13, color: C.n400, fontFamily: "Inter,system-ui,sans-serif", marginRight: 6 }}>
+                <s style={{ fontSize: 13, color: C.n400, fontFamily: "var(--f-sans), Inter, system-ui, sans-serif", marginRight: 6 }}>
                   {precoCheio(mkt)}
                 </s>
               )}

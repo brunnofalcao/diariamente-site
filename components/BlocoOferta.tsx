@@ -26,7 +26,7 @@ const C = {
   p500: "#27BDBE", p300: "#5DD8D8", s0: "#0A0E0E", s2: "#181D1D",
   n200: "#CDD2D2", n300: "#AAB2B2", n400: "#8A9494", ret: "#F5B731",
   line: "rgba(255,255,255,.07)",
-  serif: "'Literata', Georgia, serif",
+  serif: "var(--f-serif), 'Literata', Georgia, serif",
 };
 
 function Relogio() {
@@ -153,6 +153,21 @@ export function BlocoOferta({ mercado }: { mercado: Mercado }) {
             </a>
           </p>
         )}
+
+        {/* Linhas de confiança. Estavam no card antigo e se perderam na
+            troca; voltam aqui, por mercado, porque o meio de pagamento
+            muda: Pix e boleto não existem fora do Brasil. */}
+        <ul style={{ listStyle: "none", margin: "18px 0 0", padding: "18px 0 0", borderTop: `1px solid ${C.line}`, display: "grid", gap: 10, fontSize: 14, color: C.n200 }}>
+          {o.confianca.map((x) => (
+            <li key={x} style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.p500} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: "0 0 auto" }}>
+                <path d="M12 2.5l7.5 3.2v5.4c0 4.7-3.2 8.7-7.5 10-4.3-1.3-7.5-5.3-7.5-10V5.7L12 2.5z" />
+                <path d="M9.3 12l2 2 3.6-3.7" />
+              </svg>
+              {x}
+            </li>
+          ))}
+        </ul>
 
         {semLink && (
           <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 12, color: C.ret }}>
