@@ -37,6 +37,14 @@ const TEXTOS: Record<Chave, Record<Lang, Texto>> = {
         "Una práctica diaria de hábitos y bienestar. Todavía no es hoy, pero está cerca. Déjanos tu contacto y te avisamos el día que abra.",
     },
   },
+  homePt: {
+    pt: { title: "Diariamente · uma prática diária de hábitos e bem-estar", description: "Uma provocação por dia que termina numa ação possível ainda hoje. Porque interromper não significa abandonar." },
+    es: { title: "Diariamente · uma prática diária de hábitos e bem-estar", description: "Uma provocação por dia que termina numa ação possível ainda hoje." },
+  },
+  homeEs: {
+    pt: { title: "Diariamente · una práctica diaria de hábitos y bienestar", description: "Una provocación por día que termina en una acción posible hoy mismo." },
+    es: { title: "Diariamente · una práctica diaria de hábitos y bienestar", description: "Una provocación por día que termina en una acción posible hoy mismo. Porque interrumpir no significa abandonar." },
+  },
   vendas: {
     pt: { title: "Diariamente · uma prática diária de hábitos e bem-estar", description: "Página de vendas em construção." },
     es: { title: "Diariamente · una práctica diaria de hábitos y bienestar", description: "Página de ventas en construcción." },
@@ -154,5 +162,55 @@ export function metadataPrivada(chave: Chave, lang: Lang): Metadata {
     // também o hreflang herdado.
     alternates: { canonical: proprio },
     robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
+  };
+}
+
+/* =====================================================================
+   METADATA POR MERCADO
+   ---------------------------------------------------------------------
+   Quatro homes, cada uma com canonical próprio e hreflang recíproco
+   entre as QUATRO: pt-BR, pt-PT, es-ES, es-419 e x-default no Brasil.
+
+   A reciprocidade é o que mais quebra na prática: se uma delas não
+   apontar de volta, o Google descarta o grupo inteiro e passa a tratar
+   as páginas como concorrentes pelo mesmo conteúdo.
+
+   rw (resto do mundo) NÃO tem URL própria: divide a "/" com o Brasil e
+   troca só o bloco de oferta. Por isso não entra no hreflang.
+   ===================================================================== */
+
+import { HREFLANG } from "@/lib/mercado";
+import type { Mercado } from "@/config/pricing";
+
+const CHAVE_DO_MERCADO: Record<"br" | "pt" | "es" | "la", Chave> = {
+  br: "home", pt: "homePt", es: "homeEs", la: "home",
+};
+
+export function metadataDoMercado(mercado: Exclude<Mercado, "rw">): Metadata {
+  const lang: Lang = mercado === "es" || mercado === "la" ? "es" : "pt";
+  const chave = CHAVE_DO_MERCADO[mercado];
+  const { title, description } = TEXTOS[chave][lang];
+  const abs = (p: string) => SITE.dominio + (p === "/" ? "" : p);
+  const proprio = abs(
+    mercado === "br" ? "/" : mercado === "la" ? "/es" : mercado === "pt" ? "/pt-pt" : "/es-es"
+  );
+
+  const languages: Record<string, string> = {};
+  for (const [tag, caminho] of Object.entries(HREFLANG)) languages[tag] = abs(caminho);
+
+  return {
+    title,
+    description,
+    alternates: { canonical: proprio, languages },
+    openGraph: {
+      type: "website",
+      locale: lang === "pt" ? "pt_BR" : "es_ES",
+      url: proprio,
+      siteName: SITE.nome,
+      title,
+      description,
+    },
+    twitter: { card: "summary_large_image", title, description },
+    robots: { index: true, follow: true },
   };
 }

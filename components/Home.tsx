@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { I18N, TEASER, ATIVOS, cld, type Lang, type Dict } from "@/lib/i18n";
 import { caminho } from "@/lib/rotas";
+import { BlocoOferta } from "@/components/BlocoOferta";
+import { formatar, precoFinal, precoCheio, linkCheckout, MERCADOS, type Mercado } from "@/config/pricing";
 
 /* ─────────────────────────────────────────────────────────────
    Home · Diariamente (redesign v3, padrão internacional PT/ES)
@@ -138,7 +140,10 @@ function Img({ src, alt, widths, sizes, priority }: { src: string; alt: string; 
  * seletor em useState, o Google via apenas portugues: a versao espanhola
  * so existia depois de um clique, e clique nenhum robo da.
  */
-export function Home({ lang }: { lang: Lang }) {
+export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
+  // Mercado define moeda e checkout; idioma define o texto. São eixos
+  // independentes: /pt-pt é português em euro, /es é espanhol em dólar.
+  const mkt: Mercado = mercado ?? (lang === "es" ? "la" : "br");
   // Grava a escolha explicita. O middleware so decide por Accept-Language
   // quando este cookie NAO existe: escolha do usuario sempre vence deteccao.
   // O <html lang> vive no layout raiz, que e servidor e nao conhece a
@@ -590,34 +595,10 @@ export function Home({ lang }: { lang: Lang }) {
           </div>
           <div data-price="1">
             <div data-area="card">
-              <div style={{ background: C.s2, border: "1px solid rgba(39,189,190,.32)", borderRadius: 16, overflow: "hidden" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px clamp(20px,3vw,28px)", background: "rgba(39,189,190,.08)", borderBottom: "1px solid rgba(39,189,190,.2)" }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: C.p500 }}>{t.prCond}</span>
-                  <span style={{ display: "inline-flex", alignItems: "center", height: 24, padding: "0 10px", borderRadius: 999, background: "rgba(245,183,49,.12)", border: "1px solid rgba(245,183,49,.3)", color: C.ret, fontSize: 12, fontWeight: 700 }}>30% OFF</span>
-                </div>
-                <div style={{ padding: "clamp(20px,3vw,28px)" }}>
-                  <h3 style={{ fontFamily: C.serif, fontWeight: 400, fontSize: 26, lineHeight: 1.1, letterSpacing: "-.01em", margin: 0 }}>{t.prName}</h3>
-                  <div style={{ marginTop: 18, display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: 15, color: C.n400 }}><s>R$ 197</s></span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: C.p500 }}>{t.prSave}</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 4 }}>
-                    <span style={{ fontFamily: C.serif, fontSize: "clamp(48px,5vw,56px)", lineHeight: 1, letterSpacing: "-.02em" }}>R$ 137</span>
-                    <span style={{ fontFamily: C.serif, fontSize: 26, lineHeight: 1 }}>,90</span>
-                  </div>
-                  <div style={{ marginTop: 8, fontSize: 14, lineHeight: 1.55, color: C.n300 }}>{t.prTerms}</div>
-                  <div style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 8, height: 30, padding: "0 12px", borderRadius: 999, background: C.s0, border: "1px solid rgba(255,255,255,.1)", fontSize: 13, fontWeight: 600 }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.p500} strokeWidth={2.2} strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5.2l3.2 1.9" /></svg>{t.prDay}
-                  </div>
-                  <a href={LINKS.checkout} target="_blank" rel="noopener noreferrer" style={{ ...btnPrimary, marginTop: 22, width: "100%" }}>{t.cta}</a>
-                  <p style={{ margin: "12px 0 0", textAlign: "center", fontSize: 13, lineHeight: 1.45, color: C.n400 }}>{t.prNote}</p>
-                  <ul style={{ listStyle: "none", margin: "18px 0 0", padding: "18px 0 0", borderTop: `1px solid ${C.line}`, display: "grid", gap: 10, fontSize: 14, color: C.n200 }}>
-                    {[t.prT1, t.prT2, t.prT3].map((x) => (
-                      <li key={x} style={{ display: "flex", gap: 10, alignItems: "center" }}><span style={{ color: C.p500, display: "inline-flex" }}><Shield s={16} /></span>{x}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+              {/* Preço, moeda, cupom e checkout vêm de config/pricing.ts.
+                  Antes estavam escritos aqui dentro (R$ 197, R$ 137, ,90,
+                  30% OFF), o que impedia ter mercado por geografia. */}
+              <BlocoOferta mercado={mkt} />
             </div>
 
             <div data-area="value">
@@ -720,8 +701,8 @@ export function Home({ lang }: { lang: Lang }) {
           <div style={{ background: C.s1, border: `1px solid ${C.line}`, borderRadius: "16px 16px 0 0", padding: "clamp(40px,6vw,72px) clamp(20px,4vw,48px) 0", textAlign: "center", overflow: "hidden" }}>
             <p style={{ fontFamily: C.serif, fontWeight: 400, fontSize: "clamp(30px,4.4vw,50px)", lineHeight: 1.08, letterSpacing: "-.015em", margin: "0 auto", maxWidth: "22ch", textWrap: "balance" as never }}>{t.fin}</p>
             <div style={{ marginTop: 28, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-              <a href={LINKS.checkout} target="_blank" rel="noopener noreferrer" style={btnPrimary}>{t.cta}</a>
-              <span style={{ fontSize: 13, fontWeight: 500, color: C.n400 }}>{t.finNote}</span>
+              <a href={linkCheckout(mkt)} target="_blank" rel="noopener noreferrer" style={btnPrimary}>{MERCADOS[mkt].textos.botao}</a>
+              <span style={{ fontSize: 13, fontWeight: 500, color: C.n400 }}>{t.finNote.replace("{preco}", formatar(mkt, precoFinal(mkt)))}</span>
             </div>
             <div style={{ width: "min(72vw,300px)", margin: "clamp(32px,4vw,48px) auto -22%", aspectRatio: "1170/2532" }}>
               <Img src={IMG.dias} alt="" widths={[400, 600]} sizes="(min-width:900px) 300px, 72vw" />
@@ -739,6 +720,36 @@ export function Home({ lang }: { lang: Lang }) {
               <p style={{ margin: 0, fontFamily: C.serif, fontSize: 22, lineHeight: 1.2, color: C.p500 }}>{t.sign}</p>
               <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.n400, maxWidth: "38ch" }}>{t.ftTag}</p>
             </div>
+            {/* SELETOR DE MERCADO · ?mercado=xx grava o cookie dm_market
+                (180 dias) e vence a geolocalização. É a saída para quem
+                mora fora do país que o IP indica, e para quem quer ver
+                a oferta de outro mercado. */}
+            <nav aria-label="Mercado" style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
+              <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: C.p500, marginBottom: 4 }}>
+                {lang === "es" ? "País" : "País"}
+              </span>
+              {([
+                ["br", "Brasil"],
+                ["pt", "Portugal"],
+                ["es", "España"],
+                ["la", "América Latina"],
+              ] as const).map(([cod, nome]) => (
+                <a
+                  key={cod}
+                  href={`/?mercado=${cod}`}
+                  aria-current={mkt === cod ? "true" : undefined}
+                  style={{
+                    fontSize: 15, textDecoration: "none", minHeight: 28,
+                    display: "inline-flex", alignItems: "center",
+                    color: mkt === cod ? C.p500 : C.n300,
+                    fontWeight: mkt === cod ? 600 : 400,
+                  }}
+                >
+                  {nome}
+                </a>
+              ))}
+            </nav>
+
             <nav aria-label={t.ftInst} style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
               <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: C.p500, marginBottom: 4 }}>{t.ftInst}</span>
               {[[caminho("sobre", lang), t.ftAbout], [caminho("termos", lang), t.ftTerms], [caminho("privacidade", lang), t.ftPriv]].map(([href, label]) => (
@@ -772,8 +783,16 @@ export function Home({ lang }: { lang: Lang }) {
       <div data-sticky="1" aria-hidden={!sticky} style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 50, padding: "10px 0 calc(10px + env(safe-area-inset-bottom))", background: "rgba(10,14,14,.94)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderTop: `1px solid ${C.line}`, transition: "transform .3s cubic-bezier(.16,1,.3,1)", transform: sticky ? "translateY(0)" : "translateY(110%)" }}>
         <div style={{ maxWidth: 1160, margin: "0 auto", padding: "0 20px", display: "flex", alignItems: "center", gap: 14 }}>
           <div style={{ minWidth: 0 }}>
+            {/* Barra fixa: mesma fonte de verdade do bloco de oferta.
+                Era o último lugar com preço escrito à mão, e por isso
+                /pt-pt e /es-es ainda mostravam R$ 197 e R$ 137,90. */}
             <div style={{ fontFamily: C.serif, fontSize: 20, lineHeight: 1 }}>
-              <s style={{ fontSize: 13, color: C.n400, fontFamily: "Inter,system-ui,sans-serif", marginRight: 6 }}>R$ 197</s>R$ 137,90
+              {precoCheio(mkt) && (
+                <s style={{ fontSize: 13, color: C.n400, fontFamily: "Inter,system-ui,sans-serif", marginRight: 6 }}>
+                  {precoCheio(mkt)}
+                </s>
+              )}
+              {formatar(mkt, precoFinal(mkt))}
             </div>
             <div style={{ marginTop: 4, fontSize: 12, fontWeight: 500, color: C.n400, whiteSpace: "nowrap" }}>{t.stickyNote}</div>
           </div>

@@ -16,10 +16,10 @@ import { CHAVES, PRIVADAS, parDeIdiomas } from "@/lib/rotas";
    ===================================================================== */
 
 const PRIORIDADE: Record<string, number> = {
-  vendas: 0, home: 1, estudante: 0.8, sobre: 0.6, termos: 0.3, privacidade: 0.3,
+  vendas: 0, home: 1, homePt: 0.9, homeEs: 0.9, estudante: 0.8, sobre: 0.6, termos: 0.3, privacidade: 0.3,
 };
 const FREQUENCIA: Record<string, "weekly" | "monthly" | "yearly"> = {
-  home: "weekly", estudante: "monthly", sobre: "monthly", termos: "yearly", privacidade: "yearly",
+  home: "weekly", homePt: "weekly", homeEs: "weekly", estudante: "monthly", sobre: "monthly", termos: "yearly", privacidade: "yearly",
 };
 
 export default function sitemap(): MetadataRoute.Sitemap {

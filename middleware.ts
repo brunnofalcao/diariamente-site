@@ -1,43 +1,45 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { mercadoDoPais, HOME_DO_MERCADO } from "@/lib/mercado";
+import type { Mercado } from "@/config/pricing";
 
 /* =====================================================================
-   DETECÇÃO DE IDIOMA
+   ROTEAMENTO POR GEOGRAFIA
    ---------------------------------------------------------------------
-   Comportamento, na ordem em que as regras são avaliadas:
+   Antes: idioma do navegador. Agora: país do IP, via x-vercel-ip-country.
+   O motivo é simples e já estava no handoff: idioma não decide moeda.
+   Português tem duas (BRL e EUR) e espanhol tem duas (USD e EUR).
 
-   0. `/?lang=pt` ou `/?lang=es` grava a escolha no cookie `dm_lang` e
-      redireciona para a home daquele idioma. É o que o seletor PT | ES
-      no topo do site chama. Escolha explícita vence tudo.
+   Ordem de decisão:
 
-   1. Só age na RAIZ (`/`). Quem pede `/es` recebe `/es`, quem pede
-      qualquer outra rota é deixado em paz. Redirecionar a partir de
-      qualquer caminho quebra link direto e campanha.
+   1. Só as HOMES decidem mercado. Página interna abre como foi pedida,
+      e anúncio aponta direto para a home do mercado, sem depender de
+      detecção nenhuma.
 
-   2. Cookie `dm_lang` manda mais que tudo. Se a pessoa clicou PT ou ES
-      no seletor, essa escolha vale para sempre. Detecção que ignora
-      escolha explícita é a forma mais rápida de irritar alguém.
+   2. ?mercado=xx grava o cookie e manda para a home daquele mercado.
+      É o que o seletor do rodapé usa.
 
-   3. Sem cookie, lê `Accept-Language`. Só redireciona se espanhol
-      estiver à FRENTE de português na lista de preferências. Um
-      brasileiro que tem `es` como terceiro idioma continua em português.
+   3. Cookie dm_market (180 dias) vence o país do IP. Escolha explícita
+      sempre ganha de adivinhação.
 
-   4. Não redireciona robô. Googlebot precisa ver as duas versões como
-      elas são; se o crawler cair sempre em `/es`, a home em português
-      pode sair do índice.
+   4. Robô e preview de link nunca são redirecionados. Se o Googlebot
+      cair sempre em /es, a home brasileira pode sair do índice, e o card
+      do WhatsApp precisa sair no idioma da URL compartilhada.
 
-   O padrão é português. Espanhol é desvio, não destino.
+   5. Sem cabeçalho de país (ambiente local, por exemplo), cai no idioma
+      do navegador, como antes.
+
+   Vary: x-vercel-ip-country e Cookie. Sem isso o CDN pode servir o
+   redirecionamento em cache para todo mundo.
+
+   No Next.js 16 este arquivo passa a se chamar proxy.ts.
    ===================================================================== */
 
-const COOKIE = "dm_lang";
-const UM_ANO = 60 * 60 * 24 * 365;
-
 const ROBOS = /bot|crawl|spider|slurp|bingpreview|facebookexternalhit|whatsapp|telegram|lighthouse|headless/i;
+const HOMES = new Set(Object.values(HOME_DO_MERCADO));
+const VALIDOS = new Set<Mercado>(["br", "la", "es", "pt", "rw"]);
 
-/** Lê Accept-Language e devolve o idioma preferido entre pt e es. */
-function idiomaPreferido(cabecalho: string | null): "pt" | "es" | null {
+function idiomaDoNavegador(cabecalho: string | null): "pt" | "es" | null {
   if (!cabecalho) return null;
-
-  // "es-419,es;q=0.9,pt-BR;q=0.8" -> [{tag,q}] ordenado por q
   const itens = cabecalho
     .split(",")
     .map((parte) => {
@@ -47,7 +49,6 @@ function idiomaPreferido(cabecalho: string | null): "pt" | "es" | null {
     })
     .filter((i) => i.tag && !Number.isNaN(i.q))
     .sort((a, b) => b.q - a.q);
-
   for (const { tag } of itens) {
     if (tag.startsWith("es")) return "es";
     if (tag.startsWith("pt")) return "pt";
@@ -55,46 +56,58 @@ function idiomaPreferido(cabecalho: string | null): "pt" | "es" | null {
   return null;
 }
 
-export function middleware(req: NextRequest) {
-  // 0. Escolha manual via seletor PT | ES: grava cookie e redireciona.
-  //    Funciona em qualquer rota, para o seletor poder existir em todas as páginas.
-  const forcado = req.nextUrl.searchParams.get("lang");
-  if (forcado === "pt" || forcado === "es") {
-    const url = req.nextUrl.clone();
-    url.searchParams.delete("lang");
-    url.pathname = forcado === "es" ? "/es" : "/";
-    const r = NextResponse.redirect(url);
-    r.cookies.set(COOKIE, forcado, { maxAge: UM_ANO, path: "/", sameSite: "lax" });
-    return r;
-  }
-
-  // 1. Só decide na raiz.
-  if (req.nextUrl.pathname !== "/") return NextResponse.next();
-
-  // 4. Robô vê o português como ele é.
-  if (ROBOS.test(req.headers.get("user-agent") ?? "")) return NextResponse.next();
-
-  // 2. Escolha anterior vence.
-  const escolhido = req.cookies.get(COOKIE)?.value;
-  if (escolhido === "pt") return NextResponse.next();
-  if (escolhido === "es") return NextResponse.redirect(new URL("/es", req.url));
-
-  // 3. Primeira visita: idioma do navegador.
-  if (idiomaPreferido(req.headers.get("accept-language")) === "es") {
-    const r = NextResponse.redirect(new URL("/es", req.url));
-    // Vary avisa cache e CDN de que a resposta depende do idioma pedido.
-    // Sem isso, a Vercel pode servir o redirect a todo mundo.
-    r.headers.set("Vary", "Accept-Language, Cookie");
-    return r;
-  }
-
-  const r = NextResponse.next();
-  r.headers.set("Vary", "Accept-Language, Cookie");
+function comVary(r: NextResponse) {
+  r.headers.set("Vary", "x-vercel-ip-country, Accept-Language, Cookie");
   return r;
 }
 
+function fixar(req: NextRequest, destino: string, mercado: Mercado) {
+  const url = new URL(destino, req.url);
+  const r = NextResponse.redirect(url);
+  r.cookies.set("dm_market", mercado, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 180,
+    sameSite: "lax",
+  });
+  return comVary(r);
+}
+
+export function middleware(req: NextRequest) {
+  const { pathname, searchParams } = req.nextUrl;
+
+  // 2 · escolha explícita pelo seletor do rodapé
+  const pedido = searchParams.get("mercado");
+  if (pedido && VALIDOS.has(pedido as Mercado)) {
+    return fixar(req, HOME_DO_MERCADO[pedido as Mercado], pedido as Mercado);
+  }
+
+  // 1 · só as homes decidem
+  if (!HOMES.has(pathname)) return NextResponse.next();
+
+  // 4 · robô recebe o que pediu
+  if (ROBOS.test(req.headers.get("user-agent") ?? "")) return NextResponse.next();
+
+  // 3 · cookie vence o IP
+  const salvo = req.cookies.get("dm_market")?.value as Mercado | undefined;
+  if (salvo && VALIDOS.has(salvo)) {
+    const destino = HOME_DO_MERCADO[salvo];
+    return destino === pathname ? comVary(NextResponse.next()) : comVary(NextResponse.redirect(new URL(destino, req.url)));
+  }
+
+  // país do IP
+  const pais = req.headers.get("x-vercel-ip-country");
+  if (pais) {
+    const destino = HOME_DO_MERCADO[mercadoDoPais(pais)];
+    return destino === pathname ? comVary(NextResponse.next()) : comVary(NextResponse.redirect(new URL(destino, req.url)));
+  }
+
+  // 5 · sem país: idioma do navegador
+  if (pathname === "/" && idiomaDoNavegador(req.headers.get("accept-language")) === "es") {
+    return comVary(NextResponse.redirect(new URL("/es", req.url)));
+  }
+  return comVary(NextResponse.next());
+}
+
 export const config = {
-  // Fora do middleware: api, assets do Next, arquivos de ícone e tudo que
-  // tenha extensão. Middleware em asset é custo puro.
   matcher: ["/((?!api|_next/static|_next/image|icon|apple-icon|opengraph-image|favicon|robots|sitemap|.*\\..*).*)"],
 };

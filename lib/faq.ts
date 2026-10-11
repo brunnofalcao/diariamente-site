@@ -1,4 +1,4 @@
-import { GARANTIA, PLANO_APP } from "@/config";
+import { GARANTIA } from "@/config";
 
 /* =====================================================================
    FONTE ÚNICA DAS PERGUNTAS
@@ -58,6 +58,11 @@ export const PERGUNTAS: { q: string; a: string }[] = [
   },
   {
     q: "Quanto custa?",
-    a: `R$ ${PLANO_APP.preco}, ${PLANO_APP.perDia} por um ano inteiro. E tem ${GARANTIA.dias} dias de garantia: se não for pra você, devolvemos.`,
+    // SEM valor fixo, de propósito. Este FAQ alimenta o schema JSON-LD
+    // declarado no layout raiz, que é global e não conhece o mercado do
+    // visitante. Um preço em real aqui apareceria também em /pt-pt,
+    // /es-es e /es, mentindo em três dos quatro mercados. O valor correto
+    // está no bloco de oferta da própria página, que lê config/pricing.ts.
+    a: `É uma assinatura anual, com o valor da sua região mostrado na página, em um único pagamento. E tem ${GARANTIA.dias} dias de garantia: se não for pra você, devolvemos.`,
   },
 ];
