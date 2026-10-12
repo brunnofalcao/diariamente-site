@@ -1,8 +1,28 @@
 import type { Metadata } from "next";
 import { SITE, PLANOS, PROVA, GARANTIA, LOJAS, LOGOS, EMPRESA } from "@/config";
-import { PERGUNTAS } from "@/lib/faq";
 import { Consentimento } from "@/components/Consentimento";
 import "./globals.css";
+
+/* =====================================================================
+   FONTES
+   ---------------------------------------------------------------------
+   Carregadas SEM BLOQUEAR a renderização.
+
+   Antes, o <link rel="stylesheet"> para o Google Fonts era um recurso
+   bloqueante: o navegador não pintava nada até baixá-lo. Em conexão
+   lenta isso vai direto para o LCP.
+
+   A técnica abaixo pede a folha como `media="print"`, que o navegador
+   trata como não-bloqueante, e a promove para `all` quando termina de
+   carregar. O <noscript> cobre quem está sem JavaScript.
+
+   MELHOR AINDA, quando alguém puder validar o build: trocar isto por
+   `next/font/google`, que baixa as fontes no build e as serve do
+   próprio domínio, eliminando as duas conexões externas (DNS, TLS) e
+   o salto de layout. Não apliquei porque o ambiente onde compilo não
+   tem acesso de rede ao Google Fonts, e eu não entrego o que não
+   consigo buildar.
+   ===================================================================== */
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.dominio),
@@ -84,15 +104,10 @@ function StructuredData() {
   // enquanto a página mostrava 10 outras. Duas listas mantidas à mão
   // divergem sempre: o Google via um FAQ e o visitante via outro, com
   // risco de perder o rich result por inconsistência.
-  const faqSchema = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: PERGUNTAS.map((p) => ({
-      "@type": "Question",
-      name: p.q,
-      acceptedAnswer: { "@type": "Answer", text: p.a },
-    })),
-  };
+  // O FAQPage saiu daqui. Era declarado no layout raiz, global, em
+  // português do Brasil, e por isso aparecia também em /pt-pt, /es e
+  // /es-es. Agora cada página de venda declara o seu, com o dicionário
+  // do próprio mercado (ver components/Home.tsx).
 
   // sameAs é o principal sinal de ENTIDADE para buscadores e IAs (GEO).
   // A ENTIDADE é o Diariamente, não a Science Play. A realizadora entra
@@ -123,22 +138,34 @@ function StructuredData() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(appSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }} />
     </>
   );
 }
 
+const FONTES =
+  "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;1,7..72,400&display=swap";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
       <head>
+        {/* Fontes sem bloquear a renderização: a folha é pedida como
+            media="print", que o navegador não trata como bloqueante, e
+            promovida a "all" ao terminar. O noscript cobre quem está
+            sem JavaScript. Ver a nota sobre next/font acima. */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;1,7..72,400&display=swap"
           rel="stylesheet"
+          href={FONTES}
+          media="print"
+          // eslint-disable-next-line react/no-unknown-property
+          onLoad={"this.media='all'" as unknown as undefined}
         />
+        <noscript>
+          <link rel="stylesheet" href={FONTES} />
+        </noscript>
         <StructuredData />
       </head>
       <body>

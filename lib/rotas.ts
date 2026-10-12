@@ -18,6 +18,8 @@ import type { Lang } from "@/lib/i18n";
 
 export type Chave =
   | "home"
+  | "homePt"
+  | "homeEs"
   | "vendas"
   | "estudante"
   | "sobre"
@@ -26,6 +28,10 @@ export type Chave =
 
 const SLUGS: Record<Chave, Record<Lang, string>> = {
   home:        { pt: "/",              es: "/es" },
+  // Homes por MERCADO. Idioma não decide moeda (pt tem BRL e EUR, es tem
+  // USD e EUR), então cada mercado com preço próprio tem URL própria.
+  homePt:      { pt: "/pt-pt",         es: "/pt-pt" },
+  homeEs:      { pt: "/es-es",         es: "/es-es" },
   // Antigo endereço de trabalho do site de vendas. Desde a virada, o site
   // de vendas é "/" e estes dois caminhos só redirecionam ("/embreve" para
   // "/", "/es/embreve" para "/es"). Continuam fora do sitemap.
