@@ -10,7 +10,7 @@
 // config/pricing.ts, por mercado (br, la, es, pt, rw). Os campos de plano
 // abaixo só repassam de lá, para os componentes antigos continuarem
 // funcionando sem um segundo número escrito à mão.
-import { MERCADOS, ESTUDANTE_DESCONTO, formatar, precoEstudante, porMesEstudante } from "@/config/pricing";
+import { MERCADOS, ESTUDANTE_DESCONTO, formatar, precoEstudante, porMesEstudante, percentualDoLancamento } from "@/config/pricing";
 
 export const SITE = {
   nome: "Diariamente",
@@ -108,15 +108,17 @@ export const CONSELHO: { nome: string; credencial: string; registro?: string }[]
 
 // ---------------------------------------------------------------------
 // OFERTA · desde out/2026 (handoff de precificação v2)
-// Um plano anual por moeda na Hotmart (produto 7448309). No Brasil o
-// plano fica no preço cheio e o lançamento entra por cupom embutido no
-// botão. Tudo isso, com a data de término, está em config/pricing.ts.
-// A oferta antiga (R$ 137,90, link L107085210M) saiu daqui.
+// Uma oferta anual por mercado na Hotmart (produto 7448309). No Brasil,
+// a oferta oficial (R$ 149,90) e, até o fim do lançamento, uma oferta
+// própria de lançamento (R$ 99,98 por ano nos 3 primeiros anos), sem
+// cupom. Tudo isso, com a data de término, está em config/pricing.ts.
+// A oferta antiga do produto 8280315 (R$ 137,90) saiu daqui.
 // ---------------------------------------------------------------------
 const LANC_BR = MERCADOS.br.lancamento;
+const PCT_LANC_BR = percentualDoLancamento("br");
 export const LANCAMENTO = {
   ativa: Boolean(LANC_BR?.ativo),
-  selo: LANC_BR ? `${LANC_BR.percentual}% OFF de lançamento` : "",
+  selo: PCT_LANC_BR ? `${PCT_LANC_BR}% OFF de lançamento` : "Preço de lançamento",
   prazoTexto: "preço de lançamento por tempo determinado, com a data na página",
 };
 
@@ -145,8 +147,9 @@ export type Plano = {
 
 // ---------------------------------------------------------------------
 // CHECKOUT — HOTMART
-// O link do plano BRL vem de config/pricing.ts (CHECKOUT_BRL). O botão do
-// site usa linkCheckout("br"), que embute o cupom de lançamento.
+// O link da oferta oficial do Brasil vem de config/pricing.ts
+// (CHECKOUT_BRL, off=fhrttdh8). O botão do site usa linkCheckout("br"),
+// que abre a oferta de lançamento enquanto ela vale e a oficial depois.
 // ATENCAO: se houver order bump de produto fisico configurado no painel
 // da Hotmart, ele precisa ser REMOVIDO la: o site nao controla o checkout.
 // ---------------------------------------------------------------------
@@ -176,9 +179,9 @@ export const PLANO_APP: Plano = {
   id: "anual-br",
   nome: "Diariamente App",
   destaque: true,
-  // Preço CHEIO do plano BRL. O valor de lançamento (com cupom) é calculado
-  // na hora por precoFinal("br") em config/pricing.ts. Sem valor de parcela:
-  // a Hotmart calcula, e o site nunca escreve um número fixo.
+  // Preço CHEIO do plano BRL. O valor de lançamento (oferta própria) é
+  // escolhido na hora por precoFinal("br") em config/pricing.ts. Sem valor
+  // de parcela: a Hotmart calcula, e o site nunca escreve um número fixo.
   precoNumero: MERCADOS.br.anual,
   preco: semSimbolo(MERCADOS.br.anual),
   inclui: [
@@ -252,27 +255,32 @@ export const TRACKING = {
 };
 
 // ---------------------------------------------------------------------
-// ENDEREÇO DA EMPRESA · FONTE ÚNICA · PREENCHER ANTES DE PUBLICAR
+// EMPRESA · QUEM APARECE ONDE (decisão do dono, 12/10/2026)
 // ---------------------------------------------------------------------
-// Troque o texto abaixo pelo endereço completo do cartão CNPJ da
-// Science Play Cursos LTDA (rua, número, complemento, bairro, cidade/UF,
-// CEP). Ele aparece na Política de Privacidade (pt e es), no rodapé da
-// home e no rodapé das páginas legais. Obrigatório em loja on-line
-// (Decreto 7.962/2013, art. 2º).
+// O app é global. No que é visível e exposto (rodapé de todas as
+// páginas, páginas de venda, pt e es) entra só a ASSINATURA abaixo,
+// "Diariamente App by Science Play": sem razão social, CNPJ nem endereço.
 //
-// Enquanto tiver "[TROCAR" em qualquer parte, o `next build` FALHA de propósito,
-// com mensagem explicando o que fazer (scripts/checar-endereco.js,
-// chamado pelo next.config.js). Não remova a trava: preencha o endereço.
-const ENDERECO_DA_EMPRESA = "[TROCAR: endereço completo da Science Play Cursos LTDA, igual ao cartão CNPJ]";
+// Os dados completos da titular ficam nos Termos e na Política de
+// Privacidade (pt e es: /termos, /privacidade, /es/condicionesdeuso,
+// /es/privacidad), a um clique do rodapé, junto com a cláusula de
+// titularidade (components/Titularidade.tsx). Base legal da
+// identificação: Decreto 7.962/2013, art. 2º (nome empresarial, CNPJ,
+// endereço físico e eletrônico). Ver o LEIA-ME.
+//
+// Endereço conferido no cadastro público do CNPJ 33.612.911/0001-29 em
+// 12/10/2026. Fonte única: só aqui. Se um dia voltar a ter "[TROCAR" em
+// qualquer parte, o `next build` FALHA de propósito
+// (scripts/checar-endereco.js, chamado pelo next.config.js).
+const ENDERECO_DA_EMPRESA = "SRTVN Quadra 702, Conjunto P, S/N, Parte AC.07/22, Subsolo 1, Edifício Radio Center, Asa Norte, Brasília/DF, CEP 70719-900";
 
-// ---------------------------------------------------------------------
-// EMPRESA / SUPORTE / LEGAL
-// CNPJ e razão social: [TROCAR] pelo documento oficial da Science Play.
-// Não inventar número de documento — tem peso jurídico.
-// ---------------------------------------------------------------------
 export const EMPRESA = {
   marca: "Science Play",
-  razaoSocial: "Science Play Cursos LTDA",
+  // O que o visitante lê no rodapé e nas páginas de venda.
+  assinatura: "Diariamente App by Science Play",
+  // Titular e responsável pelo Diariamente App e pelos dados. Só nos
+  // Termos e na Política. Igual ao cartão CNPJ (nome empresarial).
+  razaoSocial: "SCIENCE PLAY CURSOS LTDA",
   cnpj: "33.612.911/0001-29",
   // Dois canais, papéis distintos: contato para institucional e imprensa,
   // suporte para quem já é assinante e precisa de ajuda.
@@ -285,29 +293,56 @@ export const EMPRESA = {
   // produção na Vercel). Em build normal vem vazia e vale o endereço real.
   endereco: process.env.DM_ENDERECO_TESTE || ENDERECO_DA_EMPRESA,
   // Data exibida como "Última atualização" nos Termos e na Política. Mudou
-  // em out/2026: aviso de cookies (Política, seção 8) e garantia (Termos).
+  // em out/2026: aviso de cookies (Política, seção 8), garantia (Termos) e
+  // titularidade do Diariamente App (Termos e Política, seção 1).
   vigenciaLegal: "Outubro de 2026",
 };
 
 // ---------------------------------------------------------------------
 // ESTUDANTE — condição exclusiva (/estudante)
 // ---------------------------------------------------------------------
-// mostrarPreco = false  -> a página fala de "condição exclusiva" sem número.
-// mostrarPreco = true   -> a página exibe o preço abaixo. Vire a chave só
-//                          depois de a oferta de estudante existir na Hotmart.
+// Fluxo (o original, retomado em 12/10/2026): aprovado o estudante, o
+// site cria o cupom PESSOAL dele pela API da Hotmart (lib/hotmart.js),
+// o WhatsApp leva o botão para /estudante/ativar?cupom=CODIGO, que abre
+// a oferta oficial do Brasil (CHECKOUT_BRL, R$ 149,90) com o cupom
+// aplicado, e o webhook do site apaga o cupom quando o pagamento é
+// aprovado (uso único).
+//
+// aberto       -> o fluxo do cupom pessoal está configurado na Vercel.
+//                 NÃO se edita aqui: o next.config.js calcula a cada build
+//                 (estadoDoEstudante, em scripts/checar-precos.js) e grava
+//                 DM_ESTUDANTE_ABERTO. Abre com as três: modelo v2 do
+//                 WhatsApp em WA_TEMPLATE_ESTUDANTE, HOTMART_PRODUCT_ID=7448309
+//                 e STUDENT_DISCOUNT igual ao ESTUDANTE_DESCONTO. Fechado:
+//                 a home não leva à /estudante, a /estudante mostra a lista
+//                 de espera no lugar do formulário e a API responde 503 sem
+//                 gravar nada. O log de todo build diz o que falta.
+// mostrarPreco = false  -> a /estudante e a home falam de "condição de
+//                          estudante" sem número.
+// mostrarPreco = true   -> as duas exibem o preço abaixo.
 // O desconto exibido é calculado sobre o preço cheio do plano (R$ 149,90),
 // que é a base do cupom na Hotmart; a comparação com o preço público do
 // dia (com ou sem lançamento) é feita na hora em components/BlocoPreco.tsx.
 // ---------------------------------------------------------------------
 export const ESTUDANTE = {
-  // Ligado: a /estudante passa a exibir preço, desconto e comparativo.
-  // Vire para false se a condição ainda não existir na Hotmart: a página
-  // volta à versão sem número sem quebrar nada.
+  aberto: process.env.DM_ESTUDANTE_ABERTO === "1",
+
+  // Ligado: a /estudante e a home passam a exibir preço, desconto e
+  // comparativo. Vire para false se a condição ainda não existir na
+  // Hotmart: as duas voltam à versão sem número sem quebrar nada.
   mostrarPreco: true,
 
   // Cupom de ESTUDANTE_DESCONTO% sobre o plano BRL (config/pricing.ts).
   // Sem valor de parcela: a Hotmart calcula.
   desconto: ESTUDANTE_DESCONTO,
+
+  // O cupom vale também nas renovações? AINDA NÃO CONFIRMADO pelo dono.
+  // Enquanto false, a página não promete duração do desconto e diz só
+  // `renovacao`. Confirmado na Hotmart que a renovação sai pelo mesmo
+  // valor, vire para true e a página passa a dizer `renovacaoMesmoValor`.
+  renovaMesmoValor: false,
+  renovacao: "Renova a cada ano. Cancele quando quiser.",
+  renovacaoMesmoValor: "Renova a cada ano pelo mesmo valor. Cancele quando quiser.",
   precoNumero: precoEstudante(),
   preco: semSimbolo(precoEstudante()),
   porMes: semSimbolo(porMesEstudante()),
@@ -321,12 +356,22 @@ export const ESTUDANTE = {
   // validade do código enviado por WhatsApp (espelha VALIDADE_HORAS da API)
   validadeHoras: 48,
 
-  // Tempo de espera comunicado ao estudante. O envio é SÍNCRONO: em
-  // app/api/estudante/solicitar/route.js o `await whatsapp.aprovado(...)` roda
-  // dentro da mesma requisição, antes de a resposta voltar. Estes 2 minutos são
-  // folga para atraso de entrega da Meta Cloud API, não processamento nosso.
-  esperaMinutos: 2,
+  // Tempo de espera comunicado ao estudante ("em até N minutos"). O envio
+  // é AGENDADO: app/api/estudante/solicitar/route.js grava enviar_em =
+  // agora + ESPERA_MINUTOS (5, a janela de conferência), e quem manda o
+  // WhatsApp é o cron /api/cron/manutencao, de minuto em minuto, com até
+  // MAX_TENTATIVAS (5) tentativas, uma por rodada, se a Meta recusar.
+  // 5 + 5 = 10. test/estudante.test.js confere esta conta contra os dois
+  // arquivos: mexeu na API ou no cron, ajuste aqui.
+  esperaMinutos: 10,
 
   // um código por CPF (regra aplicada na API)
   regra: "Um código por pessoa. Enviado só no WhatsApp informado.",
 };
+
+/** Período do preço de estudante no texto: "por ano" só quando o dono
+    confirmar que o cupom vale também nas renovações; até lá, "no
+    primeiro ano" (o site não promete duração do desconto). */
+export function periodoEstudante(): string {
+  return ESTUDANTE.renovaMesmoValor ? "por ano" : "no primeiro ano";
+}

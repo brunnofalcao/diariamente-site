@@ -17,6 +17,12 @@ import { MERCADOS, type Mercado } from "@/config/pricing";
    ESSA finalidade, por ação afirmativa (enviar o formulário). O
    compartilhamento com parceiros fica numa caixa separada, desmarcada e
    opcional, conforme lib/consentimento.ts.
+
+   Origem "estudante": a /estudante com o fluxo do cupom pessoal FECHADO
+   neste build (ESTUDANTE.aberto, config.ts) usa este mesmo formulário,
+   com o motivo da coleta trocado em `textos` (avisar quando a
+   solicitação do código abrir). A API separa esses leads dos da
+   abertura do produto (app/api/lista-espera/route.js).
    ===================================================================== */
 
 const T = {
@@ -85,18 +91,22 @@ export function ListaEsperaForm({
   origem,
   embutido = false,
   botao,
+  textos,
 }: {
   mercado: Mercado;
-  /** "em-breve" (página inteira) ou "oferta" (bloco de oferta). */
-  origem: "em-breve" | "oferta";
+  /** "em-breve" (página inteira), "oferta" (bloco de oferta) ou
+      "estudante" (/estudante com o fluxo do cupom fechado). */
+  origem: "em-breve" | "oferta" | "estudante";
   /** Dentro do bloco de oferta: sem o cartão próprio em volta. */
   embutido?: boolean;
   /** Texto do botão do mercado (config/pricing.ts). */
   botao?: string;
+  /** Motivo da coleta e confirmação, quando não é a abertura do produto. */
+  textos?: { legal1?: string; okT?: string; okD?: string };
 }) {
   const o = MERCADOS[mercado];
   const lang = o.idioma;
-  const t = o.locale === "pt-PT" ? T.ptPT : T[lang];
+  const t = { ...(o.locale === "pt-PT" ? T.ptPT : T[lang]), ...(textos || {}) };
   const sufixo = embutido ? "-oferta" : "";
 
   const [nome, setNome] = useState("");

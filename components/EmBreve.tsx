@@ -6,6 +6,7 @@ import { SeletorMercado } from "@/components/SeletorMercado";
 import type { Lang } from "@/lib/i18n";
 import { HOME_DO_MERCADO } from "@/lib/mercado";
 import type { Mercado } from "@/config/pricing";
+import { EMPRESA } from "@/config";
 
 /* =====================================================================
    EM BREVE · lista de espera
@@ -96,6 +97,9 @@ export function EmBreve({ lang = "pt", mercado }: { lang?: Lang; mercado?: Merca
           <i /><i /><i /><i /><i /><i /><i className="hoje" />
         </span>
         <p>{t.rodape}</p>
+        {/* Rodapé de todas as páginas: só a assinatura (decisão do dono,
+            12/10/2026). Os dados da titular ficam nos Termos e na Política. */}
+        <p>{EMPRESA.assinatura}</p>
         <SeletorMercado atual={mkt} titulo="País" linha />
       </footer>
     </main>

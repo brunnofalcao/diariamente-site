@@ -216,7 +216,7 @@ export function ObrigadoShell({ estado }: { estado: Estado }) {
       <footer className="obg-footer">
         <div className="wrap center">
           <p className="caption" style={{ color: "var(--n-600)" }}>
-            © {new Date().getFullYear()} {EMPRESA.marca}® · {SITE.dominio.replace("https://", "")}
+            © {new Date().getFullYear()} {EMPRESA.assinatura} · {SITE.dominio.replace("https://", "")}
           </p>
         </div>
       </footer>

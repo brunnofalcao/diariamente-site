@@ -4,7 +4,7 @@ import { metadataDoMercado } from "@/lib/seo";
 /* =====================================================================
    "/" · HOME DO BRASIL · site de vendas
    ---------------------------------------------------------------------
-   Desde a virada de lançamento, "/" é o site de vendas. Preço, cupom de
+   Desde a virada de lançamento, "/" é o site de vendas. Preço, oferta de
    lançamento e link do checkout saem de config/pricing.ts (mercado br).
 
    Visitante de fora do Brasil, de Portugal, da Espanha e da América

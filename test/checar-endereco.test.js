@@ -81,3 +81,12 @@ test("DM_ENDERECO_TESTE é aceita em preview da Vercel", () => {
   assert.equal(r.ok, true);
   assert.equal(r.teste, true);
 });
+
+test("o config.ts real tem o endereço da SCIENCE PLAY CURSOS LTDA e a trava libera o build de produção", () => {
+  const texto = fs.readFileSync(path.join(__dirname, "..", "config.ts"), "utf8");
+  const r = checarEndereco({ textoDoConfig: texto, env: {} });
+  assert.equal(r.ok, true, r.mensagem);
+  assert.equal(r.teste, false);
+  assert.match(r.endereco, /SRTVN Quadra 702/);
+  assert.match(r.endereco, /CEP 70719-900/);
+});

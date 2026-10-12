@@ -95,7 +95,7 @@ export default function SolicitacaoRecebida() {
       <footer className="ed-footer">
         <div className="ed-wrap ed-footer-row">
           <p>
-            © {new Date().getFullYear()} {EMPRESA.marca}® · {EMPRESA.razaoSocial}
+            © {new Date().getFullYear()} {EMPRESA.assinatura}
           </p>
           <nav aria-label="Links institucionais">
             <a href="/">Página inicial</a>

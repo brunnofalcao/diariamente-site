@@ -93,9 +93,11 @@ function StructuredData() {
       LOJAS.appStore,
       LOJAS.googlePlay,
     ],
+    // Só a marca: o app é global, e a razão social fica nos Termos e na
+    // Política (decisão do dono, 12/10/2026).
     parentOrganization: {
       "@type": "Organization",
-      name: EMPRESA.razaoSocial,
+      name: EMPRESA.marca,
       url: EMPRESA.site,
     },
   };

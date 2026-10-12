@@ -135,8 +135,8 @@ const n = (s) => s.replace(/ /g, " ");
 
 test("formato numérico de cada mercado", () => {
   assert.equal(n(P.formatar("br", 149.9)), "R$ 149,90");
-  assert.equal(n(P.formatar("la", 24.99)), "US$ 24.99");
-  assert.equal(n(P.formatar("rw", 24.99)), "US$ 24,99");
+  assert.equal(n(P.formatar("la", 29.99)), "US$ 29.99");
+  assert.equal(n(P.formatar("rw", 29.99)), "US$ 29,99");
   assert.equal(n(P.formatar("pt", 29.99)), "29,99 €");
   assert.equal(n(P.formatar("es", 29.99)), "29,99 €");
   assert.equal(n(P.formatar("br", 1234.5)), "R$ 1.234,50");
@@ -145,7 +145,7 @@ test("formato numérico de cada mercado", () => {
 
 test("equivalente mensal é anual ÷ 12, em centavos", () => {
   assert.equal(P.mensal(149.9), 12.49);
-  assert.equal(P.mensal(119.92), 9.99);
+  assert.equal(P.mensal(99.98), 8.33);
   assert.equal(P.mensal(89.94), 7.5);
   assert.equal(P.mensal(24.99), 2.08);
   assert.equal(P.mensal(29.99), 2.5);
@@ -157,91 +157,87 @@ test("estudante: 40% sobre R$ 149,90 dá R$ 89,94 e R$ 7,50/mês", () => {
   assert.equal(P.porMesEstudante(), 7.5);
 });
 
-test("hoje, sem cupom e data preenchidos, o Brasil mostra o preço cheio e o link sem cupom", () => {
-  assert.equal(P.lancamentoVigente("br"), false);
-  assert.equal(P.precoFinal("br"), 149.9);
-  assert.equal(P.precoCheio("br"), null);
-  assert.equal(P.linkCheckout("br"), P.MERCADOS.br.checkout);
+test("hoje (12/10/2026), o Brasil mostra o preço de lançamento e o botão abre a oferta de lançamento", () => {
+  const hoje = Date.parse("2026-10-12T12:00:00-03:00");
+  assert.equal(P.lancamentoVigente("br", hoje), true);
+  assert.equal(P.precoFinal("br", hoje), 99.98);
+  assert.equal(P.porMes("br", hoje), 8.33);
+  assert.equal(n(P.precoCheio("br", hoje)), "R$ 149,90");
+  assert.equal(P.linkCheckout("br", hoje), P.MERCADOS.br.lancamento.checkout);
+  assert.notEqual(P.linkCheckout("br", hoje), P.MERCADOS.br.checkout);
 });
 
-test("com link, cupom e data preenchidos, o cupom só vale depois de ativo: true", () => {
+test("lançamento com link pendente não vale: preço cheio e oferta oficial", () => {
   const br = P.MERCADOS.br;
-  const original = { checkout: br.checkout, lancamento: { ...br.lancamento } };
+  const original = { ...br.lancamento };
   try {
-    br.checkout = "https://pay.hotmart.com/X00000000Y?off=teste000";
-    br.lancamento.codigo = "LANCAMENTO";
-    br.lancamento.terminaEm = "2026-10-31";
+    br.lancamento.checkout = "[PREENCHER: link da oferta de lançamento]";
     const antes = Date.parse("2026-10-20T12:00:00-03:00");
-    assert.equal(original.lancamento.ativo, false, "o dono deixou ativo: false");
+    assert.equal(P.lancamentoVigente("br", antes), false);
     assert.equal(P.precoFinal("br", antes), 149.9);
     assert.equal(P.linkCheckout("br", antes), br.checkout);
-    br.lancamento.ativo = true;
-    assert.equal(P.precoFinal("br", antes), 119.92);
   } finally {
-    br.checkout = original.checkout;
-    Object.assign(br.lancamento, original.lancamento);
+    Object.assign(br.lancamento, original);
   }
 });
 
 test("data que não existe no calendário não vira prazo nem fim de lançamento", () => {
   const br = P.MERCADOS.br;
-  const original = { lancamento: { ...br.lancamento } };
+  const original = { ...br.lancamento };
   try {
-    br.lancamento.codigo = "LANCAMENTO";
     br.lancamento.ativo = true;
     br.lancamento.terminaEm = "2026-11-31";
     assert.equal(P.fimDoLancamento("br"), null);
     assert.equal(P.dataDoLancamento("br"), null);
     assert.equal(P.lancamentoVigente("br", Date.parse("2026-11-20T12:00:00-03:00")), false);
   } finally {
-    Object.assign(br.lancamento, original.lancamento);
+    Object.assign(br.lancamento, original);
   }
 });
 
-test("lançamento valendo: R$ 119,92, R$ 9,99/mês, cupom no link com offDiscount; encerrado, volta ao cheio", () => {
-  // Cópia do mercado br com cupom e data, sem mexer no config real.
+test("lançamento valendo: R$ 99,98, R$ 8,33/mês, oferta própria sem cupom; encerrado, volta ao cheio", () => {
   const br = P.MERCADOS.br;
-  const original = { checkout: br.checkout, lancamento: { ...br.lancamento } };
+  const original = { ...br.lancamento };
   try {
-    br.checkout = "https://pay.hotmart.com/X00000000Y?off=teste000";
-    br.lancamento.codigo = "LANCAMENTO";
-    br.lancamento.terminaEm = "2026-10-31";
-    br.lancamento.ativo = true;
-    const antes = Date.parse("2026-10-31T23:00:00-03:00");
-    const depois = Date.parse("2026-11-01T00:00:01-03:00");
+    const antes = Date.parse("2026-11-16T23:00:00-03:00");
+    const depois = Date.parse("2026-11-17T00:00:01-03:00");
     assert.equal(P.lancamentoVigente("br", antes), true);
-    assert.equal(P.precoFinal("br", antes), 119.92);
-    assert.equal(P.porMes("br", antes), 9.99);
-    assert.equal(n(P.precoCheio("br", antes)), "R$ 149,90");
-    assert.equal(P.linkCheckout("br", antes), "https://pay.hotmart.com/X00000000Y?off=teste000&offDiscount=LANCAMENTO");
-    assert.equal(P.dataDoLancamento("br"), "31 de outubro");
-    // passou da data: preço cheio e link sem parâmetro
+    assert.equal(P.precoFinal("br", antes), 99.98);
+    assert.equal(P.porMes("br", antes), 8.33);
+    assert.equal(P.linkCheckout("br", antes), "https://pay.hotmart.com/K105072021O?off=lf63bgdd");
+    assert.equal(/offDiscount/.test(P.linkCheckout("br", antes)), false);
+    assert.equal(P.dataDoLancamento("br"), "16 de novembro");
+    // passou da data: preço cheio e oferta oficial
     assert.equal(P.precoFinal("br", depois), 149.9);
-    assert.equal(P.linkCheckout("br", depois), br.checkout);
+    assert.equal(P.porMes("br", depois), 12.49);
+    assert.equal(P.linkCheckout("br", depois), "https://pay.hotmart.com/K105072021O?off=fhrttdh8");
     // marcado como encerrado antes da data: idem
     br.lancamento.ativo = false;
     assert.equal(P.precoFinal("br", antes), 149.9);
     assert.equal(P.linkCheckout("br", antes), br.checkout);
   } finally {
-    br.checkout = original.checkout;
-    Object.assign(br.lancamento, original.lancamento);
+    Object.assign(br.lancamento, original);
   }
 });
 
-test("mercados fora do Brasil: sem cupom; rw aberto com o Brasil, la, es e pt na lista de espera", () => {
-  for (const m of ["la", "es", "pt", "rw"]) assert.equal(P.MERCADOS[m].lancamento, null, m);
-  for (const m of ["la", "es", "pt"]) {
+test("mercados fora do Brasil: sem lançamento e todos fechados até o dono confirmar", () => {
+  for (const m of ["la", "es", "pt", "rw"]) {
+    assert.equal(P.MERCADOS[m].lancamento, null, m);
     assert.equal(P.MERCADOS[m].vendaAberta, false, m);
     assert.equal(P.vendeAgora(m), false, m);
   }
   assert.equal(P.MERCADOS.br.vendaAberta, true);
-  assert.equal(P.MERCADOS.rw.vendaAberta, true);
-  // sem o link USD, rw ainda não vende (e o build de produção trava)
-  assert.equal(P.vendeAgora("rw"), false);
+  assert.equal(P.vendeAgora("br"), true);
 });
 
-test("total do Brasil com o texto do handoff, seção 2", () => {
-  assert.equal(P.MERCADOS.br.textos.cupomAplicado, "com o cupom de lançamento já aplicado pelo botão");
+test("texto do lançamento: preço dos 3 primeiros anos e depois o cheio, só à vista", () => {
+  const t = P.MERCADOS.br.textos;
+  assert.equal(t.lancamentoRegra, "nos {anos} primeiros anos. Depois, {cheio} por ano.");
+  assert.equal(t.pagamentoLancamento, "Pagamento à vista");
+  // parcelado com acréscimo (o checkout da fhrttdh8 parcela com acréscimo),
+  // separado do equivalente mensal da manchete
+  assert.equal(t.pagamento, "À vista, ou em até 12x no cartão com acréscimo");
+  assert.equal("cupomAplicado" in t, false);
 });
 
 test("textos do bloco: sem travessão longo, sem compra, sem valor de parcela", () => {

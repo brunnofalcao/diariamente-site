@@ -128,18 +128,24 @@ async function gravarSupabase(lead, extras) {
 async function enviarRD(lead) {
   const token = process.env.RD_STATION_TOKEN;
   if (!token) throw new Error("RD_STATION_TOKEN ausente");
+  // Origem "estudante" (a /estudante com o fluxo do cupom fechado): outra
+  // conversão e outra tag, para o aviso de abertura do PRODUTO nunca ir
+  // para quem pediu para ser avisado da condição de estudante.
+  const estudante = lead.origem === "estudante";
   const payload = {
     event_type: "CONVERSION",
     event_family: "CDP",
     payload: {
-      conversion_identifier: process.env.RD_CONVERSION_EM_BREVE || "diariamente-em-breve",
+      conversion_identifier: estudante
+        ? process.env.RD_CONVERSION_ESTUDANTE_ESPERA || "diariamente-estudante-em-breve"
+        : process.env.RD_CONVERSION_EM_BREVE || "diariamente-em-breve",
       name: lead.nome,
       email: lead.email,
       mobile_phone: `+${lead.whatsapp}`,
       // idioma-pt / idioma-es: na abertura, cada lista recebe a mensagem
       // no idioma em que se inscreveu, sem ninguém precisar adivinhar.
       tags: [
-        "lista-espera", "em-breve", `idioma-${lead.idioma}`, `mercado-${lead.mercado}`,
+        "lista-espera", estudante ? "estudante-em-breve" : "em-breve", `idioma-${lead.idioma}`, `mercado-${lead.mercado}`,
         ...(lead.consent_parceiros ? ["aceita-parceiros"] : []),
       ],
       traffic_source: lead.utm?.utm_source,
@@ -187,7 +193,7 @@ export async function POST(req) {
   const mercado = mercadoValido(limpar(body.mercado, 4)) ?? mercadoDoPais(pais);
   // Idioma da página (o do formulário); o campo antigo, em consentimento, vale também.
   const idioma = body.idioma === "es" || (body.idioma !== "pt" && c.idioma === "es") ? "es" : "pt";
-  const origem = body.origem === "oferta" ? "oferta" : "em-breve";
+  const origem = body.origem === "oferta" || body.origem === "estudante" ? body.origem : "em-breve";
 
   const lead = {
     nome,

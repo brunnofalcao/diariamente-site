@@ -91,6 +91,7 @@ export const I18N = {
     gT: "Garantia de 7 dias",
     gD: "Você tem 7 dias para experimentar. Se sentir que o Diariamente não é pra você, devolvemos o seu investimento. Sem letra miúda.",
     stBadge: "Condição de estudante", stH: "Ainda está na graduação? O mesmo acesso de um ano por {preco}.",
+    stHSemPreco: "Ainda está na graduação? O mesmo acesso de um ano, com condição de estudante.",
     stD: "Leva cerca de um minuto. O código chega no WhatsApp. Solicitar não gera compromisso.", stCta: "Ver minha condição",
     afEyebrow: "Sem mistério", afH2: "O que acontece depois",
     after: [
@@ -186,6 +187,7 @@ export const I18N = {
     gT: "Garantía de 7 días",
     gD: "Tienes 7 días para probar. Si sientes que Diariamente no es para ti, te devolvemos tu inversión. Sin letra pequeña.",
     stBadge: "Condición de estudiante", stH: "¿Sigues en la universidad? El mismo acceso de un año por {preco}.",
+    stHSemPreco: "¿Sigues en la universidad? El mismo acceso de un año, con condición de estudiante.",
     stD: "Toma cerca de un minuto. El código llega por WhatsApp. Solicitar no genera compromiso.", stCta: "Ver mi condición",
     afEyebrow: "Sin misterio", afH2: "Qué pasa después",
     after: [
@@ -237,8 +239,8 @@ export function cld(url: string, tx: string): string {
        pelo mercado certo (/es/, /mx/, /ar/...), ou o usuario cai numa
        ficha em portugues.
      - `googlePlay` aceita &hl=es para a ficha sair traduzida.
-     - checkout NAO mora aqui: o link de cada mercado (moeda, plano e
-       cupom) esta em config/pricing.ts.
+     - checkout NAO mora aqui: o link de cada mercado (moeda, oferta e
+       lancamento) esta em config/pricing.ts.
    ===================================================================== */
 
 const IMG_PT = {

@@ -102,8 +102,10 @@ export function Rodape() {
         <hr className="rp-linha" />
 
         <div className="rp-base">
+          {/* Só a assinatura: razão social, CNPJ e endereço ficam nos
+              Termos e na Política (decisão do dono, 12/10/2026). */}
           <p>
-            © {ano} {EMPRESA.marca}® · {EMPRESA.razaoSocial} · CNPJ {EMPRESA.cnpj}
+            © {ano} {EMPRESA.assinatura}
             <br />
             {SITE.dominio.replace("https://", "")}
           </p>

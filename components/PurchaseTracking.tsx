@@ -47,8 +47,8 @@ export function PurchaseTracking() {
       params.get("full_price") ||
       params.get("transaction_value");
     const lido = bruto ? Number(String(bruto).replace(",", ".")) : NaN;
-    // Sem valor na URL, o preço do Brasil de agora (com o cupom de
-    // lançamento, se ele estiver valendo), de config/pricing.ts.
+    // Sem valor na URL, o preço do Brasil de agora (o de lançamento, se
+    // ele estiver valendo), de config/pricing.ts.
     const valor = Number.isFinite(lido) && lido > 0 ? lido : precoFinal("br");
 
     // Meta Pixel

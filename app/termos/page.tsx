@@ -1,6 +1,7 @@
 import { metadataDaPagina } from "@/lib/seo";
 import { EMPRESA, SITE, GARANTIA } from "@/config";
 import { LegalShell } from "@/components/LegalShell";
+import { Titularidade } from "@/components/Titularidade";
 
 export const metadata = metadataDaPagina("termos", "pt");
 
@@ -11,12 +12,17 @@ export default function Termos() {
         Estes Termos de Uso ("Termos") regem o acesso e a utilização do Diariamente, produto
         digital de desenvolvimento profissional composto pelo aplicativo, pelo conteúdo de
         provocações diárias, oferecido pela{" "}
-        {EMPRESA.razaoSocial}, inscrita no CNPJ nº {EMPRESA.cnpj} ("Science Play", "nós"). Ao
+        {EMPRESA.razaoSocial}, identificada na seção 1 ("Science Play", "nós"). Ao
         adquirir e utilizar o Diariamente, você ("usuário") declara ter lido, compreendido e
         aceito integralmente estes Termos.
       </p>
 
-      <h2>1. O que é o Diariamente</h2>
+      {/* Titular, dados completos e cláusula de titularidade (decisão do
+          dono, 12/10/2026). Mesmo texto da Política e das versões es. */}
+      <h2>1. Quem é a titular do Diariamente App</h2>
+      <Titularidade lang="pt" doc="termos" />
+
+      <h2>2. O que é o Diariamente</h2>
       <p>
         O Diariamente disponibiliza 365 provocações, uma para cada dia, por meio de um
         aplicativo, com recursos de acompanhamento de voltas acumuladas, conquistas,
@@ -25,7 +31,7 @@ export default function Termos() {
         usuário; não prometemos resultados específicos ou garantidos.
       </p>
 
-      <h2>2. Acesso e funcionamento</h2>
+      <h2>3. Acesso e funcionamento</h2>
       <ul>
         <li>O acesso ao aplicativo é enviado por e-mail após a confirmação do pedido.</li>
         <li>O acesso é pessoal e intransferível, vinculado ao e-mail informado na aquisição.</li>
@@ -38,7 +44,7 @@ export default function Termos() {
         <li>É vedado compartilhar, revender, reproduzir ou distribuir o conteúdo sem autorização.</li>
       </ul>
 
-      <h2>3. Cadastro e responsabilidades do usuário</h2>
+      <h2>4. Cadastro e responsabilidades do usuário</h2>
       <p>Ao utilizar o Diariamente, você se compromete a:</p>
       <ul>
         <li>Fornecer informações verdadeiras, exatas e atualizadas;</li>
@@ -47,7 +53,7 @@ export default function Termos() {
         <li>Não tentar acessar áreas restritas, burlar mecanismos de segurança ou interferir no funcionamento do aplicativo.</li>
       </ul>
 
-      <h2>4. Propriedade intelectual</h2>
+      <h2>5. Propriedade intelectual</h2>
       <p>
         Todo o conteúdo do Diariamente (textos, provocações, identidade visual, marca, software e
         demais elementos) é protegido por direitos autorais e de propriedade intelectual,
@@ -59,7 +65,7 @@ export default function Termos() {
           6) dizendo coisas diferentes, e a 6 falava em "condições
           específicas" para a devolução, contra a garantia incondicional
           prometida na página de vendas. TEXTO SUJEITO À APROVAÇÃO DO DONO. */}
-      <h2>5. Garantia e direito de arrependimento</h2>
+      <h2>6. Garantia e direito de arrependimento</h2>
       <p>
         Oferecemos <strong>garantia incondicional de {GARANTIA.dias} dias</strong>, contados da
         confirmação do pagamento. Dentro desse prazo, você pode pedir a devolução integral do valor
@@ -90,7 +96,7 @@ export default function Termos() {
         integral mesmo tendo acessado o conteúdo.
       </p>
 
-      <h2>6. Disponibilidade e alterações do serviço</h2>
+      <h2>7. Disponibilidade e alterações do serviço</h2>
       <p>
         Empenhamo-nos para manter o aplicativo disponível e funcional, mas o serviço pode passar
         por manutenções, atualizações ou indisponibilidades temporárias. Podemos aprimorar,
@@ -98,7 +104,7 @@ export default function Termos() {
         produto adquirido.
       </p>
 
-      <h2>7. Limitação de responsabilidade</h2>
+      <h2>8. Limitação de responsabilidade</h2>
       <p>
         O Diariamente é uma ferramenta de reflexão e desenvolvimento profissional, e não substitui
         aconselhamento profissional especializado (jurídico, médico, psicológico, financeiro ou de
@@ -107,20 +113,20 @@ export default function Termos() {
         uso do produto.
       </p>
 
-      <h2>8. Proteção de dados</h2>
+      <h2>9. Proteção de dados</h2>
       <p>
         O tratamento de dados pessoais relacionado ao Diariamente é regido pela nossa{" "}
         <a href="/privacidade">Política de Privacidade</a>, parte integrante destes Termos.
       </p>
 
-      <h2>9. Alterações dos Termos</h2>
+      <h2>10. Alterações dos Termos</h2>
       <p>
         Podemos atualizar estes Termos a qualquer momento. A versão vigente estará sempre
         disponível nesta página, com a data de atualização. O uso continuado após alterações
         implica concordância com a versão atualizada.
       </p>
 
-      <h2>10. Foro e contato</h2>
+      <h2>11. Foro e contato</h2>
       <p>
         Estes Termos são regidos pelas leis brasileiras. Fica eleito o foro do domicílio do
         consumidor para dirimir eventuais controvérsias, conforme o Código de Defesa do Consumidor.

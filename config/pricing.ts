@@ -11,60 +11,66 @@
 
    ESTE ARQUIVO NÃO IMPORTA NADA, de propósito. A trava de publicação
    (scripts/checar-precos.js) e os testes o carregam sozinho, fora do
-   Next, para conferir links, cupom e data antes do build de produção.
+   Next, para conferir links e data antes do build de produção.
    ===================================================================== */
 
 /* ---------------------------------------------------------------------
-   PREENCHER ANTES DO GO-LIVE · o build de produção TRAVA sem estes três
+   LINKS DA HOTMART · decisões do dono em 12/10/2026
    ---------------------------------------------------------------------
-   Enquanto algum deles tiver "[PREENCHER", o `next build` para com a
-   explicação (mesmo mecanismo da trava do endereço). Para testar o build
-   sem eles: DM_ENDERECO_TESTE="Rua de Teste, 123" npm run build (recusado
-   em produção na Vercel).
+   Produto 7448309, checkout K105072021O. Cada mercado é uma OFERTA
+   (parâmetro off). Nenhum link daqui leva cupom: o lançamento é uma
+   oferta própria, e só o estudante usa cupom (pessoal, criado pela API
+   da Hotmart na aprovação; ver app/api/estudante/solicitar).
 
-   CHECKOUT_BRL       link do plano "Diariamente Anual · BR" (R$ 149,90),
-                      do produto 7448309 na Hotmart, SEM parâmetro de cupom:
-                      o cupom de lançamento entra sozinho pelo código.
-                      O link antigo (L107085210M sem off, R$ 137,90) é
-                      recusado.
-   CUPOM_LANCAMENTO   código do cupom de 20%, restrito ao plano BRL,
-                      escrito igual ao cadastro na Hotmart.
-   FIM_DO_LANCAMENTO  último dia do preço de lançamento, AAAA-MM-DD, no
-                      horário de Brasília. A página mostra a data em texto
-                      e, passado esse dia, volta sozinha para R$ 149,90 e
-                      tira o cupom do link. Na Hotmart, deixe o cupom
-                      valendo até pelo menos 02:00 do dia seguinte: quem
-                      abriu o checkout perto da meia-noite ainda paga.
+   CHECKOUT_BRL         oferta oficial do Brasil, R$ 149,90 por ano à
+                        vista ou em até 12x no cartão com acréscimo. É
+                        também a base do cupom
+                        pessoal do estudante (/estudante/ativar).
+   CHECKOUT_LANCAMENTO  oferta "Lançamento App": R$ 99,98 por ano nos 3
+                        primeiros anos e, depois, R$ 149,90 por ano (é o
+                        que o checkout diz). Só à vista, sem parcelas.
+   FIM_DO_LANCAMENTO    último dia do preço de lançamento, AAAA-MM-DD, no
+                        horário de Brasília. A página mostra a data em
+                        texto e, passado esse dia, volta sozinha para
+                        R$ 149,90 e o botão passa a abrir o CHECKOUT_BRL.
+                        Na Hotmart, deixe a oferta de lançamento ativa
+                        até pelo menos 02:00 do dia seguinte (quem abriu o
+                        checkout perto da meia-noite ainda paga) e só
+                        então a desative: o link dela é aberto, e quem o
+                        tiver guardado pagaria o preço de lançamento.
 
-   Preenchidos os três, a página CONTINUA em R$ 149,90: o cupom só liga
-   com `ativo: true` no mercado br, depois do teste do link (abaixo).
+   O build de produção TRAVA se algum deles voltar a "[PREENCHER", se um
+   link sair do checkout da Hotmart ou se o link do lançamento for o
+   mesmo do preço cheio. Build de teste: DM_ENDERECO_TESTE="Rua de
+   Teste, 123" npm run build (recusado em produção na Vercel).
 
-   CHECKOUT_USD também é exigido no go-live: o resto do mundo (rw) abre
-   junto com o Brasil (handoff, seção 13, passo 6). Para lançar só o
-   Brasil, vire rw para vendaAberta: false; o build lista os mercados
-   fechados em todo build, para a decisão ficar à vista.
+   Mercados de fora (la, rw, pt, es): links prontos, venda FECHADA
+   (vendaAberta: false) até o dono confirmar a abertura. Fechado, o
+   mercado não exige link; aberto, a trava confere o link dele. Todo
+   build lista os mercados fechados, para a decisão ficar à vista.
    --------------------------------------------------------------------- */
 export const PRODUTO_HOTMART = "7448309";
-const CHECKOUT_BRL = "[PREENCHER: link do plano BRL do produto 7448309]";
-const CUPOM_LANCAMENTO = "[PREENCHER: código do cupom de lançamento]";
-const FIM_DO_LANCAMENTO = "[PREENCHER: último dia do lançamento, AAAA-MM-DD]";
+const CHECKOUT_BRL = "https://pay.hotmart.com/K105072021O?off=fhrttdh8";
+const CHECKOUT_LANCAMENTO = "https://pay.hotmart.com/K105072021O?off=lf63bgdd";
+const FIM_DO_LANCAMENTO = "2026-11-16";
 
-/* Mercados fora do Brasil. Só são exigidos quando o mercado tiver
-   vendaAberta: true (a trava confere). Hoje rw está aberto, então o
-   CHECKOUT_USD trava o build de produção até o link existir. */
-const CHECKOUT_USD = "[PREENCHER: link do plano USD]";
-const CHECKOUT_EUR = "[PREENCHER: link do plano EUR]";
+/* América Latina e resto do mundo usam a MESMA oferta em dólar
+   (US$ 29,99 por ano). O checkout dela abre em espanhol: conferir antes
+   de abrir o rw, que é a página em português. */
+const CHECKOUT_USD = "https://pay.hotmart.com/K105072021O?off=uevhmhy2";
+const CHECKOUT_EUR_PT = "https://pay.hotmart.com/K105072021O?off=3n484jbe";
+const CHECKOUT_EUR_ES = "https://pay.hotmart.com/K105072021O?off=iuoufnf6";
 
-/** Parâmetro de cupom do checkout da Hotmart. É o mesmo que o botão do
-    WhatsApp do estudante usa (lib/whatsapp.js): o checkout abre com o
+/** Parâmetro de cupom do checkout da Hotmart. Só o estudante usa: o link
+    de /estudante/ativar leva o cupom pessoal nele, o checkout abre com o
     desconto aplicado e ninguém digita código. */
 export const PARAMETRO_CUPOM = "offDiscount";
 
-/** Cupom de estudante, em %, sobre o plano BRL (handoff, seção 1).
-    O dono ainda decide entre 40 e 44: trocar aqui muda a home, a
-    /estudante e a /sobre juntas. O desconto que a Hotmart aplica de fato
-    vem da variável STUDENT_DISCOUNT na Vercel (0.40 para 40%); a trava
-    avisa se as duas divergirem. */
+/** Cupom pessoal de estudante, em %, sobre a oferta oficial do Brasil
+    (R$ 149,90): 40% dá R$ 89,94 por ano (R$ 7,50/mês). Trocar aqui muda
+    a home, a /estudante e a /sobre juntas. O desconto que a Hotmart
+    aplica de fato vem da variável STUDENT_DISCOUNT na Vercel (0.40 para
+    40%); a trava avisa se as duas divergirem. */
 export const ESTUDANTE_DESCONTO = 40;
 
 export type Mercado = "br" | "la" | "es" | "pt" | "rw";
@@ -87,14 +93,22 @@ export type Oferta = {
   formato: Formato;
   /** Preço cheio do plano na Hotmart, na moeda do plano. */
   anual: number;
-  /** Cupom de lançamento, só no plano BRL. null = não existe neste mercado. */
+  /** Oferta de lançamento (outra oferta da Hotmart, não cupom), só no
+      Brasil. null = não existe neste mercado. */
   lancamento: null | {
-    percentual: number;
-    codigo: string;
+    /** Preço anual da oferta de lançamento, na moeda do plano. */
+    anual: number;
+    /** Anos em que o preço de lançamento vale. Depois, o checkout cobra
+        o `anual` do plano a cada ano. */
+    anos: number;
+    /** Link da oferta de lançamento na Hotmart, sem cupom. */
+    checkout: string;
     /** Último dia do preço de lançamento (AAAA-MM-DD, horário de Brasília). */
     terminaEm: string;
-    /** false = encerrado: R$ 149,90 e link sem cupom, mesmo antes da data. */
+    /** false = encerrado: preço cheio e link do plano, mesmo antes da data. */
     ativo: boolean;
+    /** A oferta de lançamento parcela? false: só à vista. */
+    parcela: boolean;
   };
   /** Link do plano na Hotmart (seção 4 do handoff), sem cupom. */
   checkout: string;
@@ -123,12 +137,15 @@ export type Oferta = {
     titulo: string;
     proposta: string;
     mes: string;
-    /** Junto da manchete quando o cupom de lançamento vale. */
+    /** Junto da manchete quando o preço de lançamento vale. */
     mesLancamento?: string;
     totalSufixo: string;
-    cupomAplicado?: string;
-    precoCheio?: string;
+    /** Depois do total, com o lançamento valendo. {anos} e {cheio} saem
+        do config (anos do lançamento e preço cheio formatado). */
+    lancamentoRegra?: string;
     pagamento: string;
+    /** No lugar de `pagamento` com o lançamento valendo. */
+    pagamentoLancamento?: string;
     botao: string;
     renovacao: string;
     renovacaoMesmoValor?: string;
@@ -139,7 +156,7 @@ export type Oferta = {
     nota: string;
   };
   /** Linhas de confiança sob o botão. Meio de pagamento muda por
-      mercado: Pix e boleto não existem fora do Brasil. */
+      mercado: Pix não existe fora do Brasil. */
   confianca: string[];
   /** Lista de espera, enquanto vendaAberta for false. */
   espera: {
@@ -161,20 +178,23 @@ export const MERCADOS: Record<Mercado, Oferta> = {
     formato: { simbolo: "R$", simboloDepois: false, decimal: "," },
     anual: 149.9,
     lancamento: {
-      percentual: 20,
-      codigo: CUPOM_LANCAMENTO,
+      anual: 99.98,
+      anos: 3,
+      checkout: CHECKOUT_LANCAMENTO,
       terminaEm: FIM_DO_LANCAMENTO,
-      // Vire para true só depois de o cupom existir na Hotmart e o link
-      // abrir o checkout já em R$ 119,92 (a trava mostra o link exato
-      // para o teste). Com false, a página mostra R$ 149,90 e o botão vai
-      // sem o parâmetro de cupom. Encerrado antes da data? Volte a false.
-      ativo: false,
+      // Ligado: até o FIM_DO_LANCAMENTO a página mostra R$ 99,98 e o botão
+      // abre a oferta de lançamento. Encerrado antes da data? Vire para
+      // false: a página volta a R$ 149,90 e o botão, ao CHECKOUT_BRL.
+      ativo: true,
+      // O checkout da oferta de lançamento não tem seletor de parcelas.
+      parcela: false,
     },
     checkout: CHECKOUT_BRL,
     imposto: "na",
     parcela: true,
-    // Pendência da seção 14: o cupom vale nas renovações? Enquanto o
-    // dono não confirmar, a página não promete "pelo mesmo valor".
+    // O checkout do lançamento diz que, depois de 3 anos, o valor passa a
+    // R$ 149,90: "pelo mesmo valor" não vale aqui. O texto do lançamento
+    // (lancamentoRegra) já conta a regra inteira.
     renovaMesmoValor: false,
     vendaAberta: true,
     semVenda: "bloco",
@@ -184,9 +204,13 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       mes: "/mês",
       mesLancamento: "no lançamento",
       totalSufixo: "por ano",
-      cupomAplicado: "com o cupom de lançamento já aplicado pelo botão",
-      precoCheio: "Preço cheio:",
-      pagamento: "Em até 12x no cartão",
+      lancamentoRegra: "nos {anos} primeiros anos. Depois, {cheio} por ano.",
+      // Sem valor de parcela: a Hotmart calcula. E o parcelado tem
+      // acréscimo (o checkout da fhrttdh8 mostrou 12x de R$ 16,40 em
+      // 12/10/2026): "com acréscimo" impede ler, ao lado da manchete
+      // "R$ 12,49/mês", 12x de R$ 12,49.
+      pagamento: "À vista, ou em até 12x no cartão com acréscimo",
+      pagamentoLancamento: "Pagamento à vista",
       botao: "Começar meu ano",
       renovacao: "Renova a cada ano. Cancele quando quiser.",
       renovacaoMesmoValor: "Renova a cada ano pelo mesmo valor. Cancele quando quiser.",
@@ -196,7 +220,9 @@ export const MERCADOS: Record<Mercado, Oferta> = {
     },
     confianca: [
       "Garantia incondicional de 7 dias",
-      "Pagamento seguro via Hotmart · Pix, cartão ou boleto",
+      // O checkout da oferta oficial mostra cartão, Apple Pay, Pix e Pix
+      // Automático (12/10/2026). Boleto não aparece lá, e saiu daqui.
+      "Pagamento seguro via Hotmart · Pix ou cartão",
       "iPhone e Android, o mesmo acesso nos dois",
     ],
     espera: {
@@ -214,14 +240,14 @@ export const MERCADOS: Record<Mercado, Oferta> = {
     ddi: "",
     moeda: "USD",
     formato: { simbolo: "US$", simboloDepois: false, decimal: "." },
-    anual: 24.99,
+    anual: 29.99,
     lancamento: null,
     checkout: CHECKOUT_USD,
     imposto: "fora",
     parcela: false,
     renovaMesmoValor: true,
-    // Lista de espera até o plano em dólar existir e os 365 textos em
-    // espanhol estarem revisados (handoff, seção 9).
+    // Fechado até o dono confirmar a abertura (e os 365 textos em
+    // espanhol estarem revisados, handoff, seção 9).
     vendaAberta: false,
     semVenda: "pagina",
     textos: {
@@ -257,10 +283,11 @@ export const MERCADOS: Record<Mercado, Oferta> = {
     formato: { simbolo: "€", simboloDepois: true, decimal: "," },
     anual: 29.99,
     lancamento: null,
-    checkout: CHECKOUT_EUR,
+    checkout: CHECKOUT_EUR_ES,
     imposto: "dentro",
     parcela: false,
     renovaMesmoValor: true,
+    // Fechado até o dono confirmar a abertura.
     vendaAberta: false,
     semVenda: "pagina",
     textos: {
@@ -295,11 +322,11 @@ export const MERCADOS: Record<Mercado, Oferta> = {
     formato: { simbolo: "€", simboloDepois: true, decimal: "," },
     anual: 29.99,
     lancamento: null,
-    checkout: CHECKOUT_EUR,
+    checkout: CHECKOUT_EUR_PT,
     imposto: "dentro",
     parcela: false,
     renovaMesmoValor: true,
-    // Lista de espera até o plano em euro existir na Hotmart.
+    // Fechado até o dono confirmar a abertura.
     vendaAberta: false,
     semVenda: "bloco",
     textos: {
@@ -331,19 +358,19 @@ export const MERCADOS: Record<Mercado, Oferta> = {
     locale: "pt-BR",
     ddi: "",
     moeda: "USD",
-    // Página em português: vírgula decimal (US$ 24,99).
+    // Página em português: vírgula decimal (US$ 29,99).
     formato: { simbolo: "US$", simboloDepois: false, decimal: "," },
-    anual: 24.99,
+    anual: 29.99,
     lancamento: null,
+    // Mesma oferta em dólar da América Latina (decisão do dono, 12/10).
     checkout: CHECKOUT_USD,
     imposto: "fora",
     parcela: false,
     renovaMesmoValor: true,
-    // Aberto, como no arquivo do dono e no handoff (seção 13, passo 6:
-    // Brasil e resto do mundo primeiro). Sem CHECKOUT_USD o build de
-    // produção trava. Para lançar só o Brasil, vire para false: o bloco
-    // vira a lista de espera e o build avisa que rw ficou fechado.
-    vendaAberta: true,
+    // Fechado até o dono confirmar a abertura: o bloco vira a lista de
+    // espera e o build lista rw entre os mercados fechados. Antes de
+    // abrir, conferir o checkout em dólar, que abre em espanhol.
+    vendaAberta: false,
     semVenda: "bloco",
     textos: {
       titulo: "Seu Diariamente por um ano",
@@ -377,7 +404,7 @@ export const LISTA_MERCADOS = Object.keys(MERCADOS) as Mercado[];
 
 const centavos = (v: number) => Math.round(v * 100);
 
-/** Marcador de campo ainda não preenchido (link, cupom, data). */
+/** Marcador de campo ainda não preenchido (link, data). */
 export function pendente(valor: string | null | undefined): boolean {
   return !valor || /\[PREENCHER/i.test(valor);
 }
@@ -400,23 +427,21 @@ export function fimDoLancamento(m: Mercado): number | null {
 }
 
 /**
- * O cupom de lançamento vale agora? Precisa estar ativo, ter código e
- * data preenchidos e a data não ter passado. `agora` vem do servidor
- * (prop `momento`) para o HTML e a hidratação concordarem.
+ * O preço de lançamento vale agora? Precisa estar ativo, ter o link da
+ * oferta e a data preenchidos e a data não ter passado. `agora` vem do
+ * servidor (prop `momento`) para o HTML e a hidratação concordarem.
  */
 export function lancamentoVigente(m: Mercado, agora: number = Date.now()): boolean {
   const l = MERCADOS[m].lancamento;
-  if (!l || !l.ativo || pendente(l.codigo)) return false;
+  if (!l || !l.ativo || pendente(l.checkout)) return false;
   const fim = fimDoLancamento(m);
   return fim !== null && agora < fim;
 }
 
-/** Preço efetivamente cobrado: aplica o cupom de lançamento quando vale. */
+/** Preço efetivamente cobrado agora: o da oferta de lançamento, quando vale. */
 export function precoFinal(m: Mercado, agora: number = Date.now()): number {
   const o = MERCADOS[m];
-  if (o.lancamento && lancamentoVigente(m, agora)) {
-    return Math.round((centavos(o.anual) * (100 - o.lancamento.percentual)) / 100) / 100;
-  }
+  if (o.lancamento && lancamentoVigente(m, agora)) return o.lancamento.anual;
   return o.anual;
 }
 
@@ -429,7 +454,7 @@ export function porMes(m: Mercado, agora: number = Date.now()): number {
   return mensal(precoFinal(m, agora));
 }
 
-/** Formata no padrão do mercado: R$ 149,90 · US$ 24.99 (es-419) · US$ 24,99 · 29,99 €. */
+/** Formata no padrão do mercado: R$ 149,90 · US$ 29.99 (es-419) · US$ 29,99 · 29,99 €. */
 export function formatar(m: Mercado, valor: number): string {
   const f = MERCADOS[m].formato;
   const [int, dec] = (Math.round(valor * 100) / 100).toFixed(2).split(".");
@@ -437,24 +462,40 @@ export function formatar(m: Mercado, valor: number): string {
   const inteiro = int.replace(/\B(?=(\d{3})+(?!\d))/g, milhar);
   const numero = `${inteiro}${f.decimal}${dec}`;
   // Espaço que não quebra: o símbolo nunca fica sozinho no fim da linha.
-  return f.simboloDepois ? `${numero}\u00A0${f.simbolo}` : `${f.simbolo}\u00A0${numero}`;
+  return f.simboloDepois ? `${numero} ${f.simbolo}` : `${f.simbolo} ${numero}`;
 }
 
-/** Junta o cupom ao link do checkout com o parâmetro da Hotmart. */
+/** Junta o cupom ao link do checkout com o parâmetro da Hotmart. Só o
+    estudante usa (cupom pessoal, /estudante/ativar). */
 export function linkComCupom(base: string, codigo: string): string {
   const sep = base.includes("?") ? "&" : "?";
   return `${base}${sep}${PARAMETRO_CUPOM}=${encodeURIComponent(codigo)}`;
 }
 
 /**
- * Link do botão. No Brasil, com o cupom de lançamento valendo, o código
- * vai embutido para o checkout abrir já com o desconto. Encerrado, o
- * link perde o parâmetro.
+ * Link do botão. No Brasil, com o lançamento valendo, é a oferta de
+ * lançamento; encerrado (data passada ou ativo: false), é a oferta
+ * oficial do plano. Nenhum dos dois leva cupom.
  */
 export function linkCheckout(m: Mercado, agora: number = Date.now()): string {
   const o = MERCADOS[m];
-  if (pendente(o.checkout) || !o.lancamento || !lancamentoVigente(m, agora)) return o.checkout;
-  return linkComCupom(o.checkout, o.lancamento.codigo);
+  if (o.lancamento && lancamentoVigente(m, agora)) return o.lancamento.checkout;
+  return o.checkout;
+}
+
+/** Parcela agora? A oferta de lançamento é só à vista. */
+export function parcelaAgora(m: Mercado, agora: number = Date.now()): boolean {
+  const o = MERCADOS[m];
+  if (o.lancamento && lancamentoVigente(m, agora)) return o.lancamento.parcela;
+  return o.parcela;
+}
+
+/** Linha de pagamento do bloco: "Pagamento à vista" no lançamento,
+    "À vista, ou em até 12x no cartão com acréscimo" no preço cheio.
+    Nunca valor de parcela. */
+export function pagamentoAgora(m: Mercado, agora: number = Date.now()): string {
+  const t = MERCADOS[m].textos;
+  return lancamentoVigente(m, agora) && t.pagamentoLancamento ? t.pagamentoLancamento : t.pagamento;
 }
 
 /** O mercado vende agora: chave ligada e link de verdade. */
@@ -462,9 +503,30 @@ export function vendeAgora(m: Mercado): boolean {
   return MERCADOS[m].vendaAberta && !pendente(MERCADOS[m].checkout);
 }
 
-/** Preço cheio riscado: só existe enquanto o cupom de lançamento vale. */
+/** Preço cheio riscado: só existe enquanto o preço de lançamento vale. */
 export function precoCheio(m: Mercado, agora: number = Date.now()): string | null {
   return lancamentoVigente(m, agora) ? formatar(m, MERCADOS[m].anual) : null;
+}
+
+/** Desconto do lançamento sobre o preço cheio, em % inteiro, arredondado
+    PARA BAIXO (R$ 99,98 sobre R$ 149,90 é 33,3%: o selo diz 33%, nunca
+    mais do que é). null fora do lançamento. */
+export function percentualDoLancamento(m: Mercado, agora: number = Date.now()): number | null {
+  const o = MERCADOS[m];
+  if (!o.lancamento || !lancamentoVigente(m, agora)) return null;
+  const cheio = centavos(o.anual);
+  if (cheio <= 0) return null;
+  const pct = Math.floor(((cheio - centavos(o.lancamento.anual)) * 100) / cheio);
+  return pct > 0 ? pct : null;
+}
+
+/** "nos 3 primeiros anos. Depois, R$ 149,90 por ano.", com o lançamento
+    valendo. null fora dele. */
+export function regraDoLancamento(m: Mercado, agora: number = Date.now()): string | null {
+  const o = MERCADOS[m];
+  const regra = o.textos.lancamentoRegra;
+  if (!o.lancamento || !regra || !lancamentoVigente(m, agora)) return null;
+  return regra.replace("{anos}", String(o.lancamento.anos)).replace("{cheio}", formatar(m, o.anual));
 }
 
 const MESES_PT = [
@@ -472,7 +534,7 @@ const MESES_PT = [
   "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
 ];
 
-/** "31 de outubro", para a linha "Preço de lançamento até ...". */
+/** "16 de novembro", para a linha "Preço de lançamento até ...". */
 export function dataDoLancamento(m: Mercado): string | null {
   const l = MERCADOS[m].lancamento;
   if (!l || !dataReal(l.terminaEm)) return null;
@@ -483,9 +545,12 @@ export function dataDoLancamento(m: Mercado): string | null {
 }
 
 /* ---------------------------- estudante ----------------------------
-   Cupom de uso único sobre o plano BRL (handoff, seção 1). Existe só no
-   Brasil: a validação usa CPF e o cobro é em real. Piso interno de
-   R$ 47, nunca público. */
+   Cupom PESSOAL de uso único sobre a oferta oficial do Brasil
+   (CHECKOUT_BRL, R$ 149,90), criado pela API da Hotmart quando o
+   estudante é aprovado e apagado pelo webhook do site quando o
+   pagamento é aprovado. Existe só no Brasil: a validação usa CPF e o
+   cobro é em real. Piso interno de R$ 47, nunca público. Nenhuma oferta
+   própria de estudante entra no site: o cupom pessoal é a única via. */
 
 export function precoEstudante(): number {
   return Math.round((centavos(MERCADOS.br.anual) * (100 - ESTUDANTE_DESCONTO)) / 100) / 100;

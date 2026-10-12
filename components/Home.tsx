@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { TEASER, ATIVOS, cld, dicionario, type Lang, type Dict } from "@/lib/i18n";
 import { caminho } from "@/lib/rotas";
-import { EMPRESA, SITE } from "@/config";
+import { EMPRESA, SITE, ESTUDANTE } from "@/config";
 import { registrarInicioDeCheckout } from "@/lib/medicao";
 import { BlocoOferta } from "@/components/BlocoOferta";
 import { SeletorMercado } from "@/components/SeletorMercado";
@@ -671,7 +671,7 @@ export function Home({ lang, mercado, momento, previa = false }: { lang: Lang; m
           </div>
           <div data-price="1">
             <div data-area="card">
-              {/* Preço, moeda, cupom e checkout vêm de config/pricing.ts.
+              {/* Preço, moeda, oferta e checkout vêm de config/pricing.ts.
                   Antes estavam escritos aqui dentro (R$ 197, R$ 137, ,90,
                   30% OFF), o que impedia ter mercado por geografia. */}
               <BlocoOferta mercado={mkt} momento={agora} previa={previa} />
@@ -703,11 +703,15 @@ export function Home({ lang, mercado, momento, previa = false }: { lang: Lang; m
                   em real. Mostrar este bloco em /es, /pt-pt ou /es-es
                   colocava "R$ 77,00" numa página de dólar e de euro, que
                   é o pior tipo de erro: preço de outra moeda na frente de
-                  quem não pode comprar naquela moeda. */}
-              {mkt === "br" && (
+                  quem não pode comprar naquela moeda.
+                  E só com o fluxo do cupom pessoal ABERTO neste build
+                  (ESTUDANTE.aberto, config.ts): fechado, o card some, para
+                  a home não levar a uma página que ainda não entrega o
+                  código. O preço segue ESTUDANTE.mostrarPreco. */}
+              {mkt === "br" && ESTUDANTE.aberto && (
               <div style={{ ...card, marginTop: 16 }}>
                 <span style={{ display: "inline-flex", alignItems: "center", height: 26, padding: "0 12px", borderRadius: 999, background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.25)", color: C.p300, fontSize: 11, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase" }}>{t.stBadge}</span>
-                <p style={{ margin: "12px 0 0", fontFamily: C.serif, fontSize: "clamp(20px,2vw,24px)", lineHeight: 1.3 }}>{t.stH.replace("{preco}", formatar("br", precoEstudante()))}</p>
+                <p style={{ margin: "12px 0 0", fontFamily: C.serif, fontSize: "clamp(20px,2vw,24px)", lineHeight: 1.3 }}>{ESTUDANTE.mostrarPreco ? t.stH.replace("{preco}", formatar("br", precoEstudante())) : t.stHSemPreco}</p>
                 <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: C.n400 }}>{t.stD}</p>
                 <a href={caminho("estudante", lang)} style={{ marginTop: 18, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, height: 48, padding: "0 22px", borderRadius: 999, border: `1.5px solid ${C.p500}`, color: C.p500, fontSize: 15, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
                   {t.stCta}
@@ -838,13 +842,12 @@ export function Home({ lang, mercado, momento, previa = false }: { lang: Lang; m
           </div>
           <hr style={{ height: 1, border: 0, background: C.line, margin: "clamp(32px,5vw,44px) 0 20px" }} />
           <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "12px 24px" }}>
-            {/* Identificação da empresa com endereço físico (Decreto 7.962/2013,
-                art. 2º). Tudo vem do config.ts: o endereço é ENDERECO_DA_EMPRESA,
-                e o build não passa enquanto ele for "[TROCAR". */}
+            {/* O app é global: no rodapé, só a assinatura "Diariamente App by
+                Science Play" (decisão do dono, 12/10/2026). Razão social, CNPJ
+                e endereço (Decreto 7.962/2013, art. 2º) ficam nos Termos e na
+                Política, a um clique daqui (config.ts, EMPRESA). */}
             <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.n400 }}>
-              © 2026 {EMPRESA.marca}® · {EMPRESA.razaoSocial} · CNPJ {EMPRESA.cnpj} · diariamente.app
-              <br />
-              {EMPRESA.endereco}
+              © {new Date(agora).getFullYear()} {EMPRESA.assinatura} · diariamente.app
             </p>
             <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
               {[.3, .4, .5, .6, .75, .9].map((o, i) => <i key={i} style={{ display: "block", width: 10, height: 4, borderRadius: 999, background: C.p500, opacity: o }} />)}

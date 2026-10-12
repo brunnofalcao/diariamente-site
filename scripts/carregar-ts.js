@@ -10,12 +10,16 @@
    exige), então não há dependência nova. O arquivo é só transpilado
    (sem checagem de tipo) para CommonJS e executado isolado. Import de
    tipo some na transpilação; import de verdade precisa vir em `modulos`.
+
+   Componentes .tsx: os testes passam `{ jsx: true }` e entregam
+   "react/jsx-runtime" em `modulos` para renderizar o HTML de verdade com
+   react-dom/server (React já é dependência do site).
    ===================================================================== */
 
 const fs = require("fs");
 const path = require("path");
 
-function carregarTs(arquivo, modulos = {}) {
+function carregarTs(arquivo, modulos = {}, opcoes = {}) {
   const ts = require("typescript");
   const fonte = fs.readFileSync(arquivo, "utf8");
   const { outputText } = ts.transpileModule(fonte, {
@@ -24,6 +28,7 @@ function carregarTs(arquivo, modulos = {}) {
       module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2019,
       esModuleInterop: true,
+      ...(opcoes.jsx ? { jsx: ts.JsxEmit.ReactJSX } : {}),
     },
   });
   const modulo = { exports: {} };

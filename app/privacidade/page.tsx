@@ -3,6 +3,7 @@ import { LegalShell } from "@/components/LegalShell";
 import { metadataDaPagina } from "@/lib/seo";
 import { caminho } from "@/lib/rotas";
 import { RevisarCookies } from "@/components/RevisarCookies";
+import { Titularidade } from "@/components/Titularidade";
 
 /* =====================================================================
    POLÍTICA DE PRIVACIDADE · PT
@@ -44,17 +45,13 @@ export default function Privacidade() {
         Europeia (Regulamento UE 2016/679, &ldquo;RGPD&rdquo;).
       </p>
 
+      {/* Titular, dados completos e cláusula de titularidade (decisão do
+          dono, 12/10/2026). Mesmo texto dos Termos e das versões es. */}
       <h2>1. Quem é o responsável pelo tratamento</h2>
+      <Titularidade lang="pt" doc="privacidade" />
       <p>
-        <strong>{EMPRESA.razaoSocial}</strong>, inscrita no CNPJ nº {EMPRESA.cnpj}, é a
-        controladora dos dados (&ldquo;responsável pelo tratamento&rdquo; no RGPD;
-        &ldquo;controladora&rdquo; na LGPD). O Diariamente é um produto operado por ela.
-      </p>
-      <p>
-        Endereço: {EMPRESA.endereco}
-        <br />
-        Contato para assuntos de privacidade:{" "}
-        <a href={`mailto:${EMPRESA.suporteEmail}`}>{EMPRESA.suporteEmail}</a>
+        Controladora é o termo da LGPD; no RGPD, o mesmo papel se chama
+        &ldquo;responsável pelo tratamento&rdquo;.
       </p>
       <p>
         A Science Play é <strong>responsável pelo tratamento</strong> dos dados, e não sua

@@ -4,17 +4,21 @@ import { MERCADOS, linkComCupom, pendente } from "@/config/pricing";
 /* =====================================================================
    /estudante/ativar?cupom=CODIGO · ponte do botão do WhatsApp
    ---------------------------------------------------------------------
-   O botão do template diariamente_estudante_aprovado é uma URL dinâmica
-   cuja base mora no painel da Meta. Hoje ela aponta direto para o link
-   antigo da Hotmart (L107085210M), e cada troca de plano exigiria editar
-   e reaprovar o template.
+   Fluxo do estudante (o original, retomado em 12/10/2026): aprovado o
+   estudante, o site cria o cupom PESSOAL dele pela API da Hotmart
+   (app/api/estudante/solicitar), o WhatsApp manda só o código, e o
+   botão do modelo v2 aponta para cá:
+     https://diariamente.app/estudante/ativar?cupom={{1}}
 
-   Com a base do template apontando para cá
-   (https://diariamente.app/estudante/ativar?cupom={{1}}), o link do
-   checkout passa a nascer de config/pricing.ts (CHECKOUT_BRL, produto
-   7448309) com o cupom no mesmo parâmetro offDiscount: trocar de plano é
-   editar o config, nunca o template. Enquanto o template não mudar,
-   nada muda para o estudante (lib/whatsapp.js segue mandando só o código).
+   Esta rota confere o formato do código e abre a OFERTA OFICIAL do
+   Brasil (CHECKOUT_BRL de config/pricing.ts, off=fhrttdh8, R$ 149,90)
+   com offDiscount=<cupom>: o checkout já abre com o desconto. O webhook
+   do site apaga o cupom na aprovação do pagamento (uso único). Trocar
+   de oferta é editar o config, nunca o modelo da Meta. O nome do modelo
+   que sai mora em WA_TEMPLATE_ESTUDANTE (lib/whatsapp.js).
+
+   Nunca a oferta de lançamento: o cupom do estudante incide sobre o
+   preço cheio, como a /estudante anuncia.
 
    Sem o link preenchido, ou com código fora do formato, volta para
    /estudante em vez de abrir um checkout quebrado.

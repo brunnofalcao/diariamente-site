@@ -390,8 +390,8 @@ export function EstudanteForm() {
       </span>
       <h2 className="ed-form-h">Sua condição de estudante</h2>
       <p className="ed-form-sub">
-        Leva cerca de um minuto. O código chega no seu WhatsApp e é aplicado no campo de
-        cupom da tela de pagamento.
+        Leva cerca de um minuto. O código chega no seu WhatsApp, com um botão que abre o
+        pagamento com o desconto já aplicado.
       </p>
 
       <div className="ed-prog">

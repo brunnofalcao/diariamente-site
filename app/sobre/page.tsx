@@ -1,6 +1,6 @@
 import { metadataDaPagina } from "@/lib/seo";
 import { SITE, EMPRESA } from "@/config";
-import { MERCADOS, formatar, mensal, precoFinal, lancamentoVigente, dataDoLancamento } from "@/config/pricing";
+import { MERCADOS, formatar, mensal, precoFinal, porMes, lancamentoVigente, dataDoLancamento } from "@/config/pricing";
 import { LockupHorizontal } from "@/components/Brand";
 
 /* =====================================================================
@@ -41,11 +41,22 @@ export default function Sobre() {
   const agora = Date.now();
   const cheio = formatar("br", MERCADOS.br.anual);
   const cheioMes = formatar("br", mensal(MERCADOS.br.anual));
+  // O lançamento é outra oferta: só à vista, e o preço dela vale nos
+  // primeiros anos; depois, o cheio. O parcelamento fica só no cheio,
+  // sempre "com acréscimo" e separado do equivalente mensal: o checkout
+  // parcela com acréscimo, e o mensal colado ao parcelamento se lia como
+  // parcela de R$ 12,49.
   const vigente = lancamentoVigente("br", agora);
   const lancamento = formatar("br", precoFinal("br", agora));
+  const lancamentoMes = formatar("br", porMes("br", agora));
+  const anos = MERCADOS.br.lancamento?.anos ?? 0;
   const ate = dataDoLancamento("br");
-  const condicao = vigente ? ` (${lancamento} no preço de lançamento, até ${ate})` : "";
-  const condicaoLista = vigente ? `; ${lancamento} no preço de lançamento, até ${ate}` : "";
+  const condicao = vigente
+    ? ` à vista, ou em até 12x no cartão com acréscimo. No lançamento, até ${ate}: ${lancamento} por ano à vista nos ${anos} primeiros anos e, depois, ${cheio} por ano`
+    : " à vista, ou em até 12x no cartão com acréscimo";
+  const condicaoLista = vigente
+    ? `; no lançamento, até ${ate}, ${lancamento} por ano (${lancamentoMes}/mês) à vista nos ${anos} primeiros anos e, depois, ${cheio} por ano`
+    : "";
   return (
     <main className="sobre">
       <header className="sobre-top">
@@ -101,9 +112,9 @@ export default function Sobre() {
                 <li><b>Categoria:</b> prática diária de hábitos e bem-estar</li>
                 <li><b>Formato:</b> aplicativo para iPhone e Android</li>
                 <li><b>Duração:</b> 365 dias, uma provocação por dia</li>
-                <li><b>Preço:</b> {cheio} por ano ({cheioMes}/mês){condicaoLista}, em até 12x no cartão</li>
+                <li><b>Preço:</b> {cheio} por ano à vista (equivale a {cheioMes}/mês), ou em até 12x no cartão com acréscimo{condicaoLista}</li>
                 <li><b>Garantia:</b> 7 dias, incondicional</li>
-                <li><b>Responsáveis:</b> Science Play · Science Play</li>
+                <li><b>Responsável:</b> {EMPRESA.assinatura}</li>
                 <li><b>Inscrição:</b> {SITE.dominio.replace("https://", "")} · acesso enviado por e-mail</li>
               </ul>
             </div>

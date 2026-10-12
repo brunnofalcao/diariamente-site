@@ -1,9 +1,10 @@
 import { metadataDaPagina } from "@/lib/seo";
-import { SITE, EMPRESA, PROVA, GARANTIA, SCREENSHOTS, ESTUDANTE } from "@/config";
+import { SITE, EMPRESA, PROVA, GARANTIA, SCREENSHOTS, ESTUDANTE, periodoEstudante } from "@/config";
 import { OfficialLogo } from "@/components/Brand";
 import { MERCADOS, formatar, precoEstudante, porMesEstudante } from "@/config/pricing";
 import { BlocoPreco } from "@/components/BlocoPreco";
 import { EstudanteForm } from "@/components/EstudanteForm";
+import { EstudanteEspera } from "@/components/EstudanteEspera";
 import { EstudanteSticky } from "@/components/EstudanteSticky";
 import "./estudante.css";
 
@@ -23,7 +24,19 @@ import "./estudante.css";
                 formulário aparece
 
    NADA de número inventado: prova vem de PROVA/GARANTIA no config.
+
+   Dois estados, decididos no build (ESTUDANTE.aberto, config.ts):
+     aberto   o formulário pede o código, e o cupom pessoal nasce na
+              Hotmart
+     fechado  falta configuração na Vercel (o log do build diz qual):
+              o formulário dá lugar à lista de espera (EstudanteEspera)
+              e os botões dizem "Me avise quando abrir". Nada pede CPF,
+              nada emite cupom.
    ===================================================================== */
+
+// Fluxo do cupom pessoal aberto neste build?
+const ABERTO = ESTUDANTE.aberto;
+const CTA = ABERTO ? "Solicitar minha condição" : "Me avise quando abrir";
 
 const TITULO = "Diariamente para estudantes · condição exclusiva de graduação";
 const DESCRICAO =
@@ -178,11 +191,11 @@ const RESUMO: [string, string][] = [
   ["Condição", "Exclusiva para estudantes de graduação"],
   ["Formato", "Aplicativo para iPhone e Android, uma provocação por dia"],
   ["Duração", "365 provocações, uma liberada a cada dia"],
-  ["Preço estudante", `${formatar("br", precoEstudante())} por ano, ${formatar("br", porMesEstudante())}/mês (valor cheio ${formatar("br", MERCADOS.br.anual)})`],
+  ["Preço estudante", `${formatar("br", precoEstudante())} ${periodoEstudante()}, ${formatar("br", porMesEstudante())}/mês (valor cheio ${formatar("br", MERCADOS.br.anual)})`],
   ["Entrega", "Código pessoal enviado por WhatsApp"],
   ["Público", "Estudantes de graduação de qualquer curso"],
   ["Autores", "Science Play"],
-  ["Responsável", `${EMPRESA.marca}, ${EMPRESA.razaoSocial}`],
+  ["Responsável", EMPRESA.assinatura],
   ["Garantia", `${GARANTIA.dias} dias`],
 ];
 
@@ -215,7 +228,7 @@ export default function Estudante() {
               <OfficialLogo height={26} />
             </a>
             <a href="#formulario" className="ed-topbar-cta">
-              Solicitar minha condição
+              {CTA}
             </a>
           </div>
         </header>
@@ -244,7 +257,7 @@ export default function Estudante() {
 
               <div className="ed-actions">
                 <a href="#formulario" className="ed-btn ed-btn-primary">
-                  Solicitar minha condição
+                  {CTA}
                 </a>
                 <a href="#como-funciona" className="ed-btn ed-btn-ghost">
                   Como funciona
@@ -415,12 +428,13 @@ export default function Estudante() {
 
             <div className="ed-actions" style={{ justifyContent: "center", marginTop: "clamp(28px, 4vw, 40px)" }}>
               <a href="#formulario" className="ed-btn ed-btn-primary">
-                Solicitar meu código
+                {ABERTO ? "Solicitar meu código" : CTA}
               </a>
             </div>
             <p className="ed-legal" style={{ marginTop: 12 }}>
-              Solicitar não gera compromisso. O código chega no seu WhatsApp e você
-              decide depois, com calma.
+              {ABERTO
+                ? "Solicitar não gera compromisso. O código chega no seu WhatsApp e você decide depois, com calma."
+                : "A solicitação do código abre em breve. Deixe seu contato e avisamos no dia em que abrir."}
             </p>
           </div>
         </section>
@@ -429,6 +443,8 @@ export default function Estudante() {
         <section className="ed-sec" id="formulario">
           <div className="ed-wrap ed-form-grid">
             <aside className="ed-rail">
+              {ABERTO ? (
+              <>
               <div className="ed-rail-block">
                 <div className="ed-rail-t">Por que pedimos esses dados</div>
                 <p className="ed-rail-d">
@@ -450,6 +466,16 @@ export default function Estudante() {
                   {GARANTIA.dias} dias de garantia.
                 </p>
               </div>
+              </>
+              ) : (
+              <div className="ed-rail-block">
+                <div className="ed-rail-t">Quando abrir</div>
+                <p className="ed-rail-d">
+                  Avisamos pelo WhatsApp e pelo e-mail que você deixar. Aí é preencher os dados
+                  de estudante e receber o código, pessoal, no WhatsApp.
+                </p>
+              </div>
+              )}
               <div className="ed-rail-block">
                 <div className="ed-rail-t">Seus dados</div>
                 <p className="ed-rail-d">
@@ -459,7 +485,7 @@ export default function Estudante() {
               </div>
             </aside>
 
-            <EstudanteForm />
+            {ABERTO ? <EstudanteForm /> : <EstudanteEspera />}
           </div>
         </section>
 
@@ -488,12 +514,13 @@ export default function Estudante() {
             <div className="ed-final ed-reveal">
               <h2 className="ed-final-h">Constância não espera a formatura.</h2>
               <p className="ed-final-d">
-                Solicite sua condição de estudante, receba o código no WhatsApp e comece pela
-                provocação de hoje. O primeiro dia é o único que depende só de você.
+                {ABERTO
+                  ? "Solicite sua condição de estudante, receba o código no WhatsApp e comece pela provocação de hoje. O primeiro dia é o único que depende só de você."
+                  : "Deixe seu contato e avisamos no dia em que a solicitação abrir. Depois, é receber o código no WhatsApp e começar pela provocação do dia."}
               </p>
               <div className="ed-actions">
                 <a href="#formulario" className="ed-btn ed-btn-primary">
-                  Solicitar minha condição
+                  {CTA}
                 </a>
               </div>
             </div>
@@ -521,7 +548,7 @@ export default function Estudante() {
         <footer className="ed-footer">
           <div className="ed-wrap ed-footer-row">
             <p>
-              © {new Date().getFullYear()} {EMPRESA.marca}® · {EMPRESA.razaoSocial} ·{" "}
+              © {new Date().getFullYear()} {EMPRESA.assinatura} ·{" "}
               {SITE.dominio.replace("https://", "")}
             </p>
             <nav aria-label="Links institucionais">
@@ -533,7 +560,11 @@ export default function Estudante() {
           </div>
         </footer>
 
-        <EstudanteSticky alvo="formulario" />
+        <EstudanteSticky
+          alvo="formulario"
+          texto={ABERTO ? "Leva um minuto. O código chega no WhatsApp." : "Abre em breve. Avisamos você."}
+          rotulo={ABERTO ? "Solicitar" : "Me avise"}
+        />
       </main>
     </>
   );

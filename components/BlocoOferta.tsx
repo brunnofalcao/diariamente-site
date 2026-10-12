@@ -1,10 +1,12 @@
 "use client";
 
 import {
-  MERCADOS, precoFinal, porMes, formatar, linkCheckout, precoCheio, lancamentoVigente,
-  dataDoLancamento, pendente, precoEstudante, porMesEstudante,
+  MERCADOS, precoFinal, porMes, formatar, linkCheckout, lancamentoVigente,
+  dataDoLancamento, pendente, precoEstudante, porMesEstudante, pagamentoAgora,
+  percentualDoLancamento, regraDoLancamento,
   type Mercado,
 } from "@/config/pricing";
+import { ESTUDANTE, periodoEstudante } from "@/config";
 import { caminho } from "@/lib/rotas";
 import { registrarInicioDeCheckout } from "@/lib/medicao";
 import { ListaEsperaForm } from "@/components/ListaEsperaForm";
@@ -13,7 +15,7 @@ import { ListaEsperaForm } from "@/components/ListaEsperaForm";
    BLOCO DE OFERTA · cinco variantes
    ---------------------------------------------------------------------
    Handoff, seção 2. Nenhum preço escrito aqui: tudo vem de
-   config/pricing.ts. Trocar valor, moeda, cupom ou link é editar
+   config/pricing.ts. Trocar valor, moeda, oferta ou link é editar
    aquele arquivo, e o bloco acompanha nos cinco mercados.
 
    O que o visitante vê, em qualquer mercado com venda aberta:
@@ -24,7 +26,14 @@ import { ListaEsperaForm } from "@/components/ListaEsperaForm";
    Nunca: duas moedas, duas opções de plano, campo de cupom, contador,
    conversão na tela, valor de parcela.
 
-   Mercado com vendaAberta: false (hoje pt, la e es): o bloco vira a
+   Brasil no lançamento (até FIM_DO_LANCAMENTO): o preço da oferta de
+   lançamento, a regra dela (3 primeiros anos, depois o preço cheio, que
+   é o que o checkout diz) e "Pagamento à vista": a oferta de lançamento
+   não parcela. Depois da data: o preço cheio e "À vista, ou em até 12x
+   no cartão com acréscimo", sem valor de parcela (a Hotmart calcula, e
+   o parcelado custa mais que o equivalente mensal da manchete).
+
+   Mercado com vendaAberta: false (hoje la, es, pt e rw): o bloco vira a
    lista de espera daquele mercado, sem preço nenhum. Exceção: `previa`
    (só nas prévias internas /pt-pt/embreve e /es-es/embreve), que mostra
    o bloco de venda para revisão, com o botão desabilitado.
@@ -98,7 +107,8 @@ export function BlocoOferta({ mercado, momento, previa = false }: { mercado: Mer
 
   /* ------------------------------ VENDA ------------------------------ */
   const vigente = lancamentoVigente(mercado, momento);
-  const cheio = precoCheio(mercado, momento);
+  const regra = regraDoLancamento(mercado, momento);
+  const pct = percentualDoLancamento(mercado, momento);
   const link = linkCheckout(mercado, momento);
   // Só chega aqui com a venda fechada na prévia interna.
   const fechado = !o.vendaAberta;
@@ -113,8 +123,9 @@ export function BlocoOferta({ mercado, momento, previa = false }: { mercado: Mer
 
   return (
     <div style={moldura}>
-      {/* O selo só aparece com o cupom valendo, com o percentual do config. */}
-      <Cabecalho titulo={t.titulo} selo={vigente && o.lancamento ? `${o.lancamento.percentual}% OFF` : undefined} />
+      {/* O selo só aparece com o lançamento valendo: o desconto da oferta
+          de lançamento sobre o preço cheio, arredondado para baixo. */}
+      <Cabecalho titulo={t.titulo} selo={vigente && pct ? `${pct}% OFF` : undefined} />
 
       <div style={miolo}>
         <p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: C.n300 }}>{t.proposta}</p>
@@ -131,21 +142,17 @@ export function BlocoOferta({ mercado, momento, previa = false }: { mercado: Mer
           )}
         </div>
 
-        {/* TOTAL ANUAL. Com o cupom valendo, diz que ele já vem no botão e
-            mostra o preço cheio: nada de código para digitar. */}
+        {/* TOTAL ANUAL. Com o lançamento valendo, a regra inteira, como o
+            checkout diz: o preço vale nos 3 primeiros anos e depois passa
+            ao preço cheio a cada ano. */}
         <p style={{ margin: "10px 0 0", fontSize: 15, lineHeight: 1.6, color: C.n200 }}>
           <strong style={{ color: "#fff", fontWeight: 600 }}>{anual}</strong> {t.totalSufixo}
-          {vigente && t.cupomAplicado ? `, ${t.cupomAplicado}.` : ""}
+          {regra ? ` ${regra}` : ""}
         </p>
-        {cheio && t.precoCheio && (
-          <p style={{ margin: "2px 0 0", fontSize: 14, lineHeight: 1.5, color: C.n400 }}>
-            {t.precoCheio} <s>{cheio}</s>
-          </p>
-        )}
 
         <div style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 8, minHeight: 30, padding: "4px 12px", borderRadius: 999, background: C.s0, border: "1px solid rgba(255,255,255,.1)", fontSize: 13, fontWeight: 600, color: C.n200 }}>
           <Relogio />
-          {t.pagamento}
+          {pagamentoAgora(mercado, momento)}
         </div>
 
         {/* Prazo do lançamento em TEXTO. Sem contador: urgência artificial
@@ -187,11 +194,19 @@ export function BlocoOferta({ mercado, momento, previa = false }: { mercado: Mer
         )}
 
         {/* Estudante só existe no Brasil: a validação usa CPF e o cobro é
-            em real (handoff, seção 12, item P2). */}
-        {mercado === "br" && t.estudante && (
+            em real (handoff, seção 12, item P2). Só aparece com o fluxo
+            do cupom pessoal ABERTO neste build (ESTUDANTE.aberto, config.ts):
+            fechado, a home não leva a uma página que ainda não entrega o
+            código. O preço segue ESTUDANTE.mostrarPreco, como na
+            /estudante, e vale "no primeiro ano" enquanto a renovação do
+            cupom não estiver confirmada: ao lado de "R$ 99,98 por ano nos
+            3 primeiros anos", "por ano" daria a entender os três. */}
+        {mercado === "br" && t.estudante && ESTUDANTE.aberto && (
           <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 13.5, lineHeight: 1.5 }}>
             <a href={caminho("estudante", "pt")} style={{ color: C.p300, textDecoration: "none" }}>
-              {t.estudante}: {formatar("br", porMesEstudante())}{t.mes} · {formatar("br", precoEstudante())} {t.totalSufixo}
+              {ESTUDANTE.mostrarPreco
+                ? `${t.estudante}: ${formatar("br", porMesEstudante())}${t.mes} · ${formatar("br", precoEstudante())} ${periodoEstudante()}`
+                : `${t.estudante}: ver a condição`}
             </a>
           </p>
         )}

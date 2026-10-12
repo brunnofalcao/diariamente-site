@@ -3,6 +3,7 @@ import { LegalShell } from "@/components/LegalShell";
 import { metadataDaPagina } from "@/lib/seo";
 import { caminho } from "@/lib/rotas";
 import { RevisarCookies } from "@/components/RevisarCookies";
+import { Titularidade } from "@/components/Titularidade";
 
 /* =====================================================================
    POLÍTICA DE PRIVACIDAD · ES
@@ -24,17 +25,10 @@ export default function Privacidad() {
         Europea (Reglamento UE 2016/679, &ldquo;RGPD&rdquo;).
       </p>
 
+      {/* Titular, datos completos y cláusula de titularidad (decisión del
+          dueño, 12/10/2026). Mismo texto de las Condiciones y de la versión pt. */}
       <h2>1. Quién es el responsable del tratamiento</h2>
-      <p>
-        <strong>{EMPRESA.razaoSocial}</strong>, inscrita en el CNPJ nº {EMPRESA.cnpj}, es la
-        responsable del tratamiento. Diariamente es un producto operado por ella.
-      </p>
-      <p>
-        Dirección: {EMPRESA.endereco}
-        <br />
-        Contacto para asuntos de privacidad:{" "}
-        <a href={`mailto:${EMPRESA.suporteEmail}`}>{EMPRESA.suporteEmail}</a>
-      </p>
+      <Titularidade lang="es" doc="privacidade" />
       <p>
         Science Play es <strong>responsable del tratamiento</strong> de los datos, no su
         propietaria. Los datos personales no son propiedad de nadie: conservas tus derechos

@@ -1,5 +1,7 @@
-import { ESTUDANTE, GARANTIA, PLANO_APP } from "@/config";
-import { formatar, mensal, precoFinal, precoEstudante, porMesEstudante, MERCADOS } from "@/config/pricing";
+import { ESTUDANTE, GARANTIA, PLANO_APP, periodoEstudante } from "@/config";
+import {
+  formatar, mensal, precoFinal, precoEstudante, porMesEstudante, lancamentoVigente, regraDoLancamento, MERCADOS,
+} from "@/config/pricing";
 
 /**
  * BlocoPreco — pitch de venda da condição de estudante.
@@ -16,9 +18,27 @@ import { formatar, mensal, precoFinal, precoEstudante, porMesEstudante, MERCADOS
  *
  * TODOS os números são CALCULADOS a partir de config/pricing.ts. Nenhum
  * percentual, economia ou valor de desconto é digitado à mão. A âncora é o
- * que qualquer pessoa paga HOJE pelo site (com o cupom de lançamento, se
- * ele estiver valendo), para o desconto exibido ser sempre verdadeiro.
+ * que qualquer pessoa paga HOJE pelo site (o preço de lançamento, se ele
+ * estiver valendo), para o desconto exibido ser sempre verdadeiro.
  * A página /estudante se refaz a cada hora, como as homes.
+ *
+ * O cupom do estudante é pessoal, sobre a oferta oficial (R$ 149,90). Se
+ * ele vale também nas renovações ainda não está confirmado: a página não
+ * promete duração (ESTUDANTE.renovaMesmoValor, em config.ts).
+ *
+ * DURANTE O LANÇAMENTO a âncora é R$ 99,98, que vale nos 3 primeiros
+ * anos, e o cupom tem duração desconhecida. Comparar só o primeiro ano
+ * sem dizer isso levaria o estudante à opção que pode sair mais cara em
+ * 3 anos (89,94 + 149,90 + 149,90 contra 3 x 99,98), uma omissão de
+ * informação essencial (CDC, art. 37, § 3º). Por isso, enquanto o
+ * lançamento valer OU a renovação não estiver confirmada, toda economia
+ * é dita "no primeiro ano", e a coluna "Quem entra hoje pelo site"
+ * mostra a regra do lançamento (regraDoLancamento). Nada aqui promete
+ * duração do cupom.
+ *
+ * ESTUDANTE.aberto = false (fluxo fechado neste build): o card avisa que
+ * a solicitação do código abre em breve, em vez de dizer que o código
+ * chega e o botão abre o pagamento.
  *
  * ESTUDANTE.mostrarPreco = false devolve a versão sem número, para o caso
  * de a condição ainda não existir na Hotmart.
@@ -73,13 +93,42 @@ function Inclui() {
   );
 }
 
+/** O que o card diz sobre a entrega do código: aberto, como funciona;
+    fechado, que abre em breve. */
+function Entrega() {
+  if (!ESTUDANTE.aberto) {
+    return (
+      <div className="ed-price-hint">
+        <b>A solicitação do código abre em breve.</b> Deixe seu contato no formulário
+        abaixo e avisamos pelo WhatsApp e pelo e-mail no dia em que abrir. {ESTUDANTE.regra}
+      </div>
+    );
+  }
+  return (
+    <div className="ed-price-hint">
+      <b>O código chega só no WhatsApp.</b> Ele é pessoal, vale por{" "}
+      {ESTUDANTE.validadeHoras} horas, e o botão da mensagem abre o pagamento com o
+      desconto já aplicado. {ESTUDANTE.regra}
+    </div>
+  );
+}
+
 export function BlocoPreco() {
   // Preço público de hoje (server component: hora do render).
-  const de = precoFinal("br", Date.now());
+  const agora = Date.now();
+  const de = precoFinal("br", agora);
   const por = precoEstudante();
   const offReais = Math.round((de - por) * 100) / 100;
   const offPct = de > 0 ? Math.round((1 - por / de) * 100) : 0;
   const mes = MERCADOS.br.textos.mes;
+  // "nos 3 primeiros anos. Depois, R$ 149,90 por ano." enquanto o
+  // lançamento vale; null depois.
+  const vigente = lancamentoVigente("br", agora);
+  const regra = regraDoLancamento("br", agora);
+  // A economia só é "por ano" quando a renovação do cupom estiver
+  // confirmada e não houver preço de lançamento de 3 anos ao lado.
+  const soPrimeiroAno = vigente || !ESTUDANTE.renovaMesmoValor;
+  const quando = soPrimeiroAno ? "no primeiro ano" : "por ano";
 
   if (!ESTUDANTE.mostrarPreco) {
     return (
@@ -96,11 +145,7 @@ export function BlocoPreco() {
             O valor da condição de estudante é enviado junto com o seu código, no
             WhatsApp. Solicitar não gera nenhum compromisso.
           </p>
-          <div className="ed-price-hint">
-            <b>O código chega só no WhatsApp.</b> Ele é pessoal, vale por{" "}
-            {ESTUDANTE.validadeHoras} horas e é aplicado no campo de cupom da tela de
-            pagamento. {ESTUDANTE.regra}
-          </div>
+          <Entrega />
         </div>
         <Inclui />
       </div>
@@ -112,7 +157,7 @@ export function BlocoPreco() {
       <div className="ed-offer">
         {/* ---------------- card de preço ---------------- */}
         <div className="ed-price">
-          <span className="ed-price-selo">{brl(offReais)} OFF</span>
+          <span className="ed-price-selo">{brl(offReais)} OFF {quando}</span>
 
           <div className="ed-price-nome">{PLANO_APP.nome} · acesso de 1 ano</div>
 
@@ -125,15 +170,13 @@ export function BlocoPreco() {
           </div>
 
           <p className="ed-price-nota">
-            {offPct}% a menos que o valor que qualquer pessoa paga hoje.{" "}
-            {brl(porMesEstudante())}{mes}, por um ano inteiro de provocação diária.
+            {offPct}% a menos {quando} que o valor que qualquer pessoa paga hoje.{" "}
+            {regra ? `Hoje, pelo site, o preço de lançamento é ${brl(de)} por ano ${regra} ` : ""}
+            {brl(porMesEstudante())}{mes}, por um ano inteiro de provocação diária.{" "}
+            {ESTUDANTE.renovaMesmoValor ? ESTUDANTE.renovacaoMesmoValor : ESTUDANTE.renovacao}
           </p>
 
-          <div className="ed-price-hint">
-            <b>O código chega só no WhatsApp.</b> Ele é pessoal, vale por{" "}
-            {ESTUDANTE.validadeHoras} horas e é aplicado no campo de cupom da tela de
-            pagamento. {ESTUDANTE.regra}
-          </div>
+          <Entrega />
         </div>
 
         <Inclui />
@@ -145,18 +188,19 @@ export function BlocoPreco() {
           <span className="ed-econ-k">Quem entra hoje pelo site</span>
           <span className="ed-econ-v">{brl(de)}</span>
           <span className="ed-econ-d">{brl(mensal(de))}{mes}</span>
+          {regra && <span className="ed-econ-d">Por ano {regra}</span>}
         </div>
 
         <div className="ed-econ-col is-on">
           <span className="ed-econ-k">Sua condição de estudante</span>
           <span className="ed-econ-v">{brl(por)}</span>
-          <span className="ed-econ-d">{brl(porMesEstudante())}{mes}</span>
+          <span className="ed-econ-d">{brl(porMesEstudante())}{mes} {periodoEstudante()}</span>
         </div>
 
         <div className="ed-econ-col is-eco">
-          <span className="ed-econ-k">Você economiza</span>
+          <span className="ed-econ-k">Você economiza {quando}</span>
           <span className="ed-econ-v">{brl(offReais)}</span>
-          <span className="ed-econ-d">{offPct}% de diferença</span>
+          <span className="ed-econ-d">{offPct}% de diferença {quando}</span>
         </div>
       </div>
     </>

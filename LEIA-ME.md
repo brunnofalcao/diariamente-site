@@ -1,69 +1,152 @@
 # Diariamente · versão auditada para publicação
 
-> **Lançamento do Brasil e mercados (out/2026, branch `claude/site-lancamento`).**
+> **Lançamento do Brasil e mercados (out/2026, branch `claude/site-lancamento`, PR #3).**
 > O que vale é esta caixa; o resto do arquivo é o histórico das entregas
 > anteriores (inclusive a auditoria do dono, que descrevia o site oculto).
+> Decisões do dono de 12/10/2026 aplicadas: links da Hotmart, lançamento
+> como oferta própria, estudante com cupom pessoal, mercados de fora
+> fechados e "Diariamente App by Science Play" no que é visível.
 >
 > | URL | Mostra |
 > | --- | --- |
-> | `/` (país BR) | **site de vendas**, plano BRL do produto 7448309 |
-> | `/` (fora de BR, PT, ES e América Latina) | a mesma página, reescrita para `/mundo`, com o bloco em dólar (US$ 24,99); o build de produção trava até o `CHECKOUT_USD` existir |
-> | `/pt-pt` | página de vendas em pt-PT, lista de espera no bloco até o plano EUR existir |
-> | `/es` e `/es-es` | lista de espera em espanhol (página inteira) até o plano e o acervo em espanhol |
+> | `/` (país BR) | **site de vendas.** Até 16/11/2026, a oferta de lançamento (`off=lf63bgdd`): R$ 99,98 por ano (R$ 8,33/mês) nos 3 primeiros anos e, depois, R$ 149,90 por ano, só à vista. A partir de 17/11, a oferta oficial (`off=fhrttdh8`): R$ 149,90 por ano à vista (R$ 12,49/mês), ou em até 12x no cartão com acréscimo, sem valor de parcela |
+> | `/` (fora de BR, PT, ES e América Latina) | a mesma página, reescrita para `/mundo`, com a lista de espera no bloco (rw fechado; aberto, US$ 29,99 por ano pela oferta `uevhmhy2`) |
+> | `/pt-pt` | página de vendas em pt-PT, lista de espera no bloco (pt fechado; link `3n484jbe` pronto) |
+> | `/es` e `/es-es` | lista de espera em espanhol (página inteira; la e es fechados, links `uevhmhy2` e `iuoufnf6` prontos) |
 > | `/pt-pt/embreve`, `/es-es/embreve` | **prévias do dono** (noindex, fora do sitemap, abrem de qualquer país): página de vendas de Portugal e da Espanha com o bloco de 29,99 €, botão desabilitado enquanto a venda do mercado estiver fechada |
+> | `/estudante` | condição de estudante: R$ 89,94 no primeiro ano (R$ 7,50/mês), 40% sobre R$ 149,90; o cupom pessoal chega pelo WhatsApp. **Fechada sozinha** enquanto faltar configuração na Vercel (item 1 abaixo): lista de espera no lugar do formulário, e a home não leva até ela |
+> | `/estudante/ativar?cupom=CODIGO` | confere o código e abre a oferta oficial `fhrttdh8` com `offDiscount=CODIGO` |
 > | `/embreve`, `/es/embreve` | redirecionam para `/` e `/es`, com utm |
 >
-> **QUADRO DE GO-LIVE · pendências do dono, nesta ordem.** O build de
-> produção trava sozinho nos itens marcados com (trava); os outros só
-> aparecem como aviso no log do build, então confira um a um.
+> **QUADRO DE GO-LIVE · nesta ordem.** O site no ar vende na hora: o
+> botão do Brasil já abre a oferta de lançamento.
 >
-> 1. **Plano BRL** no produto 7448309 (R$ 149,90): o link vai em
->    `CHECKOUT_BRL`, em `config/pricing.ts`, sem cupom no link. (trava)
-> 2. **Cupom de lançamento** de 20%, restrito ao plano BRL: o código vai
->    em `CUPOM_LANCAMENTO`, escrito igual ao cadastro. (trava) Na
->    Hotmart, deixe a validade do cupom até pelo menos **02:00 do dia
->    seguinte** ao `FIM_DO_LANCAMENTO`: a home fica em cache por até uma
->    hora e quem abriu o checkout perto da meia-noite ainda paga.
-> 3. **Último dia do lançamento** em `FIM_DO_LANCAMENTO` (AAAA-MM-DD,
->    horário de Brasília; data que não existe, como 2026-11-31, trava). (trava)
-> 4. **Ligar o cupom na página.** Preenchidos os três, a página continua em
->    R$ 149,90 (`ativo: false` no mercado br, como o dono deixou). O build
->    mostra no aviso o link exato com `offDiscount`: abra, confira
->    **R$ 119,92** no checkout e só então vire `ativo: true`.
-> 5. **Resto do mundo (rw)** abre junto com o Brasil (handoff, seção 13,
->    passo 6): o link do plano USD vai em `CHECKOUT_USD`. (trava) Para
->    lançar só o Brasil, vire rw para `vendaAberta: false`; todo build
->    lista os mercados em lista de espera, para a decisão ficar à vista.
-> 6. **Estudante, antes de divulgar a /estudante** (ela anuncia R$ 89,94
->    com `ESTUDANTE.mostrarPreco: true`):
->    - trocar a base do botão do template `diariamente_estudante_aprovado`
->      de `https://pay.hotmart.com/L107085210M?checkoutMode=10&offDiscount={{1}}`
->      (produto 8280315, R$ 137,90, checkout fechado com o erro 049) para
->      `https://diariamente.app/estudante/ativar?cupom={{1}}` e reaprovar
->      na Meta (a rota monta o link a partir do `CHECKOUT_BRL`);
->    - na Vercel, `HOTMART_PRODUCT_ID=7448309` e, em `HOTMART_OFFER_IDS`,
->      o id NUMÉRICO da oferta do plano BRL novo (o código `off` não serve);
->    - feito isso, `DM_TEMPLATE_ESTUDANTE_OK=1` na Vercel cala o aviso.
-> 7. **Endereço da empresa** em `ENDERECO_DA_EMPRESA`, no `config.ts`. (trava)
-> 8. **Antes de abrir Portugal e Espanha:** revisar `/pt-pt/embreve` e
->    `/es-es/embreve`, e então `vendaAberta: true` em pt ou es com o
->    `CHECKOUT_EUR` (trava). O pagamento em espanhol ainda diz "reales
->    brasileños (BRL)" em `/es/condicionesdeuso` (seção 4): revisar antes
->    de abrir la ou es.
+> **(a) Primeiro, no app.** Na Hotmart, o webhook do produto 7448309
+> reconfigurado para o app, e a chave `HOTMART_WEBHOOK_V2` na **posição 1**
+> no Railway (`docs/HOTMART-WEBHOOK-V2.md`, no repositório do app). Sem
+> isso, quem paga fica sem conta. **Feito isso, na Vercel, Settings,
+> Environment Variables, Production: `DM_WEBHOOK_V2_OK=1`.** É a
+> confirmação de que o passo (a) foi feito: sem ela, o build de produção
+> da Vercel **trava** (`scripts/checar-precos.js`) enquanto algum mercado
+> vende. Preview e build local não travam por isso.
+>
+> **(b) Só então, o merge do PR #3 do site.** Com `DM_WEBHOOK_V2_OK=1`, o
+> build de produção passa (as travas estão satisfeitas); o log mostra os
+> avisos abaixo, um por um. Merge antes da variável: o deploy de produção
+> falha, e o site antigo continua no ar.
+>
+> Depois do merge (não travam o build; saem como aviso em todo build):
+>
+> 1. **Estudante: fechado sozinho até a Vercel ter as três chaves.** O
+>    fluxo é o original: aprovado o estudante, o site cria o cupom PESSOAL
+>    dele pela API da Hotmart; o WhatsApp leva o botão para
+>    `/estudante/ativar`, que abre a oferta oficial `fhrttdh8` com o cupom;
+>    o webhook do site apaga o cupom quando o pagamento é aprovado (uso
+>    único). **Enquanto faltar uma das três chaves abaixo, o build fecha o
+>    fluxo** (`DM_ESTUDANTE_ABERTO`, calculada no `next.config.js`): a home
+>    não mostra "Sou estudante" nem o card de estudante, a `/estudante`
+>    mostra a lista de espera no lugar do formulário (os contatos entram na
+>    lista com origem `estudante`, conversão `diariamente-estudante-em-breve`
+>    no RD) e `/api/estudante/solicitar` responde 503 **sem gravar nada**:
+>    nenhum cupom nasce, nenhum CPF fica preso pela regra "um CPF, um
+>    pedido", nenhuma mensagem sai. O log diz "Estudante FECHADO" e o que
+>    falta. As três chaves (Vercel, Production):
+>    - `WA_TEMPLATE_ESTUDANTE`: o nome do **v2** do modelo de aprovação,
+>      com o botão `https://diariamente.app/estudante/ativar?cupom={{1}}`,
+>      criado e aprovado pelo app na Meta (o modelo aprovado hoje fica
+>      preservado). O `diariamente_estudante_aprovado` abre o checkout
+>      antigo, do produto 8280315, onde o cupom não vale.
+>    - `HOTMART_PRODUCT_ID=7448309`. Com outro produto, o cupom nasce lá e
+>      o checkout da oferta oficial não o reconhece. As credenciais da API
+>      que o site já usa (`HOTMART_CLIENT_ID`, `HOTMART_CLIENT_SECRET`,
+>      `HOTMART_BASIC`) servem se o 7448309 estiver na mesma conta Hotmart.
+>    - `STUDENT_DISCOUNT=0.40`, igual ao `ESTUDANTE_DESCONTO` de
+>      `config/pricing.ts` (o que a página anuncia).
+>
+>    Antes do novo deploy que abre o fluxo (o build não consegue conferir):
+>    - Hotmart: o webhook do site (`https://diariamente.app/api/webhooks/hotmart`,
+>      hottok em `HOTMART_HOTTOK`) cadastrado também no 7448309, com
+>      compra aprovada. É ele que apaga o cupom; sem ele, o cupom só morre
+>      ao vencer (48 h).
+>    - Vercel, `HOTMART_OFFER_IDS`: o id NUMÉRICO da oferta `fhrttdh8`
+>      (Hotmart, produto 7448309, Ofertas; o código `off` não serve).
+>      **Vazio, o cupom pessoal vale em qualquer oferta do produto,
+>      inclusive a de lançamento** (40% sobre R$ 99,98). Não fecha o fluxo
+>      (risco aceito pelo dono); sai como aviso em todo build.
+>    - Aberto, faça um pedido de teste de estudante com um CPF seu.
+>    - Tempo de espera: a tela promete o código "em até 10 minutos"
+>      (`ESTUDANTE.esperaMinutos`): 5 de janela de conferência na API e até
+>      5 tentativas do cron, uma por minuto. Um teste confere a conta.
+>    - Renovação: o cupom vale também nas renovações? Ainda não se sabe.
+>      Até confirmar, a página diz só "Renova a cada ano. Cancele quando
+>      quiser." e toda economia é "no primeiro ano" (durante o lançamento,
+>      a `/estudante` mostra também a regra de 3 anos do lançamento, para o
+>      estudante comparar); confirmado, vire `ESTUDANTE.renovaMesmoValor`
+>      para `true` em `config.ts`.
+>    - Recomendação: desativar na Hotmart a oferta de estudante
+>      `h82bllbx`. O site não a usa, e o link dela é aberto.
+> 2. **Fim do lançamento (16/11/2026).** Nada a fazer no site: a partir de
+>    17/11 00:00 (Brasília) a página mostra R$ 149,90 e o botão abre
+>    `fhrttdh8` (as homes se refazem a cada hora e o navegador confere de
+>    novo). Na Hotmart, mantenha a oferta `lf63bgdd` ativa até 17/11 02:00
+>    e então desative-a: o link dela é aberto, e quem o guardou pagaria o
+>    preço de lançamento. Para encerrar antes da data: `ativo: false` no
+>    mercado br de `config/pricing.ts`.
+> 3. **Mercados de fora** (la, rw, pt, es): links prontos, todos com
+>    `vendaAberta: false` até o dono confirmar. Para abrir um, vire a
+>    chave dele (a trava confere o link). Antes: testar o checkout por IP
+>    (VPN) para confirmar a moeda; lembrar que rw usa a oferta da América
+>    Latina (`uevhmhy2`, US$ 29,99), cujo checkout abre em espanhol numa
+>    página em português; revisar `/es/condicionesdeuso` com o jurídico
+>    (direito do consumidor local; 14 dias na União Europeia).
+> 4. **Revisão jurídica da cláusula de titularidade.** O texto está em
+>    `components/Titularidade.tsx` (seção 1 dos Termos e da Política, pt e
+>    es): a SCIENCE PLAY CURSOS LTDA é a titular e a responsável pelo
+>    Diariamente App e pelos dados; os pagamentos são processados pela
+>    Hotmart, que atua como intermediária (o texto NÃO diz quem contratou
+>    a Hotmart); outra empresa do mesmo grupo pode aparecer como vendedora
+>    em loja de aplicativos, na plataforma de pagamento ou em documento
+>    fiscal, sem mudar a titularidade nem a responsabilidade (sem citar o
+>    nome dela; um teste varre o repositório inteiro atrás do nome, da
+>    fantasia e do CNPJ dela, guardados só como resumo SHA-256). **Merece
+>    um olhar do jurídico**, inclusive para conferir que cada empresa que
+>    pode aparecer é mesmo "do mesmo grupo econômico" e em nome de qual
+>    CNPJ está a conta de produtor da Hotmart do 7448309.
+>    Base legal: o Decreto 7.962/2013, art. 2º, pede nome empresarial, CNPJ e endereço físico e eletrônico "em local de destaque e de fácil visualização" no site.
+>    Por decisão do dono, esses dados ficam nos Termos e na Política, a um clique do rodapé, que mostra só "Diariamente App by Science Play" (risco aceito, a validar pelo jurídico).
 >
 > - **Preços:** fonte única em `config/pricing.ts`, por mercado (moeda,
->   preço anual, formato, link, textos do bloco, cupom de lançamento).
+>   preço anual, formato, link, textos do bloco, oferta de lançamento).
 >   Nenhum componente escreve preço. `vendaAberta` liga cada mercado.
-> - **Trava de preços:** `npm run build` falha enquanto faltar o link do
->   plano BRL (`CHECKOUT_BRL`), o código do cupom (`CUPOM_LANCAMENTO`) ou a
->   data de término (`FIM_DO_LANCAMENTO`), ou houver mercado com venda
->   aberta sem link (`scripts/checar-precos.js`). Passado o último dia do
->   lançamento, a página volta sozinha a R$ 149,90 e o link perde o cupom:
->   as homes se refazem a cada hora e, enquanto isso, o navegador confere
->   de novo depois de carregar (e troca na virada da meia-noite com a
->   página aberta). Um HTML antigo em cache ainda pode mostrar o preço de
+>   Nenhum link de venda leva cupom; só o estudante usa cupom.
+> - **Trava de preços:** `npm run build` falha se o link da oferta oficial
+>   (`CHECKOUT_BRL`) ou o da oferta de lançamento (`CHECKOUT_LANCAMENTO`)
+>   faltar, sair da Hotmart, levar `offDiscount` ou se os dois forem a mesma
+>   oferta; se a data de término (`FIM_DO_LANCAMENTO`) faltar ou não
+>   existir; se houver mercado com venda aberta sem link; ou, no build de
+>   produção da Vercel com venda aberta, se faltar `DM_WEBHOOK_V2_OK=1`
+>   (passo (a) do quadro) (`scripts/checar-precos.js`). Passado o último dia do lançamento, a
+>   página volta sozinha a R$ 149,90 e o botão, à oferta oficial: as homes
+>   se refazem a cada hora e, enquanto isso, o navegador confere de novo
+>   depois de carregar (e troca na virada da meia-noite com a página
+>   aberta). Um HTML antigo em cache ainda pode mostrar o preço de
 >   lançamento por até uma hora para quem estiver sem JavaScript; daí a
->   folga de validade do cupom no item 2 do quadro.
+>   folga até 02:00 no item 2.
+> - **Empresa:** no rodapé de todas as páginas e nas páginas de venda (pt
+>   e es), só `EMPRESA.assinatura` ("Diariamente App by Science Play"),
+>   sem razão social, CNPJ nem endereço. Os dados completos (SCIENCE PLAY
+>   CURSOS LTDA, CNPJ 33.612.911/0001-29, endereço conferido no cadastro
+>   público em 12/10/2026, contato@ e suporte@) ficam só nos Termos e na
+>   Política. O endereço mora em `ENDERECO_DA_EMPRESA`, no `config.ts`: a
+>   trava do endereço continua (com `[TROCAR` em qualquer parte, o build
+>   falha) e hoje está satisfeita. **Build na sua máquina:** as rotas de
+>   API criam o cliente do Supabase ao carregar, então o `next build`
+>   local precisa de `SUPABASE_URL` e `SUPABASE_SERVICE_KEY` (fictícias
+>   servem; sem elas, "supabaseUrl is required"). Produção local:
+>   `SUPABASE_URL=https://exemplo.supabase.co SUPABASE_SERVICE_KEY=x npm run build`.
+>   Com outro endereço: `DM_ENDERECO_TESTE="Rua de Teste, 123" SUPABASE_URL=https://exemplo.supabase.co SUPABASE_SERVICE_KEY=x npm run build`
+>   (libera as duas travas; recusado em produção na Vercel). Na Vercel as
+>   duas variáveis já existem. `npm test` roda os testes.
 > - **Roteamento por país:** `middleware.ts` + `lib/mercado.ts` (lista da
 >   América Latina num só lugar). Só as homes decidem; robô nunca é
 >   redirecionado (navegador interno do LinkedIn, Pinterest, Telegram,
@@ -73,23 +156,11 @@
 >   es-ES, es-419, es e x-default.
 > - **Lista de espera:** grava mercado, idioma e país quando as colunas
 >   existirem; sem elas, grava sem, sem perder o lead.
-> - **Endereço da empresa:** fica só em `ENDERECO_DA_EMPRESA`, no
->   `config.ts`. Enquanto ele tiver `[TROCAR` em qualquer parte, o build
->   falha de propósito. Para testar o build sem os dados reais:
->   `DM_ENDERECO_TESTE="Rua de Teste, 123" npm run build` (libera as duas
->   travas; recusado em produção na Vercel). `npm test` roda os testes.
 > - **Cookies:** aviso com Aceitar e Recusar (`components/Consentimento.tsx`).
 >   GA4, Pixel da Meta, InitiateCheckout e Purchase só depois do Aceitar.
 >   A Política (seção 8, pt e es) lista `dm_cookies` e `dm_market`.
 > - **Para voltar à lista de espera:** Vercel, Deployments, deploy anterior,
 >   Instant Rollback (ou reverter os commits da virada).
-
-18 arquivos. `tsc` limpo, `next build` com **34 rotas**.
-Substitui os pacotes de mercados e de pt-PT: contém os dois.
-
-Links de compra continuam inativos, conforme pedido. O botão fica
-desabilitado com aviso em âmbar enquanto `config/pricing.ts` tiver
-`[PREENCHER]`.
 
 ---
 

@@ -53,21 +53,29 @@ const nextConfig = {
    `next build` para com uma mensagem clara enquanto:
      - ENDERECO_DA_EMPRESA, em config.ts, ainda tiver o marcador "[TROCAR"
        (scripts/checar-endereco.js);
-     - config/pricing.ts ainda não tiver o link do plano BRL do produto
-       7448309, o código do cupom de lançamento e a data de término, ou
-       tiver um mercado com venda aberta sem link (scripts/checar-precos.js).
+     - config/pricing.ts não tiver o link da oferta oficial do Brasil, o
+       link e a data da oferta de lançamento, ou tiver um mercado com
+       venda aberta sem link; ou, em build de produção da Vercel com venda
+       aberta, faltar DM_WEBHOOK_V2_OK=1 (scripts/checar-precos.js).
    Em `next dev` e `next start` só avisa no terminal, para não travar o
    trabalho local. DM_ENDERECO_TESTE libera as duas para teste e é
    recusada em produção na Vercel.
+
+   CHAVE DO ESTUDANTE: DM_ESTUDANTE_ABERTO é CALCULADA aqui, a cada
+   build, a partir das variáveis da Vercel (estadoDoEstudante, em
+   scripts/checar-precos.js), e gravada pelo `env` do Next no servidor e
+   no navegador. Não se põe à mão: o valor da Vercel é sobrescrito. "1"
+   abre o fluxo do cupom pessoal; vazio o fecha (home sem link para a
+   /estudante, lista de espera no lugar do formulário, API em 503).
    ===================================================================== */
 const { PHASE_PRODUCTION_BUILD } = require("next/constants");
 const { checarEnderecoDoProjeto } = require("./scripts/checar-endereco");
-const { checarPrecosDoProjeto } = require("./scripts/checar-precos");
+const { checarPrecosDoProjeto, estudanteDoProjeto } = require("./scripts/checar-precos");
 
 module.exports = (phase) => {
   const travas = [
     ["Endereço da empresa pendente em config.ts (ENDERECO_DA_EMPRESA).", checarEnderecoDoProjeto(process.env)],
-    ["Preço ou checkout pendente em config/pricing.ts.", checarPrecosDoProjeto(process.env)],
+    ["Preço ou checkout pendente em config/pricing.ts, ou confirmação do webhook (DM_WEBHOOK_V2_OK) pendente na Vercel.", checarPrecosDoProjeto(process.env)],
   ];
   // As duas travas falam antes de parar: quem lê o log vê tudo o que
   // falta de uma vez, não uma pendência por build.
@@ -85,5 +93,6 @@ module.exports = (phase) => {
     }
   }
   if (bloqueios.length) throw new Error(bloqueios.join(" "));
-  return nextConfig;
+  const estudante = estudanteDoProjeto(process.env);
+  return { ...nextConfig, env: { ...nextConfig.env, DM_ESTUDANTE_ABERTO: estudante.aberto ? "1" : "" } };
 };
