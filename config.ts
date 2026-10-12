@@ -125,6 +125,9 @@ export const LANCAMENTO = {
 /** "149,90": o número sem o símbolo, no formato do Brasil. */
 const semSimbolo = (v: number) => formatar("br", v).replace(/^R\$\s/, "");
 
+/** "À vista, ou..." vira "à vista, ou...", para entrar depois de um preço. */
+const inicialMinuscula = (s: string) => s.charAt(0).toLocaleLowerCase("pt-BR") + s.slice(1);
+
 export type Plano = {
   id: string;
   nome: string;
@@ -313,16 +316,19 @@ export const EMPRESA = {
 //                 (estadoDoEstudante, em scripts/checar-precos.js) e grava
 //                 DM_ESTUDANTE_ABERTO. Abre com as três: modelo v2 do
 //                 WhatsApp em WA_TEMPLATE_ESTUDANTE, HOTMART_PRODUCT_ID=7448309
-//                 e STUDENT_DISCOUNT igual ao ESTUDANTE_DESCONTO. Fechado:
+//                 e um STUDENT_DISCOUNT que dê o preço final anunciado
+//                 (R$ 89,90: STUDENT_DISCOUNT=0.40027). Fechado:
 //                 a home não leva à /estudante, a /estudante mostra a lista
 //                 de espera no lugar do formulário e a API responde 503 sem
 //                 gravar nada. O log de todo build diz o que falta.
 // mostrarPreco = false  -> a /estudante e a home falam de "condição de
 //                          estudante" sem número.
 // mostrarPreco = true   -> as duas exibem o preço abaixo.
-// O desconto exibido é calculado sobre o preço cheio do plano (R$ 149,90),
-// que é a base do cupom na Hotmart; a comparação com o preço público do
-// dia (com ou sem lançamento) é feita na hora em components/BlocoPreco.tsx.
+// O preço do estudante é FINAL (ESTUDANTE_PRECO_FINAL, config/pricing.ts):
+// R$ 89,90 por ano, e o desconto do cupom sobre o preço cheio do plano
+// (R$ 149,90, a base do cupom na Hotmart) sai dele. A comparação com o
+// preço público do dia (com ou sem lançamento) é feita na hora em
+// components/BlocoPreco.tsx.
 // ---------------------------------------------------------------------
 export const ESTUDANTE = {
   aberto: process.env.DM_ESTUDANTE_ABERTO === "1",
@@ -332,17 +338,24 @@ export const ESTUDANTE = {
   // Hotmart: as duas voltam à versão sem número sem quebrar nada.
   mostrarPreco: true,
 
-  // Cupom de ESTUDANTE_DESCONTO% sobre o plano BRL (config/pricing.ts).
+  // Desconto do cupom pessoal, em fração (o STUDENT_DISCOUNT da Vercel),
+  // derivado do preço final em config/pricing.ts: 0.40027.
   // Sem valor de parcela: a Hotmart calcula.
   desconto: ESTUDANTE_DESCONTO,
 
-  // O cupom vale também nas renovações? AINDA NÃO CONFIRMADO pelo dono.
-  // Enquanto false, a página não promete duração do desconto e diz só
-  // `renovacao`. Confirmado na Hotmart que a renovação sai pelo mesmo
-  // valor, vire para true e a página passa a dizer `renovacaoMesmoValor`.
-  renovaMesmoValor: false,
-  renovacao: "Renova a cada ano. Cancele quando quiser.",
-  renovacaoMesmoValor: "Renova a cada ano pelo mesmo valor. Cancele quando quiser.",
+  // Se o cupom vale também nas renovações NÃO se sabe (decisão do dono,
+  // 12/10/2026, terceira rodada): o texto diz SÓ que a cobrança é anual.
+  // Nada de "no primeiro ano", "3 anos" ou "renova pelo mesmo valor".
+  cobranca: "cobrança anual",
+  periodo: "por ano · cobrança anual",
+  renovacao: "Cobrança anual. Cancele quando quiser.",
+  // Como o estudante paga: o cupom vai na oferta OFICIAL (fhrttdh8), que
+  // parcela em até 12x com acréscimo, nunca na de lançamento (só à vista).
+  // É a mesma linha da oferta oficial (MERCADOS.br.textos.pagamento), com
+  // inicial minúscula para seguir o preço: "R$ 89,90 à vista, ou em até 12x
+  // no cartão com acréscimo". Sem valor de parcela: a Hotmart calcula, e o
+  // parcelado custa mais que os R$ 89,90 e que o equivalente mensal.
+  pagamento: inicialMinuscula(MERCADOS.br.textos.pagamento),
   precoNumero: precoEstudante(),
   preco: semSimbolo(precoEstudante()),
   porMes: semSimbolo(porMesEstudante()),
@@ -369,9 +382,8 @@ export const ESTUDANTE = {
   regra: "Um código por pessoa. Enviado só no WhatsApp informado.",
 };
 
-/** Período do preço de estudante no texto: "por ano" só quando o dono
-    confirmar que o cupom vale também nas renovações; até lá, "no
-    primeiro ano" (o site não promete duração do desconto). */
+/** Período do preço de estudante no texto: "por ano · cobrança anual",
+    sem prometer duração do desconto (ESTUDANTE.periodo). */
 export function periodoEstudante(): string {
-  return ESTUDANTE.renovaMesmoValor ? "por ano" : "no primeiro ano";
+  return ESTUDANTE.periodo;
 }

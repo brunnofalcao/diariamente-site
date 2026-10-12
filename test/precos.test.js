@@ -49,10 +49,15 @@ test("nenhum link de venda leva cupom, antes ou depois do lançamento", () => {
   }
 });
 
-test("estudante: 40% sobre R$ 149,90 = R$ 89,94 por ano, R$ 7,50/mês, no checkout oficial com o cupom", () => {
-  assert.equal(P.ESTUDANTE_DESCONTO, 40);
-  assert.equal(txt(P.formatar("br", P.precoEstudante())), "R$ 89,94");
-  assert.equal(txt(P.formatar("br", P.porMesEstudante())), "R$ 7,50");
+test("estudante: preço final R$ 89,90 por ano, R$ 7,49/mês, no checkout oficial com o cupom", () => {
+  assert.equal(P.ESTUDANTE_PRECO_FINAL, 89.9);
+  assert.equal(txt(P.formatar("br", P.precoEstudante())), "R$ 89,90");
+  assert.equal(txt(P.formatar("br", P.porMesEstudante())), "R$ 7,49");
+  // o desconto do cupom nasce do preço final: 1 - 89,90/149,90, 5 casas
+  assert.equal(P.ESTUDANTE_DESCONTO, 0.40027);
+  assert.equal(P.precoComDesconto(P.MERCADOS.br.anual, P.ESTUDANTE_DESCONTO), 89.9);
+  // com 2 casas (40%), o checkout daria R$ 89,94
+  assert.equal(P.precoComDesconto(P.MERCADOS.br.anual, 0.4), 89.94);
   assert.equal(
     P.linkComCupom(P.MERCADOS.br.checkout, "DIARIAESTABCD2345"),
     "https://pay.hotmart.com/K105072021O?off=fhrttdh8&offDiscount=DIARIAESTABCD2345"
@@ -70,4 +75,25 @@ test("mercados de fora: US$ 29,99 por ano (US$ 2,50/mês) em la e rw; 29,99 € 
     assert.equal(P.lancamentoVigente(m, ANTES), false, m);
     assert.equal(P.vendeAgora(m), false, m);
   }
+});
+
+test("moeda por mercado (decisão do dono, 12/10/2026): Brasil em real, Portugal e Espanha em euro, todo o resto em dólar", () => {
+  const moedas = Object.fromEntries(Object.entries(P.MERCADOS).map(([m, o]) => [m, o.moeda]));
+  assert.deepEqual(moedas, { br: "BRL", la: "USD", es: "EUR", pt: "EUR", rw: "USD" });
+  // América Latina e resto do mundo: a MESMA oferta em dólar, US$ 29,99 por ano
+  assert.equal(P.MERCADOS.la.checkout, P.MERCADOS.rw.checkout);
+  assert.equal(P.MERCADOS.la.anual, 29.99);
+  assert.equal(P.MERCADOS.rw.anual, 29.99);
+  assert.equal(txt(P.formatar("la", 29.99)), "US$ 29.99");
+  assert.equal(txt(P.formatar("rw", 29.99)), "US$ 29,99");
+  assert.equal(txt(P.formatar("pt", 29.99)), "29,99 €");
+  assert.equal(txt(P.formatar("es", 29.99)), "29,99 €");
+});
+
+test("estudante: o desconto do cupom deixa o preço exato em R$ 89,90 ou abaixo, nunca acima", () => {
+  assert.equal(P.ESTUDANTE_DESCONTO, 0.40027);
+  const exato = Math.round(P.MERCADOS.br.anual * 100) * (1 - P.ESTUDANTE_DESCONTO);
+  assert.ok(exato <= 8990 && Math.round(exato) === 8990, String(exato));
+  assert.equal(P.precoEstudante(), 89.9);
+  assert.equal(P.porMesEstudante(), 7.49);
 });

@@ -66,12 +66,14 @@ const CHECKOUT_EUR_ES = "https://pay.hotmart.com/K105072021O?off=iuoufnf6";
     desconto aplicado e ninguém digita código. */
 export const PARAMETRO_CUPOM = "offDiscount";
 
-/** Cupom pessoal de estudante, em %, sobre a oferta oficial do Brasil
-    (R$ 149,90): 40% dá R$ 89,94 por ano (R$ 7,50/mês). Trocar aqui muda
-    a home, a /estudante e a /sobre juntas. O desconto que a Hotmart
-    aplica de fato vem da variável STUDENT_DISCOUNT na Vercel (0.40 para
-    40%); a trava avisa se as duas divergirem. */
-export const ESTUDANTE_DESCONTO = 40;
+/** Preço FINAL do estudante, em reais por ano (decisão do dono,
+    12/10/2026, terceira rodada): R$ 89,90 por ano exatos (R$ 7,49/mês),
+    pagos na oferta oficial do Brasil (R$ 149,90) com o cupom pessoal de
+    uso único. O número que manda é este; o desconto do cupom NASCE dele
+    (ESTUDANTE_DESCONTO, no fim do arquivo: 1 - 89,90/149,90, cerca de
+    0,40027). Trocar aqui muda a home e a /estudante juntas, e a trava do
+    build diz o STUDENT_DISCOUNT novo a pôr na Vercel. */
+export const ESTUDANTE_PRECO_FINAL = 89.9;
 
 export type Mercado = "br" | "la" | "es" | "pt" | "rw";
 export type Idioma = "pt" | "es";
@@ -399,8 +401,9 @@ export const MERCADOS: Record<Mercado, Oferta> = {
 export const LISTA_MERCADOS = Object.keys(MERCADOS) as Mercado[];
 
 /* ------------------------------ cálculo ------------------------------
-   Tudo em centavos inteiros: 89,94 / 12 em ponto flutuante dá 7,4949...
-   e arredondaria para 7,49; em centavos, 8994 / 12 = 749,5 vira 750. */
+   Tudo em centavos inteiros: 41,94 / 12 em ponto flutuante dá 3,4949...
+   e arredondaria para 3,49; em centavos, 4194 / 12 = 349,5 vira 350.
+   O estudante: 8990 / 12 = 749,17, R$ 7,49/mês. */
 
 const centavos = (v: number) => Math.round(v * 100);
 
@@ -550,10 +553,47 @@ export function dataDoLancamento(m: Mercado): string | null {
    estudante é aprovado e apagado pelo webhook do site quando o
    pagamento é aprovado. Existe só no Brasil: a validação usa CPF e o
    cobro é em real. Piso interno de R$ 47, nunca público. Nenhuma oferta
-   própria de estudante entra no site: o cupom pessoal é a única via. */
+   própria de estudante entra no site: o cupom pessoal é a única via (a
+   oferta de estudante da Hotmart hoje mostra R$ 149,90, igual à oficial).
+   Se o cupom vale também nas renovações não se sabe: o texto diz só que
+   a cobrança é anual (ESTUDANTE, em config.ts), sem prometer duração. */
 
+/** Casas decimais do desconto do cupom. A API da Hotmart recebe o
+    `discount` como fração (0 < discount < 0,99) e não documenta quantas
+    casas guarda nem como arredonda o preço; com 5, o preço que sai cai
+    no centavo certo para qualquer preço final (o desconto é arredondado
+    PARA CIMA, então o preço exato fica no anunciado ou até 0,15 centavo
+    abaixo, nunca acima). Com 2 casas (0,40) seriam R$ 89,94. */
+const CASAS_DO_DESCONTO = 5;
+
+/** Preço que um desconto (fração, o formato da API e do
+    STUDENT_DISCOUNT) deixa sobre um preço anual, arredondado ao
+    centavo. Em centavos inteiros: 149,90 x (1 - 0,40027) = 89,8995...,
+    que o checkout mostra como R$ 89,90. */
+export function precoComDesconto(anual: number, desconto: number): number {
+  return Math.round(centavos(anual) * (1 - desconto)) / 100;
+}
+
+/** Desconto do cupom pessoal, em FRAÇÃO, derivado do preço final:
+    1 - 89,90/149,90 = 0,400266..., arredondado PARA CIMA com 5 casas =
+    0.40027. Para cima porque o preço exato que ele deixa (R$ 89,8995)
+    fica no anunciado ou abaixo: seja qual for o arredondamento da
+    Hotmart, o checkout mostra R$ 89,90 ou R$ 89,89, nunca R$ 89,91. É o
+    valor do STUDENT_DISCOUNT na Vercel (a trava do build aceita só os
+    valores com essa mesma garantia, de 0.40027 a 0.40030, e diz este
+    quando faltar). Conta em centavos inteiros, sem o erro de ponto
+    flutuante de 1 - 0,59973... */
+export const ESTUDANTE_DESCONTO =
+  Math.ceil(
+    ((centavos(MERCADOS.br.anual) - centavos(ESTUDANTE_PRECO_FINAL)) * 10 ** CASAS_DO_DESCONTO) /
+      centavos(MERCADOS.br.anual),
+  ) / 10 ** CASAS_DO_DESCONTO;
+
+/** O que o estudante paga por ano: o preço oficial com o desconto do
+    cupom, em centavos. Dá o ESTUDANTE_PRECO_FINAL (R$ 89,90); a trava
+    do build e os testes conferem. */
 export function precoEstudante(): number {
-  return Math.round((centavos(MERCADOS.br.anual) * (100 - ESTUDANTE_DESCONTO)) / 100) / 100;
+  return precoComDesconto(MERCADOS.br.anual, ESTUDANTE_DESCONTO);
 }
 
 export function porMesEstudante(): number {

@@ -7,8 +7,8 @@ import { ListaEsperaForm } from "@/components/ListaEsperaForm";
    Entra no lugar do EstudanteForm quando o fluxo do cupom pessoal está
    FECHADO neste build (ESTUDANTE.aberto, config.ts). Fechado quer dizer
    que falta, na Vercel, o modelo v2 do WhatsApp, o HOTMART_PRODUCT_ID
-   do 7448309 ou o STUDENT_DISCOUNT do anunciado (o log do build diz
-   qual). Nesse estado, pedir o código queimaria o CPF ("1 CPF = 1 lead")
+   do 7448309 ou um STUDENT_DISCOUNT que dê o preço anunciado (o log do
+   build diz qual). Nesse estado, pedir o código queimaria o CPF ("1 CPF = 1 lead")
    sem o estudante conseguir ativar. Por isso a página só anota o
    contato, pela mesma lista de espera do site, com origem "estudante"
    (a API separa esses leads do aviso de abertura do produto).

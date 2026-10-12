@@ -198,9 +198,9 @@ export function BlocoOferta({ mercado, momento, previa = false }: { mercado: Mer
             do cupom pessoal ABERTO neste build (ESTUDANTE.aberto, config.ts):
             fechado, a home não leva a uma página que ainda não entrega o
             código. O preço segue ESTUDANTE.mostrarPreco, como na
-            /estudante, e vale "no primeiro ano" enquanto a renovação do
-            cupom não estiver confirmada: ao lado de "R$ 99,98 por ano nos
-            3 primeiros anos", "por ano" daria a entender os três. */}
+            /estudante, e o período é o de ESTUDANTE.periodo ("por ano ·
+            cobrança anual"): se o cupom vale nas renovações não se sabe, e
+            o dono decidiu (12/10/2026) dizer só que a cobrança é anual. */}
         {mercado === "br" && t.estudante && ESTUDANTE.aberto && (
           <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 13.5, lineHeight: 1.5 }}>
             <a href={caminho("estudante", "pt")} style={{ color: C.p300, textDecoration: "none" }}>

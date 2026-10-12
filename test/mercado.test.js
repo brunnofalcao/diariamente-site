@@ -146,15 +146,19 @@ test("formato numérico de cada mercado", () => {
 test("equivalente mensal é anual ÷ 12, em centavos", () => {
   assert.equal(P.mensal(149.9), 12.49);
   assert.equal(P.mensal(99.98), 8.33);
-  assert.equal(P.mensal(89.94), 7.5);
+  assert.equal(P.mensal(89.9), 7.49);
+  assert.equal(P.mensal(41.94), 3.5);
   assert.equal(P.mensal(24.99), 2.08);
   assert.equal(P.mensal(29.99), 2.5);
 });
 
-test("estudante: 40% sobre R$ 149,90 dá R$ 89,94 e R$ 7,50/mês", () => {
-  assert.equal(P.ESTUDANTE_DESCONTO, 40);
-  assert.equal(P.precoEstudante(), 89.94);
-  assert.equal(P.porMesEstudante(), 7.5);
+test("estudante: preço final R$ 89,90 e R$ 7,49/mês; o desconto (0.40027) sai do preço final", () => {
+  assert.equal(P.ESTUDANTE_PRECO_FINAL, 89.9);
+  assert.equal(P.precoEstudante(), 89.9);
+  assert.equal(P.porMesEstudante(), 7.49);
+  assert.equal(P.ESTUDANTE_DESCONTO, 0.40027);
+  assert.ok(Math.abs(P.ESTUDANTE_DESCONTO - (1 - 89.9 / 149.9)) < 0.000005);
+  assert.ok(P.ESTUDANTE_DESCONTO > 0 && P.ESTUDANTE_DESCONTO < 0.99, "faixa que a API da Hotmart aceita");
 });
 
 test("hoje (12/10/2026), o Brasil mostra o preço de lançamento e o botão abre a oferta de lançamento", () => {

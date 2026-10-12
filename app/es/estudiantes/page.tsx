@@ -54,7 +54,7 @@ export default function Estudiantes() {
           <p className="lead" style={{ maxWidth: "52ch", marginBottom: "var(--sp8)" }}>
             Nada se recorta de tu versión. Es la aplicación completa, con los 365 textos, el
             contador de vueltas, el menú Acciones y el recordatorio diario. Lo que cambia es
-            cuánto pagas por ella mientras estás cursando.
+            el precio de entrada.
           </p>
 
           <div className="sobre-corpo" style={{ marginBottom: "var(--sp10)" }}>

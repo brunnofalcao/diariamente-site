@@ -65,38 +65,75 @@ const html = (Componente, props = {}) => txt(renderToStaticMarkup(React.createEl
 
 /* ------------------------- comparativo da /estudante ------------------------- */
 
-test("/estudante no lançamento: a economia é só do primeiro ano e a regra dos 3 anos aparece", () => {
+/** Texto do estudante, sem a regra do LANÇAMENTO (que é do checkout da
+    oferta de lançamento e continua na página para o estudante comparar). */
+const semRegraDoLancamento = (h) =>
+  h.replace(/nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\./g, "");
+
+/** Promessa de que o preço dura a graduação inteira: é duração do cupom
+    com outras palavras (o cupom é de uso único e a renovação dele não se
+    sabe). Vale para o português e o espanhol. */
+const DURACAO_DA_GRADUACAO =
+  /enquanto (você )?(ainda )?(está|estiver|estuda|estudar)|durante toda a (sua )?graduação|até (você )?se formar|mientras (estás|estés|sigas|sigues) (cursando|estudiando)|mientras estudias|durante toda tu carrera/i;
+
+/** O que o texto do estudante NÃO pode dizer (decisão do dono, 12/10/2026):
+    duração do desconto ou renovação pelo mesmo valor. */
+function semDuracaoDoEstudante(h, rotulo) {
+  const s = semRegraDoLancamento(h);
+  assert.equal(/primeiro ano/.test(s), false, `${rotulo}: "primeiro ano"`);
+  assert.equal(/3 anos|três anos|3 primeiros anos/.test(s), false, `${rotulo}: "3 anos"`);
+  assert.equal(/mesmo valor/.test(s), false, `${rotulo}: "mesmo valor"`);
+  assert.equal(DURACAO_DA_GRADUACAO.test(s), false, `${rotulo}: duração pela graduação`);
+  assert.equal(/89,94|7,50|40%/.test(s.replace(/40% a menos|40% de diferença/g, "")), false, `${rotulo}: preço antigo`);
+}
+
+/** A nota do card de estudante: só o estudante, com sujeito, e como ele paga. */
+const NOTA_DO_ESTUDANTE =
+  /Para você, estudante: R\$ 7,49\/mês, por um ano inteiro de provocação diária\. R\$ 89,90 à vista, ou em até 12x no cartão com acréscimo\. Cobrança anual\. Cancele quando quiser\./;
+
+test("/estudante no lançamento: R$ 89,90 por ano, cobrança anual, e a regra dos 3 anos só na coluna do lançamento", () => {
   const h = comRelogio(LANCAMENTO, () => html(blocoPreco(config(true))));
-  assert.match(h, /R\$ 10,04 OFF no primeiro ano/);
-  assert.match(h, /10% a menos no primeiro ano que o valor que qualquer pessoa paga hoje/);
-  assert.match(h, /Hoje, pelo site, o preço de lançamento é R\$ 99,98 por ano nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\./);
+  assert.match(h, /R\$ 10,08 OFF<\/span>/);
+  assert.match(h, /<small>R\$<\/small>89,90/);
+  assert.match(h, /10% a menos que o valor que qualquer pessoa paga hoje/);
   assert.match(h, /Quem entra hoje pelo site<\/span><span class="ed-econ-v">R\$ 99,98<\/span><span class="ed-econ-d">R\$ 8,33\/mês<\/span><span class="ed-econ-d">Por ano nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\.<\/span>/);
-  assert.match(h, /Você economiza no primeiro ano<\/span><span class="ed-econ-v">R\$ 10,04<\/span><span class="ed-econ-d">10% de diferença no primeiro ano/);
-  assert.match(h, /R\$ 7,50\/mês no primeiro ano/);
-  // nenhuma economia sem o "no primeiro ano"
-  assert.equal(/Você economiza<\/span>/.test(h), false);
-  assert.equal(/OFF<\/span>/.test(h), false);
-  // não promete duração do cupom
-  assert.equal(/mesmo valor/.test(h), false);
+  assert.match(h, /Sua condição de estudante<\/span><span class="ed-econ-v">R\$ 89,90<\/span><span class="ed-econ-d">R\$ 7,49\/mês · cobrança anual<\/span>/);
+  assert.match(h, /Você economiza<\/span><span class="ed-econ-v">R\$ 10,08<\/span><span class="ed-econ-d">10% de diferença<\/span>/);
+  assert.match(h, NOTA_DO_ESTUDANTE);
+  // A regra do lançamento aparece UMA vez, na coluna do lançamento, e
+  // nunca dentro do card de estudante (lá ela era lida como duração do cupom).
+  assert.equal((h.match(/3 primeiros anos/g) || []).length, 1);
+  const card = h.slice(h.indexOf('class="ed-price"'), h.indexOf('class="ed-econ"'));
+  assert.equal(/3 primeiros anos|preço de lançamento|Depois, R\$ 149,90/.test(card), false);
+  // Parcelado com acréscimo, sem valor de parcela, e longe do equivalente mensal.
+  assert.equal(/\d+\s*x\s*de\s*R\$/i.test(h), false);
+  assert.equal(/\/mês\)?,? (ou )?em até 12x/.test(h), false);
+  semDuracaoDoEstudante(h, "lançamento");
 });
 
-test("/estudante depois do lançamento: base R$ 149,90, sem a regra dos 3 anos, ainda \"no primeiro ano\" (renovação não confirmada)", () => {
+test("/estudante depois do lançamento: base R$ 149,90, R$ 60,00 OFF, sem regra de 3 anos nenhuma", () => {
   const h = comRelogio(DEPOIS, () => html(blocoPreco(config(true))));
-  assert.match(h, /R\$ 59,96 OFF no primeiro ano/);
-  assert.match(h, /40% a menos no primeiro ano/);
+  assert.match(h, /R\$ 60,00 OFF<\/span>/);
+  assert.match(h, /40% a menos que o valor que qualquer pessoa paga hoje/);
+  assert.match(h, NOTA_DO_ESTUDANTE);
   assert.equal(/3 primeiros anos/.test(h), false);
   assert.equal(/preço de lançamento/.test(h), false);
+  semDuracaoDoEstudante(h, "depois");
 });
 
-test("/estudante com a renovação confirmada e sem lançamento: a economia passa a ser por ano", () => {
+test("config.ts: o estudante não tem mais a chave de renovação; o texto é só de cobrança anual", () => {
   const C = config(true);
-  C.ESTUDANTE.renovaMesmoValor = true;
-  const h = comRelogio(DEPOIS, () => html(blocoPreco(C)));
-  assert.match(h, /R\$ 59,96 OFF por ano/);
-  assert.match(h, /Renova a cada ano pelo mesmo valor/);
-  // mas, no lançamento, continua "no primeiro ano"
-  const l = comRelogio(LANCAMENTO, () => html(blocoPreco(C)));
-  assert.match(l, /OFF no primeiro ano/);
+  assert.equal("renovaMesmoValor" in C.ESTUDANTE, false);
+  assert.equal("renovacaoMesmoValor" in C.ESTUDANTE, false);
+  assert.equal(C.ESTUDANTE.periodo, "por ano · cobrança anual");
+  assert.equal(C.ESTUDANTE.renovacao, "Cobrança anual. Cancele quando quiser.");
+  assert.equal(C.periodoEstudante(), "por ano · cobrança anual");
+  assert.equal(C.ESTUDANTE.preco, "89,90");
+  assert.equal(C.ESTUDANTE.porMes, "7,49");
+  assert.equal(C.ESTUDANTE.desconto, 0.40027);
+  // O estudante paga na oferta OFICIAL: a mesma linha de pagamento dela.
+  assert.equal(C.ESTUDANTE.pagamento, "à vista, ou em até 12x no cartão com acréscimo");
+  assert.equal(C.ESTUDANTE.pagamento.toLowerCase(), P.MERCADOS.br.textos.pagamento.toLowerCase());
 });
 
 test("/estudante com o fluxo fechado: o card avisa que a solicitação abre em breve", () => {
@@ -109,10 +146,11 @@ test("/estudante com o fluxo fechado: o card avisa que a solicitação abre em b
 
 /* --------------------------- bloco de oferta (home) --------------------------- */
 
-test("home do Brasil com o estudante aberto: \"Sou estudante\" com o preço do primeiro ano e o link para a /estudante", () => {
+test("home do Brasil com o estudante aberto: \"Sou estudante\" com R$ 89,90 por ano, cobrança anual, e o link para a /estudante", () => {
   const h = html(blocoOferta(config(true)), { mercado: "br", momento: LANCAMENTO });
   assert.match(h, /href="\/estudante"/);
-  assert.match(h, /Sou estudante: R\$ 7,50\/mês · R\$ 89,94 no primeiro ano/);
+  assert.match(h, /Sou estudante: R\$ 7,49\/mês · R\$ 89,90 por ano · cobrança anual/);
+  semDuracaoDoEstudante(h.replace(/R\$ 99,98<\/strong> por ano nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\./, ""), "home");
   assert.match(h, /R\$ 99,98<\/strong> por ano nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\./);
 });
 
@@ -120,7 +158,7 @@ test("home do Brasil com o estudante FECHADO: nenhum link nem preço de estudant
   for (const momento of [LANCAMENTO, DEPOIS]) {
     const h = html(blocoOferta(config(false)), { mercado: "br", momento });
     assert.equal(/estudante/i.test(h), false);
-    assert.equal(/89,94|7,50/.test(h), false);
+    assert.equal(/89,90|7,49|89,94|7,50/.test(h), false);
   }
 });
 
@@ -129,7 +167,7 @@ test("home: ESTUDANTE.mostrarPreco = false também esconde o preço de estudante
   C.ESTUDANTE.mostrarPreco = false;
   const h = html(blocoOferta(C), { mercado: "br", momento: LANCAMENTO });
   assert.match(h, /Sou estudante: ver a condição/);
-  assert.equal(/89,94|7,50/.test(h), false);
+  assert.equal(/89,90|7,49|89,94|7,50/.test(h), false);
 });
 
 test("home depois do lançamento: o parcelamento diz que tem acréscimo e fica separado do equivalente mensal", () => {
@@ -195,9 +233,44 @@ test("/estudante ABERTA: o formulário de sempre e os botões de solicitar", () 
   assert.match(h, /Solicitar minha condição/);
   assert.match(h, /Solicitar meu código/);
   assert.equal(/abre em breve/.test(h), false);
-  // o tempo prometido é o do config, e o resumo fala do primeiro ano
+  // o tempo prometido é o do config, e o resumo diz só que a cobrança é anual
   assert.match(h, /em até 10 minutos/);
-  assert.match(h, /R\$ 89,94 no primeiro ano, R\$ 7,50\/mês/);
+  assert.match(h, /R\$ 89,90 por ano · cobrança anual \(equivale a R\$ 7,49\/mês; valor cheio R\$ 149,90\)/);
+  assert.match(h, /Pagamento<\/span><span class="ed-review-v">R\$ 89,90 à vista, ou em até 12x no cartão com acréscimo<\/span>/);
+  assert.match(h, /O que muda é o preço\s+de entrada\./);
+  assert.match(h, /Essa condição é <b>para quem ainda está na graduação<\/b>/);
+  semDuracaoDoEstudante(h, "/estudante");
+});
+
+test("/estudante aberta e fechada, no lançamento e depois: nenhuma promessa de duração pela graduação", () => {
+  for (const momento of [LANCAMENTO, DEPOIS]) {
+    for (const aberto of [true, false]) {
+      const h = comRelogio(momento, () => html(paginaEstudante(config(aberto))));
+      semDuracaoDoEstudante(h, `/estudante ${aberto ? "aberta" : "fechada"} ${momento === LANCAMENTO ? "no lançamento" : "depois"}`);
+    }
+  }
+});
+
+test("fonte: nenhum texto de estudante promete o preço pela graduação inteira (pt e es, inclusive o que não está em uso)", () => {
+  const fs = require("fs");
+  // Comentários fora: só o que pode chegar ao visitante.
+  const semComentarios = (t) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+  for (const f of [
+    ["app", "estudante", "page.tsx"], ["app", "es", "estudiantes", "page.tsx"],
+    ["components", "Oferta.tsx"], ["components", "CtaEstudante.tsx"], ["components", "BlocoPreco.tsx"],
+    ["components", "BlocoOferta.tsx"], ["components", "EstudanteEspera.tsx"], ["config.ts"], ["lib", "i18n.ts"], ["lib", "seo.ts"],
+  ]) {
+    const t = semComentarios(fs.readFileSync(arq(...f), "utf8"));
+    const achou = t.match(DURACAO_DA_GRADUACAO);
+    assert.equal(achou, null, `${f.join("/")}: "${achou && achou[0]}"`);
+  }
+  // O exemplo do problema, de verdade, é pego pela regra.
+  for (const frase of [
+    "O que muda é quanto você paga por ele enquanto está na graduação.",
+    "Uma provocação por dia durante toda a sua graduação",
+    "Lo que cambia es cuánto pagas por ella mientras estás cursando.",
+    "por R$ 89,90, enquanto você ainda estuda.",
+  ]) assert.match(frase, DURACAO_DA_GRADUACAO, frase);
 });
 
 /* ------------------------- home: card do estudante ------------------------- */

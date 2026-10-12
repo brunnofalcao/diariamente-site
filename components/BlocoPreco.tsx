@@ -1,6 +1,6 @@
-import { ESTUDANTE, GARANTIA, PLANO_APP, periodoEstudante } from "@/config";
+import { ESTUDANTE, GARANTIA, PLANO_APP } from "@/config";
 import {
-  formatar, mensal, precoFinal, precoEstudante, porMesEstudante, lancamentoVigente, regraDoLancamento, MERCADOS,
+  formatar, mensal, precoFinal, precoEstudante, porMesEstudante, regraDoLancamento, MERCADOS,
 } from "@/config/pricing";
 
 /**
@@ -22,19 +22,29 @@ import {
  * estiver valendo), para o desconto exibido ser sempre verdadeiro.
  * A página /estudante se refaz a cada hora, como as homes.
  *
- * O cupom do estudante é pessoal, sobre a oferta oficial (R$ 149,90). Se
- * ele vale também nas renovações ainda não está confirmado: a página não
- * promete duração (ESTUDANTE.renovaMesmoValor, em config.ts).
+ * O cupom do estudante é pessoal, sobre a oferta oficial (R$ 149,90), e
+ * o preço que sai dele é FINAL: R$ 89,90 por ano (ESTUDANTE_PRECO_FINAL,
+ * config/pricing.ts). Se ele vale também nas renovações não se sabe, e
+ * a decisão do dono (12/10/2026, terceira rodada) é dizer SÓ que a
+ * cobrança é anual: "R$ 89,90 por ano · cobrança anual" e "Cobrança
+ * anual. Cancele quando quiser." (ESTUDANTE.periodo e .renovacao, em
+ * config.ts). Nada aqui diz "no primeiro ano", "3 anos" ou "renova pelo
+ * mesmo valor" do estudante, e nada promete duração do cupom.
  *
  * DURANTE O LANÇAMENTO a âncora é R$ 99,98, que vale nos 3 primeiros
- * anos, e o cupom tem duração desconhecida. Comparar só o primeiro ano
- * sem dizer isso levaria o estudante à opção que pode sair mais cara em
- * 3 anos (89,94 + 149,90 + 149,90 contra 3 x 99,98), uma omissão de
- * informação essencial (CDC, art. 37, § 3º). Por isso, enquanto o
- * lançamento valer OU a renovação não estiver confirmada, toda economia
- * é dita "no primeiro ano", e a coluna "Quem entra hoje pelo site"
- * mostra a regra do lançamento (regraDoLancamento). Nada aqui promete
- * duração do cupom.
+ * anos. Só a coluna "Quem entra hoje pelo site" mostra a regra do
+ * LANÇAMENTO (regraDoLancamento: "nos 3 primeiros anos. Depois, R$ 149,90
+ * por ano."), que é do checkout da oferta de lançamento e não do
+ * estudante: é ela que deixa o estudante comparar as duas opções sabendo
+ * quanto dura cada preço público (CDC, art. 37, § 3º). Ela saiu da nota
+ * do card: colada ao preço de estudante, "3 primeiros anos. Depois,
+ * R$ 149,90" era lida como a duração do cupom. A nota fala só do
+ * estudante ("Para você, estudante: ...") e diz como ele paga: R$ 89,90
+ * à vista, ou em até 12x no cartão com acréscimo (ESTUDANTE.pagamento),
+ * porque o cupom vai na oferta oficial, que parcela. A economia aparece
+ * sem período ("R$ 10,08 OFF"): é a diferença entre as duas cobranças
+ * anuais de hoje (o risco dessa comparação no lançamento está no
+ * LEIA-ME, decisão do dono).
  *
  * ESTUDANTE.aberto = false (fluxo fechado neste build): o card avisa que
  * a solicitação do código abre em breve, em vez de dizer que o código
@@ -123,12 +133,7 @@ export function BlocoPreco() {
   const mes = MERCADOS.br.textos.mes;
   // "nos 3 primeiros anos. Depois, R$ 149,90 por ano." enquanto o
   // lançamento vale; null depois.
-  const vigente = lancamentoVigente("br", agora);
   const regra = regraDoLancamento("br", agora);
-  // A economia só é "por ano" quando a renovação do cupom estiver
-  // confirmada e não houver preço de lançamento de 3 anos ao lado.
-  const soPrimeiroAno = vigente || !ESTUDANTE.renovaMesmoValor;
-  const quando = soPrimeiroAno ? "no primeiro ano" : "por ano";
 
   if (!ESTUDANTE.mostrarPreco) {
     return (
@@ -157,7 +162,7 @@ export function BlocoPreco() {
       <div className="ed-offer">
         {/* ---------------- card de preço ---------------- */}
         <div className="ed-price">
-          <span className="ed-price-selo">{brl(offReais)} OFF {quando}</span>
+          <span className="ed-price-selo">{brl(offReais)} OFF</span>
 
           <div className="ed-price-nome">{PLANO_APP.nome} · acesso de 1 ano</div>
 
@@ -169,11 +174,16 @@ export function BlocoPreco() {
             </span>
           </div>
 
+          {/* Só o estudante aqui. A regra do LANÇAMENTO ("nos 3 primeiros
+              anos. Depois, R$ 149,90") fica na coluna "Quem entra hoje
+              pelo site", logo abaixo: colada ao preço de estudante, ela era
+              lida como duração do cupom, que não se sabe. E o pagamento do
+              estudante é o da oferta oficial, que parcela com acréscimo. */}
           <p className="ed-price-nota">
-            {offPct}% a menos {quando} que o valor que qualquer pessoa paga hoje.{" "}
-            {regra ? `Hoje, pelo site, o preço de lançamento é ${brl(de)} por ano ${regra} ` : ""}
-            {brl(porMesEstudante())}{mes}, por um ano inteiro de provocação diária.{" "}
-            {ESTUDANTE.renovaMesmoValor ? ESTUDANTE.renovacaoMesmoValor : ESTUDANTE.renovacao}
+            {offPct}% a menos que o valor que qualquer pessoa paga hoje.{" "}
+            Para você, estudante: {brl(porMesEstudante())}{mes}, por um ano inteiro de provocação diária.{" "}
+            {brl(por)} {ESTUDANTE.pagamento}.{" "}
+            {ESTUDANTE.renovacao}
           </p>
 
           <Entrega />
@@ -194,13 +204,13 @@ export function BlocoPreco() {
         <div className="ed-econ-col is-on">
           <span className="ed-econ-k">Sua condição de estudante</span>
           <span className="ed-econ-v">{brl(por)}</span>
-          <span className="ed-econ-d">{brl(porMesEstudante())}{mes} {periodoEstudante()}</span>
+          <span className="ed-econ-d">{brl(porMesEstudante())}{mes} · {ESTUDANTE.cobranca}</span>
         </div>
 
         <div className="ed-econ-col is-eco">
-          <span className="ed-econ-k">Você economiza {quando}</span>
+          <span className="ed-econ-k">Você economiza</span>
           <span className="ed-econ-v">{brl(offReais)}</span>
-          <span className="ed-econ-d">{offPct}% de diferença {quando}</span>
+          <span className="ed-econ-d">{offPct}% de diferença</span>
         </div>
       </div>
     </>

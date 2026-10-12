@@ -40,7 +40,9 @@
    ESTUDANTE ABERTO OU FECHADO (estadoDoEstudante). O fluxo do cupom
    pessoal só funciona com três coisas na Vercel: o modelo v2 do WhatsApp
    em WA_TEMPLATE_ESTUDANTE (ou DM_TEMPLATE_ESTUDANTE_OK=1), o
-   HOTMART_PRODUCT_ID=7448309 e o STUDENT_DISCOUNT igual ao anunciado.
+   HOTMART_PRODUCT_ID=7448309 e um STUDENT_DISCOUNT que, sobre o preço
+   oficial (R$ 149,90), dê o preço FINAL que a página anuncia
+   (ESTUDANTE_PRECO_FINAL, R$ 89,90: STUDENT_DISCOUNT=0.40027).
    Faltando qualquer uma, o next.config.js grava DM_ESTUDANTE_ABERTO vazio
    no build e o site fecha o fluxo sozinho: a home não leva à /estudante,
    a /estudante mostra a lista de espera no lugar do formulário e a
@@ -117,6 +119,93 @@ function reais(v) {
   return `R$ ${Number(v).toFixed(2).replace(".", ",")}`;
 }
 
+/** Preço que um desconto (fração) deixa sobre um anual, em CENTAVOS
+    inteiros, arredondado como o precoComDesconto de config/pricing.ts. */
+function centavosComDesconto(anual, desconto) {
+  return Math.round(centavosExatos(anual, desconto));
+}
+
+/** O mesmo preço SEM arredondar (149,90 com 0.40027 = 8989,9527 centavos). */
+function centavosExatos(anual, desconto) {
+  return Math.round(anual * 100) * (1 - desconto);
+}
+
+/**
+ * O desconto dá o preço final anunciado com qualquer arredondamento da
+ * Hotmart? Ninguém sabe se ela arredonda o preço ao centavo mais próximo,
+ * corta o centavo ou arredonda o valor do desconto. Por isso o preço
+ * EXATO precisa ficar no anunciado ou abaixo dele, e arredondar para ele:
+ * aí o checkout mostra o anunciado ou 1 centavo a menos, nunca mais.
+ * Sobre R$ 149,90 e R$ 89,90: de 0.40027 a 0.40030. Fora disso:
+ *   0.40024 a 0.40026  preço exato acima de R$ 89,90 (89,904 a 89,901):
+ *                      cortando o desconto, o checkout cobraria R$ 89,91
+ *   0.40031 em diante  arredonda para R$ 89,89 ou menos
+ * (1e-6 de folga só para o erro de ponto flutuante da multiplicação.)
+ */
+function descontoGarantido(anual, desconto, precoFinal) {
+  const alvo = Math.round(precoFinal * 100);
+  const exato = centavosExatos(anual, desconto);
+  return Math.round(exato) === alvo && exato <= alvo + 1e-6;
+}
+
+/**
+ * O que o PRIMEIRO cupom real pode mostrar no checkout, em centavos, com
+ * o desconto da Vercel: o anunciado (a Hotmart arredonda ao centavo), 1
+ * centavo a menos (ela corta o centavo do preço ou arredonda o desconto
+ * para cima) e o preço com o desconto cortado em 2 ou 3 casas (se ela não
+ * guardar as 5). Cada um pede uma decisão diferente (LEIA-ME, item 1).
+ */
+function cenariosDoPrimeiroCupom(anual, desconto) {
+  const exato = centavosExatos(anual, desconto);
+  return {
+    esperado: Math.round(exato),
+    cortado: Math.floor(exato + 1e-6),
+    duasCasas: centavosComDesconto(anual, Math.round(desconto * 100) / 100),
+    tresCasas: centavosComDesconto(anual, Math.round(desconto * 1000) / 1000),
+  };
+}
+
+/**
+ * O que a página anuncia para o estudante, lido do config/pricing.ts:
+ *   anual       preço oficial do Brasil (R$ 149,90), a base do cupom
+ *   precoFinal  ESTUDANTE_PRECO_FINAL (R$ 89,90 por ano)
+ *   desconto    ESTUDANTE_DESCONTO, a fração derivada dele (0.40027),
+ *               o valor exato a pôr no STUDENT_DISCOUNT
+ */
+function alvoDoEstudante(cfg) {
+  return {
+    anual: cfg && cfg.MERCADOS && cfg.MERCADOS.br ? cfg.MERCADOS.br.anual : undefined,
+    precoFinal: cfg ? cfg.ESTUDANTE_PRECO_FINAL : undefined,
+    desconto: cfg ? cfg.ESTUDANTE_DESCONTO : undefined,
+  };
+}
+
+/** Problema com o preço de estudante do config, ou null. */
+function problemaDoAlvo(alvo) {
+  const a = alvo || {};
+  if (!(typeof a.anual === "number" && a.anual > 0)) return "Estudante: preço oficial do Brasil ausente no config/pricing.ts.";
+  if (!(typeof a.precoFinal === "number" && a.precoFinal > 0 && a.precoFinal < a.anual)) {
+    return `ESTUDANTE_PRECO_FINAL inválido: ${a.precoFinal} (precisa ser maior que zero e menor que ${reais(a.anual)}).`;
+  }
+  if (!(typeof a.desconto === "number" && a.desconto > 0 && a.desconto < 0.99)) {
+    return `ESTUDANTE_DESCONTO inválido: ${a.desconto} (a API da Hotmart exige mais que 0 e menos que 0.99).`;
+  }
+  if (centavosComDesconto(a.anual, a.desconto) !== Math.round(a.precoFinal * 100)) {
+    return (
+      `ESTUDANTE_DESCONTO ${a.desconto} sobre ${reais(a.anual)} dá ${reais(centavosComDesconto(a.anual, a.desconto) / 100)}, ` +
+      `e o ESTUDANTE_PRECO_FINAL anunciado é ${reais(a.precoFinal)}.`
+    );
+  }
+  if (!descontoGarantido(a.anual, a.desconto, a.precoFinal)) {
+    return (
+      `ESTUDANTE_DESCONTO ${a.desconto} sobre ${reais(a.anual)} deixa o preço exato acima de ${reais(a.precoFinal)}: ` +
+      "conforme o arredondamento da Hotmart, o checkout cobraria 1 centavo a mais que a página. " +
+      "Arredonde o desconto para cima (config/pricing.ts)."
+    );
+  }
+  return null;
+}
+
 /** Problema com o link de um plano, ou null se ele está bom. */
 function problemaDoLink(link, rotulo) {
   if (pendente(link)) return `${rotulo}: link de checkout ainda é "[PREENCHER...]".`;
@@ -158,7 +247,8 @@ function idsDeOfertaValidos(bruto) {
 /**
  * O fluxo do cupom pessoal do estudante pode abrir neste build?
  *   env           process.env (o da Vercel no build)
- *   estudantePct  ESTUDANTE_DESCONTO (em %), o que a página anuncia
+ *   alvo          { anual, precoFinal, desconto } (alvoDoEstudante): o
+ *                 que a página anuncia
  *   produto       PRODUTO_HOTMART de config/pricing.ts
  * Devolve { aberto, faltas[], modelo, nomeInvalido }.
  *
@@ -167,13 +257,20 @@ function idsDeOfertaValidos(bruto) {
  *   - modelo antigo: o botão do WhatsApp abre o checkout do 8280315;
  *   - HOTMART_PRODUCT_ID de outro produto: o cupom nasce lá, e o
  *     checkout K105072021O (7448309) não o reconhece;
- *   - STUDENT_DISCOUNT diferente do anunciado (ou vazio, quando a API já
- *     respondia 503): o checkout cobraria outro valor que o da página.
+ *   - STUDENT_DISCOUNT que, sobre R$ 149,90, não dá o preço final
+ *     anunciado (ou vazio, quando a API já respondia 503): o checkout
+ *     cobraria outro valor que o da página. Vale só o valor cujo preço
+ *     EXATO fica em R$ 89,90 ou abaixo e arredonda para R$ 89,90 (de
+ *     0.40027 a 0.40030, descontoGarantido): com qualquer arredondamento
+ *     da Hotmart, o checkout nunca cobra mais que a página. O aviso diz o
+ *     exato, o ESTUDANTE_DESCONTO (0.40027). 0.40 não serve: daria
+ *     R$ 89,94. 0.40024 a 0.40026 também não: cortando o desconto, a
+ *     Hotmart cobraria R$ 89,91.
  * HOTMART_OFFER_IDS NÃO fecha o fluxo: sem ele o estudante paga o valor
  * certo, e o risco (o cupom valer também na oferta de lançamento) foi
  * aceito pelo dono. Ele continua no aviso.
  */
-function estadoDoEstudante(env = {}, estudantePct = 40, produto = PRODUTO_DO_SITE) {
+function estadoDoEstudante(env = {}, alvo = {}, produto = PRODUTO_DO_SITE) {
   const faltas = [];
   // Mesma regra de lib/whatsapp.js: nome fora do padrão da Meta (só
   // minúsculas, números e _) faz o envio voltar ao modelo antigo.
@@ -198,12 +295,33 @@ function estadoDoEstudante(env = {}, estudantePct = 40, produto = PRODUTO_DO_SIT
     );
   }
   const descontoEnv = String(env.STUDENT_DISCOUNT || "").trim();
-  const esperado = estudantePct / 100;
-  if (!descontoEnv || !(Math.abs(Number(descontoEnv) - esperado) <= 0.0001)) {
-    faltas.push(
-      `STUDENT_DISCOUNT=${esperado.toFixed(2)}, o ${estudantePct}% que a página anuncia ` +
-        `(hoje ${descontoEnv ? `STUDENT_DISCOUNT=${descontoEnv}` : "vazio"})`
-    );
+  const erroDoAlvo = problemaDoAlvo(alvo);
+  if (erroDoAlvo) {
+    faltas.push(`config/pricing.ts: ${erroDoAlvo}`);
+  } else {
+    // Mesma regra da /api/estudante/solicitar (0 < desconto < 0.99), mas
+    // com Number: "0.40027x" não passa aqui, para o build não abrir com
+    // um valor que só o parseFloat da rota aceitaria.
+    const d = Number(descontoEnv);
+    const valido = descontoEnv !== "" && Number.isFinite(d) && d > 0 && d < 0.99;
+    const cobraria = valido ? centavosComDesconto(alvo.anual, d) : null;
+    if (!valido || !descontoGarantido(alvo.anual, d, alvo.precoFinal)) {
+      // Arredonda para o anunciado, mas o preço exato passa dele: a
+      // Hotmart pode cobrar 1 centavo a mais, conforme arredonda.
+      const acima = valido && cobraria === Math.round(alvo.precoFinal * 100);
+      const hoje = !descontoEnv
+        ? "vazio"
+        : `STUDENT_DISCOUNT=${descontoEnv}, ` +
+          (!valido
+            ? "inválido"
+            : acima
+              ? `cujo preço exato passa de ${reais(alvo.precoFinal)} e pode sair ${reais((Math.floor(centavosExatos(alvo.anual, d)) + 1) / 100)} no checkout`
+              : `que daria ${reais(cobraria / 100)}`);
+      faltas.push(
+        `STUDENT_DISCOUNT=${alvo.desconto}, que sobre ${reais(alvo.anual)} dá os ${reais(alvo.precoFinal)} por ano ` +
+          `que a página anuncia (hoje ${hoje})`
+      );
+    }
   }
   return { aberto: faltas.length === 0, faltas, modelo, nomeInvalido: Boolean(nomeEnv) && modelo !== nomeEnv };
 }
@@ -211,14 +329,15 @@ function estadoDoEstudante(env = {}, estudantePct = 40, produto = PRODUTO_DO_SIT
 /**
  * Decide se o build pode seguir.
  *   mercados       o MERCADOS do config/pricing.ts
- *   estudantePct   ESTUDANTE_DESCONTO (em %)
+ *   alvoEstudante  { precoFinal, desconto }: ESTUDANTE_PRECO_FINAL e
+ *                  ESTUDANTE_DESCONTO (o anual vem do mercados.br)
  *   env            process.env
  *   agora          ms (para o aviso de data vencida)
  *   produto        PRODUTO_HOTMART de config/pricing.ts
  * Devolve { ok, teste, problemas[], avisos[], mensagem, estudante }.
  */
 function checarPrecos({
-  mercados, estudantePct, env = {}, agora = Date.now(), estudanteMostraPreco = false, produto = PRODUTO_DO_SITE,
+  mercados, alvoEstudante = {}, env = {}, agora = Date.now(), estudanteMostraPreco = false, produto = PRODUTO_DO_SITE,
 }) {
   const problemas = [];
   // Problemas que não estão no config/pricing.ts (a ordem do lançamento):
@@ -320,10 +439,10 @@ function checarPrecos({
   }
 
   /* ----------------------------- estudante ----------------------------- */
-  if (!(estudantePct > 0 && estudantePct < 99)) {
-    problemas.push(`ESTUDANTE_DESCONTO inválido: ${estudantePct}.`);
-  }
-  const estudante = estadoDoEstudante(env, estudantePct, produto);
+  const alvo = { ...alvoEstudante, anual: br ? br.anual : undefined };
+  const erroDoAlvo = br ? problemaDoAlvo(alvo) : null;
+  if (erroDoAlvo) problemas.push(erroDoAlvo);
+  const estudante = estadoDoEstudante(env, alvo, produto);
   if (estudante.nomeInvalido) {
     avisos.push(
       `WA_TEMPLATE_ESTUDANTE="${String(env.WA_TEMPLATE_ESTUDANTE).trim()}" não é um nome de modelo da Meta ` +
@@ -338,10 +457,21 @@ function checarPrecos({
         (estudanteMostraPreco ? " A /estudante continua mostrando o preço de estudante (ESTUDANTE.mostrarPreco), com o aviso de que a solicitação abre em breve." : "")
     );
   } else {
+    const c = cenariosDoPrimeiroCupom(alvo.anual, Number(env.STUDENT_DISCOUNT));
+    const poucasCasas =
+      c.duasCasas === c.tresCasas
+        ? `${reais(c.duasCasas / 100)} se ela guardar só 2 ou 3 casas do desconto`
+        : `${reais(c.duasCasas / 100)} ou ${reais(c.tresCasas / 100)} se ela guardar só 2 ou 3 casas do desconto`;
     avisos.push(
-      `Estudante ABERTO neste build (modelo ${estudante.modelo}, produto ${produto}, desconto ${estudantePct}%). ` +
+      `Estudante ABERTO neste build (modelo ${estudante.modelo}, produto ${produto}, ` +
+        `STUDENT_DISCOUNT=${String(env.STUDENT_DISCOUNT).trim()}: ${reais(alvo.precoFinal)} por ano sobre ${reais(alvo.anual)}). ` +
         `Confira que o webhook do site (https://diariamente.app/api/webhooks/hotmart) está cadastrado no ${produto}: ` +
-        "é ele que apaga o cupom usado."
+        "é ele que apaga o cupom usado. E confira o PRIMEIRO cupom real no checkout: ele precisa mostrar " +
+        `${reais(alvo.precoFinal)}. A API da Hotmart não documenta quantas casas do desconto guarda nem como arredonda, ` +
+        `então o checkout pode mostrar ${reais(c.esperado / 100)} (pronto), ` +
+        (c.cortado !== c.esperado ? `${reais(c.cortado / 100)} se ela cortar o centavo (1 centavo a menos que a página), ` : "") +
+        `ou ${poucasCasas}; se ela recusar o desconto com 5 casas, o estudante vê "Não foi possível gerar seu código". ` +
+        "Fora do primeiro caso, o fluxo volta para o DEV antes de ser anunciado (o que decidir em cada caso: LEIA-ME, item 1)."
     );
   }
 
@@ -436,7 +566,7 @@ function checarPrecosDoProjeto(env = process.env) {
     // endereço (scripts/checar-endereco.js) já para o build nesse caso.
   }
   return checarPrecos({
-    mercados: cfg.MERCADOS, estudantePct: cfg.ESTUDANTE_DESCONTO, env, estudanteMostraPreco,
+    mercados: cfg.MERCADOS, alvoEstudante: alvoDoEstudante(cfg), env, estudanteMostraPreco,
     produto: cfg.PRODUTO_HOTMART || PRODUTO_DO_SITE,
   });
 }
@@ -449,7 +579,7 @@ function checarPrecosDoProjeto(env = process.env) {
 function estudanteDoProjeto(env = process.env) {
   try {
     const cfg = carregarPrecos();
-    return estadoDoEstudante(env, cfg.ESTUDANTE_DESCONTO, cfg.PRODUTO_HOTMART || PRODUTO_DO_SITE);
+    return estadoDoEstudante(env, alvoDoEstudante(cfg), cfg.PRODUTO_HOTMART || PRODUTO_DO_SITE);
   } catch (e) {
     return { aberto: false, faltas: [`config/pricing.ts ilegível (${e && e.message})`], modelo: MODELO_ESTUDANTE_ANTIGO, nomeInvalido: false };
   }
@@ -457,6 +587,7 @@ function estudanteDoProjeto(env = process.env) {
 
 module.exports = {
   checarPrecos, checarPrecosDoProjeto, carregarPrecos, problemaDoLink, dataReal, idsDeOfertaValidos,
-  estudanteMostraPrecoNoConfig, estadoDoEstudante, estudanteDoProjeto,
+  estudanteMostraPrecoNoConfig, estadoDoEstudante, estudanteDoProjeto, alvoDoEstudante, centavosComDesconto,
+  descontoGarantido, cenariosDoPrimeiroCupom,
   LINK_ANTIGO, CHECKOUT_DO_7448309, MODELO_ESTUDANTE_ANTIGO, PRODUTO_DO_SITE,
 };

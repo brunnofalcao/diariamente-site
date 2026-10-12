@@ -224,7 +224,7 @@ test("fluxo FECHADO: /api/estudante/solicitar responde 503 sem ler o pedido, sem
   const { rota, banco, cupons } = carregarSolicitar();
   for (const valor of [undefined, "", "0", "true"]) {
     const r = await semLog(() =>
-      comEnvAsync({ DM_ESTUDANTE_ABERTO: valor, STUDENT_DISCOUNT: "0.40" }, () => rota.POST(pedidoEstudante()))
+      comEnvAsync({ DM_ESTUDANTE_ABERTO: valor, STUDENT_DISCOUNT: "0.40027" }, () => rota.POST(pedidoEstudante()))
     );
     assert.equal(r.status, 503, String(valor));
     const corpo = await r.json();
@@ -240,14 +240,14 @@ test("fluxo ABERTO: a mesma rota grava o lead, cria o cupom e agenda o WhatsApp 
   const { rota, banco, cupons } = carregarSolicitar();
   const antes = Date.now();
   const r = await semLog(() =>
-    comEnvAsync({ DM_ESTUDANTE_ABERTO: "1", STUDENT_DISCOUNT: "0.40" }, () => rota.POST(pedidoEstudante()))
+    comEnvAsync({ DM_ESTUDANTE_ABERTO: "1", STUDENT_DISCOUNT: "0.40027" }, () => rota.POST(pedidoEstudante()))
   );
   assert.equal(r.status, 200);
   const corpo = await r.json();
   assert.equal(corpo.ok, true, JSON.stringify(corpo));
   assert.equal(corpo.agendado, true);
   assert.equal(cupons.length, 1);
-  assert.equal(cupons[0].desconto, 0.4);
+  assert.equal(cupons[0].desconto, 0.40027);
   const tabelas = banco.chamadas.map((c) => c.tabela);
   assert.ok(tabelas.includes("leads_estudante"));
   const insercao = banco.chamadas.find((c) => c.tabela === "cupons_estudante" && c.passos[0][0] === "insert");

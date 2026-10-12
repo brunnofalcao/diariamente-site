@@ -40,7 +40,7 @@ const CTA = ABERTO ? "Solicitar minha condição" : "Me avise quando abrir";
 
 const TITULO = "Diariamente para estudantes · condição exclusiva de graduação";
 const DESCRICAO =
-  "Uma provocação por dia durante toda a sua graduação, em qualquer curso. Condição exclusiva para estudantes: solicite seu código e receba no WhatsApp.";
+  "Uma provocação por dia, em qualquer curso de graduação. Condição exclusiva para estudantes: solicite seu código e receba no WhatsApp.";
 
 // Refaz a cada hora: o comparativo usa o preço público do dia, que muda
 // quando o lançamento termina (config/pricing.ts).
@@ -191,7 +191,10 @@ const RESUMO: [string, string][] = [
   ["Condição", "Exclusiva para estudantes de graduação"],
   ["Formato", "Aplicativo para iPhone e Android, uma provocação por dia"],
   ["Duração", "365 provocações, uma liberada a cada dia"],
-  ["Preço estudante", `${formatar("br", precoEstudante())} ${periodoEstudante()}, ${formatar("br", porMesEstudante())}/mês (valor cheio ${formatar("br", MERCADOS.br.anual)})`],
+  ["Preço estudante", `${formatar("br", precoEstudante())} ${periodoEstudante()} (equivale a ${formatar("br", porMesEstudante())}/mês; valor cheio ${formatar("br", MERCADOS.br.anual)})`],
+  // O cupom vai na oferta oficial, que parcela com acréscimo: o equivalente
+  // mensal não é parcela. Sem valor de parcela (a Hotmart calcula).
+  ["Pagamento", `${formatar("br", precoEstudante())} ${ESTUDANTE.pagamento}`],
   ["Entrega", "Código pessoal enviado por WhatsApp"],
   ["Público", "Estudantes de graduação de qualquer curso"],
   ["Autores", "Science Play"],
@@ -404,21 +407,24 @@ export default function Estudante() {
               </h2>
               <p className="ed-sec-sub">
                 Nada é retirado da sua versão. É o app inteiro, com as 365 provocações,
-                o contador de voltas, o menu Ações e o lembrete diário. O que muda é quanto você
-                paga por ele enquanto está na graduação.
+                o contador de voltas, o menu Ações e o lembrete diário. O que muda é o preço
+                de entrada.
               </p>
             </div>
 
-            {/* A condição existe enquanto a pessoa é estudante. Não é escassez
-                fabricada: é a natureza da condição, e dizer isso é honesto. */}
+            {/* A condição é para quem é estudante na hora de entrar. Não é
+                escassez fabricada: é a natureza da condição, e dizer isso é
+                honesto. Nada aqui diz quanto tempo o preço dura: se o cupom
+                vale nas renovações não se sabe (decisão do dono, 12/10/2026:
+                dizer só que a cobrança é anual). */}
             <div className="ed-urg">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 7v5.2l3.2 1.9" />
               </svg>
               <span>
-                Essa condição existe <b>enquanto você ainda está na graduação</b>. Depois
-                de formado, a entrada passa a ser pelo valor cheio.
+                Essa condição é <b>para quem ainda está na graduação</b>. Depois de
+                formado, a entrada passa a ser pelo mesmo preço de qualquer pessoa.
               </span>
             </div>
 

@@ -5,17 +5,20 @@ const assert = require("node:assert/strict");
 const path = require("path");
 const {
   checarPrecos, carregarPrecos, checarPrecosDoProjeto, estudanteMostraPrecoNoConfig, idsDeOfertaValidos,
-  estadoDoEstudante, estudanteDoProjeto,
+  estadoDoEstudante, estudanteDoProjeto, descontoGarantido, cenariosDoPrimeiroCupom,
 } = require("../scripts/checar-precos");
 
 const LINK_OK = "https://pay.hotmart.com/X00000000Y?off=teste000&checkoutMode=10";
 const LINK_LANC = "https://pay.hotmart.com/X00000000Y?off=lanc0000";
 // Estudante pronto: modelo v2 do WhatsApp, produto 7448309, desconto
-// anunciado e id numérico de oferta.
+// que dá o preço final anunciado e id numérico de oferta.
 const ENV_ESTUDANTE = {
   HOTMART_OFFER_IDS: "1234567", WA_TEMPLATE_ESTUDANTE: "diariamente_estudante_aprovado_v2",
-  HOTMART_PRODUCT_ID: "7448309", STUDENT_DISCOUNT: "0.40",
+  HOTMART_PRODUCT_ID: "7448309", STUDENT_DISCOUNT: "0.40027",
 };
+// O que a página anuncia ao estudante (o anual vem do mercado br).
+const ALVO = { precoFinal: 89.9, desconto: 0.40027 };
+const ALVO_BR = { anual: 149.9, ...ALVO };
 const DIA_12_10 = Date.parse("2026-10-12T12:00:00Z");
 
 /** Mercados fictícios a partir do config real, com o que o teste trocar. */
@@ -30,7 +33,7 @@ function mercados(troca = {}) {
   return m;
 }
 
-const checar = (m, extra = {}) => checarPrecos({ mercados: m, estudantePct: 40, env: ENV_ESTUDANTE, agora: DIA_12_10, ...extra });
+const checar = (m, extra = {}) => checarPrecos({ mercados: m, alvoEstudante: ALVO, env: ENV_ESTUDANTE, agora: DIA_12_10, ...extra });
 
 test("o config/pricing.ts real carrega fora do Next e tem os cinco mercados", () => {
   const cfg = carregarPrecos();
@@ -243,7 +246,7 @@ test("avisos aparecem também na mensagem do build bloqueado", () => {
 
 test("estudante: HOTMART_OFFER_IDS vazio ou sem id numérico avisa (sem travar)", () => {
   for (const ids of ["", "  ", "fhrttdh8", "fhrttdh8, abc"]) {
-    const r = checarPrecos({ mercados: mercados(), estudantePct: 40, env: { ...ENV_ESTUDANTE, HOTMART_OFFER_IDS: ids } });
+    const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { ...ENV_ESTUDANTE, HOTMART_OFFER_IDS: ids } });
     assert.equal(r.ok, true, ids);
     assert.match(r.avisos.join(" "), /HOTMART_OFFER_IDS/, ids);
     assert.match(r.avisos.join(" "), /inclusive a de lançamento/, ids);
@@ -253,39 +256,102 @@ test("estudante: HOTMART_OFFER_IDS vazio ou sem id numérico avisa (sem travar)"
 
 test("estudante: modelo de WhatsApp antigo (ou sem WA_TEMPLATE_ESTUDANTE) avisa até o v2", () => {
   for (const nome of [undefined, "", "diariamente_estudante_aprovado"]) {
-    const r = checarPrecos({ mercados: mercados(), estudantePct: 40, env: { HOTMART_OFFER_IDS: "1", WA_TEMPLATE_ESTUDANTE: nome } });
+    const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { HOTMART_OFFER_IDS: "1", WA_TEMPLATE_ESTUDANTE: nome } });
     const aviso = r.avisos.join(" ");
     assert.match(aviso, /diariamente_estudante_aprovado/);
     assert.match(aviso, /estudante\/ativar\?cupom=\{\{1\}\}/);
     assert.match(aviso, /WA_TEMPLATE_ESTUDANTE/);
   }
-  const v2 = checarPrecos({ mercados: mercados(), estudantePct: 40, env: ENV_ESTUDANTE });
+  const v2 = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: ENV_ESTUDANTE });
   assert.equal(/WA_TEMPLATE_ESTUDANTE/.test(v2.avisos.join(" ")), false);
-  const confirmado = checarPrecos({ mercados: mercados(), estudantePct: 40, env: { HOTMART_OFFER_IDS: "1", DM_TEMPLATE_ESTUDANTE_OK: "1" } });
+  const confirmado = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { HOTMART_OFFER_IDS: "1", DM_TEMPLATE_ESTUDANTE_OK: "1" } });
   assert.equal(/WA_TEMPLATE_ESTUDANTE/.test(confirmado.avisos.join(" ")), false);
   // o config.ts real hoje mostra o preço de estudante
   assert.equal(estudanteMostraPrecoNoConfig(), true);
 });
 
 test("HOTMART_PRODUCT_ID diferente de 7448309 gera aviso", () => {
-  const r = checarPrecos({ mercados: mercados(), estudantePct: 40, env: { ...ENV_ESTUDANTE, HOTMART_PRODUCT_ID: "8280315" } });
+  const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { ...ENV_ESTUDANTE, HOTMART_PRODUCT_ID: "8280315" } });
   assert.match(r.avisos.join(" "), /HOTMART_PRODUCT_ID=8280315/);
-  const certo = checarPrecos({ mercados: mercados(), estudantePct: 40, env: { ...ENV_ESTUDANTE, HOTMART_PRODUCT_ID: "7448309" } });
+  const certo = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { ...ENV_ESTUDANTE, HOTMART_PRODUCT_ID: "7448309" } });
   assert.equal(/HOTMART_PRODUCT_ID/.test(certo.avisos.join(" ")), false);
 });
 
-test("STUDENT_DISCOUNT diferente do anunciado gera aviso", () => {
-  const r = checarPrecos({ mercados: mercados(), estudantePct: 40, env: { ...ENV_ESTUDANTE, STUDENT_DISCOUNT: "0.44" } });
+test("STUDENT_DISCOUNT que não dá R$ 89,90 gera aviso com o valor exato a pôr na Vercel", () => {
+  for (const d of ["0.44", "0.40", "0.4"]) {
+    const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { ...ENV_ESTUDANTE, STUDENT_DISCOUNT: d } });
+    assert.equal(r.ok, true, d);
+    assert.match(r.avisos.join(" "), /STUDENT_DISCOUNT=0\.40027, que sobre R\$ 149,90 dá os R\$ 89,90 por ano/, d);
+  }
+  // 0.40 era o 40% antigo: o aviso diz quanto ele cobraria
+  const antigo = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { ...ENV_ESTUDANTE, STUDENT_DISCOUNT: "0.40" } });
+  assert.match(antigo.avisos.join(" "), /hoje STUDENT_DISCOUNT=0\.40, que daria R\$ 89,94/);
+  const igual = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { ...ENV_ESTUDANTE, STUDENT_DISCOUNT: "0.40027" } });
+  assert.equal(/STUDENT_DISCOUNT=0\.40027, que/.test(igual.avisos.join(" ")), false);
+  assert.equal(igual.estudante.aberto, true);
+});
+
+test("estudante ABERTO: o aviso pede para conferir o primeiro cupom real no checkout", () => {
+  const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: ENV_ESTUDANTE, agora: DIA_12_10 });
+  const aviso = r.avisos.join(" ");
+  assert.match(aviso, /Estudante ABERTO neste build .*STUDENT_DISCOUNT=0\.40027: R\$ 89,90 por ano sobre R\$ 149,90/);
+  assert.match(aviso, /PRIMEIRO cupom real no checkout: ele precisa mostrar R\$ 89,90/);
+  // os três resultados possíveis, cada um com a sua decisão no LEIA-ME
+  assert.match(aviso, /pode mostrar R\$ 89,90 \(pronto\), R\$ 89,89 se ela cortar o centavo \(1 centavo a menos que a página\), ou R\$ 89,94 se ela guardar só 2 ou 3 casas do desconto/);
+  assert.match(aviso, /Não foi possível gerar seu código/);
+  assert.match(aviso, /LEIA-ME, item 1/);
+  // nunca um cenário acima do anunciado
+  assert.equal(/R\$ 89,91/.test(aviso), false);
+});
+
+test("primeiro cupom: com o desconto do config, o checkout mostra R$ 89,90, R$ 89,89 ou R$ 89,94, nunca mais que a página", () => {
+  assert.deepEqual(cenariosDoPrimeiroCupom(149.9, 0.40027), { esperado: 8990, cortado: 8989, duasCasas: 8994, tresCasas: 8994 });
+  // o pior arredondamento possível de cada desconto aceito fica em R$ 89,90 ou abaixo
+  for (const d of [0.40027, 0.40028, 0.40029, 0.4003]) {
+    const c = cenariosDoPrimeiroCupom(149.9, d);
+    const exato = 14990 * (1 - d);
+    assert.ok(Math.ceil(exato - 1e-6) <= 8990, `${d}: arredondado para cima ainda cabe nos R$ 89,90`);
+    assert.ok(c.cortado >= 8989 && c.esperado === 8990, String(d));
+  }
+});
+
+test("descontoGarantido: só o desconto cujo preço exato fica em R$ 89,90 ou abaixo, e arredonda para ele", () => {
+  for (const d of [0.40027, 0.40028, 0.40029, 0.4003]) assert.equal(descontoGarantido(149.9, d, 89.9), true, String(d));
+  // 0.40024 a 0.40026 arredondam para R$ 89,90, mas o preço exato passa dele:
+  // cortando o desconto (59,997 vira 59,99), a Hotmart cobraria R$ 89,91
+  for (const d of [0.40024, 0.40025, 0.40026, 0.400266, 0.400266844]) assert.equal(descontoGarantido(149.9, d, 89.9), false, String(d));
+  for (const d of [0.40023, 0.40031, 0.4, 0.44]) assert.equal(descontoGarantido(149.9, d, 89.9), false, String(d));
+});
+
+test("STUDENT_DISCOUNT que arredonda para R$ 89,90 mas passa dele (0.40025) fecha o fluxo e o aviso diz o porquê", () => {
+  const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { ...ENV_ESTUDANTE, STUDENT_DISCOUNT: "0.40025" } });
   assert.equal(r.ok, true);
-  assert.match(r.avisos.join(" "), /STUDENT_DISCOUNT/);
-  const igual = checarPrecos({ mercados: mercados(), estudantePct: 40, env: { ...ENV_ESTUDANTE, STUDENT_DISCOUNT: "0.40" } });
-  assert.equal(/STUDENT_DISCOUNT/.test(igual.avisos.join(" ")), false);
+  assert.equal(r.estudante.aberto, false);
+  const aviso = r.avisos.join(" ");
+  assert.match(aviso, /STUDENT_DISCOUNT=0\.40027, que sobre R\$ 149,90 dá os R\$ 89,90 por ano/);
+  assert.match(aviso, /hoje STUDENT_DISCOUNT=0\.40025, cujo preço exato passa de R\$ 89,90 e pode sair R\$ 89,91 no checkout/);
+});
+
+test("preço de estudante do config que não fecha a conta TRAVA o build", () => {
+  for (const alvo of [
+    { precoFinal: 89.9, desconto: 0.4 },      // desconto não dá o preço final
+    { precoFinal: 0, desconto: 0.40027 },     // preço final inválido
+    { precoFinal: 149.9, desconto: 0.40027 }, // igual ao cheio
+    { precoFinal: 89.9, desconto: 0.995 },    // fora da faixa da API
+    { precoFinal: 89.9, desconto: 0.40025 },  // arredonda para 89,90, mas o exato passa dele
+    {},
+  ]) {
+    const r = checarPrecos({ mercados: mercados(), alvoEstudante: alvo, env: ENV_ESTUDANTE, agora: DIA_12_10 });
+    assert.equal(r.ok, false, JSON.stringify(alvo));
+    assert.match(r.mensagem, /ESTUDANTE_/, JSON.stringify(alvo));
+    assert.equal(r.estudante.aberto, false, JSON.stringify(alvo));
+  }
 });
 
 test("DM_ENDERECO_TESTE libera o build local com problema de preço, com aviso de teste", () => {
   const m = mercados();
   m.br.checkout = "[PREENCHER: link]";
-  const r = checarPrecos({ mercados: m, estudantePct: 40, env: { DM_ENDERECO_TESTE: "Rua de Teste, 123" } });
+  const r = checarPrecos({ mercados: m, alvoEstudante: ALVO, env: { DM_ENDERECO_TESTE: "Rua de Teste, 123" } });
   assert.equal(r.ok, true);
   assert.equal(r.teste, true);
   assert.match(r.mensagem, /TESTE/);
@@ -294,14 +360,14 @@ test("DM_ENDERECO_TESTE libera o build local com problema de preço, com aviso d
 test("DM_ENDERECO_TESTE é aceita em preview da Vercel e recusada em produção", () => {
   const m = mercados();
   m.br.checkout = "[PREENCHER: link]";
-  const env = (extra) => ({ mercados: m, estudantePct: 40, env: { DM_ENDERECO_TESTE: "x", VERCEL: "1", ...extra } });
+  const env = (extra) => ({ mercados: m, alvoEstudante: ALVO, env: { DM_ENDERECO_TESTE: "x", VERCEL: "1", ...extra } });
   assert.equal(checarPrecos(env({ VERCEL_ENV: "preview" })).ok, true);
   assert.equal(checarPrecos(env({ VERCEL_ENV: "production" })).ok, false);
   assert.equal(checarPrecos(env({})).ok, false);
 });
 
 test("estudante: WA_TEMPLATE_ESTUDANTE fora do padrão da Meta avisa e conta como modelo antigo", () => {
-  const r = checarPrecos({ mercados: mercados(), estudantePct: 40, env: { HOTMART_OFFER_IDS: "1", WA_TEMPLATE_ESTUDANTE: "Diariamente-V2" } });
+  const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { HOTMART_OFFER_IDS: "1", WA_TEMPLATE_ESTUDANTE: "Diariamente-V2" } });
   const aviso = r.avisos.join(" ");
   assert.match(aviso, /não é um nome de modelo da Meta/);
   assert.match(aviso, /estudante\/ativar\?cupom=\{\{1\}\}/);
@@ -309,21 +375,24 @@ test("estudante: WA_TEMPLATE_ESTUDANTE fora do padrão da Meta avisa e conta com
 
 /* --------------------- estudante aberto ou fechado --------------------- */
 
-const PRONTO = { WA_TEMPLATE_ESTUDANTE: "diariamente_estudante_aprovado_v2", HOTMART_PRODUCT_ID: "7448309", STUDENT_DISCOUNT: "0.40" };
+const PRONTO = { WA_TEMPLATE_ESTUDANTE: "diariamente_estudante_aprovado_v2", HOTMART_PRODUCT_ID: "7448309", STUDENT_DISCOUNT: "0.40027" };
 
 test("estudante: sem nada na Vercel, FECHADO, com as três pendências", () => {
-  const e = estadoDoEstudante({}, 40);
+  const e = estadoDoEstudante({}, ALVO_BR);
   assert.equal(e.aberto, false);
   assert.equal(e.faltas.length, 3);
   const faltas = e.faltas.join(" ");
   assert.match(faltas, /WA_TEMPLATE_ESTUDANTE/);
   assert.match(faltas, /HOTMART_PRODUCT_ID=7448309 \(hoje vazio\)/);
-  assert.match(faltas, /STUDENT_DISCOUNT=0\.40/);
+  assert.match(faltas, /STUDENT_DISCOUNT=0\.40027, que sobre R\$ 149,90 dá os R\$ 89,90 por ano que a página anuncia \(hoje vazio\)/);
 });
 
 test("estudante: ABERTO só com modelo v2, produto 7448309 e o desconto anunciado; cada falta, sozinha, fecha", () => {
-  assert.equal(estadoDoEstudante(PRONTO, 40).aberto, true);
-  assert.equal(estadoDoEstudante({ ...PRONTO, STUDENT_DISCOUNT: "0.4" }, 40).aberto, true);
+  assert.equal(estadoDoEstudante(PRONTO, ALVO_BR).aberto, true);
+  // só o valor cujo preço exato fica em R$ 89,90 ou abaixo e arredonda para ele
+  for (const d of ["0.40027", "0.40028", "0.40029", "0.4003", "0.40030"]) {
+    assert.equal(estadoDoEstudante({ ...PRONTO, STUDENT_DISCOUNT: d }, ALVO_BR).aberto, true, d);
+  }
   for (const [k, v] of [
     ["WA_TEMPLATE_ESTUDANTE", undefined],
     ["WA_TEMPLATE_ESTUDANTE", "diariamente_estudante_aprovado"],
@@ -332,20 +401,29 @@ test("estudante: ABERTO só com modelo v2, produto 7448309 e o desconto anunciad
     ["HOTMART_PRODUCT_ID", "8280315"],
     ["STUDENT_DISCOUNT", undefined],
     ["STUDENT_DISCOUNT", "0.44"],
+    ["STUDENT_DISCOUNT", "0.4"],
+    ["STUDENT_DISCOUNT", "0.40"],
+    ["STUDENT_DISCOUNT", "0.40023"],
+    ["STUDENT_DISCOUNT", "0.40024"],
+    ["STUDENT_DISCOUNT", "0.40026"],
+    ["STUDENT_DISCOUNT", "0.400266"],
+    ["STUDENT_DISCOUNT", "0.400266844"],
+    ["STUDENT_DISCOUNT", "0.40031"],
+    ["STUDENT_DISCOUNT", "0.40027x"],
     ["STUDENT_DISCOUNT", "quarenta"],
   ]) {
     const env = { ...PRONTO, [k]: v };
     if (v === undefined) delete env[k];
-    const e = estadoDoEstudante(env, 40);
+    const e = estadoDoEstudante(env, ALVO_BR);
     assert.equal(e.aberto, false, `${k}=${v}`);
     assert.equal(e.faltas.length, 1, `${k}=${v}`);
   }
 });
 
 test("estudante: DM_TEMPLATE_ESTUDANTE_OK=1 confirma à mão o modelo; HOTMART_OFFER_IDS não fecha o fluxo", () => {
-  const confirmado = { HOTMART_PRODUCT_ID: "7448309", STUDENT_DISCOUNT: "0.40", DM_TEMPLATE_ESTUDANTE_OK: "1" };
-  assert.equal(estadoDoEstudante(confirmado, 40).aberto, true);
-  const r = checarPrecos({ mercados: mercados(), estudantePct: 40, env: PRONTO, agora: DIA_12_10 });
+  const confirmado = { HOTMART_PRODUCT_ID: "7448309", STUDENT_DISCOUNT: "0.40027", DM_TEMPLATE_ESTUDANTE_OK: "1" };
+  assert.equal(estadoDoEstudante(confirmado, ALVO_BR).aberto, true);
+  const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: PRONTO, agora: DIA_12_10 });
   assert.equal(r.estudante.aberto, true);
   // o risco aceito pelo dono continua à vista no log
   assert.match(r.avisos.join(" "), /HOTMART_OFFER_IDS está vazio/);

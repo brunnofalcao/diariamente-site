@@ -14,7 +14,7 @@
 > | `/pt-pt` | página de vendas em pt-PT, lista de espera no bloco (pt fechado; link `3n484jbe` pronto) |
 > | `/es` e `/es-es` | lista de espera em espanhol (página inteira; la e es fechados, links `uevhmhy2` e `iuoufnf6` prontos) |
 > | `/pt-pt/embreve`, `/es-es/embreve` | **prévias do dono** (noindex, fora do sitemap, abrem de qualquer país): página de vendas de Portugal e da Espanha com o bloco de 29,99 €, botão desabilitado enquanto a venda do mercado estiver fechada |
-> | `/estudante` | condição de estudante: R$ 89,94 no primeiro ano (R$ 7,50/mês), 40% sobre R$ 149,90; o cupom pessoal chega pelo WhatsApp. **Fechada sozinha** enquanto faltar configuração na Vercel (item 1 abaixo): lista de espera no lugar do formulário, e a home não leva até ela |
+> | `/estudante` | condição de estudante: R$ 89,90 por ano, cobrança anual (R$ 7,49/mês), com o cupom pessoal de uso único sobre a oferta oficial de R$ 149,90; o cupom chega pelo WhatsApp. **Fechada sozinha** enquanto faltar configuração na Vercel (item 1 abaixo): lista de espera no lugar do formulário, e a home não leva até ela |
 > | `/estudante/ativar?cupom=CODIGO` | confere o código e abre a oferta oficial `fhrttdh8` com `offDiscount=CODIGO` |
 > | `/embreve`, `/es/embreve` | redirecionam para `/` e `/es`, com utm |
 >
@@ -60,8 +60,19 @@
 >      o checkout da oferta oficial não o reconhece. As credenciais da API
 >      que o site já usa (`HOTMART_CLIENT_ID`, `HOTMART_CLIENT_SECRET`,
 >      `HOTMART_BASIC`) servem se o 7448309 estiver na mesma conta Hotmart.
->    - `STUDENT_DISCOUNT=0.40`, igual ao `ESTUDANTE_DESCONTO` de
->      `config/pricing.ts` (o que a página anuncia).
+>    - `STUDENT_DISCOUNT=0.40027` (exatamente este valor). O preço do
+>      estudante é FINAL (`ESTUDANTE_PRECO_FINAL = 89.9` em
+>      `config/pricing.ts`), e o desconto do cupom sai dele:
+>      1 - 89,90/149,90 = 0,400266..., arredondado PARA CIMA com 5 casas
+>      = 0.40027 (`ESTUDANTE_DESCONTO`). Para cima porque o preço exato
+>      (R$ 89,8995) fica no anunciado ou abaixo: seja qual for o
+>      arredondamento da Hotmart, o checkout mostra R$ 89,90 ou R$ 89,89,
+>      nunca R$ 89,91. A trava aceita só valores com essa garantia (de
+>      0.40027 a 0.40030) e diz o exato no aviso. **O `0.40` antigo fecha
+>      o fluxo** (daria R$ 89,94), e **0.40024 a 0.40026 também** (o
+>      0.400266 do passo a passo antigo do app incluído): arredondam para
+>      R$ 89,90, mas o preço exato passa dele, e, se a Hotmart cortar o
+>      desconto, o checkout cobraria R$ 89,91.
 >
 >    Antes do novo deploy que abre o fluxo (o build não consegue conferir):
 >    - Hotmart: o webhook do site (`https://diariamente.app/api/webhooks/hotmart`,
@@ -71,20 +82,78 @@
 >    - Vercel, `HOTMART_OFFER_IDS`: o id NUMÉRICO da oferta `fhrttdh8`
 >      (Hotmart, produto 7448309, Ofertas; o código `off` não serve).
 >      **Vazio, o cupom pessoal vale em qualquer oferta do produto,
->      inclusive a de lançamento** (40% sobre R$ 99,98). Não fecha o fluxo
+>      inclusive a de lançamento** (o mesmo desconto sobre R$ 99,98 daria
+>      R$ 59,96). Não fecha o fluxo
 >      (risco aceito pelo dono); sai como aviso em todo build.
->    - Aberto, faça um pedido de teste de estudante com um CPF seu.
+>    - Aberto, faça um pedido de teste de estudante com um CPF seu e
+>      **confira o primeiro cupom real no checkout: ele precisa mostrar
+>      R$ 89,90.** A API da Hotmart recebe o desconto como fração e nada
+>      no código nem na documentação que ele seguiu diz quantas casas ela
+>      guarda nem como arredonda. O que o checkout pode mostrar, e o que
+>      decidir em cada caso:
+>      - **R$ 89,90:** pronto, nada a fazer.
+>      - **R$ 89,89:** a Hotmart corta o centavo. O estudante paga 1
+>        centavo a menos que a página (nunca a mais). Decisão do dono:
+>        aceitar assim, ou pedir ao DEV um desconto um pouco menor (com o
+>        corte confirmado, 0.40024 dá R$ 89,90; a trava hoje recusa esse
+>        valor de propósito e precisa ser ajustada junto).
+>      - **R$ 89,94:** a Hotmart guarda só 2 ou 3 casas do desconto
+>        (0.40). Nenhum desconto percentual dá R$ 89,90 sobre R$ 149,90
+>        (0.40 dá R$ 89,94; 0.41 dá R$ 88,44). Decisão do dono: anunciar
+>        R$ 89,94 (`ESTUDANTE_PRECO_FINAL = 89.94` em `config/pricing.ts`
+>        e `STUDENT_DISCOUNT=0.4`) ou R$ 88,44 (0.41). Até a decisão, o
+>        estudante fica fechado (tirar o `STUDENT_DISCOUNT` da Vercel e
+>        fazer um novo deploy).
+>      - **"Não foi possível gerar seu código":** a Hotmart recusou o
+>        desconto com 5 casas. Mesma decisão do caso de R$ 89,94.
+>      - Confira também que o checkout com o cupom mostra o seletor de
+>        parcelas: a `/estudante` diz "R$ 89,90 à vista, ou em até 12x no
+>        cartão com acréscimo" (`ESTUDANTE.pagamento`, a mesma linha da
+>        oferta oficial). Sem seletor, troque essa linha por "à vista".
+>    - Banco: a coluna `cupons_estudante.desconto` é `numeric(4,3)` e
+>      guarda 0.400 (o valor exato, 0.40027, fica em
+>      `log_estudante.detalhe`). Não quebra nada; para guardar o valor
+>      exato, `sql/2026-10-12-cupons-estudante-desconto_APROVACAO.sql`
+>      (mudança em tabela existente, precisa de aprovação).
 >    - Tempo de espera: a tela promete o código "em até 10 minutos"
 >      (`ESTUDANTE.esperaMinutos`): 5 de janela de conferência na API e até
 >      5 tentativas do cron, uma por minuto. Um teste confere a conta.
->    - Renovação: o cupom vale também nas renovações? Ainda não se sabe.
->      Até confirmar, a página diz só "Renova a cada ano. Cancele quando
->      quiser." e toda economia é "no primeiro ano" (durante o lançamento,
->      a `/estudante` mostra também a regra de 3 anos do lançamento, para o
->      estudante comparar); confirmado, vire `ESTUDANTE.renovaMesmoValor`
->      para `true` em `config.ts`.
->    - Recomendação: desativar na Hotmart a oferta de estudante
->      `h82bllbx`. O site não a usa, e o link dela é aberto.
+>    - Renovação: o cupom vale também nas renovações? Não se sabe. Por
+>      decisão do dono (12/10/2026, terceira rodada), o texto diz SÓ que a
+>      cobrança é anual: "R$ 89,90 por ano · cobrança anual" e "Cobrança
+>      anual. Cancele quando quiser." (`ESTUDANTE.periodo` e
+>      `ESTUDANTE.renovacao` em `config.ts`), sem "no primeiro ano", sem
+>      "3 anos" e sem "renova pelo mesmo valor" (a chave
+>      `renovaMesmoValor` saiu do estudante). Também sem "enquanto está
+>      na graduação" nem "durante toda a sua graduação" (o mesmo prazo
+>      com outras palavras): a `/estudante` diz que a condição é "para
+>      quem ainda está na graduação" e que muda "o preço de entrada". Um
+>      teste varre o texto em português e espanhol atrás dessas frases.
+>      Durante o lançamento, a regra do LANÇAMENTO ("nos 3 primeiros
+>      anos. Depois, R$ 149,90 por ano."), que é da oferta `lf63bgdd`,
+>      aparece só na coluna "Quem entra hoje pelo site" do comparativo,
+>      para o estudante comparar as duas opções. Ela saiu da nota do card
+>      de estudante, onde era lida como a duração do cupom; a nota agora
+>      começa por "Para você, estudante:".
+>    - **Risco a decidir (dono): a economia durante o lançamento.** Até
+>      16/11, o comparativo mostra "Você economiza R$ 10,08" e o selo
+>      "R$ 10,08 OFF" (R$ 99,98 contra R$ 89,90, a cobrança de hoje), sem
+>      período, como o dono pediu. Só que o preço de lançamento é garantido
+>      por 3 anos e o do estudante não se sabe: se o cupom não valer nas
+>      renovações, o estudante paga 89,90 + 149,90 + 149,90 = R$ 389,70 em
+>      3 anos, contra R$ 299,94 pelo lançamento (R$ 89,76 a mais). A coluna
+>      do lançamento mostra a regra dos 3 anos, mas o "economiza" pode ser
+>      lido como vantagem garantida (CDC, art. 37). Opções, sem falar em
+>      duração do estudante: (a) manter; (b) esconder a coluna "Você
+>      economiza" e o selo OFF enquanto o lançamento vale; (c) dizer "na
+>      cobrança de hoje". Hoje está (a).
+>    - O link "Sou estudante" da home diz "R$ 7,49/mês · R$ 89,90 por ano
+>      · cobrança anual", sem a linha de pagamento (não cabe no link). Ela
+>      está no card e no resumo da `/estudante`, e o checkout mostra cada
+>      parcela com o total.
+>    - A oferta de estudante `h82bllbx` hoje mostra R$ 149,90 no checkout,
+>      igual à oficial, e o site não a usa. Recomendação mantida:
+>      desativá-la na Hotmart (o link dela é aberto).
 > 2. **Fim do lançamento (16/11/2026).** Nada a fazer no site: a partir de
 >    17/11 00:00 (Brasília) a página mostra R$ 149,90 e o botão abre
 >    `fhrttdh8` (as homes se refazem a cada hora e o navegador confere de
@@ -117,6 +186,8 @@
 >
 > - **Preços:** fonte única em `config/pricing.ts`, por mercado (moeda,
 >   preço anual, formato, link, textos do bloco, oferta de lançamento).
+>   Moeda por mercado: Brasil em BRL; Portugal e Espanha em EUR; América
+>   Latina e resto do mundo em USD.
 >   Nenhum componente escreve preço. `vendaAberta` liga cada mercado.
 >   Nenhum link de venda leva cupom; só o estudante usa cupom.
 > - **Trava de preços:** `npm run build` falha se o link da oferta oficial
