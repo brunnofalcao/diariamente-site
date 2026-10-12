@@ -1,5 +1,6 @@
 import { metadataDaPagina } from "@/lib/seo";
-import { SITE, EMPRESA, PLANO_APP, ESTUDANTE } from "@/config";
+import { SITE, EMPRESA } from "@/config";
+import { MERCADOS, formatar, mensal, precoFinal, lancamentoVigente, dataDoLancamento } from "@/config/pricing";
 import { LockupHorizontal } from "@/components/Brand";
 
 /* =====================================================================
@@ -30,7 +31,21 @@ const DESCRICAO =
 
 export const metadata = metadataDaPagina("sobre", "pt");
 
+// Refaz a cada hora: o preço de lançamento sai sozinho depois da data
+// de término (config/pricing.ts), como nas homes.
+export const revalidate = 3600;
+
 export default function Sobre() {
+  // Preço do Brasil, de config/pricing.ts. Sem valor de parcela: a Hotmart
+  // calcula, e o site nunca escreve um número fixo.
+  const agora = Date.now();
+  const cheio = formatar("br", MERCADOS.br.anual);
+  const cheioMes = formatar("br", mensal(MERCADOS.br.anual));
+  const vigente = lancamentoVigente("br", agora);
+  const lancamento = formatar("br", precoFinal("br", agora));
+  const ate = dataDoLancamento("br");
+  const condicao = vigente ? ` (${lancamento} no preço de lançamento, até ${ate})` : "";
+  const condicaoLista = vigente ? `; ${lancamento} no preço de lançamento, até ${ate}` : "";
   return (
     <main className="sobre">
       <header className="sobre-top">
@@ -77,7 +92,7 @@ export default function Sobre() {
               </p>
               <p>
                 <strong className="teal">Acesso:</strong> assinatura anual. Diariamente App,
-                R$ 197 (R$ 137,90 na condição de lançamento). São 365 textos por ano; na
+                {" "}{cheio} por ano{condicao}. São 365 textos por ano; na
                 renovação, um ciclo novo de conteúdo inédito. Garantia de 7 dias.
                 Realização Science Play.
               </p>
@@ -86,7 +101,7 @@ export default function Sobre() {
                 <li><b>Categoria:</b> prática diária de hábitos e bem-estar</li>
                 <li><b>Formato:</b> aplicativo para iPhone e Android</li>
                 <li><b>Duração:</b> 365 dias, uma provocação por dia</li>
-                <li><b>Preço:</b> R$ 197 · R$ 137,90 na condição de lançamento, ou 12x de R$ 14,26 no cartão (total R$ 171,12)</li>
+                <li><b>Preço:</b> {cheio} por ano ({cheioMes}/mês){condicaoLista}, em até 12x no cartão</li>
                 <li><b>Garantia:</b> 7 dias, incondicional</li>
                 <li><b>Responsáveis:</b> Science Play · Science Play</li>
                 <li><b>Inscrição:</b> {SITE.dominio.replace("https://", "")} · acesso enviado por e-mail</li>

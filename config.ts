@@ -6,6 +6,12 @@
 // definição (links de checkout, pixels). Nada inventado.
 // =====================================================================
 
+// PREÇO, CUPOM, MOEDA E LINK DE CHECKOUT NÃO MORAM AQUI: moram em
+// config/pricing.ts, por mercado (br, la, es, pt, rw). Os campos de plano
+// abaixo só repassam de lá, para os componentes antigos continuarem
+// funcionando sem um segundo número escrito à mão.
+import { MERCADOS, ESTUDANTE_DESCONTO, formatar, precoEstudante, porMesEstudante } from "@/config/pricing";
+
 export const SITE = {
   nome: "Diariamente",
   // Domínio oficial (Brandbook 5.0, seção 29 · papelaria: diariamente.app).
@@ -101,19 +107,21 @@ export const CONSELHO: { nome: string; credencial: string; registro?: string }[]
 ];
 
 // ---------------------------------------------------------------------
-// OFERTA (arquitetura confirmada por Brunno em ago/2026)
-// Dois carrinhos:
-//   APP    — Diariamente App:   nominal R$197 → lançamento R$137,90 (30% OFF)
-// Estudante: NÃO divulgado no site (sem mecanismo de validação ainda).
-// Desconto founders válido durante o mês de lançamento — ao encerrar,
-// definir LANCAMENTO.ativa = false e os cards voltam ao preço nominal.
+// OFERTA · desde out/2026 (handoff de precificação v2)
+// Um plano anual por moeda na Hotmart (produto 7448309). No Brasil o
+// plano fica no preço cheio e o lançamento entra por cupom embutido no
+// botão. Tudo isso, com a data de término, está em config/pricing.ts.
+// A oferta antiga (R$ 137,90, link L107085210M) saiu daqui.
 // ---------------------------------------------------------------------
+const LANC_BR = MERCADOS.br.lancamento;
 export const LANCAMENTO = {
-  ativa: true,
-  selo: "30% OFF de lançamento",
-  // [TROCAR] data de fim da janela founders (usada só no texto, ex: "até 30/09")
-  prazoTexto: "válido apenas no mês de lançamento",
+  ativa: Boolean(LANC_BR?.ativo),
+  selo: LANC_BR ? `${LANC_BR.percentual}% OFF de lançamento` : "",
+  prazoTexto: "preço de lançamento por tempo determinado, com a data na página",
 };
+
+/** "149,90": o número sem o símbolo, no formato do Brasil. */
+const semSimbolo = (v: number) => formatar("br", v).replace(/^R\$\s/, "");
 
 export type Plano = {
   id: string;
@@ -137,16 +145,13 @@ export type Plano = {
 
 // ---------------------------------------------------------------------
 // CHECKOUT — HOTMART
-// Cada preço é uma OFERTA na Hotmart (parâmetro ?off=CODIGO).
-// [TROCAR] Criar no Hotmart:
-//   2) Oferta APP lançamento:   R$137,90
-// Enquanto o link começar com "[", o botão avisa "em configuração".
+// O link do plano BRL vem de config/pricing.ts (CHECKOUT_BRL). O botão do
+// site usa linkCheckout("br"), que embute o cupom de lançamento.
+// ATENCAO: se houver order bump de produto fisico configurado no painel
+// da Hotmart, ele precisa ser REMOVIDO la: o site nao controla o checkout.
 // ---------------------------------------------------------------------
 export const HOTMART = {
-  // Oferta única do APP. ATENCAO: se houver order bump de produto fisico
-  // configurado no painel da Hotmart, ele precisa ser REMOVIDO la — o site
-  // nao controla o conteudo do checkout.
-  app: "https://pay.hotmart.com/L107085210M?checkoutMode=10",
+  app: MERCADOS.br.checkout,
 };
 
 
@@ -168,21 +173,14 @@ export const LOJAS_BADGES = {
 // PLANOS
 // ---------------------------------------------------------------------
 export const PLANO_APP: Plano = {
-  id: "club",
+  id: "anual-br",
   nome: "Diariamente App",
   destaque: true,
-  precoNumero: 137.9,
-  preco: "137,90",
-  precoDe: "197",
-  precoVista: "R$ 137,90 à vista",
-  // Parcelamento confirmado por Brunno (ago/2026).
-  // 12 x 14,26 = 171,12 contra 137,90 à vista: acréscimo de R$ 33,22 (24,1%).
-  // O total precisa aparecer na página junto da parcela (CDC art. 52 e
-  // Decreto 5.903). Oferta.tsx exibe automaticamente quando estes campos existem.
-  parcela: "14,26",
-  parcelas: 12,
-  parcelaTotal: "171,12",
-  perDia: "menos de R$ 0,38 por dia",
+  // Preço CHEIO do plano BRL. O valor de lançamento (com cupom) é calculado
+  // na hora por precoFinal("br") em config/pricing.ts. Sem valor de parcela:
+  // a Hotmart calcula, e o site nunca escreve um número fixo.
+  precoNumero: MERCADOS.br.anual,
+  preco: semSimbolo(MERCADOS.br.anual),
   inclui: [
     "Uma provocação por dia, os 365 dias do ano",
     "Calendário de constância (acompanhe sua jornada)",
@@ -191,7 +189,7 @@ export const PLANO_APP: Plano = {
     "Lembrete diário no WhatsApp",
     "Acesso imediato por e-mail",
   ],
-  ctaLabel: "Quero meu acesso",
+  ctaLabel: MERCADOS.br.textos.botao,
   checkoutUrl: HOTMART.app,
   nota: "Acesso liberado por e-mail assim que o pagamento for confirmado.",
   rodape: "Comece hoje. Volte amanhã.",
@@ -254,6 +252,20 @@ export const TRACKING = {
 };
 
 // ---------------------------------------------------------------------
+// ENDEREÇO DA EMPRESA · FONTE ÚNICA · PREENCHER ANTES DE PUBLICAR
+// ---------------------------------------------------------------------
+// Troque o texto abaixo pelo endereço completo do cartão CNPJ da
+// Science Play Cursos LTDA (rua, número, complemento, bairro, cidade/UF,
+// CEP). Ele aparece na Política de Privacidade (pt e es), no rodapé da
+// home e no rodapé das páginas legais. Obrigatório em loja on-line
+// (Decreto 7.962/2013, art. 2º).
+//
+// Enquanto tiver "[TROCAR" em qualquer parte, o `next build` FALHA de propósito,
+// com mensagem explicando o que fazer (scripts/checar-endereco.js,
+// chamado pelo next.config.js). Não remova a trava: preencha o endereço.
+const ENDERECO_DA_EMPRESA = "[TROCAR: endereço completo da Science Play Cursos LTDA, igual ao cartão CNPJ]";
+
+// ---------------------------------------------------------------------
 // EMPRESA / SUPORTE / LEGAL
 // CNPJ e razão social: [TROCAR] pelo documento oficial da Science Play.
 // Não inventar número de documento — tem peso jurídico.
@@ -269,8 +281,12 @@ export const EMPRESA = {
   site: "https://www.scienceplay.com",
   instagram: "scienceplay",
   linkedin: "scienceplay",
-  endereco: "[TROCAR: endereço completo da empresa, recomendado nos legais]",
-  vigenciaLegal: "Junho de 2026",
+  // DM_ENDERECO_TESTE só existe em build de teste (a trava recusa em
+  // produção na Vercel). Em build normal vem vazia e vale o endereço real.
+  endereco: process.env.DM_ENDERECO_TESTE || ENDERECO_DA_EMPRESA,
+  // Data exibida como "Última atualização" nos Termos e na Política. Mudou
+  // em out/2026: aviso de cookies (Política, seção 8) e garantia (Termos).
+  vigenciaLegal: "Outubro de 2026",
 };
 
 // ---------------------------------------------------------------------
@@ -279,8 +295,9 @@ export const EMPRESA = {
 // mostrarPreco = false  -> a página fala de "condição exclusiva" sem número.
 // mostrarPreco = true   -> a página exibe o preço abaixo. Vire a chave só
 //                          depois de a oferta de estudante existir na Hotmart.
-// A âncora riscada usa o preço PÚBLICO vigente (PLANO_APP), não o nominal,
-// para o desconto exibido ser sempre verdadeiro em relação ao que está à venda.
+// O desconto exibido é calculado sobre o preço cheio do plano (R$ 149,90),
+// que é a base do cupom na Hotmart; a comparação com o preço público do
+// dia (com ou sem lançamento) é feita na hora em components/BlocoPreco.tsx.
 // ---------------------------------------------------------------------
 export const ESTUDANTE = {
   // Ligado: a /estudante passa a exibir preço, desconto e comparativo.
@@ -288,14 +305,17 @@ export const ESTUDANTE = {
   // volta à versão sem número sem quebrar nada.
   mostrarPreco: true,
 
-  precoNumero: 77,
-  preco: "77,00",
-  parcela: "", // [CONFIRMAR na Hotmart] ex: "12x de R$ 7,58"
+  // Cupom de ESTUDANTE_DESCONTO% sobre o plano BRL (config/pricing.ts).
+  // Sem valor de parcela: a Hotmart calcula.
+  desconto: ESTUDANTE_DESCONTO,
+  precoNumero: precoEstudante(),
+  preco: semSimbolo(precoEstudante()),
+  porMes: semSimbolo(porMesEstudante()),
 
-  precoDeNumero: PLANO_APP.precoNumero,
-  precoDe: PLANO_APP.preco,
+  // Preço cheio do plano, sobre o qual o cupom incide.
+  precoDeNumero: MERCADOS.br.anual,
+  precoDe: semSimbolo(MERCADOS.br.anual),
 
-  perDia: "menos de R$ 0,22 por dia",
   selo: "Condição de estudante",
 
   // validade do código enviado por WhatsApp (espelha VALIDADE_HORAS da API)

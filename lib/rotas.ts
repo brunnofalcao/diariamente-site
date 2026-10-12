@@ -32,9 +32,12 @@ const SLUGS: Record<Chave, Record<Lang, string>> = {
   // USD e EUR), então cada mercado com preço próprio tem URL própria.
   homePt:      { pt: "/pt-pt",         es: "/pt-pt" },
   homeEs:      { pt: "/es-es",         es: "/es-es" },
-  // Site de vendas em construção. Fora do sitemap e com noindex até o
-  // lançamento: é endereço de trabalho, não de busca. Na virada, basta
-  // trocar o que as rotas "/" e "/es" renderizam.
+  // Antigo endereço de trabalho do site de vendas. Desde a virada, o site
+  // de vendas é "/" e estes caminhos só redirecionam ("/embreve" para "/",
+  // "/es/embreve" para "/es"). As prévias do dono, "/pt-pt/embreve" e
+  // "/es-es/embreve", continuam páginas: mostram o bloco de venda de pt e
+  // es enquanto as homes desses mercados são a lista de espera. Todas
+  // fora do sitemap e com noindex.
   vendas:      { pt: "/embreve",       es: "/es/embreve" },
   estudante:   { pt: "/estudante",     es: "/es/estudiantes" },
   sobre:       { pt: "/sobre",         es: "/es/acerca-de" },
@@ -67,4 +70,22 @@ export function identificar(pathname: string): { chave: Chave; lang: Lang } {
     }
   }
   return { chave: "home", lang: limpo.startsWith("/es") ? "es" : "pt" };
+}
+
+/**
+ * Destino de redirecionamento mantendo os parâmetros da URL original
+ * (utm_*, fbclid, gclid...). Anúncio ou link antigo que apontava para
+ * /embreve continua chegando com a origem do tráfego intacta.
+ */
+export function comParametros(
+  destino: string,
+  parametros: Record<string, string | string[] | undefined> = {}
+): string {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(parametros)) {
+    if (Array.isArray(v)) v.forEach((x) => q.append(k, x));
+    else if (v !== undefined) q.append(k, v);
+  }
+  const s = q.toString();
+  return s ? `${destino}?${s}` : destino;
 }

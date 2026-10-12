@@ -73,6 +73,11 @@ h3,.h3{ font-size:17px; font-weight:600; line-height:1.35; }
 .btn-block{ width:100%; }
 .btn-primary{ background:var(--p-500); color:var(--s-0); box-shadow:0 8px 30px rgba(39,189,190,.25); }
 .btn-primary:hover{ background:var(--p-400); box-shadow:0 12px 40px rgba(39,189,190,.35); }
+/* .btn-dark volta: o botão "Revisar cookies" da Política (RevisarCookies.tsx)
+   usa, e a poda de CSS da auditoria a tirou porque o componente não
+   existia na base dela. */
+.btn-dark{ background:rgba(255,255,255,.06); color:var(--n-0); border:1px solid var(--border-strong); }
+.btn-dark:hover{ background:rgba(255,255,255,.10); }
 .btn-ghost{ background:transparent; color:var(--p-500); }
 
 .badge{ display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; padding:7px 14px; border-radius:999px; }
@@ -1334,6 +1339,11 @@ html, body { overflow-x: clip; }
 .eb-seq i:nth-child(6) { opacity: .90; } .eb-seq i.hoje { width: 22px; opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) { .eb-ok, .eb-btn { animation: none; transition: none; } }
+
+/* Formulário da lista de espera DENTRO do bloco de oferta (mercados sem
+   venda aberta): o bloco já é o cartão, então o formulário perde o seu. */
+.eb-form.eb-embutido { margin-top: 20px; padding: 0; background: none; border: 0; border-radius: 0; }
+.eb-ok.eb-embutido { margin-top: 20px; text-align: center; }
 
 /* ---------- pular para o conteúdo ----------
    Invisível até receber foco pelo teclado. Primeiro elemento focável

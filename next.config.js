@@ -31,6 +31,12 @@ const CABECALHOS_DE_PROTECAO = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Endereço fictício SÓ para teste (ver scripts/checar-endereco.js). O
+  // `env` do Next grava o valor no servidor e no navegador no momento do
+  // build; vazio, o config.ts usa ENDERECO_DA_EMPRESA.
+  env: {
+    DM_ENDERECO_TESTE: (process.env.DM_ENDERECO_TESTE || "").trim(),
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },
@@ -41,4 +47,43 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+/* =====================================================================
+   TRAVAS DE PUBLICAÇÃO: ENDEREÇO DA EMPRESA E PREÇOS
+   ---------------------------------------------------------------------
+   `next build` para com uma mensagem clara enquanto:
+     - ENDERECO_DA_EMPRESA, em config.ts, ainda tiver o marcador "[TROCAR"
+       (scripts/checar-endereco.js);
+     - config/pricing.ts ainda não tiver o link do plano BRL do produto
+       7448309, o código do cupom de lançamento e a data de término, ou
+       tiver um mercado com venda aberta sem link (scripts/checar-precos.js).
+   Em `next dev` e `next start` só avisa no terminal, para não travar o
+   trabalho local. DM_ENDERECO_TESTE libera as duas para teste e é
+   recusada em produção na Vercel.
+   ===================================================================== */
+const { PHASE_PRODUCTION_BUILD } = require("next/constants");
+const { checarEnderecoDoProjeto } = require("./scripts/checar-endereco");
+const { checarPrecosDoProjeto } = require("./scripts/checar-precos");
+
+module.exports = (phase) => {
+  const travas = [
+    ["Endereço da empresa pendente em config.ts (ENDERECO_DA_EMPRESA).", checarEnderecoDoProjeto(process.env)],
+    ["Preço ou checkout pendente em config/pricing.ts.", checarPrecosDoProjeto(process.env)],
+  ];
+  // As duas travas falam antes de parar: quem lê o log vê tudo o que
+  // falta de uma vez, não uma pendência por build.
+  const bloqueios = [];
+  for (const [erro, r] of travas) {
+    if (!r.ok) {
+      if (phase === PHASE_PRODUCTION_BUILD) {
+        console.error("\n[diariamente] BUILD BLOQUEADO: " + r.mensagem + "\n");
+        bloqueios.push(erro);
+      } else {
+        console.warn("\n[diariamente] Aviso: " + r.mensagem + "\n");
+      }
+    } else if (r.teste || r.mensagem) {
+      console.warn("\n[diariamente] Aviso: " + r.mensagem + "\n");
+    }
+  }
+  if (bloqueios.length) throw new Error(bloqueios.join(" "));
+  return nextConfig;
+};

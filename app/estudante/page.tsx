@@ -1,6 +1,7 @@
 import { metadataDaPagina } from "@/lib/seo";
 import { SITE, EMPRESA, PROVA, GARANTIA, SCREENSHOTS, ESTUDANTE } from "@/config";
 import { OfficialLogo } from "@/components/Brand";
+import { MERCADOS, formatar, precoEstudante, porMesEstudante } from "@/config/pricing";
 import { BlocoPreco } from "@/components/BlocoPreco";
 import { EstudanteForm } from "@/components/EstudanteForm";
 import { EstudanteSticky } from "@/components/EstudanteSticky";
@@ -27,6 +28,10 @@ import "./estudante.css";
 const TITULO = "Diariamente para estudantes · condição exclusiva de graduação";
 const DESCRICAO =
   "Uma provocação por dia durante toda a sua graduação, em qualquer curso. Condição exclusiva para estudantes: solicite seu código e receba no WhatsApp.";
+
+// Refaz a cada hora: o comparativo usa o preço público do dia, que muda
+// quando o lançamento termina (config/pricing.ts).
+export const revalidate = 3600;
 
 export const metadata = {
   ...metadataDaPagina("estudante", "pt"),
@@ -173,7 +178,7 @@ const RESUMO: [string, string][] = [
   ["Condição", "Exclusiva para estudantes de graduação"],
   ["Formato", "Aplicativo para iPhone e Android, uma provocação por dia"],
   ["Duração", "365 provocações, uma liberada a cada dia"],
-  ["Preço estudante", `R$ ${ESTUDANTE.preco} no ano (valor cheio R$ ${ESTUDANTE.precoDe})`],
+  ["Preço estudante", `${formatar("br", precoEstudante())} por ano, ${formatar("br", porMesEstudante())}/mês (valor cheio ${formatar("br", MERCADOS.br.anual)})`],
   ["Entrega", "Código pessoal enviado por WhatsApp"],
   ["Público", "Estudantes de graduação de qualquer curso"],
   ["Autores", "Science Play"],
@@ -414,8 +419,8 @@ export default function Estudante() {
               </a>
             </div>
             <p className="ed-legal" style={{ marginTop: 12 }}>
-              Solicitar não é comprar e não gera compromisso. O código chega no seu
-              WhatsApp e você decide depois, com calma.
+              Solicitar não gera compromisso. O código chega no seu WhatsApp e você
+              decide depois, com calma.
             </p>
           </div>
         </section>
@@ -439,7 +444,7 @@ export default function Estudante() {
                 </p>
               </div>
               <div className="ed-rail-block">
-                <div className="ed-rail-t">Solicitar não é comprar</div>
+                <div className="ed-rail-t">Solicitar não gera compromisso</div>
                 <p className="ed-rail-d">
                   Você recebe o código e decide depois, com calma. E se ativar o acesso, tem{" "}
                   {GARANTIA.dias} dias de garantia.
