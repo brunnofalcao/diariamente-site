@@ -62,7 +62,7 @@ export default function Termos() {
       <h2>5. Garantia e direito de arrependimento</h2>
       <p>
         Oferecemos <strong>garantia incondicional de {GARANTIA.dias} dias</strong>, contados da
-        confirmação da compra. Dentro desse prazo, você pode pedir a devolução integral do valor
+        confirmação do pagamento. Dentro desse prazo, você pode pedir a devolução integral do valor
         pago, sem precisar justificar.
       </p>
       <p>
@@ -72,8 +72,8 @@ export default function Termos() {
       </p>
       <p>
         <strong>Se você está no Brasil:</strong> o art. 49 do Código de Defesa do Consumidor (Lei
-        nº 8.078/1990) garante 7 dias para desistir de compras feitas fora do estabelecimento
-        comercial, contados da confirmação da compra ou do recebimento do produto. Nossa garantia
+        nº 8.078/1990) garante 7 dias para desistir de contratações feitas fora do estabelecimento
+        comercial, contados da confirmação do pagamento ou do recebimento do produto. Nossa garantia
         de {GARANTIA.dias} dias já contempla esse prazo.
       </p>
       <p>

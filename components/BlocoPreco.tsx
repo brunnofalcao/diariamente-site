@@ -1,4 +1,5 @@
 import { ESTUDANTE, GARANTIA, PLANO_APP } from "@/config";
+import { formatar, mensal, precoFinal, precoEstudante, porMesEstudante, MERCADOS } from "@/config/pricing";
 
 /**
  * BlocoPreco — pitch de venda da condição de estudante.
@@ -13,9 +14,11 @@ import { ESTUDANTE, GARANTIA, PLANO_APP } from "@/config";
  *   4. A garantia, ao lado da decisão e não no rodapé.
  *   5. O comparativo lado a lado, que fecha a conta.
  *
- * TODOS os números são CALCULADOS a partir do config. Nenhum percentual,
- * economia ou valor de desconto é digitado à mão. Se o preço mudar, a
- * página acompanha em vez de mentir.
+ * TODOS os números são CALCULADOS a partir de config/pricing.ts. Nenhum
+ * percentual, economia ou valor de desconto é digitado à mão. A âncora é o
+ * que qualquer pessoa paga HOJE pelo site (com o cupom de lançamento, se
+ * ele estiver valendo), para o desconto exibido ser sempre verdadeiro.
+ * A página /estudante se refaz a cada hora, como as homes.
  *
  * ESTUDANTE.mostrarPreco = false devolve a versão sem número, para o caso
  * de a condição ainda não existir na Hotmart.
@@ -30,9 +33,7 @@ function Check({ s = 20 }: { s?: number }) {
   );
 }
 
-function brl(n: number) {
-  return n.toFixed(2).replace(".", ",");
-}
+const brl = (n: number) => formatar("br", n);
 
 const INCLUI = [
   "As 365 provocações, uma liberada por dia",
@@ -73,10 +74,12 @@ function Inclui() {
 }
 
 export function BlocoPreco() {
-  const de = ESTUDANTE.precoDeNumero;
-  const por = ESTUDANTE.precoNumero;
-  const offReais = de - por;
+  // Preço público de hoje (server component: hora do render).
+  const de = precoFinal("br", Date.now());
+  const por = precoEstudante();
+  const offReais = Math.round((de - por) * 100) / 100;
   const offPct = de > 0 ? Math.round((1 - por / de) * 100) : 0;
+  const mes = MERCADOS.br.textos.mes;
 
   if (!ESTUDANTE.mostrarPreco) {
     return (
@@ -109,21 +112,21 @@ export function BlocoPreco() {
       <div className="ed-offer">
         {/* ---------------- card de preço ---------------- */}
         <div className="ed-price">
-          <span className="ed-price-selo">R$ {brl(offReais)} OFF</span>
+          <span className="ed-price-selo">{brl(offReais)} OFF</span>
 
           <div className="ed-price-nome">{PLANO_APP.nome} · acesso de 1 ano</div>
 
           <div className="ed-price-row">
-            <span className="ed-price-de">R$ {ESTUDANTE.precoDe}</span>
+            <span className="ed-price-de">{brl(de)}</span>
             <span className="ed-price-v">
-              <small>R$</small>
+              <small>{MERCADOS.br.formato.simbolo}</small>
               {ESTUDANTE.preco}
             </span>
           </div>
 
           <p className="ed-price-nota">
             {offPct}% a menos que o valor que qualquer pessoa paga hoje.{" "}
-            {ESTUDANTE.perDia}, por um ano inteiro de provocação diária.
+            {brl(porMesEstudante())}{mes}, por um ano inteiro de provocação diária.
           </p>
 
           <div className="ed-price-hint">
@@ -140,19 +143,19 @@ export function BlocoPreco() {
       <div className="ed-econ">
         <div className="ed-econ-col">
           <span className="ed-econ-k">Quem entra hoje pelo site</span>
-          <span className="ed-econ-v">R$ {ESTUDANTE.precoDe}</span>
-          <span className="ed-econ-d">{PLANO_APP.perDia}</span>
+          <span className="ed-econ-v">{brl(de)}</span>
+          <span className="ed-econ-d">{brl(mensal(de))}{mes}</span>
         </div>
 
         <div className="ed-econ-col is-on">
           <span className="ed-econ-k">Sua condição de estudante</span>
-          <span className="ed-econ-v">R$ {ESTUDANTE.preco}</span>
-          <span className="ed-econ-d">{ESTUDANTE.perDia}</span>
+          <span className="ed-econ-v">{brl(por)}</span>
+          <span className="ed-econ-d">{brl(porMesEstudante())}{mes}</span>
         </div>
 
         <div className="ed-econ-col is-eco">
           <span className="ed-econ-k">Você economiza</span>
-          <span className="ed-econ-v">R$ {brl(offReais)}</span>
+          <span className="ed-econ-v">{brl(offReais)}</span>
           <span className="ed-econ-d">{offPct}% de diferença</span>
         </div>
       </div>

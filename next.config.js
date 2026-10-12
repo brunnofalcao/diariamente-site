@@ -48,26 +48,42 @@ const nextConfig = {
 };
 
 /* =====================================================================
-   TRAVA DE PUBLICAÇÃO: ENDEREÇO DA EMPRESA
+   TRAVAS DE PUBLICAÇÃO: ENDEREÇO DA EMPRESA E PREÇOS
    ---------------------------------------------------------------------
-   `next build` para com uma mensagem clara enquanto ENDERECO_DA_EMPRESA,
-   em config.ts, ainda tiver o marcador "[TROCAR". Em `next dev` e
-   `next start` só avisa no terminal, para não travar o trabalho local.
-   Detalhes e teste em scripts/checar-endereco.js.
+   `next build` para com uma mensagem clara enquanto:
+     - ENDERECO_DA_EMPRESA, em config.ts, ainda tiver o marcador "[TROCAR"
+       (scripts/checar-endereco.js);
+     - config/pricing.ts ainda não tiver o link do plano BRL do produto
+       7448309, o código do cupom de lançamento e a data de término, ou
+       tiver um mercado com venda aberta sem link (scripts/checar-precos.js).
+   Em `next dev` e `next start` só avisa no terminal, para não travar o
+   trabalho local. DM_ENDERECO_TESTE libera as duas para teste e é
+   recusada em produção na Vercel.
    ===================================================================== */
 const { PHASE_PRODUCTION_BUILD } = require("next/constants");
 const { checarEnderecoDoProjeto } = require("./scripts/checar-endereco");
+const { checarPrecosDoProjeto } = require("./scripts/checar-precos");
 
 module.exports = (phase) => {
-  const r = checarEnderecoDoProjeto(process.env);
-  if (!r.ok) {
-    if (phase === PHASE_PRODUCTION_BUILD) {
-      console.error("\n[diariamente] BUILD BLOQUEADO: " + r.mensagem + "\n");
-      throw new Error("Endereço da empresa pendente em config.ts (ENDERECO_DA_EMPRESA).");
+  const travas = [
+    ["Endereço da empresa pendente em config.ts (ENDERECO_DA_EMPRESA).", checarEnderecoDoProjeto(process.env)],
+    ["Preço ou checkout pendente em config/pricing.ts.", checarPrecosDoProjeto(process.env)],
+  ];
+  // As duas travas falam antes de parar: quem lê o log vê tudo o que
+  // falta de uma vez, não uma pendência por build.
+  const bloqueios = [];
+  for (const [erro, r] of travas) {
+    if (!r.ok) {
+      if (phase === PHASE_PRODUCTION_BUILD) {
+        console.error("\n[diariamente] BUILD BLOQUEADO: " + r.mensagem + "\n");
+        bloqueios.push(erro);
+      } else {
+        console.warn("\n[diariamente] Aviso: " + r.mensagem + "\n");
+      }
+    } else if (r.teste || r.mensagem) {
+      console.warn("\n[diariamente] Aviso: " + r.mensagem + "\n");
     }
-    console.warn("\n[diariamente] Aviso: " + r.mensagem + "\n");
-  } else if (r.teste) {
-    console.warn("\n[diariamente] Aviso: " + r.mensagem + "\n");
   }
+  if (bloqueios.length) throw new Error(bloqueios.join(" "));
   return nextConfig;
 };

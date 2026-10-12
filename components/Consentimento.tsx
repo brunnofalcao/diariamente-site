@@ -116,10 +116,11 @@ html{scroll-padding-bottom:calc(var(--dm-ck-h,220px) + 32px + env(safe-area-inse
 @media (prefers-reduced-motion:reduce){.dm-ck button{transition:none}}
 `;
 
-/** "/es" e "/es/..." são espanhol. "/estudante" NÃO é (por isso não basta startsWith("/es")). */
+/** "/es", "/es/...", "/es-es" e "/es-es/..." são espanhol. "/estudante" NÃO é (por isso não basta startsWith("/es")). */
 function idiomaDaRota(pathname: string | null): Lang {
   const p = pathname ?? "/";
-  return p === "/es" || p.startsWith("/es/") ? "es" : "pt";
+  const es = (base: string) => p === base || p.startsWith(base + "/");
+  return es("/es") || es("/es-es") ? "es" : "pt";
 }
 
 function AvisoCookies({ onEscolha }: { onEscolha: (e: Escolha) => void }) {

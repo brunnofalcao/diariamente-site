@@ -33,8 +33,11 @@ const SLUGS: Record<Chave, Record<Lang, string>> = {
   homePt:      { pt: "/pt-pt",         es: "/pt-pt" },
   homeEs:      { pt: "/es-es",         es: "/es-es" },
   // Antigo endereço de trabalho do site de vendas. Desde a virada, o site
-  // de vendas é "/" e estes dois caminhos só redirecionam ("/embreve" para
-  // "/", "/es/embreve" para "/es"). Continuam fora do sitemap.
+  // de vendas é "/" e estes caminhos só redirecionam ("/embreve" para "/",
+  // "/es/embreve" para "/es"). As prévias do dono, "/pt-pt/embreve" e
+  // "/es-es/embreve", continuam páginas: mostram o bloco de venda de pt e
+  // es enquanto as homes desses mercados são a lista de espera. Todas
+  // fora do sitemap e com noindex.
   vendas:      { pt: "/embreve",       es: "/es/embreve" },
   estudante:   { pt: "/estudante",     es: "/es/estudiantes" },
   sobre:       { pt: "/sobre",         es: "/es/acerca-de" },

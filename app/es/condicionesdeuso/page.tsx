@@ -50,9 +50,9 @@ export default function CondicionesDeUso() {
 
       <h2>2. Acceso y licencia de uso</h2>
       <p>
-        La compra otorga una licencia de uso personal, intransferible y no exclusiva del
+        La contratación otorga una licencia de uso personal, intransferible y no exclusiva del
         contenido, durante el período contratado. El acceso se envía por correo electrónico
-        tras la confirmación del pago y está vinculado a la persona que realizó la compra.
+        tras la confirmación del pago y está vinculado a la persona que realizó el pago.
       </p>
       <p>
         No está permitido compartir credenciales, reproducir, distribuir, revender o exhibir
@@ -69,8 +69,8 @@ export default function CondicionesDeUso() {
       <h2>4. Pago</h2>
       <p>
         La venta se procesa a través de la plataforma de pago indicada en el momento de la
-        compra, que actúa como intermediaria. Las condiciones comerciales vigentes son las
-        presentadas en la página de compra en el momento de la contratación.
+        contratación, que actúa como intermediaria. Las condiciones comerciales vigentes son las
+        presentadas en la página de pago en el momento de la contratación.
       </p>
       <p>
         <strong>Moneda:</strong> salvo indicación en contrario en el checkout, la operación se
@@ -80,8 +80,8 @@ export default function CondicionesDeUso() {
 
       <h2>5. Garantía y derecho de desistimiento</h2>
       <p>
-        Ofrecemos garantía de {GARANTIA.dias} días contados desde la confirmación de la
-        compra. Dentro de ese plazo puedes solicitar la devolución íntegra del importe pagado,
+        Ofrecemos garantía de {GARANTIA.dias} días contados desde la confirmación del
+        pago. Dentro de ese plazo puedes solicitar la devolución íntegra del importe pagado,
         escribiendo a{" "}
         <a href={`mailto:${EMPRESA.suporteEmail}`}>{EMPRESA.suporteEmail}</a>, sin necesidad
         de justificación.

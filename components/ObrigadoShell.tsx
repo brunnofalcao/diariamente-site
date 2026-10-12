@@ -140,7 +140,7 @@ export function ObrigadoShell({ estado }: { estado: Estado }) {
                   <span className="overline">Passo 2</span>
                   <h2 className="obg-card-titulo">Baixe o app no seu celular</h2>
                   <p className="body-sm muted" style={{ marginBottom: "var(--sp6)" }}>
-                    Entre com o mesmo e-mail da sua compra. O ritual funciona melhor no
+                    Entre com o mesmo e-mail que você usou no pagamento. O ritual funciona melhor no
                     bolso, junto com o lembrete diário no WhatsApp.
                   </p>
                   <StoreBadges variant="link" />
@@ -163,7 +163,7 @@ export function ObrigadoShell({ estado }: { estado: Estado }) {
                 </p>
                 <p className="body-sm muted">
                   Se preferir, já deixe o app instalado. Quando o acesso liberar, é só
-                  entrar com o e-mail da compra.
+                  entrar com o seu e-mail de acesso.
                 </p>
                 <div style={{ marginTop: "var(--sp6)" }}>
                   <StoreBadges variant="link" />

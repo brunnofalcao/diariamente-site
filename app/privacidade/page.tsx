@@ -74,6 +74,11 @@ export default function Privacidade() {
         checkout. <strong>Não recebemos nem armazenamos dados de cartão.</strong>
       </p>
       <p>
+        <strong>País da conexão:</strong> informado pela hospedagem a cada acesso, sem
+        cookie, para o site abrir na página e na moeda do seu país. Na lista de espera, fica
+        guardado junto com o seu contato, para o aviso de abertura sair no seu mercado.
+      </p>
+      <p>
         <strong>Dados de uso:</strong> páginas visitadas, origem do acesso, dispositivo e
         interações, coletados por cookies e ferramentas de medição somente se você aceitar
         no aviso de cookies (seção 8).
@@ -101,7 +106,7 @@ export default function Privacidade() {
         </thead>
         <tbody>
           <tr>
-            <td>Processar a compra, liberar e manter o acesso, prestar suporte</td>
+            <td>Processar o pagamento, liberar e manter o acesso, prestar suporte</td>
             <td>Execução de contrato<br /><small>RGPD 6(1)(b) · LGPD 7º, V</small></td>
             <td>Não, sem isso não há como entregar o produto</td>
           </tr>
@@ -202,10 +207,10 @@ export default function Privacidade() {
         </thead>
         <tbody>
           <tr><td>Cadastro e acesso</td><td>Enquanto durar a relação, e por 5 anos após o término</td><td>Prazo prescricional do CDC e do Código Civil</td></tr>
-          <tr><td>Registros fiscais da compra</td><td>5 anos</td><td>Obrigação legal</td></tr>
+          <tr><td>Registros fiscais do pagamento</td><td>5 anos</td><td>Obrigação legal</td></tr>
           <tr><td>Registros de acesso à aplicação</td><td>6 meses</td><td>Marco Civil da Internet, art. 15</td></tr>
           <tr><td>Consentimentos e revogações</td><td>Enquanto necessário à comprovação</td><td>Ônus da prova do responsável</td></tr>
-          <tr><td>Dados de marketing</td><td>Até a revogação, mais o prazo de execução do descadastro</td><td>—</td></tr>
+          <tr><td>Dados de marketing</td><td>Até a revogação, mais o prazo de execução do descadastro</td><td>Consentimento</td></tr>
         </tbody>
       </table>
       <p>Encerrados os prazos, os dados são eliminados ou anonimizados de forma irreversível.</p>
@@ -253,7 +258,10 @@ export default function Privacidade() {
           6 meses. Depois desse prazo, o aviso aparece de novo.
         </li>
         <li>
-          <strong>dm_lang</strong>: guarda o idioma escolhido no seletor PT | ES, por 1 ano.
+          <strong>dm_market</strong>: guarda o país escolhido no seletor do rodapé (Brasil,
+          Portugal, España, América Latina) ou no seletor PT | ES, por 180 dias, para o site
+          abrir na página e na moeda que você escolheu. Sem essa escolha, a página segue o país
+          da sua conexão, informado pela hospedagem, sem gravar nada.
         </li>
         <li>
           No formulário de estudante, um rascunho do que você digitou, sem o CPF, fica guardado

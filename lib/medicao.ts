@@ -32,19 +32,20 @@ export function quandoPronto(nome: "fbq" | "gtag", fn: (f: Ferramenta) => void, 
  * abrem o checkout da Hotmart. Só com "Aceitar" gravado: sem aceite, sai
  * daqui sem chamar nada, mesmo que alguma coisa tenha criado um fbq.
  * Os botões abrem o checkout em outra aba, então a página continua viva
- * para o evento sair.
+ * para o evento sair. Moeda e valor são os do mercado da página
+ * (config/pricing.ts): o mesmo número que o visitante vê no bloco.
  */
-export function registrarInicioDeCheckout(plano: { id: string; nome: string; precoNumero: number }): void {
+export function registrarInicioDeCheckout(plano: { id: string; nome: string; valor: number; moeda: string }): void {
   if (typeof window === "undefined" || lerEscolha() !== "aceito") return;
   const w = window as unknown as { fbq?: Ferramenta; gtag?: Ferramenta };
   w.fbq?.("track", "InitiateCheckout", {
-    currency: "BRL",
-    value: plano.precoNumero,
+    currency: plano.moeda,
+    value: plano.valor,
     content_name: plano.nome,
   });
   w.gtag?.("event", "begin_checkout", {
-    currency: "BRL",
-    value: plano.precoNumero,
-    items: [{ item_id: plano.id, item_name: plano.nome, price: plano.precoNumero, quantity: 1 }],
+    currency: plano.moeda,
+    value: plano.valor,
+    items: [{ item_id: plano.id, item_name: plano.nome, price: plano.valor, quantity: 1 }],
   });
 }

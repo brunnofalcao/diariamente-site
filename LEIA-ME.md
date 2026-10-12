@@ -1,25 +1,86 @@
 # Diariamente · versão auditada para publicação
 
-> **Virada de lançamento (out/2026, branch `claude/site-lancamento`).**
-> A partir dela, o que vale é esta caixa; o resto do arquivo é o histórico
-> da entrega "em breve".
+> **Lançamento do Brasil e mercados (out/2026, branch `claude/site-lancamento`).**
+> O que vale é esta caixa; o resto do arquivo é o histórico das entregas
+> anteriores (inclusive a auditoria do dono, que descrevia o site oculto).
 >
 > | URL | Mostra |
 > | --- | --- |
-> | `diariamente.app` | **site de vendas** (PT), indexável |
-> | `diariamente.app/es` | **Próximamente** (ES), sem mudança |
-> | `/embreve` | redireciona para `/` |
-> | `/es/embreve` | redireciona para `/es` |
+> | `/` (país BR) | **site de vendas**, plano BRL do produto 7448309 |
+> | `/` (fora de BR, PT, ES e América Latina) | a mesma página, reescrita para `/mundo`, com o bloco em dólar (US$ 24,99); o build de produção trava até o `CHECKOUT_USD` existir |
+> | `/pt-pt` | página de vendas em pt-PT, lista de espera no bloco até o plano EUR existir |
+> | `/es` e `/es-es` | lista de espera em espanhol (página inteira) até o plano e o acervo em espanhol |
+> | `/pt-pt/embreve`, `/es-es/embreve` | **prévias do dono** (noindex, fora do sitemap, abrem de qualquer país): página de vendas de Portugal e da Espanha com o bloco de 29,99 €, botão desabilitado enquanto a venda do mercado estiver fechada |
+> | `/embreve`, `/es/embreve` | redirecionam para `/` e `/es`, com utm |
 >
+> **QUADRO DE GO-LIVE · pendências do dono, nesta ordem.** O build de
+> produção trava sozinho nos itens marcados com (trava); os outros só
+> aparecem como aviso no log do build, então confira um a um.
+>
+> 1. **Plano BRL** no produto 7448309 (R$ 149,90): o link vai em
+>    `CHECKOUT_BRL`, em `config/pricing.ts`, sem cupom no link. (trava)
+> 2. **Cupom de lançamento** de 20%, restrito ao plano BRL: o código vai
+>    em `CUPOM_LANCAMENTO`, escrito igual ao cadastro. (trava) Na
+>    Hotmart, deixe a validade do cupom até pelo menos **02:00 do dia
+>    seguinte** ao `FIM_DO_LANCAMENTO`: a home fica em cache por até uma
+>    hora e quem abriu o checkout perto da meia-noite ainda paga.
+> 3. **Último dia do lançamento** em `FIM_DO_LANCAMENTO` (AAAA-MM-DD,
+>    horário de Brasília; data que não existe, como 2026-11-31, trava). (trava)
+> 4. **Ligar o cupom na página.** Preenchidos os três, a página continua em
+>    R$ 149,90 (`ativo: false` no mercado br, como o dono deixou). O build
+>    mostra no aviso o link exato com `offDiscount`: abra, confira
+>    **R$ 119,92** no checkout e só então vire `ativo: true`.
+> 5. **Resto do mundo (rw)** abre junto com o Brasil (handoff, seção 13,
+>    passo 6): o link do plano USD vai em `CHECKOUT_USD`. (trava) Para
+>    lançar só o Brasil, vire rw para `vendaAberta: false`; todo build
+>    lista os mercados em lista de espera, para a decisão ficar à vista.
+> 6. **Estudante, antes de divulgar a /estudante** (ela anuncia R$ 89,94
+>    com `ESTUDANTE.mostrarPreco: true`):
+>    - trocar a base do botão do template `diariamente_estudante_aprovado`
+>      de `https://pay.hotmart.com/L107085210M?checkoutMode=10&offDiscount={{1}}`
+>      (produto 8280315, R$ 137,90, checkout fechado com o erro 049) para
+>      `https://diariamente.app/estudante/ativar?cupom={{1}}` e reaprovar
+>      na Meta (a rota monta o link a partir do `CHECKOUT_BRL`);
+>    - na Vercel, `HOTMART_PRODUCT_ID=7448309` e, em `HOTMART_OFFER_IDS`,
+>      o id NUMÉRICO da oferta do plano BRL novo (o código `off` não serve);
+>    - feito isso, `DM_TEMPLATE_ESTUDANTE_OK=1` na Vercel cala o aviso.
+> 7. **Endereço da empresa** em `ENDERECO_DA_EMPRESA`, no `config.ts`. (trava)
+> 8. **Antes de abrir Portugal e Espanha:** revisar `/pt-pt/embreve` e
+>    `/es-es/embreve`, e então `vendaAberta: true` em pt ou es com o
+>    `CHECKOUT_EUR` (trava). O pagamento em espanhol ainda diz "reales
+>    brasileños (BRL)" em `/es/condicionesdeuso` (seção 4): revisar antes
+>    de abrir la ou es.
+>
+> - **Preços:** fonte única em `config/pricing.ts`, por mercado (moeda,
+>   preço anual, formato, link, textos do bloco, cupom de lançamento).
+>   Nenhum componente escreve preço. `vendaAberta` liga cada mercado.
+> - **Trava de preços:** `npm run build` falha enquanto faltar o link do
+>   plano BRL (`CHECKOUT_BRL`), o código do cupom (`CUPOM_LANCAMENTO`) ou a
+>   data de término (`FIM_DO_LANCAMENTO`), ou houver mercado com venda
+>   aberta sem link (`scripts/checar-precos.js`). Passado o último dia do
+>   lançamento, a página volta sozinha a R$ 149,90 e o link perde o cupom:
+>   as homes se refazem a cada hora e, enquanto isso, o navegador confere
+>   de novo depois de carregar (e troca na virada da meia-noite com a
+>   página aberta). Um HTML antigo em cache ainda pode mostrar o preço de
+>   lançamento por até uma hora para quem estiver sem JavaScript; daí a
+>   folga de validade do cupom no item 2 do quadro.
+> - **Roteamento por país:** `middleware.ts` + `lib/mercado.ts` (lista da
+>   América Latina num só lugar). Só as homes decidem; robô nunca é
+>   redirecionado (navegador interno do LinkedIn, Pinterest, Telegram,
+>   DuckDuckGo e Instagram é gente, e segue o país); `?mercado=` do
+>   seletor do rodapé grava `dm_market` por 180 dias e vence o país; sem
+>   país, o idioma do navegador decide. hreflang das homes: pt-BR, pt-PT,
+>   es-ES, es-419, es e x-default.
+> - **Lista de espera:** grava mercado, idioma e país quando as colunas
+>   existirem; sem elas, grava sem, sem perder o lead.
 > - **Endereço da empresa:** fica só em `ENDERECO_DA_EMPRESA`, no
->   `config.ts`. Enquanto ele tiver `[TROCAR` em qualquer parte, o `npm run build`
->   falha de propósito, com a explicação. Para testar o build sem o
->   endereço real: `DM_ENDERECO_TESTE="Rua de Teste, 123" npm run build`
->   (recusado em produção na Vercel). `npm test` roda os testes da trava.
+>   `config.ts`. Enquanto ele tiver `[TROCAR` em qualquer parte, o build
+>   falha de propósito. Para testar o build sem os dados reais:
+>   `DM_ENDERECO_TESTE="Rua de Teste, 123" npm run build` (libera as duas
+>   travas; recusado em produção na Vercel). `npm test` roda os testes.
 > - **Cookies:** aviso com Aceitar e Recusar (`components/Consentimento.tsx`).
->   GA4, Pixel da Meta e o evento de Purchase só carregam depois do
->   Aceitar; a escolha fica 6 meses no cookie `dm_cookies`. A Política
->   (seção 8, pt e es) descreve exatamente isso.
+>   GA4, Pixel da Meta, InitiateCheckout e Purchase só depois do Aceitar.
+>   A Política (seção 8, pt e es) lista `dm_cookies` e `dm_market`.
 > - **Para voltar à lista de espera:** Vercel, Deployments, deploy anterior,
 >   Instant Rollback (ou reverter os commits da virada).
 

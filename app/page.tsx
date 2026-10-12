@@ -1,28 +1,27 @@
-import { Home } from "@/components/Home";
-import { metadataDaPagina } from "@/lib/seo";
+import { PaginaDoMercado } from "@/components/PaginaDoMercado";
+import { metadataDoMercado } from "@/lib/seo";
 
 /* =====================================================================
-   HOME · PORTUGUÊS · site de vendas
+   "/" · HOME DO BRASIL · site de vendas
    ---------------------------------------------------------------------
-   Virada de lançamento: "/" deixou de ser a lista de espera e passou a
-   mostrar o site de vendas. O que mudou junto, e precisa continuar
-   coerente se alguém voltar atrás:
+   Desde a virada de lançamento, "/" é o site de vendas. Preço, cupom de
+   lançamento e link do checkout saem de config/pricing.ts (mercado br).
 
-   1. lib/seo.ts, bloco home/pt: título e descrição de venda (sem isso o
-      Google e a prévia de link continuam dizendo "em breve").
-   2. components/Home.tsx: o seletor PT | ES aponta para "/" e "/es".
-   3. app/embreve e app/es/embreve: só redirecionam para "/" e "/es",
-      para não sobrar cópia da home nem venda em espanhol com preço em real.
-
-   app/es/page.tsx continua "próximamente" de propósito: o espanhol ainda
-   não tem preço, checkout nem lojas próprios.
+   Visitante de fora do Brasil, de Portugal, da Espanha e da América
+   Latina: o middleware reescreve "/" para /mundo (mesma página, bloco em
+   dólar), sem mudar a URL. Portugal, Espanha e América Latina vão para
+   as suas homes (/pt-pt, /es-es, /es).
 
    Para voltar à lista de espera: reverter o commit da virada (ou, na
    Vercel, Instant Rollback para o deploy anterior).
    ===================================================================== */
 
-export const metadata = metadataDaPagina("home", "pt");
+// A página se refaz a cada hora: é o que tira o preço de lançamento no
+// dia seguinte ao FIM_DO_LANCAMENTO, sem depender de novo deploy.
+export const revalidate = 3600;
+
+export const metadata = metadataDoMercado("br");
 
 export default function Page() {
-  return <Home lang="pt" />;
+  return <PaginaDoMercado mercado="br" />;
 }

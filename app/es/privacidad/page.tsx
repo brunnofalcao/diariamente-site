@@ -54,6 +54,12 @@ export default function Privacidad() {
         <strong>No recibimos ni almacenamos datos de tarjeta.</strong>
       </p>
       <p>
+        <strong>País de la conexión:</strong> lo informa el alojamiento en cada acceso, sin
+        cookie, para que el sitio abra en la página y la moneda de tu país. En la lista de
+        espera, se guarda junto con tu contacto, para que el aviso de apertura llegue a tu
+        mercado.
+      </p>
+      <p>
         <strong>Datos de uso:</strong> páginas visitadas, origen del acceso, dispositivo e
         interacciones, recogidos mediante cookies y herramientas de medición solo si lo
         aceptas en el aviso de cookies (sección 8).
@@ -81,7 +87,7 @@ export default function Privacidad() {
         </thead>
         <tbody>
           <tr>
-            <td>Procesar la compra, dar y mantener el acceso, prestar soporte</td>
+            <td>Procesar el pago, dar y mantener el acceso, prestar soporte</td>
             <td>Ejecución del contrato<br /><small>RGPD 6(1)(b) · LGPD 7º, V</small></td>
             <td>No, sin eso no podemos entregar el producto</td>
           </tr>
@@ -182,10 +188,10 @@ export default function Privacidad() {
         </thead>
         <tbody>
           <tr><td>Registro y acceso</td><td>Durante la relación y 5 años después</td><td>Plazos de prescripción aplicables</td></tr>
-          <tr><td>Registros fiscales de la compra</td><td>5 años</td><td>Obligación legal</td></tr>
+          <tr><td>Registros fiscales del pago</td><td>5 años</td><td>Obligación legal</td></tr>
           <tr><td>Registros de acceso a la aplicación</td><td>6 meses</td><td>Marco Civil de Internet, art. 15</td></tr>
           <tr><td>Consentimientos y revocaciones</td><td>Mientras sea necesario para su acreditación</td><td>Carga de la prueba del responsable</td></tr>
-          <tr><td>Datos de marketing</td><td>Hasta la revocación, más el plazo de ejecución de la baja</td><td>—</td></tr>
+          <tr><td>Datos de marketing</td><td>Hasta la revocación, más el plazo de ejecución de la baja</td><td>Consentimiento</td></tr>
         </tbody>
       </table>
       <p>Cumplidos los plazos, los datos se eliminan o se anonimizan de forma irreversible.</p>
@@ -236,8 +242,10 @@ export default function Privacidad() {
           durante 6 meses. Pasado ese plazo, el aviso vuelve a aparecer.
         </li>
         <li>
-          <strong>dm_lang</strong>: guarda el idioma elegido en el selector PT | ES, durante 1
-          año.
+          <strong>dm_market</strong>: guarda el país elegido en el selector del pie de página
+          (Brasil, Portugal, España, América Latina) o en el selector PT | ES, durante 180 días,
+          para que el sitio abra en la página y la moneda que elegiste. Sin esa elección, la
+          página sigue el país de tu conexión, informado por el alojamiento, sin grabar nada.
         </li>
         <li>
           En el formulario de estudiantes de Brasil, un borrador de lo que escribiste, sin el CPF, se
