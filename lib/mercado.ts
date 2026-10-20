@@ -41,11 +41,15 @@ export function mercadoDoPais(pais: string | null | undefined): Mercado {
   return "rw";
 }
 
-/** hreflang de cada home. Recíproco e com x-default no português do Brasil. */
+/** hreflang de cada home. Recíproco e com x-default no português do Brasil.
+ *  As quatro homes, o sitemap e o <head> leem daqui (lib/seo.ts, hreflangDe).
+ *  "/es" é "es", e não "es-419": é o código que "/" e "/es" já publicavam,
+ *  o Google pede região em ISO 3166-1 (419 não é) e "es" cobre todo
+ *  hispanofalante fora da Espanha, que tem a própria "/es-es". */
 export const HREFLANG: Record<string, string> = {
   "pt-BR": "/",
   "pt-PT": "/pt-pt",
   "es-ES": "/es-es",
-  "es-419": "/es",
+  es: "/es",
   "x-default": "/",
 };

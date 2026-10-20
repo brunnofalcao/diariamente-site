@@ -26,11 +26,25 @@ import { segredoConfere } from '@/lib/seguranca';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+/* SEM CACHE DE FETCH (Data Cache do Next 14)
+ * `dynamic = 'force-dynamic'` sozinho NAO desliga o cache do fetch numa rota
+ * so com GET: o Next 14.2 deixa a rota com revalidate=false e todo fetch sem
+ * opcao de cache entra em "auto cache" por 1 ano (patch-fetch.js). As
+ * consultas com data na URL escapavam porque a chave muda a cada minuto; a
+ * da limpeza tem URL fixa e passou a ser respondida pelo cache, sem chegar
+ * ao banco. As duas linhas abaixo valem para todo fetch feito durante a
+ * rota, inclusive os da Hotmart, do WhatsApp e do RD em lib/. */
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
+// Segunda trava, no proprio cliente: mesmo que alguem apague as linhas
+// acima, as consultas ao banco continuam sem cache.
+const semCache = (input, init) => fetch(input, { ...init, cache: 'no-store' });
 
 const db = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY,
-  { auth: { persistSession: false } }
+  { auth: { persistSession: false }, global: { fetch: semCache } }
 );
 
 const LOTE_ENVIO = 40;   // teto por rodada, protege contra pico

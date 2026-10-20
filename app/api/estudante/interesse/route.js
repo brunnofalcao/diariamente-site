@@ -43,6 +43,10 @@ import { createClient } from "@supabase/supabase-js";
    ===================================================================== */
 
 export const dynamic = "force-dynamic";
+// Sem cache de fetch (ver app/api/cron/manutencao/route.js). Rota so com
+// POST ja nao cacheia no Next 14, mas um GET acrescentado depois cacheia.
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 const TABELA = process.env.SUPABASE_TABELA_INTERESSE || "estudante_interesse";
 
