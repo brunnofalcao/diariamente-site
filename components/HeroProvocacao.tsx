@@ -103,7 +103,7 @@ export function HeroProvocacao() {
     const texto = prov
       ? 'Provocação de hoje no Diariamente: "' + prov.texto + '"'
       : "Diariamente: uma prática diária de hábitos e bem-estar.";
-    const url = SITE.dominio + "/?utm_source=share&utm_medium=organic&utm_campaign=provocacao_do_dia";
+    const url = "https://" + SITE.dominioVisivel + "/?utm_source=share&utm_medium=organic&utm_campaign=provocacao_do_dia";
     (window as any).gtag?.("event", "share", { method: "provocacao_hero" });
     (window as any).dataLayer?.push({ event: "share_provocacao" });
     try {
