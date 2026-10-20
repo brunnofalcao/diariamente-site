@@ -32,6 +32,10 @@ import type { Mercado } from "@/config/pricing";
    redirecionamento em cache para todo mundo.
 
    No Next.js 16 este arquivo passa a se chamar proxy.ts.
+   Mantido como middleware.ts DE PROPÓSITO: proxy.ts roda só em Node.js,
+   e este arquivo roda no Edge da Vercel. Renomear muda onde e como cada
+   visita às homes é processada (e cobrada). O build avisa que o nome
+   está obsoleto; o aviso é esperado. Trocar numa entrega própria.
    ===================================================================== */
 
 const ROBOS = /bot|crawl|spider|slurp|bingpreview|facebookexternalhit|whatsapp|telegram|lighthouse|headless/i;

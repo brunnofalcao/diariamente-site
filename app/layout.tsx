@@ -148,21 +148,18 @@ const FONTES =
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" data-scroll-behavior="smooth">
       <head>
-        {/* Fontes sem bloquear a renderização: a folha é pedida como
-            media="print", que o navegador não trata como bloqueante, e
-            promovida a "all" ao terminar. O noscript cobre quem está
-            sem JavaScript. Ver a nota sobre next/font acima. */}
+        {/* Fontes: a folha é pedida como media="print", que o navegador
+            não trata como bloqueante. O onLoad em texto que a promoveria
+            a "all" nunca chegou ao HTML (o React não escreve handler no
+            servidor) e, no React 19, passou a lançar o erro #231 no
+            console a cada página; saiu na atualização do Next. O HTML
+            servido não muda. O noscript cobre quem está sem JavaScript.
+            Ver a nota sobre next/font acima. */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          rel="stylesheet"
-          href={FONTES}
-          media="print"
-          // eslint-disable-next-line react/no-unknown-property
-          onLoad={"this.media='all'" as unknown as undefined}
-        />
+        <link rel="stylesheet" href={FONTES} media="print" />
         <noscript>
           <link rel="stylesheet" href={FONTES} />
         </noscript>
