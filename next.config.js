@@ -33,7 +33,9 @@ const nextConfig = {
   reactStrictMode: true,
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "res.cloudinary.com" },
+      // Só a conta do Diariamente: sem isto, qualquer conta do Cloudinary podia usar o
+      // otimizador de imagem da Vercel pelo nosso domínio (cota e custo).
+      { protocol: "https", hostname: "res.cloudinary.com", pathname: "/dlzrfhwin/**" },
     ],
   },
   // O `next dev` do Next 16 cria um AGENTS.md na raiz quando percebe um
