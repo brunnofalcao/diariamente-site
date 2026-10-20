@@ -516,6 +516,24 @@ body::before{ animation:breathe 9s var(--ease) infinite; }
   color:var(--a-500,#F5B731);
 }
 
+/* pós-pagamento (aprovado e aguardando pagamento): só peças que faltavam,
+   com os mesmos tokens das de cima */
+.obg-forte{ color:var(--n-0,#fff); font-weight:600; }
+.obg-web{ margin-top:var(--sp5,20px); text-align:center; }
+.obg-web a{ font-weight:600; text-decoration:none; white-space:nowrap; }
+.obg-inteiro{ white-space:nowrap; }
+.obg-web a:hover{ text-decoration:underline; }
+/* "Se quiser entrar agora": secundário, sem fundo de cartão */
+.obg-atalho{
+  padding:var(--sp5,20px);
+  border-radius:var(--r-2xl,24px);
+  border:1px dashed var(--border-strong);
+}
+.obg-atalho-selo{ display:block; margin-bottom:var(--sp2,8px); color:var(--n-300,#AAB2B2); }
+.obg-formas{ display:flex; flex-direction:column; gap:var(--sp3,12px); }
+.obg-atendimento{ margin-top:var(--sp8,32px); }
+.obg-atendimento a{ font-weight:600; text-decoration:none; word-break:break-word; }
+
 /* ============ PÁGINA /ESTUDANTE ============ */
 .est{ position:relative; overflow-x:hidden; }
 .est-titulo{

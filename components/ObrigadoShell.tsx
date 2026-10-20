@@ -1,76 +1,48 @@
+import { Fragment, type ReactNode } from "react";
 import { SITE, EMPRESA } from "@/config";
+import { ATENDIMENTO } from "@/config/atendimento";
 import { OfficialLogo } from "@/components/Brand";
 import { StoreBadges } from "@/components/StoreBadges";
+import { TEXTOS } from "@/lib/obrigado.mjs";
 
 type Estado = "aprovado" | "aguardando-pagamento" | "aguardando-analise";
+type Idioma = "pt" | "es";
+type Forma = "pix" | "boleto" | null;
+type Trecho = string | { b: string };
 
 /**
  * ObrigadoShell — layout compartilhado das 3 páginas de obrigado.
  * Cada estado tem sua própria mensagem, cor de selo e próximo passo.
  * O design é o mesmo da página de vendas (dark, teal, serifado).
+ *
+ * Aprovado e aguardando pagamento seguem o roteiro do dono (20/10/2026)
+ * e existem em pt e es: os textos ficam em lib/obrigado.mjs, onde o teste
+ * confere as regras da marca. O idioma e a forma de pagamento vêm da
+ * página (?lang=, Accept-Language e, se um dia vier, a forma na URL).
+ *
+ * Em análise fica como era, só em português. Nas três, o endereço de
+ * atendimento sai de config/atendimento.ts.
  */
-export function ObrigadoShell({ estado }: { estado: Estado }) {
-  const aprovado = estado === "aprovado";
+export function ObrigadoShell({
+  estado,
+  lang = "pt",
+  forma = null,
+}: {
+  estado: Estado;
+  lang?: Idioma;
+  forma?: Forma;
+}) {
+  if (estado === "aprovado") return <Aprovado lang={lang} />;
+  if (estado === "aguardando-pagamento") return <AguardandoPagamento lang={lang} forma={forma} />;
+  return <AguardandoAnalise />;
+}
 
-  const conteudo = {
-    aprovado: {
-      selo: "teal",
-      eyebrow: "Acesso confirmado",
-      titulo: (
-        <>
-          Seu primeiro passo já
-          <br />
-          está te esperando.
-        </>
-      ),
-      sub: (
-        <>
-          Em instantes você recebe o <span className="teal">e-mail de acesso</span> com tudo
-          que precisa pra abrir o app e começar. Se não chegar em alguns minutos, confira
-          o spam ou fale com a gente.
-        </>
-      ),
-    },
-    "aguardando-pagamento": {
-      selo: "gold",
-      eyebrow: "Quase lá",
-      titulo: (
-        <>
-          Falta só a confirmação
-          <br />
-          do pagamento.
-        </>
-      ),
-      sub: (
-        <>
-          Assim que o pagamento for compensado, você recebe o{" "}
-          <span className="teal">e-mail de acesso</span> automaticamente. Pix costuma levar
-          minutos. Boleto pode levar até 3 dias úteis.
-        </>
-      ),
-    },
-    "aguardando-analise": {
-      selo: "gold",
-      eyebrow: "Em análise",
-      titulo: (
-        <>
-          Seu pagamento está
-          <br />
-          sendo analisado.
-        </>
-      ),
-      sub: (
-        <>
-          A operadora do cartão está confirmando a transação. Assim que for aprovada, você
-          recebe o <span className="teal">e-mail de acesso</span>. Isso costuma levar poucos
-          minutos, mas pode demorar algumas horas.
-        </>
-      ),
-    },
-  }[estado];
-
+/* ------------------------------------------------------------------ */
+/* moldura comum: brilho, logo e rodapé                                */
+/* ------------------------------------------------------------------ */
+function Moldura({ lang, children }: { lang?: Idioma; children: ReactNode }) {
   return (
-    <main className="obg">
+    <main className="obg" lang={lang === "es" ? "es" : undefined}>
       <div className="obg-glow" aria-hidden="true" />
 
       <header className="obg-header">
@@ -79,117 +51,337 @@ export function ObrigadoShell({ estado }: { estado: Estado }) {
         </div>
       </header>
 
-      <section className="obg-hero">
-        <div className="wrap-narrow center">
-          {/* selo: check (aprovado) ou relógio (aguardando) */}
-          <div className={`obg-check ${aprovado ? "" : "is-wait"}`}>
-            {aprovado ? (
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            ) : (
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 7v5l3 2" />
-              </svg>
-            )}
+      {children}
+
+      <footer className="obg-footer">
+        <div className="wrap center">
+          <p className="caption" style={{ color: "var(--n-600)" }}>
+            © {new Date().getFullYear()} {EMPRESA.marca}® · {SITE.dominioVisivel}
+          </p>
+        </div>
+      </footer>
+    </main>
+  );
+}
+
+function SeloCheck() {
+  return (
+    <div className="obg-check">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    </div>
+  );
+}
+
+function SeloRelogio() {
+  return (
+    <div className="obg-check is-wait">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </svg>
+    </div>
+  );
+}
+
+/** Palavra com hífen (e-mail, Boas-vindas) não quebra no hífen. */
+function Inteiro({ texto }: { texto: string }) {
+  return (
+    <>
+      {texto.split(/(\S+-\S+)/).map((parte, i) =>
+        i % 2 ? (
+          <span key={i} className="obg-inteiro">{parte}</span>
+        ) : (
+          <Fragment key={i}>{parte}</Fragment>
+        )
+      )}
+    </>
+  );
+}
+
+/** Texto com trechos em negrito ({ b: "..." }). */
+function Rico({ partes }: { partes: readonly Trecho[] }) {
+  return (
+    <>
+      {partes.map((p, i) =>
+        typeof p === "string" ? (
+          <Fragment key={i}>{p}</Fragment>
+        ) : (
+          <strong key={i} className="obg-forte">{p.b}</strong>
+        )
+      )}
+    </>
+  );
+}
+
+function Hero({
+  selo,
+  tom,
+  eyebrow,
+  titulo,
+  sub,
+}: {
+  selo: ReactNode;
+  tom: "teal" | "gold";
+  eyebrow: string;
+  titulo: readonly string[];
+  sub: string;
+}) {
+  return (
+    <section className="obg-hero">
+      <div className="wrap-narrow center">
+        {selo}
+        <span className={`overline ${tom}`} style={{ display: "block", marginBottom: "var(--sp3)" }}>
+          {eyebrow}
+        </span>
+        <h1 className="obg-titulo">
+          {titulo.map((linha, i) => (
+            <Fragment key={i}>
+              {i > 0 && <br />}
+              <Inteiro texto={linha} />
+            </Fragment>
+          ))}
+        </h1>
+        <p className="lead muted obg-sub">{sub}</p>
+      </div>
+    </section>
+  );
+}
+
+/** Versão web do app. No espanhol, o app já abre em espanhol. */
+function LinkWeb({ lang, antes, rotulo }: { lang: Idioma; antes: string; rotulo: string }) {
+  const href = lang === "es" ? `${SITE.appUrl}/?lang=es` : SITE.appUrl;
+  return (
+    <p className="body-sm muted obg-web">
+      {antes}{" "}
+      <a href={href} className="teal">
+        {rotulo}
+      </a>
+    </p>
+  );
+}
+
+function Atendimento({ antes }: { antes: string }) {
+  return (
+    <p className="body-sm muted center obg-atendimento">
+      {antes}{" "}
+      <a href={`mailto:${ATENDIMENTO.email}`} className="teal">
+        {ATENDIMENTO.email}
+      </a>
+      .
+    </p>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* 1 · PAGAMENTO APROVADO                                              */
+/* ------------------------------------------------------------------ */
+function Aprovado({ lang }: { lang: Idioma }) {
+  const t = TEXTOS.aprovado[lang];
+  return (
+    <Moldura lang={lang}>
+      <Hero selo={<SeloCheck />} tom="teal" eyebrow={t.selo} titulo={t.titulo} sub={t.sub} />
+
+      {/* Passo 1: o e-mail com os dados de acesso */}
+      <section className="obg-sec">
+        <div className="wrap-narrow">
+          <div className="obg-card obg-card-destaque">
+            <div className="obg-card-glow" aria-hidden="true" />
+            <div className="obg-card-inner">
+              <span className="badge badge-primary">{t.passo1Selo}</span>
+              <h2 className="obg-card-titulo"><Inteiro texto={t.passo1Titulo} /></h2>
+              <p className="body-sm muted">
+                <Rico partes={t.passo1Texto} />
+              </p>
+            </div>
           </div>
-
-          <span
-            className={`overline ${aprovado ? "teal" : "gold"}`}
-            style={{ display: "block", marginBottom: "var(--sp3)" }}
-          >
-            {conteudo.eyebrow}
-          </span>
-
-          <h1 className="obg-titulo">{conteudo.titulo}</h1>
-
-          <p className="lead muted obg-sub">{conteudo.sub}</p>
         </div>
       </section>
 
-      {/* ---------- APROVADO: comece agora + lojas ---------- */}
-      {aprovado ? (
-        <>
-          <section className="obg-sec">
-            <div className="wrap-narrow">
-              <div className="obg-card obg-card-destaque">
-                <div className="obg-card-glow" aria-hidden="true" />
-                <div className="obg-card-inner">
-                  <span className="badge badge-primary">Comece agora</span>
-                  <h2 className="obg-card-titulo">Faça a provocação do Dia 1 hoje</h2>
-                  <p className="body-sm muted" style={{ marginBottom: "var(--sp6)" }}>
-                    Sua constância começa no momento em que você marca o primeiro dia como
-                    lido. Não deixe pra amanhã o que pode começar agora.
-                  </p>
-                  <a href={SITE.appUrl} className="btn btn-primary btn-block obg-cta">
-                    Abrir o app
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 8 }}>
-                      <path d="M5 12h14M13 5l7 7-7 7" />
-                    </svg>
-                  </a>
-                </div>
-              </div>
+      {/* Passo 2: baixar o app (lojas e versão web) */}
+      <section className="obg-sec">
+        <div className="wrap-narrow">
+          <div className="obg-card">
+            <div className="obg-card-inner">
+              <span className="overline">{t.passo2Selo}</span>
+              <h2 className="obg-card-titulo"><Inteiro texto={t.passo2Titulo} /></h2>
+              <p className="body-sm muted" style={{ marginBottom: "var(--sp6)" }}>
+                {t.passo2Texto}
+              </p>
+              <StoreBadges variant="link" lang={lang} />
+              <LinkWeb lang={lang} antes={t.webAntes} rotulo={t.webLink} />
             </div>
-          </section>
+          </div>
+        </div>
+      </section>
 
-          <section className="obg-sec">
-            <div className="wrap-narrow">
-              <div className="obg-card">
-                <div className="obg-card-inner">
-                  <span className="overline">Passo 2</span>
-                  <h2 className="obg-card-titulo">Baixe o app no seu celular</h2>
-                  <p className="body-sm muted" style={{ marginBottom: "var(--sp6)" }}>
-                    Entre com o mesmo e-mail da sua compra. O ritual funciona melhor no
-                    bolso, junto com o lembrete diário no WhatsApp.
-                  </p>
-                  <StoreBadges variant="link" />
-                </div>
+      {/* O caminho que já funciona hoje, discreto: código no WhatsApp */}
+      <section className="obg-sec">
+        <div className="wrap-narrow">
+          <div className="obg-atalho">
+            <span className="overline obg-atalho-selo">{t.agoraSelo}</span>
+            <p className="body-sm muted">
+              <Rico partes={t.agoraTexto} />
+            </p>
+          </div>
+
+          <p className="obg-frase center">{t.frase}</p>
+
+          <Atendimento antes={t.suporteAntes} />
+        </div>
+      </section>
+    </Moldura>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* 2 · AGUARDANDO PAGAMENTO (Pix ou boleto)                            */
+/* ------------------------------------------------------------------ */
+function AguardandoPagamento({ lang, forma }: { lang: Idioma; forma: Forma }) {
+  const t = TEXTOS["aguardando-pagamento"][lang];
+  // Sem a forma na URL, as duas orientações.
+  const mostraPix = forma !== "boleto";
+  const mostraBoleto = forma !== "pix";
+  return (
+    <Moldura lang={lang}>
+      <Hero selo={<SeloRelogio />} tom="gold" eyebrow={t.selo} titulo={t.titulo} sub={t.sub} />
+
+      {/* Como concluir o pagamento */}
+      <section className="obg-sec">
+        <div className="wrap-narrow">
+          <div className="obg-card">
+            <div className="obg-card-inner">
+              <span className="badge badge-gold">{t.concluirSelo}</span>
+              <h2 className="obg-card-titulo"><Inteiro texto={t.concluirTitulo} /></h2>
+              <div className="obg-formas">
+                {mostraPix && (
+                  <div className="obg-item" data-forma="pix">
+                    <div>
+                      <div className="h3" style={{ marginBottom: 3 }}>{t.pixTitulo}</div>
+                      <p className="body-sm muted">{t.pixTexto}</p>
+                    </div>
+                  </div>
+                )}
+                {mostraBoleto && (
+                  <div className="obg-item" data-forma="boleto">
+                    <div>
+                      <div className="h3" style={{ marginBottom: 3 }}>{t.boletoTitulo}</div>
+                      <p className="body-sm muted">{t.boletoTexto}</p>
+                    </div>
+                  </div>
+                )}
               </div>
+              <p className="body-sm muted" style={{ marginTop: "var(--sp5)" }}>
+                {t.instrucoes} {t.jaPagou}
+              </p>
             </div>
-          </section>
-        </>
-      ) : (
-        /* ---------- AGUARDANDO: o que acontece agora ---------- */
-        <section className="obg-sec">
-          <div className="wrap-narrow">
-            <div className="obg-card">
-              <div className="obg-card-inner">
-                <span className="badge badge-gold">Enquanto isso</span>
-                <h2 className="obg-card-titulo">Você não precisa fazer nada</h2>
-                <p className="body-sm muted" style={{ marginBottom: "var(--sp5)" }}>
-                  Assim que a confirmação chegar, disparamos seu e-mail de acesso
-                  automaticamente. Pode fechar esta página.
-                </p>
-                <p className="body-sm muted">
-                  Se preferir, já deixe o app instalado. Quando o acesso liberar, é só
-                  entrar com o e-mail da compra.
-                </p>
-                <div style={{ marginTop: "var(--sp6)" }}>
-                  <StoreBadges variant="link" />
-                </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Acesso liberado depois da confirmação; acompanhar o e-mail */}
+      <section className="obg-sec">
+        <div className="wrap-narrow">
+          <div className="obg-card">
+            <div className="obg-card-inner">
+              <span className="overline">{t.emailSelo}</span>
+              <h2 className="obg-card-titulo"><Inteiro texto={t.emailTitulo} /></h2>
+              <p className="body-sm muted">
+                <Rico partes={t.emailTexto} />
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Baixar o app enquanto espera */}
+      <section className="obg-sec">
+        <div className="wrap-narrow">
+          <div className="obg-card">
+            <div className="obg-card-inner">
+              <span className="overline">{t.appSelo}</span>
+              <h2 className="obg-card-titulo"><Inteiro texto={t.appTitulo} /></h2>
+              <p className="body-sm muted" style={{ marginBottom: "var(--sp6)" }}>
+                {t.appTexto}
+              </p>
+              <StoreBadges variant="link" lang={lang} />
+              <LinkWeb lang={lang} antes={t.webAntes} rotulo={t.webLink} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="obg-sec">
+        <div className="wrap-narrow">
+          <p className="obg-frase center">{t.frase}</p>
+          <Atendimento antes={t.suporteAntes} />
+        </div>
+      </section>
+    </Moldura>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* 3 · EM ANÁLISE (como era; só o atendimento e "e-mail da compra")    */
+/* ------------------------------------------------------------------ */
+function AguardandoAnalise() {
+  return (
+    <Moldura>
+      <section className="obg-hero">
+        <div className="wrap-narrow center">
+          <SeloRelogio />
+
+          <span className="overline gold" style={{ display: "block", marginBottom: "var(--sp3)" }}>
+            Em análise
+          </span>
+
+          <h1 className="obg-titulo">
+            Seu pagamento está
+            <br />
+            sendo analisado.
+          </h1>
+
+          <p className="lead muted obg-sub">
+            A operadora do cartão está confirmando a transação. Assim que for aprovada, você
+            recebe o <span className="teal">e-mail de acesso</span>. Isso costuma levar poucos
+            minutos, mas pode demorar algumas horas.
+          </p>
+        </div>
+      </section>
+
+      {/* ---------- AGUARDANDO: o que acontece agora ---------- */}
+      <section className="obg-sec">
+        <div className="wrap-narrow">
+          <div className="obg-card">
+            <div className="obg-card-inner">
+              <span className="badge badge-gold">Enquanto isso</span>
+              <h2 className="obg-card-titulo">Você não precisa fazer nada</h2>
+              <p className="body-sm muted" style={{ marginBottom: "var(--sp5)" }}>
+                Assim que a confirmação chegar, disparamos seu e-mail de acesso
+                automaticamente. Pode fechar esta página.
+              </p>
+              <p className="body-sm muted">
+                Se preferir, já deixe o app instalado. Quando o acesso liberar, é só
+                entrar com o e-mail usado no pagamento.
+              </p>
+              <div style={{ marginTop: "var(--sp6)" }}>
+                <StoreBadges variant="link" />
               </div>
             </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* ---------- O QUE ESPERAR ---------- */}
       <section className="obg-sec">
         <div className="wrap-narrow">
           <div className="obg-lista">
-            {(aprovado
-              ? [
-                  { t: "O e-mail de acesso", d: "Chega logo após a confirmação, com o passo a passo pra entrar no app." },
-                  { t: "O lembrete diário", d: "Todo dia, no WhatsApp. Você não precisa lembrar de nada, o ritual te encontra." },
-                  { t: "O acúmulo fica visível", d: "O contador mostra o total de dias em que você voltou. Ele nunca zera." },
-                ]
-              : [
-                  { t: "A confirmação do pagamento", d: "Você recebe um aviso assim que for compensado. Não precisa ficar conferindo." },
-                  { t: "O e-mail de acesso", d: "Chega automaticamente na sequência, com o passo a passo pra entrar no app." },
-                  { t: "Sua jornada começa", d: "Você faz a provocação do Dia 1 e a constância começa a se construir." },
-                ]
-            ).map((item, i) => (
+            {[
+              { t: "A confirmação do pagamento", d: "Você recebe um aviso assim que for compensado. Não precisa ficar conferindo." },
+              { t: "O e-mail de acesso", d: "Chega automaticamente na sequência, com o passo a passo pra entrar no app." },
+              { t: "Sua jornada começa", d: "Você faz a provocação do Dia 1 e a constância começa a se construir." },
+            ].map((item, i) => (
               <div key={i} className="obg-item">
                 <div className="obg-num">{i + 1}</div>
                 <div>
@@ -206,20 +398,12 @@ export function ObrigadoShell({ estado }: { estado: Estado }) {
 
           <p className="caption center" style={{ marginTop: "var(--sp8)" }}>
             Precisa de ajuda?{" "}
-            <a href={`mailto:${EMPRESA.suporteEmail}`} className="teal">
-              {EMPRESA.suporteEmail}
+            <a href={`mailto:${ATENDIMENTO.email}`} className="teal">
+              {ATENDIMENTO.email}
             </a>
           </p>
         </div>
       </section>
-
-      <footer className="obg-footer">
-        <div className="wrap center">
-          <p className="caption" style={{ color: "var(--n-600)" }}>
-            © {new Date().getFullYear()} {EMPRESA.marca}® · {SITE.dominioVisivel}
-          </p>
-        </div>
-      </footer>
-    </main>
+    </Moldura>
   );
 }
