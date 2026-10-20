@@ -1,7 +1,8 @@
 // Toda rota de app/api declara que nenhum fetch dela entra no Data Cache
 // do Next 14. Sem isso, numa rota só com GET, o fetch sem opção de cache
 // fica guardado por 1 ano e a consulta de URL fixa deixa de chegar ao
-// banco (foi o que travou a limpeza do cron de manutenção).
+// banco (foi o que travou a limpeza do cron de manutenção). No Next 16 o
+// padrão já é não cachear durante o pedido; as três linhas ficam como defesa.
 // Roda com: npm test   (node --test, sem dependência nova)
 import { test } from "node:test";
 import assert from "node:assert/strict";

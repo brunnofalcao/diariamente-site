@@ -38,6 +38,10 @@ const nextConfig = {
       { protocol: "https", hostname: "res.cloudinary.com", pathname: "/dlzrfhwin/**" },
     ],
   },
+  // O `next dev` do Next 16 cria um AGENTS.md na raiz quando percebe um
+  // assistente de IA rodando. Desligado: o arquivo ficava fora do git e
+  // entraria no próximo `git add .` do repositório público.
+  agentRules: false,
   async headers() {
     return [{ source: "/:path*", headers: CABECALHOS_DE_PROTECAO }];
   },

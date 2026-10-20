@@ -33,7 +33,11 @@ export const dynamic = 'force-dynamic';
  * consultas com data na URL escapavam porque a chave muda a cada minuto; a
  * da limpeza tem URL fixa e passou a ser respondida pelo cache, sem chegar
  * ao banco. As duas linhas abaixo valem para todo fetch feito durante a
- * rota, inclusive os da Hotmart, do WhatsApp e do RD em lib/. */
+ * rota, inclusive os da Hotmart, do WhatsApp e do RD em lib/.
+ * No Next 16 (sem cacheComponents) o fetch sem opcao ja nao entra no cache
+ * durante o pedido; as linhas continuam validas e ficam como defesa. Se um
+ * dia ligarem cacheComponents: a documentacao do Next 16 tira dynamic,
+ * revalidate e fetchCache nesse modo, entao trocar a trava antes de ligar. */
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
 

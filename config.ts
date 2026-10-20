@@ -45,10 +45,13 @@ export const SITE = {
 // a MARCA ANTERIOR e saíram de circulação. O símbolo agora é SVG inline em
 // components/Brand.tsx, e os arquivos de ícone são servidos pelo próprio
 // domínio através das convenções do Next:
-//   app/icon.svg            favicon vetorial
-//   app/icon.png            512px, símbolo a 66% sobre S0
+//   app/icon.png            512px, símbolo a 66% sobre S0 (o favicon)
 //   app/apple-icon.png      180px, idem
 //   app/opengraph-image.png 1200x630, lockup horizontal + a sequência
+// O símbolo vetorial fica em public/icon.svg: responde em /icon.svg, mas
+// não é anunciado no <head>. Em app/ o Next 16 passaria a anunciá-lo, e
+// Chrome, Edge e Firefox trocariam o ícone da aba pelo SVG (maior e, no
+// tema claro, de outro verde). O Next 14 anunciava só o icon.png.
 export const LOGOS = {
   // usado no schema Organization, que exige URL absoluta
   schemaLogo: "/icon.png",
