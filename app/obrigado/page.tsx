@@ -8,11 +8,12 @@ import { comParametros } from "@/lib/rotas";
 // JavaScript. Dinâmica, a resposta é um 307 de verdade, com Location.
 export const dynamic = "force-dynamic";
 
-type Props = { searchParams: Record<string, string | string[] | undefined> };
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 // Os parâmetros da Hotmart (transaction, price...) vão junto: sem eles o
 // PurchaseTracking da página nova perde o id da transação, que é o que
 // evita o Meta contar a mesma venda duas vezes.
-export default function ObrigadoLegacy({ searchParams }: Props) {
+export default async function ObrigadoLegacy(props: Props) {
+  const searchParams = await props.searchParams;
   redirect(comParametros("/obrigado-aprovado", searchParams));
 }

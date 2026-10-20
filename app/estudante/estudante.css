@@ -57,9 +57,10 @@
   background: rgba(10,14,14,.72);
   transition: border-color .3s var(--ease);
 }
+/* backdrop-filter: -webkit- SEMPRE antes da sem prefixo (ver globals.css). */
 @supports (backdrop-filter: blur(1px)) {
   @media (min-width: 1024px) {
-    .ed-topbar { backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+    .ed-topbar { -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
   }
 }
 @media (max-width: 1023px) { .ed-topbar { background: rgba(10,14,14,.94); } }
@@ -487,7 +488,7 @@
   transform: translateY(120%);
   transition: transform .32s var(--ease);
 }
-@supports (backdrop-filter: blur(1px)) { .ed-sticky { background: rgba(10,14,14,.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); } }
+@supports (backdrop-filter: blur(1px)) { .ed-sticky { background: rgba(10,14,14,.82); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); } }
 .ed-sticky.is-on { transform: translateY(0); }
 .ed-sticky-row { display: flex; align-items: center; gap: 14px; max-width: var(--ed-max); margin: 0 auto; }
 .ed-sticky-txt { flex: 1; min-width: 0; }

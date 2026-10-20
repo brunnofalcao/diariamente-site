@@ -27,7 +27,8 @@ import type { Lang } from "@/lib/i18n";
    componente para os quatro documentos: pt e es nunca divergem.
    ===================================================================== */
 
-const dominio = SITE.dominio.replace("https://", "");
+// O que a pessoa lê: sem www (config.ts, SITE.dominioVisivel).
+const dominio = SITE.dominioVisivel;
 
 function Contatos({ lang }: { lang: Lang }) {
   const suporte = <a href={`mailto:${EMPRESA.suporteEmail}`}>{EMPRESA.suporteEmail}</a>;

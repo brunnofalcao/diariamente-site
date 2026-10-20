@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SITE } from "@/config";
 import type { Lang } from "@/lib/i18n";
 import { parDeIdiomas, type Chave } from "@/lib/rotas";
+import { HREFLANG } from "@/lib/mercado";
 
 /* =====================================================================
    METADATA POR PÁGINA E IDIOMA
@@ -10,7 +11,8 @@ import { parDeIdiomas, type Chave } from "@/lib/rotas";
    uma versão e descarta a outra:
 
    1. CANONICAL próprio     cada rota aponta para si mesma
-   2. HREFLANG recíproco    pt-BR ↔ es, mais x-default no português
+   2. HREFLANG recíproco    pt-BR ↔ es, mais x-default no português;
+                            nas homes, o grupo das quatro (hreflangDe)
    3. <html lang>           correto por rota
 
    A reciprocidade é o que mais quebra na prática: se A aponta para B e
@@ -112,10 +114,34 @@ const IMAGEM_DA_PREVIA: Record<Lang, { url: string; width: number; height: numbe
   },
 };
 
+/** Endereço absoluto no domínio do config. "/" vira o domínio sem barra. */
+export function urlAbsoluta(caminho: string): string {
+  return SITE.dominio + (caminho === "/" ? "" : caminho);
+}
+
+/* ---------------------------------------------------------------------
+   HREFLANG DE UMA PÁGINA · fonte única do <head> e do sitemap
+   As quatro homes ("/", "/es", "/pt-pt", "/es-es") formam um grupo só e
+   declaram as mesmas linhas de lib/mercado.ts (HREFLANG). Se "/" não apontar
+   para "/pt-pt" e "/pt-pt" não apontar de volta, o Google descarta o
+   par. As outras páginas formam o par pt-BR ↔ es de lib/rotas.ts.
+   --------------------------------------------------------------------- */
+const CHAVES_DE_HOME: Chave[] = ["home", "homePt", "homeEs"];
+
+export function hreflangDe(chave: Chave): Record<string, string> {
+  if (CHAVES_DE_HOME.includes(chave)) {
+    const grupo: Record<string, string> = {};
+    for (const [tag, caminho] of Object.entries(HREFLANG)) grupo[tag] = urlAbsoluta(caminho);
+    return grupo;
+  }
+  const par = parDeIdiomas(chave);
+  return { "pt-BR": urlAbsoluta(par.pt), es: urlAbsoluta(par.es), "x-default": urlAbsoluta(par.pt) };
+}
+
 export function metadataDaPagina(chave: Chave, lang: Lang): Metadata {
   const { title, description } = TEXTOS[chave][lang];
   const par = parDeIdiomas(chave);
-  const abs = (p: string) => SITE.dominio + (p === "/" ? "" : p);
+  const abs = urlAbsoluta;
   const imagem = IMAGEM_DA_PREVIA[lang];
 
   return {
@@ -123,11 +149,7 @@ export function metadataDaPagina(chave: Chave, lang: Lang): Metadata {
     description,
     alternates: {
       canonical: abs(par[lang]),
-      languages: {
-        "pt-BR": abs(par.pt),
-        es: abs(par.es),
-        "x-default": abs(par.pt),
-      },
+      languages: hreflangDe(chave),
     },
     openGraph: {
       type: "website",
@@ -173,7 +195,7 @@ export function metadataPrivada(chave: Chave, lang: Lang): Metadata {
    ---------------------------------------------------------------------
    Quatro homes, cada uma com canonical próprio e hreflang recíproco
    entre as QUATRO: pt-BR, pt-PT, es-ES, es-419, es e x-default no
-   Brasil (lib/mercado.ts, HREFLANG).
+   Brasil (lib/mercado.ts, HREFLANG, lido por hreflangDe).
 
    A reciprocidade é o que mais quebra na prática: se uma delas não
    apontar de volta, o Google descarta o grupo inteiro e passa a tratar
@@ -188,7 +210,7 @@ export function metadataPrivada(chave: Chave, lang: Lang): Metadata {
    (config/pricing.ts, vendaAberta e semVenda).
    ===================================================================== */
 
-import { HREFLANG, HOME_DO_MERCADO } from "@/lib/mercado";
+import { HOME_DO_MERCADO } from "@/lib/mercado";
 import { MERCADOS, type Mercado } from "@/config/pricing";
 
 type MercadoComHome = Exclude<Mercado, "rw">;
@@ -216,12 +238,10 @@ export function metadataDoMercado(mercado: MercadoComHome): Metadata {
   const lang: Lang = o.idioma;
   const mostraVenda = o.vendaAberta || o.semVenda === "bloco";
   const { title, description } = TEXTOS_DO_MERCADO[mercado][mostraVenda ? "venda" : "espera"];
-  const abs = (p: string) => SITE.dominio + (p === "/" ? "" : p);
-  const proprio = abs(HOME_DO_MERCADO[mercado]);
+  const proprio = urlAbsoluta(HOME_DO_MERCADO[mercado]);
   const imagem = IMAGEM_DA_PREVIA[lang];
-
-  const languages: Record<string, string> = {};
-  for (const [tag, caminho] of Object.entries(HREFLANG)) languages[tag] = abs(caminho);
+  // O grupo das quatro homes: o mesmo em todas elas e no sitemap.
+  const languages = hreflangDe("home");
 
   return {
     title,

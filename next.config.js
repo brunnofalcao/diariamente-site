@@ -39,9 +39,15 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "res.cloudinary.com" },
+      // Só a conta do Diariamente: sem isto, qualquer conta do Cloudinary podia usar o
+      // otimizador de imagem da Vercel pelo nosso domínio (cota e custo).
+      { protocol: "https", hostname: "res.cloudinary.com", pathname: "/dlzrfhwin/**" },
     ],
   },
+  // O `next dev` do Next 16 cria um AGENTS.md na raiz quando percebe um
+  // assistente de IA rodando. Desligado: o arquivo ficava fora do git e
+  // entraria no próximo `git add .` do repositório público.
+  agentRules: false,
   async headers() {
     return [{ source: "/:path*", headers: CABECALHOS_DE_PROTECAO }];
   },

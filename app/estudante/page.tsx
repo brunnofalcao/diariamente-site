@@ -555,7 +555,7 @@ export default function Estudante() {
           <div className="ed-wrap ed-footer-row">
             <p>
               © {new Date().getFullYear()} {EMPRESA.assinatura} ·{" "}
-              {SITE.dominio.replace("https://", "")}
+              {SITE.dominioVisivel}
             </p>
             <nav aria-label="Links institucionais">
               <a href="/">Página inicial</a>

@@ -16,8 +16,13 @@ import { join } from "node:path";
    própria app/opengraph-image.png. Assim não há segunda versão da marca
    para manter, e não é preciso carregar fonte de fora (o gerador não
    aceita woff2, e buscar a Literata no Google a cada build criaria uma
-   dependência externa para o card). A linha em espanhol usa a fonte
-   sem serifa que vem embutida no gerador, próxima da Inter do site.
+   dependência externa para o card). A linha em espanhol usa a Noto Sans
+   Regular, a sem serifa que vinha embutida no gerador do Next 14,
+   próxima da Inter do site. Desde o Next 15 o gerador embute a Geist
+   no lugar dela; por isso o arquivo (o mesmo do Next 14, 27.748 bytes,
+   SIL Open Font License 1.1, copyright e licença dentro do .ttf) fica
+   aqui ao lado e entra em `fonts`, com o mesmo nome e peso que o
+   gerador do 14 usava. Sem isso a linha muda de letra no card.
 
    Gerada no build (estática): nada roda quando alguém compartilha.
    Medidas tiradas da imagem original (1200x630, fundo #0A0E0E):
@@ -68,6 +73,7 @@ function Recorte({
 export default async function Image() {
   const original = await readFile(join(process.cwd(), "app", "opengraph-image.png"));
   const src = `data:image/png;base64,${original.toString("base64")}`;
+  const notoSans = await readFile(join(process.cwd(), "app", "es", "noto-sans-v27-latin-regular.ttf"));
 
   // O lockup sobe 19 px para abrir espaço à linha em espanhol; a
   // sequência fica exatamente onde estava.
@@ -108,6 +114,10 @@ export default async function Image() {
         <Recorte src={src} de={{ x: 503, y: 420, w: 226, h: 17 }} em={{ x: 503, y: 420 }} />
       </div>
     ),
-    { ...size },
+    {
+      ...size,
+      // Mesmo nome e peso da fonte padrão do gerador do Next 14.
+      fonts: [{ name: "sans serif", data: notoSans, weight: 700, style: "normal" }],
+    },
   );
 }

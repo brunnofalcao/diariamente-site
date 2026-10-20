@@ -26,6 +26,11 @@ import { criarCupom, gerarCodigo, apagarCupom, offerIdsDoAmbiente } from '@/lib/
 import { enviarLeadRD } from '@/lib/rdstation';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+// Sem cache de fetch (ver app/api/cron/manutencao/route.js). Rota so com
+// POST ja nao cacheia no Next 14, mas um GET acrescentado depois cacheia.
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 const db = createClient(
   process.env.SUPABASE_URL,

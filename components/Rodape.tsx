@@ -107,7 +107,7 @@ export function Rodape() {
           <p>
             © {ano} {EMPRESA.assinatura}
             <br />
-            {SITE.dominio.replace("https://", "")}
+            {SITE.dominioVisivel}
           </p>
           <p className="rp-aviso">
             O Diariamente é uma prática de hábitos e bem-estar. Não trata, não

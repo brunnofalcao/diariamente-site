@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
-import { SITE } from "@/config";
 import { CHAVES, PRIVADAS, parDeIdiomas, type Chave } from "@/lib/rotas";
 import { HREFLANG } from "@/lib/mercado";
+import { hreflangDe, urlAbsoluta } from "@/lib/seo";
 
 /* =====================================================================
    SITEMAP
@@ -20,6 +20,10 @@ import { HREFLANG } from "@/lib/mercado";
    página. E a reciprocidade é obrigatória: se uma das versões não aponta
    de volta, o grupo inteiro é descartado.
 
+   O hreflang de cada endereço vem de hreflangDe (lib/seo.ts), a mesma
+   função que escreve o <head> da página: sitemap e página dizem a mesma
+   coisa. Endereço repetido sai uma vez só.
+
    A rota interna do resto do mundo (/mundo) não entra: ela é servida na
    própria "/".
    ===================================================================== */
@@ -31,39 +35,46 @@ const FREQUENCIA: Record<string, "weekly" | "monthly" | "yearly"> = {
   estudante: "monthly", sobre: "monthly", termos: "yearly", privacidade: "yearly",
 };
 
-// Homes de mercado: tratadas à parte, com o grupo de cinco hreflang.
+// Homes de mercado: tratadas à parte, com o grupo inteiro de hreflang.
 const HOMES_DE_MERCADO: Chave[] = ["home", "homePt", "homeEs"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = SITE.dominio;
   const now = new Date();
-  const abs = (p: string) => base + (p === "/" ? "" : p);
+  const jaListados = new Set<string>();
 
-  const grupo: Record<string, string> = {};
-  for (const [tag, caminho] of Object.entries(HREFLANG)) grupo[tag] = abs(caminho);
+  const grupo = hreflangDe("home");
 
   // Uma entrada por home, sem repetir a "/" do x-default.
-  const homes = Array.from(new Set(Object.values(HREFLANG))).map((caminho) => ({
-    url: abs(caminho),
-    lastModified: now,
-    changeFrequency: "weekly" as const,
-    priority: caminho === "/" ? 1 : 0.9,
-    alternates: { languages: grupo },
-  }));
+  const homes = Array.from(new Set(Object.values(HREFLANG))).map((caminho) => {
+    const url = urlAbsoluta(caminho);
+    jaListados.add(url);
+    return {
+      url,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: caminho === "/" ? 1 : 0.9,
+      alternates: { languages: grupo },
+    };
+  });
 
   const paginas = CHAVES.filter((c) => !PRIVADAS.includes(c) && !HOMES_DE_MERCADO.includes(c)).flatMap((chave) => {
     const par = parDeIdiomas(chave);
-    const languages = { "pt-BR": abs(par.pt), es: abs(par.es), "x-default": abs(par.pt) };
+    const languages = hreflangDe(chave);
 
-    return (["pt", "es"] as const).map((lang) => ({
-      url: abs(par[lang]),
-      lastModified: now,
-      changeFrequency: FREQUENCIA[chave],
-      // A versão espanhola entra logo abaixo da portuguesa: mesmo conteúdo,
-      // público menor. Prioridade é dica relativa, não ranking.
-      priority: lang === "pt" ? PRIORIDADE[chave] : Math.max(0.1, PRIORIDADE[chave] - 0.1),
-      alternates: { languages },
-    }));
+    return (["pt", "es"] as const).flatMap((lang) => {
+      const url = urlAbsoluta(par[lang]);
+      if (jaListados.has(url)) return [];
+      jaListados.add(url);
+      return [{
+        url,
+        lastModified: now,
+        changeFrequency: FREQUENCIA[chave],
+        // A versão espanhola entra logo abaixo da portuguesa: mesmo conteúdo,
+        // público menor. Prioridade é dica relativa, não ranking.
+        priority: lang === "pt" ? PRIORIDADE[chave] : Math.max(0.1, PRIORIDADE[chave] - 0.1),
+        alternates: { languages },
+      }];
+    });
   });
 
   return [...homes, ...paginas];

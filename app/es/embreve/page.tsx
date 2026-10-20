@@ -11,9 +11,10 @@ import { comParametros } from "@/lib/rotas";
 // vazia. Dinâmica, a resposta é um 307 de verdade, com Location.
 export const dynamic = "force-dynamic";
 
-type Props = { searchParams: Record<string, string | string[] | undefined> };
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 // Os parâmetros (utm, fbclid) vão junto: anúncio antigo não perde a origem.
-export default function Page({ searchParams }: Props) {
+export default async function Page(props: Props) {
+  const searchParams = await props.searchParams;
   redirect(comParametros("/es", searchParams));
 }

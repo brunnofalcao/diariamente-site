@@ -94,6 +94,9 @@ function dataBR(lang: LangApi): { mes: number; dia: number; diaAno: number; diaN
 
 export const dynamic = "force-dynamic"; // recalcula a cada request
 export const revalidate = 0;
+// Sem cache de fetch em nenhuma chamada da rota, nao so na que pede
+// no-store (ver app/api/cron/manutencao/route.js).
+export const fetchCache = "force-no-store";
 
 export async function GET(req: Request) {
   const lang = idiomaPedido(new URL(req.url).searchParams.get("lang"));

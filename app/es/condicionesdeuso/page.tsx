@@ -135,7 +135,7 @@ export default function CondicionesDeUso() {
       <p>
         Podemos actualizar estas Condiciones para reflejar cambios legales o en el producto.
         La versión vigente estará siempre disponible en{" "}
-        <a href={`${SITE.dominio}/es/condicionesdeuso`}>{SITE.dominio.replace("https://", "")}/es/condicionesdeuso</a>,
+        <a href={`${SITE.dominio}/es/condicionesdeuso`}>{SITE.dominioVisivel}/es/condicionesdeuso</a>,
         con la fecha de la última actualización.
       </p>
 

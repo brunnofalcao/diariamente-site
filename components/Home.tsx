@@ -297,7 +297,7 @@ export function Home({ lang, mercado, momento, previa = false }: { lang: Lang; m
 
   const share = async () => {
     const txt = `\u201C${texto}\u201D \u00B7 Diariamente`;
-    const url = "https://diariamente.app/?utm_source=share&utm_medium=organic&utm_campaign=provocacao_do_dia";
+    const url = "https://" + SITE.dominioVisivel + "/?utm_source=share&utm_medium=organic&utm_campaign=provocacao_do_dia";
     try {
       if (navigator.share) await navigator.share({ title: "Diariamente", text: txt, url });
       else { await navigator.clipboard.writeText(`${txt} ${url}`); setCopiado(true); setTimeout(() => setCopiado(false), 2200); }
@@ -847,7 +847,7 @@ export function Home({ lang, mercado, momento, previa = false }: { lang: Lang; m
                 e endereço (Decreto 7.962/2013, art. 2º) ficam nos Termos e na
                 Política, a um clique daqui (config.ts, EMPRESA). */}
             <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.n400 }}>
-              © {new Date(agora).getFullYear()} {EMPRESA.assinatura} · diariamente.app
+              © {new Date(agora).getFullYear()} {EMPRESA.assinatura} · {SITE.dominioVisivel}
             </p>
             <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
               {[.3, .4, .5, .6, .75, .9].map((o, i) => <i key={i} style={{ display: "block", width: 10, height: 4, borderRadius: 999, background: C.p500, opacity: o }} />)}

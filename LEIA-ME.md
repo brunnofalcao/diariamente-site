@@ -386,7 +386,7 @@ mas confundem quem for mexer.
 | `/pt-pt/embreve` | vendas · 29,99 € | noindex |
 | `/es-es/embreve` | vendas · 29,99 € | noindex |
 
-Site continua oculto. Sitemap com 14 URLs, nenhuma de venda.
+Site continua oculto. Sitemap com 12 URLs (sem repetição desde 20/10/2026), nenhuma de venda.
 
 ---
 

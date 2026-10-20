@@ -1,0 +1,43 @@
+name: CI
+
+# Roda em todo push na main e em todo pull request. Não publica nada:
+# só instala, testa, confere os tipos e faz o build de prévia.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  testes-e-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Instalar dependências
+        run: npm ci
+      # --if-present: enquanto a main não tiver o script "test", o passo
+      # passa sem rodar nada; quando os testes chegarem, passam a contar.
+      - name: Rodar testes
+        run: npm test --if-present
+      - name: Checar tipos
+        run: npx tsc --noEmit
+      # Valores fictícios, como manda o LEIA-ME: as rotas de API criam o
+      # cliente do Supabase ao carregar e o build pede SUPABASE_URL e
+      # SUPABASE_SERVICE_KEY; DM_ENDERECO_TESTE libera as travas de
+      # endereço e de preços só neste build de prévia (a Vercel recusa em
+      # produção). Nenhum segredo real entra aqui.
+      - name: Build de prévia
+        env:
+          DM_ENDERECO_TESTE: 'Rua de Teste, 123'
+          SUPABASE_URL: 'https://exemplo.supabase.co'
+          SUPABASE_SERVICE_KEY: 'x'
+        run: npm run build

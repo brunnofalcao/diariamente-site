@@ -115,7 +115,7 @@ export default function Sobre() {
                 <li><b>Preço:</b> {cheio} por ano à vista (equivale a {cheioMes}/mês), ou em até 12x no cartão com acréscimo{condicaoLista}</li>
                 <li><b>Garantia:</b> 7 dias, incondicional</li>
                 <li><b>Responsável:</b> {EMPRESA.assinatura}</li>
-                <li><b>Inscrição:</b> {SITE.dominio.replace("https://", "")} · acesso enviado por e-mail</li>
+                <li><b>Inscrição:</b> {SITE.dominioVisivel} · acesso enviado por e-mail</li>
               </ul>
             </div>
           </div>

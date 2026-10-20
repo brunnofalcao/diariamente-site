@@ -14,13 +14,15 @@ import { MERCADOS, ESTUDANTE_DESCONTO, formatar, precoEstudante, porMesEstudante
 
 export const SITE = {
   nome: "Diariamente",
-  // Domínio oficial (Brandbook 5.0, seção 29 · papelaria: diariamente.app).
-  // Alimenta metadataBase, canonical, openGraph.url, schemas, sitemap,
-  // robots e o rodapé visível.
-  // PRÉ-CONDIÇÃO: diariamente.club precisa fazer 301 permanente para cá,
-  // e os dois domínios precisam estar no Search Console. Sem isso, o sinal
-  // fica dividido entre os dois.
-  dominio: "https://diariamente.app",
+  // Endereço técnico oficial (decisão do dono, 20/10/2026): com www, que é onde o site
+  // responde (diariamente.app sem www faz 308 para cá na Vercel). Alimenta metadataBase,
+  // canonical, openGraph.url, schemas, sitemap, robots e os links (href).
+  // PRÉ-CONDIÇÃO: diariamente.club precisa fazer 301 permanente para cá, e os domínios
+  // precisam estar no Search Console. Sem isso, o sinal fica dividido.
+  dominio: "https://www.diariamente.app",
+  // O que a pessoa LÊ (rodapé, papelaria, textos e links de compartilhar): sem www, como
+  // no Brandbook 5.0, seção 29. Nunca usar dominio.replace("https://", "") para texto.
+  dominioVisivel: "diariamente.app",
   // Parte protegida (app, login, API e banco). O domínio .club é só
   // endereço técnico: a marca é "Diariamente" / "Diariamente App", nunca
   // "Diariamente Club". O site comercial não tem login: só aponta para cá.
@@ -49,10 +51,13 @@ export const SITE = {
 // a MARCA ANTERIOR e saíram de circulação. O símbolo agora é SVG inline em
 // components/Brand.tsx, e os arquivos de ícone são servidos pelo próprio
 // domínio através das convenções do Next:
-//   app/icon.svg            favicon vetorial
-//   app/icon.png            512px, símbolo a 66% sobre S0
+//   app/icon.png            512px, símbolo a 66% sobre S0 (o favicon)
 //   app/apple-icon.png      180px, idem
 //   app/opengraph-image.png 1200x630, lockup horizontal + a sequência
+// O símbolo vetorial fica em public/icon.svg: responde em /icon.svg, mas
+// não é anunciado no <head>. Em app/ o Next 16 passaria a anunciá-lo, e
+// Chrome, Edge e Firefox trocariam o ícone da aba pelo SVG (maior e, no
+// tema claro, de outro verde). O Next 14 anunciava só o icon.png.
 export const LOGOS = {
   // usado no schema Organization, que exige URL absoluta
   schemaLogo: "/icon.png",

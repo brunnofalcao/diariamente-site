@@ -301,7 +301,7 @@ export default function Privacidad() {
       <p>
         Esta Política puede actualizarse. La versión vigente está siempre en{" "}
         <a href={`${SITE.dominio}${caminho("privacidade", "es")}`}>
-          {SITE.dominio.replace("https://", "")}{caminho("privacidade", "es")}
+          {SITE.dominioVisivel}{caminho("privacidade", "es")}
         </a>
         , con la fecha de la última actualización. Los cambios relevantes en las finalidades o
         en los destinatarios se comunicarán y, cuando la base jurídica sea el consentimiento,
