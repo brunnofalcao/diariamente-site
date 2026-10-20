@@ -22,7 +22,7 @@ const RESUMO: [string, string][] = [
   ["Modelo", "Suscripción anual, contenido nuevo en cada ciclo"],
   ["Formato", "Aplicación para iPhone y Android"],
   ["Duración", "365 textos por año, uno liberado cada día"],
-  ["Responsable", `${EMPRESA.marca}, ${EMPRESA.razaoSocial}`],
+  ["Responsable", EMPRESA.assinatura],
 ];
 
 export default function AcercaDe() {

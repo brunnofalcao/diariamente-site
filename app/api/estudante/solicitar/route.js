@@ -8,6 +8,17 @@
  * Ordem intencional: o cupom e criado ANTES do RD e do WhatsApp.
  * Se RD ou WhatsApp falharem, o cupom existe e volta na resposta,
  * entao a tela consegue mostrar o codigo mesmo assim.
+ *
+ * FLUXO FECHADO: DM_ESTUDANTE_ABERTO e calculada no build pelo
+ * next.config.js (estadoDoEstudante, em scripts/checar-precos.js) e so
+ * vale "1" com o modelo v2 do WhatsApp, HOTMART_PRODUCT_ID=7448309 e um
+ * STUDENT_DISCOUNT que de o preco final anunciado (R$ 89,90 sobre
+ * R$ 149,90: STUDENT_DISCOUNT=0.40027). Sem isso, a rota responde 503
+ * ANTES de ler o corpo ou tocar no banco: nenhum lead gravado, nenhum
+ * cupom criado, nenhuma mensagem agendada, e o CPF nao fica preso pela
+ * regra "1 CPF = 1 lead" num pedido que o estudante nao conseguiria
+ * ativar. A /estudante, fechada, nem mostra o formulario; isto cobre
+ * pagina antiga em cache e POST direto.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -66,7 +77,19 @@ function cpfValido(cpf) {
 export async function POST(req) {
   let lead = null;
 
+  if (process.env.DM_ESTUDANTE_ABERTO !== '1') {
+    console.error('[estudante] fluxo fechado neste build (DM_ESTUDANTE_ABERTO); ver o aviso "Estudante FECHADO" no log do build');
+    return Response.json({
+      ok: false,
+      erros: ['Falta configuracao. A solicitacao do codigo de estudante abre em breve.'],
+    }, { status: 503 });
+  }
+
   try {
+    // Fracao, com todas as casas (0.40027): e o que vai para a API da
+    // Hotmart. O build ja conferiu que ela da os R$ 89,90 da pagina. A
+    // coluna cupons_estudante.desconto e numeric(4,3) e guarda 0.400; o
+    // valor exato fica no log_estudante (detalhe.desconto).
     const desconto = parseFloat(process.env.STUDENT_DISCOUNT);
     if (!(desconto > 0 && desconto < 0.99)) {
       console.error('[estudante] STUDENT_DISCOUNT ausente ou invalido');

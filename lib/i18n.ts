@@ -81,10 +81,6 @@ export const I18N = {
     no: ["Procura solução mágica da noite pro dia", "Não está disposto a três minutos por dia", "Quer só mais um PDF pra estante digital"],
     prEyebrow: "Acesso anual", prH2: "Comece hoje. Volte amanhã.",
     prSub: "Menos que um café por semana, por um ano inteiro de prática.",
-    prCond: "Condição de lançamento", prName: "Diariamente App · 1 ano", prSave: "você economiza R$ 59,10",
-    prTerms: "à vista · ou 12x de R$ 14,26 no cartão (total R$ 171,12)", prDay: "menos de R$ 0,38 por dia",
-    prNote: "Acesso liberado por e-mail assim que o pagamento for confirmado. Condição válida no mês de lançamento.",
-    prT1: "Garantia incondicional de 7 dias", prT2: "Pagamento seguro via Hotmart · Pix, cartão ou boleto", prT3: "iPhone e Android, o mesmo acesso nos dois",
     vaEyebrow: "O que entra no seu acesso", vaH3: "Um sistema, não um arquivo que você baixa e esquece.",
     v1t: "Uma provocação por dia, os 365 dias do ano", v1d: "Sem antecipar e sem acumular. Três minutos e o dia está cumprido.",
     v2t: "Calendário de constância", v2d: "Os dias em que você veio ficam visíveis. Você para de achar e passa a saber.",
@@ -95,6 +91,7 @@ export const I18N = {
     gT: "Garantia de 7 dias",
     gD: "Você tem 7 dias para experimentar. Se sentir que o Diariamente não é pra você, devolvemos o seu investimento. Sem letra miúda.",
     stBadge: "Condição de estudante", stH: "Ainda está na graduação? O mesmo acesso de um ano por {preco}.",
+    stHSemPreco: "Ainda está na graduação? O mesmo acesso de um ano, com condição de estudante.",
     stD: "Leva cerca de um minuto. O código chega no WhatsApp. Solicitar não gera compromisso.", stCta: "Ver minha condição",
     afEyebrow: "Sem mistério", afH2: "O que acontece depois",
     after: [
@@ -180,10 +177,6 @@ export const I18N = {
     no: ["Buscas una solución mágica de la noche a la mañana", "No estás dispuesto a tres minutos al día", "Solo quieres otro PDF para la estantería digital"],
     prEyebrow: "Acceso anual", prH2: "Empieza hoy. Vuelve mañana.",
     prSub: "Menos que un café a la semana, por un año entero de práctica.",
-    prCond: "Condición de lanzamiento", prName: "Diariamente App · 1 año", prSave: "ahorras R$ 59,10",
-    prTerms: "pago único · o 12 cuotas de R$ 14,26 con tarjeta (total R$ 171,12)", prDay: "menos de R$ 0,38 al día",
-    prNote: "Acceso liberado por e-mail en cuanto se confirme el pago. Condición válida en el mes de lanzamiento.",
-    prT1: "Garantía incondicional de 7 días", prT2: "Pago seguro vía Hotmart · tarjeta o Pix", prT3: "iPhone y Android, el mismo acceso en ambos",
     vaEyebrow: "Qué incluye tu acceso", vaH3: "Un sistema, no un archivo que descargas y olvidas.",
     v1t: "Una provocación al día, los 365 días del año", v1d: "Sin anticipar y sin acumular. Tres minutos y el día está cumplido.",
     v2t: "Calendario de constancia", v2d: "Los días en que viniste quedan visibles. Dejas de suponer y pasas a saber.",
@@ -194,6 +187,7 @@ export const I18N = {
     gT: "Garantía de 7 días",
     gD: "Tienes 7 días para probar. Si sientes que Diariamente no es para ti, te devolvemos tu inversión. Sin letra pequeña.",
     stBadge: "Condición de estudiante", stH: "¿Sigues en la universidad? El mismo acceso de un año por {preco}.",
+    stHSemPreco: "¿Sigues en la universidad? El mismo acceso de un año, con condición de estudiante.",
     stD: "Toma cerca de un minuto. El código llega por WhatsApp. Solicitar no genera compromiso.", stCta: "Ver mi condición",
     afEyebrow: "Sin misterio", afH2: "Qué pasa después",
     after: [
@@ -245,8 +239,8 @@ export function cld(url: string, tx: string): string {
        pelo mercado certo (/es/, /mx/, /ar/...), ou o usuario cai numa
        ficha em portugues.
      - `googlePlay` aceita &hl=es para a ficha sair traduzida.
-     - `checkout` provavelmente precisa de OUTRA oferta na Hotmart, em
-       moeda local. Enquanto for a mesma, o espanhol paga em real.
+     - checkout NAO mora aqui: o link de cada mercado (moeda, oferta e
+       lancamento) esta em config/pricing.ts.
    ===================================================================== */
 
 const IMG_PT = {
@@ -260,7 +254,6 @@ const IMG_PT = {
 };
 
 const LINKS_PT = {
-  checkout: "https://pay.hotmart.com/L107085210M?checkoutMode=10",
   appStore: "https://apps.apple.com/br/app/diariamente/id6762151251",
   googlePlay: "https://play.google.com/store/apps/details?id=club.diariamente.app",
   instagram: "https://instagram.com/diariamente",

@@ -5,7 +5,12 @@ import { caminho } from "@/lib/rotas";
 
 /* Shell das páginas legais, agora ciente do idioma.
    O "Voltar" e o logotipo levam para a home DO MESMO IDIOMA: um leitor
-   espanhol que clica em voltar não pode cair no site em português. */
+   espanhol que clica em voltar não pode cair no site em português.
+
+   A identificação completa da titular (razão social, CNPJ, endereço e
+   contatos, Decreto 7.962/2013, art. 2º) mora no CORPO dos Termos e da
+   Política, na seção 1 de cada um (components/Titularidade.tsx). O
+   rodapé daqui mostra só a assinatura, como o resto do site. */
 
 const T = {
   pt: { voltar: "← Voltar", atualizado: "Última atualização:" },
@@ -43,18 +48,13 @@ export function LegalShell({
 
           <div className="legal-body stack">{children}</div>
 
-          <div className="divider" />
-          <p className="caption muted">
-            {EMPRESA.marca} · {EMPRESA.razaoSocial} · CNPJ {EMPRESA.cnpj} ·{" "}
-            <a href={`mailto:${EMPRESA.suporteEmail}`} className="teal">{EMPRESA.suporteEmail}</a>
-          </p>
         </div>
       </section>
 
       <footer style={{ borderTop: "1px solid var(--border)", marginTop: "var(--sp12)", padding: "var(--sp10) 0" }}>
         <div className="wrap center">
           <p className="caption" style={{ color: "var(--n-600)" }}>
-            © {new Date().getFullYear()} {EMPRESA.marca}® · {SITE.dominioVisivel}
+            © {new Date().getFullYear()} {EMPRESA.assinatura} · {SITE.dominioVisivel}
           </p>
         </div>
       </footer>

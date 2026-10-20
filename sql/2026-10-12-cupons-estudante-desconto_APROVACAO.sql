@@ -1,0 +1,32 @@
+-- =====================================================================
+-- cupons_estudante.desconto: de numeric(4,3) para numeric(6,5)
+-- ---------------------------------------------------------------------
+-- PRECISA DE APROVAÇÃO (muda uma tabela que já existe). NÃO APLICADO.
+-- Rodar uma vez no Supabase do Diariamente (projeto
+-- xycwmtsicuqjswfiohbc), no SQL Editor, por quem cuida do banco.
+--
+-- Por que: em 12/10/2026 o preço do estudante passou a ser FINAL
+-- (R$ 89,90 por ano sobre a oferta oficial de R$ 149,90), e o desconto
+-- do cupom pessoal sai dele: STUDENT_DISCOUNT=0.40027 (config/pricing.ts,
+-- ESTUDANTE_DESCONTO). A coluna hoje é numeric(4,3) (conferido com
+-- SELECT em information_schema.columns em 12/10/2026): o Postgres
+-- arredonda 0.40027 para 0.400 ao gravar, SEM erro. Nada lê essa coluna
+-- para cobrar (o desconto que vale é o do cupom na Hotmart), e o valor
+-- exato já fica em log_estudante.detalhe (jsonb). Então isto NÃO é
+-- obrigatório: só deixa o registro do cupom igual ao que foi à Hotmart.
+--
+-- Risco: baixo. Aumentar precisão e escala de numeric não perde nenhum
+-- valor gravado (0.400 continua 0.40000). O ALTER reescreve a tabela e
+-- a trava (ACCESS EXCLUSIVE) enquanto roda: com poucas linhas, é
+-- instantâneo; rodar fora do horário de pedidos de estudante, por
+-- garantia. A restrição desconto_valido (> 0 e < 0.99) continua valendo
+-- e não muda. Em 12/10/2026 nenhuma view nem trigger depende da tabela
+-- (conferido em pg_depend e pg_trigger).
+--
+-- Como desfazer (volta a guardar 3 casas, arredondando o que houver):
+--   alter table public.cupons_estudante
+--     alter column desconto type numeric(4,3);
+-- =====================================================================
+
+alter table public.cupons_estudante
+  alter column desconto type numeric(6,5);

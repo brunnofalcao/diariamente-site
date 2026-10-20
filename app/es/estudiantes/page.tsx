@@ -1,4 +1,4 @@
-import { EMPRESA, GARANTIA } from "@/config";
+import { EMPRESA, GARANTIA, ESTUDANTE } from "@/config";
 import { LockupHorizontal } from "@/components/Brand";
 import { metadataDaPagina } from "@/lib/seo";
 import { caminho } from "@/lib/rotas";
@@ -54,7 +54,7 @@ export default function Estudiantes() {
           <p className="lead" style={{ maxWidth: "52ch", marginBottom: "var(--sp8)" }}>
             Nada se recorta de tu versión. Es la aplicación completa, con los 365 textos, el
             contador de vueltas, el menú Acciones y el recordatorio diario. Lo que cambia es
-            cuánto pagas por ella mientras estás cursando.
+            el precio de entrada.
           </p>
 
           <div className="sobre-corpo" style={{ marginBottom: "var(--sp10)" }}>
@@ -71,17 +71,22 @@ export default function Estudiantes() {
 
           <FormularioGlobal lang="es" />
 
+          {/* Só com o fluxo do cupom pessoal aberto neste build
+              (ESTUDANTE.aberto, config.ts). O código sai pelo cron, minutos
+              depois do pedido: "inmediato" não era verdade. */}
+          {ESTUDANTE.aberto && (
           <p className="caption" style={{ marginTop: "var(--sp8)", color: "var(--n-500)" }}>
             ¿Estudias en Brasil?{" "}
             <a href={caminho("estudante", "pt")} className="teal" hrefLang="pt-BR">
               Solicita tu código aquí
             </a>
-            , el proceso es inmediato.
+            ; llega por WhatsApp en unos minutos.
           </p>
+          )}
 
           <p className="caption" style={{ marginTop: "var(--sp4)", color: "var(--n-500)" }}>
-            Responsable del tratamiento: {EMPRESA.razaoSocial}. Consulta la{" "}
-            <a href={caminho("privacidade", "es")} className="teal">Política de Privacidad</a>.
+            Responsable del tratamiento: {EMPRESA.marca} (datos completos en la{" "}
+            <a href={caminho("privacidade", "es")} className="teal">Política de Privacidad</a>).
           </p>
 
           <p className="assinatura" style={{ marginTop: "var(--sp10)" }}>Vuelve mañana.</p>

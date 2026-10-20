@@ -1,4 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
+import { gravarTolerante } from "@/lib/lista-espera";
+import { mercadoValido, mercadoDoPais } from "@/lib/mercado";
 
 /* =====================================================================
    POST /api/lista-espera
@@ -36,6 +38,13 @@ import { createClient } from "@supabase/supabase-js";
    nela arriscaria o fluxo que já funciona.
 
    >>> TABELA: sql/2026-10-03-lista-espera.sql (com rollback ao lado) <<<
+
+   MERCADO, IDIOMA E PAÍS: o formulário manda o mercado e o idioma da
+   página; o país vem do cabeçalho x-vercel-ip-country (servidor, não do
+   navegador). Vão para as colunas mercado, idioma e pais quando elas
+   existirem (criadas pela frente do app); sem elas, a linha é gravada
+   sem os três campos, sem quebrar (lib/lista-espera.ts). No RD, viram as
+   tags mercado-xx e idioma-xx.
 
    O e-mail é UNIQUE na coluna (e chega sempre em minúsculas): é o alvo
    do "ignora repetido" e impede duplicata. Quem se inscreve duas vezes
@@ -103,35 +112,46 @@ async function hashear(texto) {
 /**
  * Insere o lead se o e-mail ainda não está na lista. Nunca altera quem já
  * está lá (on conflict do nothing). Devolve true quando a linha é nova.
+ * `extras` (mercado, idioma, pais) entram se as colunas existirem.
  */
-async function gravarSupabase(lead) {
+async function gravarSupabase(lead, extras) {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_KEY;
   if (!url || !key) throw new Error("supabase sem configuracao");
   const sb = createClient(url, key, { auth: { persistSession: false } });
-  const { data, error } = await sb
-    .from("lista_espera")
-    .upsert(lead, { onConflict: "email", ignoreDuplicates: true })
-    .select("id");
-  if (error) throw error;
   // Com ignoreDuplicates, o e-mail repetido não volta na resposta.
-  return Array.isArray(data) && data.length > 0;
+  const gravar = (linha) =>
+    sb.from("lista_espera").upsert(linha, { onConflict: "email", ignoreDuplicates: true }).select("id");
+  const r = await gravarTolerante(gravar, lead, extras);
+  if (r.semColunasNovas) {
+    console.warn("[lista-espera] colunas mercado/idioma/pais ainda não existem; gravado sem elas");
+  }
+  return r.novo;
 }
 
 async function enviarRD(lead) {
   const token = process.env.RD_STATION_TOKEN;
   if (!token) throw new Error("RD_STATION_TOKEN ausente");
+  // Origem "estudante" (a /estudante com o fluxo do cupom fechado): outra
+  // conversão e outra tag, para o aviso de abertura do PRODUTO nunca ir
+  // para quem pediu para ser avisado da condição de estudante.
+  const estudante = lead.origem === "estudante";
   const payload = {
     event_type: "CONVERSION",
     event_family: "CDP",
     payload: {
-      conversion_identifier: process.env.RD_CONVERSION_EM_BREVE || "diariamente-em-breve",
+      conversion_identifier: estudante
+        ? process.env.RD_CONVERSION_ESTUDANTE_ESPERA || "diariamente-estudante-em-breve"
+        : process.env.RD_CONVERSION_EM_BREVE || "diariamente-em-breve",
       name: lead.nome,
       email: lead.email,
       mobile_phone: `+${lead.whatsapp}`,
       // idioma-pt / idioma-es: na abertura, cada lista recebe a mensagem
       // no idioma em que se inscreveu, sem ninguém precisar adivinhar.
-      tags: ["lista-espera", "em-breve", `idioma-${lead.idioma}`, ...(lead.consent_parceiros ? ["aceita-parceiros"] : [])],
+      tags: [
+        "lista-espera", estudante ? "estudante-em-breve" : "em-breve", `idioma-${lead.idioma}`, `mercado-${lead.mercado}`,
+        ...(lead.consent_parceiros ? ["aceita-parceiros"] : []),
+      ],
       traffic_source: lead.utm?.utm_source,
       traffic_medium: lead.utm?.utm_medium,
       traffic_campaign: lead.utm?.utm_campaign,
@@ -170,11 +190,20 @@ export async function POST(req) {
   const c = body.consentimento && typeof body.consentimento === "object" ? body.consentimento : {};
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "";
 
+  // País do IP, pela Vercel. Só duas letras; qualquer outra coisa some.
+  const paisBruto = (req.headers.get("x-vercel-ip-country") || "").toUpperCase();
+  const pais = /^[A-Z]{2}$/.test(paisBruto) ? paisBruto : null;
+  // Mercado da página; se vier vazio ou inválido, o do país (ou br).
+  const mercado = mercadoValido(limpar(body.mercado, 4)) ?? mercadoDoPais(pais);
+  // Idioma da página (o do formulário); o campo antigo, em consentimento, vale também.
+  const idioma = body.idioma === "es" || (body.idioma !== "pt" && c.idioma === "es") ? "es" : "pt";
+  const origem = body.origem === "oferta" || body.origem === "estudante" ? body.origem : "em-breve";
+
   const lead = {
     nome,
     email,
     whatsapp,
-    origem: "em-breve",
+    origem,
     consent_versao: limpar(c.versao, 32) || "desconhecida",
     consent_aceito_em: dataDoAceite(c.aceitoEm),
     consent_parceiros: Boolean(c.parceiros),
@@ -182,14 +211,10 @@ export async function POST(req) {
     user_agent: limpar(req.headers.get("user-agent"), 300),
     utm: limparUtm(body.utm),
   };
-  // idioma vai só para o RD (tag). Fora do objeto gravado no Supabase
-  // para não exigir coluna nova na tabela.
-  const idioma = c.idioma === "es" ? "es" : "pt";
-
   let gravouNoBanco = false;
   let novo = false;
   try {
-    novo = await gravarSupabase(lead);
+    novo = await gravarSupabase(lead, { mercado, idioma, pais });
     gravouNoBanco = true;
   } catch (e) {
     console.error("[lista-espera] supabase:", e?.message ?? e);
@@ -200,7 +225,7 @@ export async function POST(req) {
 
   let foiProRD = false;
   try {
-    await enviarRD({ ...lead, idioma });
+    await enviarRD({ ...lead, idioma, mercado });
     foiProRD = true;
   } catch (e) {
     console.error("[lista-espera] rd:", e?.message ?? e);

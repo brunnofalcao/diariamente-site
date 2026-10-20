@@ -2,6 +2,8 @@ import { EMPRESA, SITE } from "@/config";
 import { LegalShell } from "@/components/LegalShell";
 import { metadataDaPagina } from "@/lib/seo";
 import { caminho } from "@/lib/rotas";
+import { RevisarCookies } from "@/components/RevisarCookies";
+import { Titularidade } from "@/components/Titularidade";
 
 /* =====================================================================
    POLÍTICA DE PRIVACIDADE · PT
@@ -43,17 +45,13 @@ export default function Privacidade() {
         Europeia (Regulamento UE 2016/679, &ldquo;RGPD&rdquo;).
       </p>
 
+      {/* Titular, dados completos e cláusula de titularidade (decisão do
+          dono, 12/10/2026). Mesmo texto dos Termos e das versões es. */}
       <h2>1. Quem é o responsável pelo tratamento</h2>
+      <Titularidade lang="pt" doc="privacidade" />
       <p>
-        <strong>{EMPRESA.razaoSocial}</strong>, inscrita no CNPJ nº {EMPRESA.cnpj}, é a
-        controladora dos dados (&ldquo;responsável pelo tratamento&rdquo; no RGPD;
-        &ldquo;controladora&rdquo; na LGPD). O Diariamente é um produto operado por ela.
-      </p>
-      <p>
-        Endereço: {EMPRESA.endereco}
-        <br />
-        Contato para assuntos de privacidade:{" "}
-        <a href={`mailto:${EMPRESA.suporteEmail}`}>{EMPRESA.suporteEmail}</a>
+        Controladora é o termo da LGPD; no RGPD, o mesmo papel se chama
+        &ldquo;responsável pelo tratamento&rdquo;.
       </p>
       <p>
         A Science Play é <strong>responsável pelo tratamento</strong> dos dados, e não sua
@@ -73,8 +71,14 @@ export default function Privacidade() {
         checkout. <strong>Não recebemos nem armazenamos dados de cartão.</strong>
       </p>
       <p>
+        <strong>País da conexão:</strong> informado pela hospedagem a cada acesso, sem
+        cookie, para o site abrir na página e na moeda do seu país. Na lista de espera, fica
+        guardado junto com o seu contato, para o aviso de abertura sair no seu mercado.
+      </p>
+      <p>
         <strong>Dados de uso:</strong> páginas visitadas, origem do acesso, dispositivo e
-        interações, coletados por cookies e ferramentas de medição.
+        interações, coletados por cookies e ferramentas de medição somente se você aceitar
+        no aviso de cookies (seção 8).
       </p>
       <p>
         <strong>Dados do aplicativo:</strong> registros de leitura, ações registradas e
@@ -99,7 +103,7 @@ export default function Privacidade() {
         </thead>
         <tbody>
           <tr>
-            <td>Processar a compra, liberar e manter o acesso, prestar suporte</td>
+            <td>Processar o pagamento, liberar e manter o acesso, prestar suporte</td>
             <td>Execução de contrato<br /><small>RGPD 6(1)(b) · LGPD 7º, V</small></td>
             <td>Não, sem isso não há como entregar o produto</td>
           </tr>
@@ -117,6 +121,11 @@ export default function Privacidade() {
             <td>Segurança, prevenção a fraude e abuso</td>
             <td>Interesse legítimo<br /><small>RGPD 6(1)(f) · LGPD 7º, IX</small></td>
             <td>Sim, por oposição fundamentada</td>
+          </tr>
+          <tr>
+            <td>Medir as visitas ao site e os resultados dos anúncios (cookies de medição e publicidade)</td>
+            <td>Consentimento<br /><small>RGPD 6(1)(a) · LGPD 7º, I</small></td>
+            <td><strong>Sim, no aviso de cookies, e dá para mudar depois</strong> (seção 8)</td>
           </tr>
           <tr>
             <td>Comunicações sobre o próprio Diariamente</td>
@@ -195,10 +204,10 @@ export default function Privacidade() {
         </thead>
         <tbody>
           <tr><td>Cadastro e acesso</td><td>Enquanto durar a relação, e por 5 anos após o término</td><td>Prazo prescricional do CDC e do Código Civil</td></tr>
-          <tr><td>Registros fiscais da compra</td><td>5 anos</td><td>Obrigação legal</td></tr>
+          <tr><td>Registros fiscais do pagamento</td><td>5 anos</td><td>Obrigação legal</td></tr>
           <tr><td>Registros de acesso à aplicação</td><td>6 meses</td><td>Marco Civil da Internet, art. 15</td></tr>
           <tr><td>Consentimentos e revogações</td><td>Enquanto necessário à comprovação</td><td>Ônus da prova do responsável</td></tr>
-          <tr><td>Dados de marketing</td><td>Até a revogação, mais o prazo de execução do descadastro</td><td>—</td></tr>
+          <tr><td>Dados de marketing</td><td>Até a revogação, mais o prazo de execução do descadastro</td><td>Consentimento</td></tr>
         </tbody>
       </table>
       <p>Encerrados os prazos, os dados são eliminados ou anonimizados de forma irreversível.</p>
@@ -232,12 +241,65 @@ export default function Privacidade() {
 
       <h2>8. Cookies e medição</h2>
       <p>
-        Usamos cookies estritamente necessários ao funcionamento do site e cookies de medição
-        e publicidade. Os de medição e publicidade{" "}
-        <strong>só são ativados mediante seu consentimento</strong>, manifestado no aviso
-        exibido no primeiro acesso, e podem ser revistos a qualquer momento. Cookies
-        estritamente necessários não dependem de consentimento e não podem ser desativados
-        sem inviabilizar o site.
+        No primeiro acesso, o site mostra um aviso com dois botões, <strong>Aceitar</strong> e{" "}
+        <strong>Recusar</strong>. Enquanto você não escolhe, nenhuma ferramenta de medição ou de
+        publicidade é carregada, e o site funciona normalmente.
+      </p>
+      <p>
+        <strong>Necessários</strong>, sempre ativos e sem depender de consentimento, porque só
+        guardam escolhas que você mesmo fez ou protegem o site:
+      </p>
+      <ul>
+        <li>
+          <strong>dm_cookies</strong>: guarda a sua resposta ao aviso (aceitou ou recusou) por
+          6 meses. Depois desse prazo, o aviso aparece de novo.
+        </li>
+        <li>
+          <strong>dm_market</strong>: guarda o país escolhido no seletor do rodapé (Brasil,
+          Portugal, España, América Latina) ou no seletor PT | ES, por 180 dias, para o site
+          abrir na página e na moeda que você escolheu. Sem essa escolha, a página segue o país
+          da sua conexão, informado pela hospedagem, sem gravar nada.
+        </li>
+        <li>
+          No formulário de estudante, um rascunho do que você digitou, sem o CPF, fica guardado
+          só nesta aba do navegador, para não se perder se a página recarregar. Ele some quando
+          a aba é fechada.
+        </li>
+        <li>
+          Cookies técnicos de segurança da hospedagem, gravados só quando ela precisa confirmar
+          que o acesso não é automatizado.
+        </li>
+      </ul>
+      <p>
+        <strong>Medição e publicidade</strong>, que só funcionam se você clicar em Aceitar:
+      </p>
+      <ul>
+        <li>
+          <strong>Google Analytics 4</strong> (Google): conta as visitas e mostra como o site é
+          usado. Cookies <code>_ga</code> e <code>_ga_*</code>.
+        </li>
+        <li>
+          <strong>Pixel da Meta</strong> (Facebook e Instagram): mede os resultados dos anúncios
+          e permite mostrar anúncios do Diariamente a quem visitou o site. Cookie{" "}
+          <code>_fbp</code> e, quando você chega por um anúncio, <code>_fbc</code>.
+        </li>
+      </ul>
+      <p>
+        Se você clicar em <strong>Recusar</strong>, essas duas ferramentas não são carregadas em
+        nenhuma página do site, e os cookies delas que tenham ficado de um aceite anterior são
+        apagados. Se clicar em <strong>Aceitar</strong>, elas passam a funcionar a
+        partir desse momento, em todas as páginas, até a sua escolha vencer ou você mudar de
+        ideia.
+      </p>
+      <p>
+        Você pode mudar de ideia a qualquer momento pelo botão abaixo. Ao usá-lo, apagamos do seu
+        navegador a sua escolha e os cookies de medição deste site, e a página é recarregada com
+        o aviso de novo.
+      </p>
+      <RevisarCookies lang="pt" />
+      <p>
+        O pagamento acontece no checkout da Hotmart, em outro endereço, que segue a política de
+        privacidade e de cookies da própria Hotmart.
       </p>
 
       <h2>9. Segurança</h2>

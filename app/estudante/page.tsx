@@ -1,8 +1,10 @@
 import { metadataDaPagina } from "@/lib/seo";
-import { SITE, EMPRESA, PROVA, GARANTIA, SCREENSHOTS, ESTUDANTE } from "@/config";
+import { SITE, EMPRESA, PROVA, GARANTIA, SCREENSHOTS, ESTUDANTE, periodoEstudante } from "@/config";
 import { OfficialLogo } from "@/components/Brand";
+import { MERCADOS, formatar, precoEstudante, porMesEstudante } from "@/config/pricing";
 import { BlocoPreco } from "@/components/BlocoPreco";
 import { EstudanteForm } from "@/components/EstudanteForm";
+import { EstudanteEspera } from "@/components/EstudanteEspera";
 import { EstudanteSticky } from "@/components/EstudanteSticky";
 import "./estudante.css";
 
@@ -22,11 +24,27 @@ import "./estudante.css";
                 formulário aparece
 
    NADA de número inventado: prova vem de PROVA/GARANTIA no config.
+
+   Dois estados, decididos no build (ESTUDANTE.aberto, config.ts):
+     aberto   o formulário pede o código, e o cupom pessoal nasce na
+              Hotmart
+     fechado  falta configuração na Vercel (o log do build diz qual):
+              o formulário dá lugar à lista de espera (EstudanteEspera)
+              e os botões dizem "Me avise quando abrir". Nada pede CPF,
+              nada emite cupom.
    ===================================================================== */
+
+// Fluxo do cupom pessoal aberto neste build?
+const ABERTO = ESTUDANTE.aberto;
+const CTA = ABERTO ? "Solicitar minha condição" : "Me avise quando abrir";
 
 const TITULO = "Diariamente para estudantes · condição exclusiva de graduação";
 const DESCRICAO =
-  "Uma provocação por dia durante toda a sua graduação, em qualquer curso. Condição exclusiva para estudantes: solicite seu código e receba no WhatsApp.";
+  "Uma provocação por dia, em qualquer curso de graduação. Condição exclusiva para estudantes: solicite seu código e receba no WhatsApp.";
+
+// Refaz a cada hora: o comparativo usa o preço público do dia, que muda
+// quando o lançamento termina (config/pricing.ts).
+export const revalidate = 3600;
 
 export const metadata = {
   ...metadataDaPagina("estudante", "pt"),
@@ -173,11 +191,14 @@ const RESUMO: [string, string][] = [
   ["Condição", "Exclusiva para estudantes de graduação"],
   ["Formato", "Aplicativo para iPhone e Android, uma provocação por dia"],
   ["Duração", "365 provocações, uma liberada a cada dia"],
-  ["Preço estudante", `R$ ${ESTUDANTE.preco} no ano (valor cheio R$ ${ESTUDANTE.precoDe})`],
+  ["Preço estudante", `${formatar("br", precoEstudante())} ${periodoEstudante()} (equivale a ${formatar("br", porMesEstudante())}/mês; valor cheio ${formatar("br", MERCADOS.br.anual)})`],
+  // O cupom vai na oferta oficial, que parcela com acréscimo: o equivalente
+  // mensal não é parcela. Sem valor de parcela (a Hotmart calcula).
+  ["Pagamento", `${formatar("br", precoEstudante())} ${ESTUDANTE.pagamento}`],
   ["Entrega", "Código pessoal enviado por WhatsApp"],
   ["Público", "Estudantes de graduação de qualquer curso"],
   ["Autores", "Science Play"],
-  ["Responsável", `${EMPRESA.marca}, ${EMPRESA.razaoSocial}`],
+  ["Responsável", EMPRESA.assinatura],
   ["Garantia", `${GARANTIA.dias} dias`],
 ];
 
@@ -210,7 +231,7 @@ export default function Estudante() {
               <OfficialLogo height={26} />
             </a>
             <a href="#formulario" className="ed-topbar-cta">
-              Solicitar minha condição
+              {CTA}
             </a>
           </div>
         </header>
@@ -239,7 +260,7 @@ export default function Estudante() {
 
               <div className="ed-actions">
                 <a href="#formulario" className="ed-btn ed-btn-primary">
-                  Solicitar minha condição
+                  {CTA}
                 </a>
                 <a href="#como-funciona" className="ed-btn ed-btn-ghost">
                   Como funciona
@@ -386,21 +407,24 @@ export default function Estudante() {
               </h2>
               <p className="ed-sec-sub">
                 Nada é retirado da sua versão. É o app inteiro, com as 365 provocações,
-                o contador de voltas, o menu Ações e o lembrete diário. O que muda é quanto você
-                paga por ele enquanto está na graduação.
+                o contador de voltas, o menu Ações e o lembrete diário. O que muda é o preço
+                de entrada.
               </p>
             </div>
 
-            {/* A condição existe enquanto a pessoa é estudante. Não é escassez
-                fabricada: é a natureza da condição, e dizer isso é honesto. */}
+            {/* A condição é para quem é estudante na hora de entrar. Não é
+                escassez fabricada: é a natureza da condição, e dizer isso é
+                honesto. Nada aqui diz quanto tempo o preço dura: se o cupom
+                vale nas renovações não se sabe (decisão do dono, 12/10/2026:
+                dizer só que a cobrança é anual). */}
             <div className="ed-urg">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 7v5.2l3.2 1.9" />
               </svg>
               <span>
-                Essa condição existe <b>enquanto você ainda está na graduação</b>. Depois
-                de formado, a entrada passa a ser pelo valor cheio.
+                Essa condição é <b>para quem ainda está na graduação</b>. Depois de
+                formado, a entrada passa a ser pelo mesmo preço de qualquer pessoa.
               </span>
             </div>
 
@@ -410,12 +434,13 @@ export default function Estudante() {
 
             <div className="ed-actions" style={{ justifyContent: "center", marginTop: "clamp(28px, 4vw, 40px)" }}>
               <a href="#formulario" className="ed-btn ed-btn-primary">
-                Solicitar meu código
+                {ABERTO ? "Solicitar meu código" : CTA}
               </a>
             </div>
             <p className="ed-legal" style={{ marginTop: 12 }}>
-              Solicitar não é comprar e não gera compromisso. O código chega no seu
-              WhatsApp e você decide depois, com calma.
+              {ABERTO
+                ? "Solicitar não gera compromisso. O código chega no seu WhatsApp e você decide depois, com calma."
+                : "A solicitação do código abre em breve. Deixe seu contato e avisamos no dia em que abrir."}
             </p>
           </div>
         </section>
@@ -424,6 +449,8 @@ export default function Estudante() {
         <section className="ed-sec" id="formulario">
           <div className="ed-wrap ed-form-grid">
             <aside className="ed-rail">
+              {ABERTO ? (
+              <>
               <div className="ed-rail-block">
                 <div className="ed-rail-t">Por que pedimos esses dados</div>
                 <p className="ed-rail-d">
@@ -439,12 +466,22 @@ export default function Estudante() {
                 </p>
               </div>
               <div className="ed-rail-block">
-                <div className="ed-rail-t">Solicitar não é comprar</div>
+                <div className="ed-rail-t">Solicitar não gera compromisso</div>
                 <p className="ed-rail-d">
                   Você recebe o código e decide depois, com calma. E se ativar o acesso, tem{" "}
                   {GARANTIA.dias} dias de garantia.
                 </p>
               </div>
+              </>
+              ) : (
+              <div className="ed-rail-block">
+                <div className="ed-rail-t">Quando abrir</div>
+                <p className="ed-rail-d">
+                  Avisamos pelo WhatsApp e pelo e-mail que você deixar. Aí é preencher os dados
+                  de estudante e receber o código, pessoal, no WhatsApp.
+                </p>
+              </div>
+              )}
               <div className="ed-rail-block">
                 <div className="ed-rail-t">Seus dados</div>
                 <p className="ed-rail-d">
@@ -454,7 +491,7 @@ export default function Estudante() {
               </div>
             </aside>
 
-            <EstudanteForm />
+            {ABERTO ? <EstudanteForm /> : <EstudanteEspera />}
           </div>
         </section>
 
@@ -483,12 +520,13 @@ export default function Estudante() {
             <div className="ed-final ed-reveal">
               <h2 className="ed-final-h">Constância não espera a formatura.</h2>
               <p className="ed-final-d">
-                Solicite sua condição de estudante, receba o código no WhatsApp e comece pela
-                provocação de hoje. O primeiro dia é o único que depende só de você.
+                {ABERTO
+                  ? "Solicite sua condição de estudante, receba o código no WhatsApp e comece pela provocação de hoje. O primeiro dia é o único que depende só de você."
+                  : "Deixe seu contato e avisamos no dia em que a solicitação abrir. Depois, é receber o código no WhatsApp e começar pela provocação do dia."}
               </p>
               <div className="ed-actions">
                 <a href="#formulario" className="ed-btn ed-btn-primary">
-                  Solicitar minha condição
+                  {CTA}
                 </a>
               </div>
             </div>
@@ -516,7 +554,7 @@ export default function Estudante() {
         <footer className="ed-footer">
           <div className="ed-wrap ed-footer-row">
             <p>
-              © {new Date().getFullYear()} {EMPRESA.marca}® · {EMPRESA.razaoSocial} ·{" "}
+              © {new Date().getFullYear()} {EMPRESA.assinatura} ·{" "}
               {SITE.dominioVisivel}
             </p>
             <nav aria-label="Links institucionais">
@@ -528,7 +566,11 @@ export default function Estudante() {
           </div>
         </footer>
 
-        <EstudanteSticky alvo="formulario" />
+        <EstudanteSticky
+          alvo="formulario"
+          texto={ABERTO ? "Leva um minuto. O código chega no WhatsApp." : "Abre em breve. Avisamos você."}
+          rotulo={ABERTO ? "Solicitar" : "Me avise"}
+        />
       </main>
     </>
   );
