@@ -18,3 +18,8 @@ out/
 .DS_Store
 *.tsbuildinfo
 npm-debug.log*
+
+# Gerado pelo Next a cada next dev, next build e next typegen, e com
+# conteúdo diferente no dev e no build (.next/dev/types x .next/types).
+# A documentação do Next 16 manda não versionar.
+next-env.d.ts
