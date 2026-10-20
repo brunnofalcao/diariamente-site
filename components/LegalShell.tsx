@@ -54,7 +54,7 @@ export function LegalShell({
       <footer style={{ borderTop: "1px solid var(--border)", marginTop: "var(--sp12)", padding: "var(--sp10) 0" }}>
         <div className="wrap center">
           <p className="caption" style={{ color: "var(--n-600)" }}>
-            © {new Date().getFullYear()} {EMPRESA.marca}® · {SITE.dominio.replace("https://", "")}
+            © {new Date().getFullYear()} {EMPRESA.marca}® · {SITE.dominioVisivel}
           </p>
         </div>
       </footer>

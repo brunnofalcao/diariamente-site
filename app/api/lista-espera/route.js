@@ -45,6 +45,10 @@ import { createClient } from "@supabase/supabase-js";
    ===================================================================== */
 
 export const dynamic = "force-dynamic";
+// Sem cache de fetch (ver app/api/cron/manutencao/route.js). Rota so com
+// POST ja nao cacheia no Next 14, mas um GET acrescentado depois cacheia.
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 // Troca caracteres de controle por espaço (o \u0000 faz o Postgres
 // recusar a linha inteira) e tira metades soltas de emoji (UTF-16
