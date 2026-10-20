@@ -8,7 +8,8 @@ import { MERCADOS, linkComCupom, pendente } from "@/config/pricing";
    estudante, o site cria o cupom PESSOAL dele pela API da Hotmart
    (app/api/estudante/solicitar), o WhatsApp manda só o código, e o
    botão do modelo v2 aponta para cá:
-     https://diariamente.app/estudante/ativar?cupom={{1}}
+     https://www.diariamente.app/estudante/ativar?cupom={{1}}
+   (com www, o SITE.dominio do config.ts: sem www a Vercel responde 308.)
 
    Esta rota confere o formato do código e abre a OFERTA OFICIAL do
    Brasil (CHECKOUT_BRL de config/pricing.ts, off=fhrttdh8, R$ 149,90)

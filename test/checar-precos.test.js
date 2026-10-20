@@ -5,7 +5,7 @@ const assert = require("node:assert/strict");
 const path = require("path");
 const {
   checarPrecos, carregarPrecos, checarPrecosDoProjeto, estudanteMostraPrecoNoConfig, idsDeOfertaValidos,
-  estadoDoEstudante, estudanteDoProjeto, descontoGarantido, cenariosDoPrimeiroCupom,
+  estadoDoEstudante, estudanteDoProjeto, descontoGarantido, cenariosDoPrimeiroCupom, SITE_DOMINIO,
 } = require("../scripts/checar-precos");
 
 const LINK_OK = "https://pay.hotmart.com/X00000000Y?off=teste000&checkoutMode=10";
@@ -512,4 +512,17 @@ test("hoje, o build de produção da Vercel trava até o dono confirmar o webhoo
   assert.equal(r.ok, false);
   assert.match(r.mensagem, /DM_WEBHOOK_V2_OK=1/);
   assert.equal(checarPrecosDoProjeto({ VERCEL: "1", VERCEL_ENV: "production", DM_WEBHOOK_V2_OK: "1" }).ok, true);
+});
+
+test("webhook e botão do WhatsApp nos avisos usam o SITE.dominio do config.ts, com www (sem www a Vercel responde 308)", () => {
+  const texto = require("fs").readFileSync(path.join(__dirname, "..", "config.ts"), "utf8");
+  const dominio = texto.match(/^\s*dominio:\s*"([^"]+)"/m);
+  assert.ok(dominio, "SITE.dominio no config.ts");
+  assert.equal(SITE_DOMINIO, dominio[1]);
+  assert.equal(SITE_DOMINIO, "https://www.diariamente.app");
+  const aberto = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: ENV_ESTUDANTE, agora: DIA_12_10 }).avisos.join(" ");
+  assert.ok(aberto.includes("https://www.diariamente.app/api/webhooks/hotmart"), "webhook com www");
+  const antigo = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { HOTMART_OFFER_IDS: "1" } }).avisos.join(" ");
+  assert.ok(antigo.includes("https://www.diariamente.app/estudante/ativar?cupom={{1}}"), "botão com www");
+  for (const aviso of [aberto, antigo]) assert.equal(/https:\/\/diariamente\.app/.test(aviso), false, "nenhum endereço sem www");
 });

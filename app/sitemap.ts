@@ -11,7 +11,7 @@ import { hreflangDe, urlAbsoluta } from "@/lib/seo";
    esquecer de atualizar.
 
    As QUATRO homes (/, /pt-pt, /es-es, /es) entram com o grupo de
-   mercado inteiro: pt-BR, pt-PT, es-ES, es-419, es e x-default, o mesmo
+   mercado inteiro: pt-BR, pt-PT, es-ES, es e x-default, o mesmo
    que cada home declara no <head> (lib/mercado.ts, HREFLANG). As outras
    páginas seguem o par pt-BR e es.
 

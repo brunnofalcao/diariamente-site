@@ -47,16 +47,15 @@ export const COOKIE_MERCADO_SEGUNDOS = 60 * 60 * 24 * 180;
 /**
  * hreflang de cada home. Recíproco e com x-default no português do Brasil.
  * As quatro homes, o sitemap e o <head> leem daqui (lib/seo.ts, hreflangDe).
- * "es-419" é o que o handoff pede, mas 419 é código M.49 e a documentação
- * do Google aceita região só em ISO 3166-1 alfa-2: se ele ignorar essa
- * tag, "es" genérico segura /es no grupo. A Espanha cai em es-ES e
- * qualquer outro hispanofalante cai em es.
+ * "/es" é "es", e não "es-419" (o que o handoff pedia): é a decisão da
+ * main (commit 3d4fc22), o Google pede região em ISO 3166-1 alfa-2 (419 é
+ * código M.49) e "es" cobre todo hispanofalante fora da Espanha, que tem
+ * a própria "/es-es".
  */
 export const HREFLANG: Record<string, string> = {
   "pt-BR": "/",
   "pt-PT": "/pt-pt",
   "es-ES": "/es-es",
-  "es-419": "/es",
   es: "/es",
   "x-default": "/",
 };

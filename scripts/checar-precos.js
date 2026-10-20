@@ -78,12 +78,20 @@ const CHECKOUT_DO_7448309 = "K105072021O";
 /* Modelo de WhatsApp aprovado hoje para o estudante. O botão dele foi
    aprovado com a base do checkout antigo (produto 8280315): o cupom
    pessoal, criado no 7448309, não abre ali. O v2, com o botão
-   https://diariamente.app/estudante/ativar?cupom={{1}}, é criado pelo
+   https://www.diariamente.app/estudante/ativar?cupom={{1}}, é criado pelo
    app; o nome dele vai em WA_TEMPLATE_ESTUDANTE (lib/whatsapp.js). */
 const MODELO_ESTUDANTE_ANTIGO = "diariamente_estudante_aprovado";
 
 /** Produto da Hotmart do site (o mesmo PRODUTO_HOTMART de config/pricing.ts). */
 const PRODUTO_DO_SITE = "7448309";
+
+/* Endereço técnico do site: o mesmo SITE.dominio do config.ts, com www.
+   Sem www, a Vercel responde 308 para cá. O navegador segue o 308 (o
+   botão do WhatsApp é um GET), mas o POST do webhook da Hotmart pode não
+   seguir, e aí o cupom usado não é apagado. Por isso os avisos dizem o
+   endereço com www. O config.ts importa o pricing e não é carregado aqui;
+   test/checar-precos.test.js confere que os dois valores batem. */
+const SITE_DOMINIO = "https://www.diariamente.app";
 
 function pendente(v) {
   return !v || /\[PREENCHER/i.test(String(v));
@@ -283,7 +291,7 @@ function estadoDoEstudante(env = {}, alvo = {}, produto = PRODUTO_DO_SITE) {
   if (modelo === MODELO_ESTUDANTE_ANTIGO && !confirmado) {
     faltas.push(
       "WA_TEMPLATE_ESTUDANTE com o nome do modelo v2 aprovado na Meta, cujo botão é " +
-        `https://diariamente.app/estudante/ativar?cupom={{1}} (o ${MODELO_ESTUDANTE_ANTIGO} abre o checkout ` +
+        `${SITE_DOMINIO}/estudante/ativar?cupom={{1}} (o ${MODELO_ESTUDANTE_ANTIGO} abre o checkout ` +
         "antigo, do produto 8280315, onde o cupom pessoal não vale)"
     );
   }
@@ -465,7 +473,7 @@ function checarPrecos({
     avisos.push(
       `Estudante ABERTO neste build (modelo ${estudante.modelo}, produto ${produto}, ` +
         `STUDENT_DISCOUNT=${String(env.STUDENT_DISCOUNT).trim()}: ${reais(alvo.precoFinal)} por ano sobre ${reais(alvo.anual)}). ` +
-        `Confira que o webhook do site (https://diariamente.app/api/webhooks/hotmart) está cadastrado no ${produto}: ` +
+        `Confira que o webhook do site (${SITE_DOMINIO}/api/webhooks/hotmart, com www) está cadastrado no ${produto}: ` +
         "é ele que apaga o cupom usado. E confira o PRIMEIRO cupom real no checkout: ele precisa mostrar " +
         `${reais(alvo.precoFinal)}. A API da Hotmart não documenta quantas casas do desconto guarda nem como arredonda, ` +
         `então o checkout pode mostrar ${reais(c.esperado / 100)} (pronto), ` +
@@ -589,5 +597,5 @@ module.exports = {
   checarPrecos, checarPrecosDoProjeto, carregarPrecos, problemaDoLink, dataReal, idsDeOfertaValidos,
   estudanteMostraPrecoNoConfig, estadoDoEstudante, estudanteDoProjeto, alvoDoEstudante, centavosComDesconto,
   descontoGarantido, cenariosDoPrimeiroCupom,
-  LINK_ANTIGO, CHECKOUT_DO_7448309, MODELO_ESTUDANTE_ANTIGO, PRODUTO_DO_SITE,
+  LINK_ANTIGO, CHECKOUT_DO_7448309, MODELO_ESTUDANTE_ANTIGO, PRODUTO_DO_SITE, SITE_DOMINIO,
 };

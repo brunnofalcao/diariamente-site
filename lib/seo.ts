@@ -194,8 +194,8 @@ export function metadataPrivada(chave: Chave, lang: Lang): Metadata {
    METADATA POR MERCADO
    ---------------------------------------------------------------------
    Quatro homes, cada uma com canonical próprio e hreflang recíproco
-   entre as QUATRO: pt-BR, pt-PT, es-ES, es-419, es e x-default no
-   Brasil (lib/mercado.ts, HREFLANG, lido por hreflangDe).
+   entre as QUATRO: pt-BR, pt-PT, es-ES, es e x-default no Brasil
+   (lib/mercado.ts, HREFLANG, lido por hreflangDe).
 
    A reciprocidade é o que mais quebra na prática: se uma delas não
    apontar de volta, o Google descarta o grupo inteiro e passa a tratar

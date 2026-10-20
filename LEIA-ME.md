@@ -52,7 +52,8 @@
 >    pedido", nenhuma mensagem sai. O log diz "Estudante FECHADO" e o que
 >    falta. As três chaves (Vercel, Production):
 >    - `WA_TEMPLATE_ESTUDANTE`: o nome do **v2** do modelo de aprovação,
->      com o botão `https://diariamente.app/estudante/ativar?cupom={{1}}`,
+>      com o botão `https://www.diariamente.app/estudante/ativar?cupom={{1}}`
+>      (com www: sem www a Vercel responde 308 e o clique dá um salto a mais),
 >      criado e aprovado pelo app na Meta (o modelo aprovado hoje fica
 >      preservado). O `diariamente_estudante_aprovado` abre o checkout
 >      antigo, do produto 8280315, onde o cupom não vale.
@@ -75,10 +76,12 @@
 >      desconto, o checkout cobraria R$ 89,91.
 >
 >    Antes do novo deploy que abre o fluxo (o build não consegue conferir):
->    - Hotmart: o webhook do site (`https://diariamente.app/api/webhooks/hotmart`,
->      hottok em `HOTMART_HOTTOK`) cadastrado também no 7448309, com
+>    - Hotmart: o webhook do site (`https://www.diariamente.app/api/webhooks/hotmart`,
+>      COM www, hottok em `HOTMART_HOTTOK`) cadastrado também no 7448309, com
 >      compra aprovada. É ele que apaga o cupom; sem ele, o cupom só morre
->      ao vencer (48 h).
+>      ao vencer (48 h). Sem www, a Vercel responde 308 e a Hotmart pode
+>      não repetir o POST no endereço novo: se um cadastro já existente
+>      usa `https://diariamente.app/...`, troque pelo com www.
 >    - Vercel, `HOTMART_OFFER_IDS`: o id NUMÉRICO da oferta `fhrttdh8`
 >      (Hotmart, produto 7448309, Ofertas; o código `off` não serve).
 >      **Vazio, o cupom pessoal vale em qualquer oferta do produto,
@@ -224,7 +227,7 @@
 >   DuckDuckGo e Instagram é gente, e segue o país); `?mercado=` do
 >   seletor do rodapé grava `dm_market` por 180 dias e vence o país; sem
 >   país, o idioma do navegador decide. hreflang das homes: pt-BR, pt-PT,
->   es-ES, es-419, es e x-default.
+>   es-ES, es e x-default (o es-419 do handoff saiu, como na main).
 > - **Lista de espera:** grava mercado, idioma e país quando as colunas
 >   existirem; sem elas, grava sem, sem perder o lead.
 > - **Cookies:** aviso com Aceitar e Recusar (`components/Consentimento.tsx`).

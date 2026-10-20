@@ -124,8 +124,8 @@ test("utm, fbclid e gclid seguem junto em todo redirecionamento", () => {
   assert.equal(s.destino, "/es-es?gclid=x1");
 });
 
-test("hreflang das homes: pt-BR, pt-PT, es-ES, es-419, es genérico e x-default", () => {
-  assert.deepEqual(M.HREFLANG, { "pt-BR": "/", "pt-PT": "/pt-pt", "es-ES": "/es-es", "es-419": "/es", es: "/es", "x-default": "/" });
+test("hreflang das homes: pt-BR, pt-PT, es-ES, es genérico e x-default (sem es-419, como na main)", () => {
+  assert.deepEqual(M.HREFLANG, { "pt-BR": "/", "pt-PT": "/pt-pt", "es-ES": "/es-es", es: "/es", "x-default": "/" });
 });
 
 /* ------------------------------- preços ------------------------------- */
