@@ -8,13 +8,15 @@
 
 export const SITE = {
   nome: "Diariamente",
-  // Domínio oficial (Brandbook 5.0, seção 29 · papelaria: diariamente.app).
-  // Alimenta metadataBase, canonical, openGraph.url, schemas, sitemap,
-  // robots e o rodapé visível.
-  // PRÉ-CONDIÇÃO: diariamente.club precisa fazer 301 permanente para cá,
-  // e os dois domínios precisam estar no Search Console. Sem isso, o sinal
-  // fica dividido entre os dois.
-  dominio: "https://diariamente.app",
+  // Endereço técnico oficial (decisão do dono, 20/10/2026): com www, que é onde o site
+  // responde (diariamente.app sem www faz 308 para cá na Vercel). Alimenta metadataBase,
+  // canonical, openGraph.url, schemas, sitemap, robots e os links (href).
+  // PRÉ-CONDIÇÃO: diariamente.club precisa fazer 301 permanente para cá, e os domínios
+  // precisam estar no Search Console. Sem isso, o sinal fica dividido.
+  dominio: "https://www.diariamente.app",
+  // O que a pessoa LÊ (rodapé, papelaria, textos e links de compartilhar): sem www, como
+  // no Brandbook 5.0, seção 29. Nunca usar dominio.replace("https://", "") para texto.
+  dominioVisivel: "diariamente.app",
   // Parte protegida (app, login, API e banco). O domínio .club é só
   // endereço técnico: a marca é "Diariamente" / "Diariamente App", nunca
   // "Diariamente Club". O site comercial não tem login: só aponta para cá.

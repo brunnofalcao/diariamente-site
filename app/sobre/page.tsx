@@ -89,7 +89,7 @@ export default function Sobre() {
                 <li><b>Preço:</b> R$ 197 · R$ 137,90 na condição de lançamento, ou 12x de R$ 14,26 no cartão (total R$ 171,12)</li>
                 <li><b>Garantia:</b> 7 dias, incondicional</li>
                 <li><b>Responsáveis:</b> Science Play · Science Play</li>
-                <li><b>Inscrição:</b> {SITE.dominio.replace("https://", "")} · acesso enviado por e-mail</li>
+                <li><b>Inscrição:</b> {SITE.dominioVisivel} · acesso enviado por e-mail</li>
               </ul>
             </div>
           </div>
