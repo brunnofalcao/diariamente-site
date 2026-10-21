@@ -7,17 +7,21 @@ import { EMPRESA } from "@/config";
 // /obrigado-aguardando-pagamento e /obrigado-aguardando-analise) mostram
 // para quem tem dificuldade de acesso ou dúvida sobre o pagamento.
 //
-// PENDENTE DO DONO (plano 2.6 do app, docs/PLANO-DE-ACAO.md): escolher
-// um endereço único de atendimento, contato@ ou suporte@scienceplay.com.
-// Até a decisão vale contato@, que é o que o app já mostra quando o envio
-// do acesso falha (RESPOSTA_ENVIO_INDISPONIVEL, command-center/acesso.js,
-// e as mensagens err.ENVIO_INDISPONIVEL e err.ACESSO_ENCERRADO do app).
-// Assim a pessoa vê o mesmo endereço aqui e no app. O suporte@ ainda não
-// tem a caixa de entrada confirmada (plano 6.2).
-//
-// Decidido o endereço, troque SÓ esta linha (por EMPRESA.suporteEmail,
-// por exemplo) e, no app, a RESPOSTA_ENVIO_INDISPONIVEL e o i18n.
+// DECIDIDO PELO DONO em 20/10/2026 (plano 2.6 do app): contato@scienceplay.com,
+// o mesmo que o app já mostra (RESPOSTA_ENVIO_INDISPONIVEL e i18n), com o
+// assunto já preenchido no link:
+//   - "Suporte Diariamente App": dificuldade de acesso (/obrigado-aprovado);
+//   - "Atendimento Diariamente App": dúvidas (/obrigado-aguardando-pagamento
+//     e /obrigado-aguardando-analise).
+// O endereço também aparece escrito, para quem prefere copiar.
 // =====================================================================
 export const ATENDIMENTO = {
   email: EMPRESA.contatoEmail,
+  assuntoSuporte: "Suporte Diariamente App",
+  assuntoAtendimento: "Atendimento Diariamente App",
 };
+
+/** mailto: com o assunto preenchido (o assunto vai codificado; o endereço, não). */
+export function linkDoAtendimento(assunto: string): string {
+  return `mailto:${ATENDIMENTO.email}?subject=${encodeURIComponent(assunto)}`;
+}

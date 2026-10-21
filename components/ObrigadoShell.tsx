@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 import { SITE, EMPRESA } from "@/config";
-import { ATENDIMENTO } from "@/config/atendimento";
+import { ATENDIMENTO, linkDoAtendimento } from "@/config/atendimento";
 import { OfficialLogo } from "@/components/Brand";
 import { StoreBadges } from "@/components/StoreBadges";
 import { TEXTOS } from "@/lib/obrigado.mjs";
@@ -162,11 +162,11 @@ function LinkWeb({ lang, antes, rotulo }: { lang: Idioma; antes: string; rotulo:
   );
 }
 
-function Atendimento({ antes }: { antes: string }) {
+function Atendimento({ antes, assunto }: { antes: string; assunto: string }) {
   return (
     <p className="body-sm muted center obg-atendimento">
       {antes}{" "}
-      <a href={`mailto:${ATENDIMENTO.email}`} className="teal">
+      <a href={linkDoAtendimento(assunto)} className="teal">
         {ATENDIMENTO.email}
       </a>
       .
@@ -228,7 +228,7 @@ function Aprovado({ lang }: { lang: Idioma }) {
 
           <p className="obg-frase center">{t.frase}</p>
 
-          <Atendimento antes={t.suporteAntes} />
+          <Atendimento antes={t.suporteAntes} assunto={ATENDIMENTO.assuntoSuporte} />
         </div>
       </section>
     </Moldura>
@@ -325,7 +325,7 @@ function AguardandoPagamento({ lang, forma }: { lang: Idioma; forma: Forma }) {
       <section className="obg-sec">
         <div className="wrap-narrow">
           <p className="obg-frase center">{t.frase}</p>
-          <Atendimento antes={t.suporteAntes} />
+          <Atendimento antes={t.suporteAntes} assunto={ATENDIMENTO.assuntoAtendimento} />
         </div>
       </section>
     </Moldura>
@@ -408,7 +408,7 @@ function AguardandoAnalise() {
 
           <p className="caption center" style={{ marginTop: "var(--sp8)" }}>
             Precisa de ajuda?{" "}
-            <a href={`mailto:${ATENDIMENTO.email}`} className="teal">
+            <a href={linkDoAtendimento(ATENDIMENTO.assuntoAtendimento)} className="teal">
               {ATENDIMENTO.email}
             </a>
           </p>

@@ -171,3 +171,18 @@ test("atendimento: as três páginas usam a constante única", () => {
   const atendimento = ler("config/atendimento.ts");
   assert.equal((atendimento.match(/^\s*email:/gm) || []).length, 1);
 });
+
+test("atendimento: assunto já preenchido, Suporte no aprovado e Atendimento nas outras duas", () => {
+  const atendimento = ler("config/atendimento.ts");
+  assert.match(atendimento, /assuntoSuporte: "Suporte Diariamente App"/);
+  assert.match(atendimento, /assuntoAtendimento: "Atendimento Diariamente App"/);
+  assert.match(atendimento, /mailto:\$\{ATENDIMENTO\.email\}\?subject=\$\{encodeURIComponent\(assunto\)\}/);
+  const shell = ler("components/ObrigadoShell.tsx");
+  const aprovado = shell.slice(shell.indexOf("function Aprovado"), shell.indexOf("function AguardandoPagamento"));
+  assert.match(aprovado, /assunto=\{ATENDIMENTO\.assuntoSuporte\}/);
+  assert.doesNotMatch(aprovado, /assuntoAtendimento/);
+  const resto = shell.slice(shell.indexOf("function AguardandoPagamento"));
+  assert.equal((resto.match(/assuntoAtendimento/g) || []).length, 2, "aguardando pagamento e em análise");
+  assert.doesNotMatch(resto, /assuntoSuporte/);
+  assert.doesNotMatch(shell, /href=\{`mailto:/, "todo mailto passa por linkDoAtendimento");
+});
