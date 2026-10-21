@@ -38,17 +38,39 @@ function PlayGlyph() {
   );
 }
 
+// Rótulos acessíveis dos badges. As imagens são as mesmas nos dois idiomas
+// (não há badge em espanhol no Cloudinary, ver o [TROCAR] em lib/i18n.ts).
+const ROTULOS = {
+  pt: {
+    appStoreAria: "Baixe o Diariamente na App Store",
+    appStoreAlt: "Baixe na App Store",
+    googlePlay: "Disponível no Google Play",
+  },
+  es: {
+    appStoreAria: "Descarga Diariamente en App Store",
+    appStoreAlt: "Descárgalo en App Store",
+    googlePlay: "Disponible en Google Play",
+  },
+};
+
 export function StoreBadges({
   variant = "link",
   align = "center",
   tema = "escuro",
+  lang = "pt",
 }: {
   variant?: "link" | "prova";
   align?: "center" | "left";
   tema?: "escuro" | "claro";
+  // "es": rótulos em espanhol, App Store sem o /br/ (a Apple abre a loja
+  // do país da pessoa) e Google Play com &hl=es, como nas páginas de
+  // obrigado em espanhol que o app tinha. "pt" (padrão) não muda nada.
+  lang?: "pt" | "es";
 }) {
-  const ios = LOJAS.appStore;
-  const android = LOJAS.googlePlay;
+  const es = lang === "es";
+  const ios = es ? LOJAS.appStore.replace("apps.apple.com/br/", "apps.apple.com/") : LOJAS.appStore;
+  const android = es && LOJAS.googlePlay ? `${LOJAS.googlePlay}&hl=es` : LOJAS.googlePlay;
+  const rotulo = ROTULOS[es ? "es" : "pt"];
   const pronto = (u: string) => u && !u.startsWith("[");
 
   // badge da Apple muda conforme o fundo
@@ -75,9 +97,9 @@ export function StoreBadges({
           href={ios}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Baixe o Diariamente na App Store"
+          aria-label={rotulo.appStoreAria}
         >
-          <img src={badgeApple} alt="Baixe na App Store" height={48} />
+          <img src={badgeApple} alt={rotulo.appStoreAlt} height={48} />
         </a>
       )}
 
@@ -87,9 +109,9 @@ export function StoreBadges({
           href={android}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Disponível no Google Play"
+          aria-label={rotulo.googlePlay}
         >
-          <img src={LOJAS_BADGES.googlePlay} alt="Disponível no Google Play" height={48} />
+          <img src={LOJAS_BADGES.googlePlay} alt={rotulo.googlePlay} height={48} />
         </a>
       )}
     </div>
