@@ -54,15 +54,37 @@ test("sem nada, português", () => {
 
 /* ---------------- forma de pagamento ---------------- */
 
-test("forma de pagamento na URL: Pix e boleto; o resto mostra os dois", () => {
+test("forma de pagamento na URL: Pix e boleto", () => {
   assert.equal(formaDoPagamento({ payment_type: "PIX" }), "pix");
   assert.equal(formaDoPagamento({ payment_type: "BILLET" }), "boleto");
   assert.equal(formaDoPagamento({ payment_method: "boleto" }), "boleto");
   assert.equal(formaDoPagamento({ payment_type: ["pix", "BILLET"] }), "pix");
-  assert.equal(formaDoPagamento({ payment_type: "CREDIT_CARD" }), null);
+});
+
+test("forma que não é Pix nem boleto (cartão, meio local): outra", () => {
+  assert.equal(formaDoPagamento({ payment_type: "CREDIT_CARD" }), "outra");
+  assert.equal(formaDoPagamento({ payment_type: "CASH_PAYMENT" }), "outra");
+  assert.equal(formaDoPagamento({ payment_method: "PAYPAL" }), "outra");
+});
+
+test("sem a forma na URL: null (a página mostra Pix e boleto)", () => {
   assert.equal(formaDoPagamento({ transaction: "HP123" }), null);
+  assert.equal(formaDoPagamento({ payment_type: "  " }), null);
   assert.equal(formaDoPagamento({}), null);
   assert.equal(formaDoPagamento(undefined), null);
+});
+
+test("aguardando pagamento: com outra forma, só a linha geral, sem Pix nem boleto", () => {
+  const shell = ler("components/ObrigadoShell.tsx");
+  assert.match(shell, /const mostraPix = !outra && forma !== "boleto";/);
+  assert.match(shell, /const mostraBoleto = !outra && forma !== "pix";/);
+  assert.match(shell, /t\.instrucoesSoEmail/);
+  for (const lang of ["pt", "es"]) {
+    const t = TEXTOS["aguardando-pagamento"][lang];
+    // A linha geral não fala de Pix nem de boleto e não diz "também".
+    assert.doesNotMatch(t.instrucoesSoEmail, /pix|boleto|também|también/i);
+    assert.match(t.instrucoesSoEmail, /Hotmart/);
+  }
 });
 
 /* ---------------- textos: regras da marca ---------------- */
@@ -116,6 +138,13 @@ test("aprovado: o caminho que já funciona, com o rótulo exato do botão do app
   assert.match(textoPlano(TEXTOS.aprovado.pt.agoraTexto), /Primeiro acesso\? Ativar conta/);
   assert.match(textoPlano(TEXTOS.aprovado.es.agoraTexto), /¿Primer acceso\? Activar cuenta/);
   assert.match(textoPlano(TEXTOS.aprovado.pt.agoraTexto), /WhatsApp/);
+});
+
+test("aprovado: o caminho de agora fala de criar a senha (a ativação pede e-mail e senha)", () => {
+  // server.js, /api/auth/activate-by-email: sem senha, 400 EMAIL_SENHA_OBRIGATORIOS.
+  assert.match(textoPlano(TEXTOS.aprovado.pt.agoraTexto), /crie uma senha/);
+  assert.match(textoPlano(TEXTOS.aprovado.es.agoraTexto), /crea una contraseña/);
+  assert.match(textoPlano(TEXTOS.aprovado.es.agoraTexto), /WhatsApp/);
 });
 
 test("aguardando pagamento: sem prazo inventado para Pix ou boleto", () => {

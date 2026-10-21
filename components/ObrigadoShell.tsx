@@ -7,7 +7,7 @@ import { TEXTOS } from "@/lib/obrigado.mjs";
 
 type Estado = "aprovado" | "aguardando-pagamento" | "aguardando-analise";
 type Idioma = "pt" | "es";
-type Forma = "pix" | "boleto" | null;
+type Forma = "pix" | "boleto" | "outra" | null;
 type Trecho = string | { b: string };
 
 /**
@@ -100,15 +100,15 @@ function Inteiro({ texto }: { texto: string }) {
   );
 }
 
-/** Texto com trechos em negrito ({ b: "..." }). */
+/** Texto com trechos em negrito ({ b: "..." }). "e-mail" não quebra no hífen. */
 function Rico({ partes }: { partes: readonly Trecho[] }) {
   return (
     <>
       {partes.map((p, i) =>
         typeof p === "string" ? (
-          <Fragment key={i}>{p}</Fragment>
+          <Inteiro key={i} texto={p} />
         ) : (
-          <strong key={i} className="obg-forte">{p.b}</strong>
+          <strong key={i} className="obg-forte"><Inteiro texto={p.b} /></strong>
         )
       )}
     </>
@@ -207,7 +207,7 @@ function Aprovado({ lang }: { lang: Idioma }) {
               <span className="overline">{t.passo2Selo}</span>
               <h2 className="obg-card-titulo"><Inteiro texto={t.passo2Titulo} /></h2>
               <p className="body-sm muted" style={{ marginBottom: "var(--sp6)" }}>
-                {t.passo2Texto}
+                <Inteiro texto={t.passo2Texto} />
               </p>
               <StoreBadges variant="link" lang={lang} />
               <LinkWeb lang={lang} antes={t.webAntes} rotulo={t.webLink} />
@@ -240,9 +240,11 @@ function Aprovado({ lang }: { lang: Idioma }) {
 /* ------------------------------------------------------------------ */
 function AguardandoPagamento({ lang, forma }: { lang: Idioma; forma: Forma }) {
   const t = TEXTOS["aguardando-pagamento"][lang];
-  // Sem a forma na URL, as duas orientações.
-  const mostraPix = forma !== "boleto";
-  const mostraBoleto = forma !== "pix";
+  // Sem a forma na URL, as duas orientações. Com uma forma que não é Pix nem
+  // boleto ("outra"), nenhuma das duas: só a linha das instruções no e-mail.
+  const outra = forma === "outra";
+  const mostraPix = !outra && forma !== "boleto";
+  const mostraBoleto = !outra && forma !== "pix";
   return (
     <Moldura lang={lang}>
       <Hero selo={<SeloRelogio />} tom="gold" eyebrow={t.selo} titulo={t.titulo} sub={t.sub} />
@@ -254,27 +256,35 @@ function AguardandoPagamento({ lang, forma }: { lang: Idioma; forma: Forma }) {
             <div className="obg-card-inner">
               <span className="badge badge-gold">{t.concluirSelo}</span>
               <h2 className="obg-card-titulo"><Inteiro texto={t.concluirTitulo} /></h2>
-              <div className="obg-formas">
-                {mostraPix && (
-                  <div className="obg-item" data-forma="pix">
-                    <div>
-                      <div className="h3" style={{ marginBottom: 3 }}>{t.pixTitulo}</div>
-                      <p className="body-sm muted">{t.pixTexto}</p>
+              {(mostraPix || mostraBoleto) && (
+                <div className="obg-formas">
+                  {mostraPix && (
+                    <div className="obg-item" data-forma="pix">
+                      <div>
+                        <div className="h3" style={{ marginBottom: 3 }}>{t.pixTitulo}</div>
+                        <p className="body-sm muted">{t.pixTexto}</p>
+                      </div>
                     </div>
-                  </div>
-                )}
-                {mostraBoleto && (
-                  <div className="obg-item" data-forma="boleto">
-                    <div>
-                      <div className="h3" style={{ marginBottom: 3 }}>{t.boletoTitulo}</div>
-                      <p className="body-sm muted">{t.boletoTexto}</p>
+                  )}
+                  {mostraBoleto && (
+                    <div className="obg-item" data-forma="boleto">
+                      <div>
+                        <div className="h3" style={{ marginBottom: 3 }}>{t.boletoTitulo}</div>
+                        <p className="body-sm muted">{t.boletoTexto}</p>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-              <p className="body-sm muted" style={{ marginTop: "var(--sp5)" }}>
-                {t.instrucoes} {t.jaPagou}
-              </p>
+                  )}
+                </div>
+              )}
+              {outra ? (
+                <p className="body-sm muted" data-forma="outra">
+                  <Inteiro texto={`${t.instrucoesSoEmail} ${t.jaPagou}`} />
+                </p>
+              ) : (
+                <p className="body-sm muted" style={{ marginTop: "var(--sp5)" }}>
+                  <Inteiro texto={`${t.instrucoes} ${t.jaPagou}`} />
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -303,7 +313,7 @@ function AguardandoPagamento({ lang, forma }: { lang: Idioma; forma: Forma }) {
               <span className="overline">{t.appSelo}</span>
               <h2 className="obg-card-titulo"><Inteiro texto={t.appTitulo} /></h2>
               <p className="body-sm muted" style={{ marginBottom: "var(--sp6)" }}>
-                {t.appTexto}
+                <Inteiro texto={t.appTexto} />
               </p>
               <StoreBadges variant="link" lang={lang} />
               <LinkWeb lang={lang} antes={t.webAntes} rotulo={t.webLink} />

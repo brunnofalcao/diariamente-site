@@ -24,7 +24,8 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 // Sem Purchase aqui: o pagamento ainda não foi confirmado.
 export default async function ObrigadoAguardandoPagamento(props: Props) {
   const lang = await idioma(props);
-  // Pix ou boleto, se a URL disser; sem isso, a página mostra os dois.
+  // Pix ou boleto, se a URL disser; outra forma, só as instruções no e-mail;
+  // sem a forma na URL, a página mostra Pix e boleto.
   const forma = formaDoPagamento(await props.searchParams);
   return <ObrigadoShell estado="aguardando-pagamento" lang={lang} forma={forma} />;
 }
