@@ -722,7 +722,15 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
           <div style={{ background: C.s1, border: `1px solid ${C.line}`, borderRadius: "16px 16px 0 0", padding: "clamp(40px,6vw,72px) clamp(20px,4vw,48px) 0", textAlign: "center", overflow: "hidden" }}>
             <p style={{ fontFamily: C.serif, fontWeight: 400, fontSize: "clamp(30px,4.4vw,50px)", lineHeight: 1.08, letterSpacing: "-.015em", margin: "0 auto", maxWidth: "22ch", textWrap: "balance" as never }}>{t.fin}</p>
             <div style={{ marginTop: 28, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-              <a href={linkCheckout(mkt)} target="_blank" rel="noopener noreferrer" style={btnPrimary}>{MERCADOS[mkt].textos.botao}</a>
+              {/* A mesma regra do BlocoOferta: mercado fechado leva à lista de espera; sem o
+                  link do checkout, o botão fica sem destino (antes o href era o "[PREENCHER...]"). */}
+              {!MERCADOS[mkt].vendaAberta ? (
+                <a href={caminho("home", MERCADOS[mkt].idioma)} style={btnPrimary}>{MERCADOS[mkt].idioma === "es" ? "Avísame cuando abra" : "Me avise quando abrir"}</a>
+              ) : linkCheckout(mkt).startsWith("[") ? (
+                <a aria-disabled="true" style={{ ...btnPrimary, opacity: 0.5, cursor: "not-allowed" }}>{MERCADOS[mkt].textos.botao}</a>
+              ) : (
+                <a href={linkCheckout(mkt)} target="_blank" rel="noopener noreferrer" style={btnPrimary}>{MERCADOS[mkt].textos.botao}</a>
+              )}
               <span style={{ fontSize: 13, fontWeight: 500, color: C.n400 }}>{t.finNote.replace("{preco}", formatar(mkt, precoFinal(mkt)))}</span>
             </div>
             <div style={{ width: "min(72vw,300px)", margin: "clamp(32px,4vw,48px) auto -22%", aspectRatio: "1170/2532" }}>

@@ -29,8 +29,13 @@ export default function Privacidad() {
         responsable del tratamiento. Diariamente es un producto operado por ella.
       </p>
       <p>
-        Dirección: {EMPRESA.endereco}
-        <br />
+        {/* Sin la dirección completa en config.ts, la línea no aparece (antes salía la nota interna "[TROCAR: ...]", en portugués). */}
+        {!EMPRESA.endereco.startsWith("[") && (
+          <>
+            Dirección: {EMPRESA.endereco}
+            <br />
+          </>
+        )}
         Contacto para asuntos de privacidad:{" "}
         <a href={`mailto:${EMPRESA.suporteEmail}`}>{EMPRESA.suporteEmail}</a>
       </p>

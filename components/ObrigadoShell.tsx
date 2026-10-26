@@ -3,12 +3,12 @@ import { SITE, EMPRESA } from "@/config";
 import { ATENDIMENTO, linkDoAtendimento } from "@/config/atendimento";
 import { OfficialLogo } from "@/components/Brand";
 import { StoreBadges } from "@/components/StoreBadges";
-import { TEXTOS } from "@/lib/obrigado.mjs";
+import { TEXTOS, formasParaMostrar } from "@/lib/obrigado.mjs";
 
 type Estado = "aprovado" | "aguardando-pagamento" | "aguardando-analise";
 type Idioma = "pt" | "es";
 type Forma = "pix" | "boleto" | "outra" | null;
-type Trecho = string | { b: string };
+type Trecho = string | { b: string } | { teal: string };
 
 /**
  * ObrigadoShell — layout compartilhado das 3 páginas de obrigado.
@@ -20,8 +20,8 @@ type Trecho = string | { b: string };
  * confere as regras da marca. O idioma e a forma de pagamento vêm da
  * página (?lang=, Accept-Language e, se um dia vier, a forma na URL).
  *
- * Em análise fica como era, só em português. Nas três, o endereço de
- * atendimento sai de config/atendimento.ts.
+ * Em análise existe em pt (o texto de sempre) e es desde 27/10/2026. Nas
+ * três, o endereço de atendimento sai de config/atendimento.ts.
  */
 export function ObrigadoShell({
   estado,
@@ -34,7 +34,7 @@ export function ObrigadoShell({
 }) {
   if (estado === "aprovado") return <Aprovado lang={lang} />;
   if (estado === "aguardando-pagamento") return <AguardandoPagamento lang={lang} forma={forma} />;
-  return <AguardandoAnalise />;
+  return <AguardandoAnalise lang={lang} />;
 }
 
 /* ------------------------------------------------------------------ */
@@ -100,13 +100,15 @@ function Inteiro({ texto }: { texto: string }) {
   );
 }
 
-/** Texto com trechos em negrito ({ b: "..." }). "e-mail" não quebra no hífen. */
+/** Texto com trechos em negrito ({ b: "..." }) ou em teal ({ teal: "..." }). "e-mail" não quebra no hífen. */
 function Rico({ partes }: { partes: readonly Trecho[] }) {
   return (
     <>
       {partes.map((p, i) =>
         typeof p === "string" ? (
           <Inteiro key={i} texto={p} />
+        ) : "teal" in p ? (
+          <span key={i} className="teal"><Inteiro texto={p.teal} /></span>
         ) : (
           <strong key={i} className="obg-forte"><Inteiro texto={p.b} /></strong>
         )
@@ -240,11 +242,13 @@ function Aprovado({ lang }: { lang: Idioma }) {
 /* ------------------------------------------------------------------ */
 function AguardandoPagamento({ lang, forma }: { lang: Idioma; forma: Forma }) {
   const t = TEXTOS["aguardando-pagamento"][lang];
-  // Sem a forma na URL, as duas orientações. Com uma forma que não é Pix nem
-  // boleto ("outra"), nenhuma das duas: só a linha das instruções no e-mail.
-  const outra = forma === "outra";
-  const mostraPix = !outra && forma !== "boleto";
-  const mostraBoleto = !outra && forma !== "pix";
+  // Sem a forma na URL, as duas orientações em português; em espanhol,
+  // nenhuma (Pix e boleto só existem no Brasil). Com uma forma que não é Pix
+  // nem boleto ("outra"), nenhuma das duas: só a linha das instruções no e-mail.
+  const formas = formasParaMostrar(forma, lang);
+  const outra = formas.soEmail;
+  const mostraPix = formas.pix;
+  const mostraBoleto = formas.boleto;
   return (
     <Moldura lang={lang}>
       <Hero selo={<SeloRelogio />} tom="gold" eyebrow={t.selo} titulo={t.titulo} sub={t.sub} />
@@ -333,29 +337,31 @@ function AguardandoPagamento({ lang, forma }: { lang: Idioma; forma: Forma }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* 3 · EM ANÁLISE (como era; só o atendimento e "e-mail da compra")    */
+/* 3 · EM ANÁLISE (pt como sempre foi; es desde 27/10/2026)            */
 /* ------------------------------------------------------------------ */
-function AguardandoAnalise() {
+function AguardandoAnalise({ lang }: { lang: Idioma }) {
+  const t = TEXTOS["aguardando-analise"][lang];
   return (
-    <Moldura>
+    <Moldura lang={lang}>
       <section className="obg-hero">
         <div className="wrap-narrow center">
           <SeloRelogio />
 
           <span className="overline gold" style={{ display: "block", marginBottom: "var(--sp3)" }}>
-            Em análise
+            {t.selo}
           </span>
 
           <h1 className="obg-titulo">
-            Seu pagamento está
-            <br />
-            sendo analisado.
+            {t.titulo.map((linha, i) => (
+              <Fragment key={i}>
+                {i > 0 && <br />}
+                {linha}
+              </Fragment>
+            ))}
           </h1>
 
           <p className="lead muted obg-sub">
-            A operadora do cartão está confirmando a transação. Assim que for aprovada, você
-            recebe o <span className="teal">e-mail de acesso</span>. Isso costuma levar poucos
-            minutos, mas pode demorar algumas horas.
+            <Rico partes={t.sub} />
           </p>
         </div>
       </section>
@@ -365,18 +371,16 @@ function AguardandoAnalise() {
         <div className="wrap-narrow">
           <div className="obg-card">
             <div className="obg-card-inner">
-              <span className="badge badge-gold">Enquanto isso</span>
-              <h2 className="obg-card-titulo">Você não precisa fazer nada</h2>
+              <span className="badge badge-gold">{t.esperaSelo}</span>
+              <h2 className="obg-card-titulo">{t.esperaTitulo}</h2>
               <p className="body-sm muted" style={{ marginBottom: "var(--sp5)" }}>
-                Assim que a confirmação chegar, disparamos seu e-mail de acesso
-                automaticamente. Pode fechar esta página.
+                <Inteiro texto={t.esperaTexto} />
               </p>
               <p className="body-sm muted">
-                Se preferir, já deixe o app instalado. Quando o acesso liberar, é só
-                entrar com o e-mail usado no pagamento.
+                <Inteiro texto={t.appTexto} />
               </p>
               <div style={{ marginTop: "var(--sp6)" }}>
-                <StoreBadges variant="link" />
+                <StoreBadges variant="link" lang={lang} />
               </div>
             </div>
           </div>
@@ -387,27 +391,23 @@ function AguardandoAnalise() {
       <section className="obg-sec">
         <div className="wrap-narrow">
           <div className="obg-lista">
-            {[
-              { t: "A confirmação do pagamento", d: "Você recebe um aviso assim que for compensado. Não precisa ficar conferindo." },
-              { t: "O e-mail de acesso", d: "Chega automaticamente na sequência, com o passo a passo pra entrar no app." },
-              { t: "Sua jornada começa", d: "Você faz a provocação do Dia 1 e a constância começa a se construir." },
-            ].map((item, i) => (
+            {t.lista.map((item, i) => (
               <div key={i} className="obg-item">
                 <div className="obg-num">{i + 1}</div>
                 <div>
-                  <div className="h3" style={{ marginBottom: 3 }}>{item.t}</div>
-                  <p className="body-sm muted">{item.d}</p>
+                  <div className="h3" style={{ marginBottom: 3 }}><Inteiro texto={item.t} /></div>
+                  <p className="body-sm muted"><Inteiro texto={item.d} /></p>
                 </div>
               </div>
             ))}
           </div>
 
           <p className="obg-frase center">
-            Volte amanhã.
+            {t.frase}
           </p>
 
           <p className="caption center" style={{ marginTop: "var(--sp8)" }}>
-            Precisa de ajuda?{" "}
+            {t.suporteAntes}{" "}
             <a href={linkDoAtendimento(ATENDIMENTO.assuntoAtendimento)} className="teal">
               {ATENDIMENTO.email}
             </a>
