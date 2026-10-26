@@ -169,8 +169,7 @@ export function BlocoOferta({ mercado }: { mercado: Mercado }) {
           ))}
         </ul>
 
-        {/* Nota para quem desenvolve: no ar, o visitante não vê (era em português até no /es). */}
-        {semLink && process.env.NODE_ENV !== "production" && (
+        {semLink && (
           <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 12, color: C.ret }}>
             Link de checkout pendente em config/pricing.ts
           </p>

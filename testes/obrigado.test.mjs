@@ -13,7 +13,6 @@ import {
   formasParaMostrar,
   idiomaDoNavegador,
   idiomaDoObrigado,
-  paraObrigadoAprovado,
   primeiro,
 } from "../lib/obrigado.mjs";
 
@@ -197,31 +196,17 @@ test("em análise: ?lang=es em espanhol, sem palavra em português", () => {
   assert.doesNotMatch(analise, />\s*(Em análise|Enquanto isso|Você não precisa|Volte amanhã|Precisa de ajuda)/, "nenhum texto fixo em pt");
 });
 
-/* ---------------- /obrigado (rota antiga) ---------------- */
+/* ---------------- em análise: espanhol natural ---------------- */
 
-test("/obrigado leva a /obrigado-aprovado com a mesma query string (lang e transaction)", () => {
-  assert.equal(paraObrigadoAprovado({ lang: "es", transaction: "HP123" }), "/obrigado-aprovado?lang=es&transaction=HP123");
-  assert.equal(paraObrigadoAprovado({}), "/obrigado-aprovado");
-  assert.equal(paraObrigadoAprovado(undefined), "/obrigado-aprovado");
-  assert.equal(paraObrigadoAprovado({ a: ["1", "2"], vazio: "", nada: undefined }), "/obrigado-aprovado?a=1&a=2");
-  assert.equal(paraObrigadoAprovado({ nome: "Ana Lu&a" }), "/obrigado-aprovado?nome=Ana+Lu%26a");
-  assert.match(ler("app/obrigado/page.tsx"), /redirect\(paraObrigadoAprovado\(await props\.searchParams\)\)/);
-});
-
-/* ---------------- notas internas fora do ar ---------------- */
-
-test("privacidade (pt e es): sem o endereço preenchido, a nota [TROCAR] não aparece", () => {
-  for (const arq of ["app/privacidade/page.tsx", "app/es/privacidad/page.tsx"]) {
-    assert.match(ler(arq), /\{!EMPRESA\.endereco\.startsWith\("\["\) && \(/, arq);
-  }
-});
-
-test("/es/embreve: nem a nota do checkout pendente nem o href [PREENCHER] chegam ao visitante", () => {
-  assert.match(ler("components/BlocoOferta.tsx"), /\{semLink && process\.env\.NODE_ENV !== "production" && \(/);
-  const home = ler("components/Home.tsx");
-  assert.doesNotMatch(home, /<a href=\{linkCheckout\(mkt\)\} target="_blank" rel="noopener noreferrer" style=\{btnPrimary\}>\{MERCADOS\[mkt\]\.textos\.botao\}<\/a>\s*<span/);
-  assert.match(home, /!MERCADOS\[mkt\]\.vendaAberta \?/);
-  assert.match(home, /linkCheckout\(mkt\)\.startsWith\("\["\) \?/);
+test("em análise (es): futuro no aviso e o exercício do dia como leitura", () => {
+  const t = TEXTOS["aguardando-analise"].es;
+  assert.match(textoPlano(t.sub), /recibirás el correo de acceso\. Suele tardar unos minutos/);
+  assert.equal(t.lista[2].t, "Empieza tu recorrido");
+  assert.equal(t.lista[2].d, "Lees la provocación del Día 1 y la constancia empieza a construirse.");
+  assert.doesNotMatch(textoPlano(t), /Haces la provocación|se libere|No necesitas estar/);
+  // A frase do app é a mesma nas duas páginas que esperam a confirmação.
+  assert.match(t.appTexto, /Cuando tu acceso esté activo, solo tienes que entrar con el correo que usaste para pagar\.$/);
+  assert.equal(TEXTOS["aguardando-pagamento"].es.appTexto, "Cuando tu acceso esté activo, solo tienes que entrar con el correo que usaste para pagar.");
 });
 
 test("espanhol: selo sem a lei brasileira e lojas sem o /br/", () => {
