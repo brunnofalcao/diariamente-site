@@ -438,12 +438,12 @@ export function periodoEstudante(): string {
 // ESTUDANTE EM STANDBY · a /estudante da produção (main, 0a25ffa)
 // ---------------------------------------------------------------------
 // Com a chave de lançamento desligada (config/lancamento.ts), a
-// /estudante continua a da produção: formulário aberto, R$ 77,00 sobre
-// R$ 137,90 e o mockup Tela_HOJE do Cloudinary no hero
-// (components/estudante-atual/). Estes são os números da main, copiados
-// como estavam; só valem em standby. Ligada a chave, valem ESTUDANTE e
-// config/pricing.ts. No lançamento, este bloco e a pasta
-// components/estudante-atual podem sair.
+// /estudante continua a da produção: formulário aberto e R$ 77,00 sobre
+// R$ 137,90 (components/estudante-atual/). A imagem do hero já é a arte
+// Hoje das lojas nos dois estados (pedido do dono, 27/10/2026). Estes
+// são os números da main, copiados como estavam; só valem em standby.
+// Ligada a chave, valem ESTUDANTE e config/pricing.ts. No lançamento,
+// este bloco e a pasta components/estudante-atual podem sair.
 // ---------------------------------------------------------------------
 export const ESTUDANTE_ATUAL = {
   precoNumero: 77,
@@ -454,9 +454,6 @@ export const ESTUDANTE_ATUAL = {
   perDia: "menos de R$ 0,22 por dia",
   // PLANO_APP.perDia da main, na coluna "Quem entra hoje pelo site".
   planoPerDia: "menos de R$ 0,38 por dia",
-  // O mockup do hero da main (SCREENSHOTS.hoje).
-  telaHoje: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664582/Tela_HOJE_Diariamente_shzi7c.png",
-  telaHojeAlt: "Tela Hoje do aplicativo Diariamente, com a provocação do dia e o progresso da sequência",
   // Subtítulo do formulário na main (components/EstudanteForm.tsx).
   subtituloDoFormulario:
     "Leva cerca de um minuto. O código chega no seu WhatsApp e é aplicado no campo de cupom da tela de pagamento.",

@@ -212,11 +212,8 @@ function paginaEstudante(C, lancado = true) {
     "@/components/estudante-atual/BlocoPrecoAtual": carregarTs(arq("components", "estudante-atual", "BlocoPrecoAtual.tsx"), {
       "@/config": C, "react/jsx-runtime": jsx,
     }, { jsx: true }),
-    "@/components/estudante-atual/TelaHojeAtual": carregarTs(arq("components", "estudante-atual", "TelaHojeAtual.tsx"), {
-      "@/config": C, "react/jsx-runtime": jsx,
-    }, { jsx: true }),
     "@/components/Brand": Brand,
-    // a arte Hoje das lojas no hero (components/TelaDaLoja.tsx)
+    // a arte Hoje das lojas no hero, nos dois estados (components/TelaDaLoja.tsx)
     "@/components/TelaDaLoja": carregarTs(arq("components", "TelaDaLoja.tsx"), {
       "@/lib/i18n": i18n, "react/jsx-runtime": jsx,
     }, { jsx: true }),
@@ -261,7 +258,7 @@ test("/estudante ABERTA: o formulário de sempre e os botões de solicitar", () 
   semDuracaoDoEstudante(h, "/estudante");
 });
 
-test("standby: a /estudante é a da produção (R$ 77,00 sobre R$ 137,90, formulário aberto, mockup do Cloudinary)", () => {
+test("standby: a /estudante é a da produção (R$ 77,00 sobre R$ 137,90, formulário aberto), com a arte Hoje das lojas", () => {
   // Em standby o fluxo da produção abre mesmo sem as chaves do estudante.
   for (const aberto of [false, true]) {
     const h = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(aberto), false)));
@@ -277,9 +274,10 @@ test("standby: a /estudante é a da produção (R$ 77,00 sobre R$ 137,90, formul
     assert.match(h, /Solicitar meu código/);
     assert.match(h, /formulario-cpf/);
     assert.match(h, /O código chega no seu WhatsApp e é aplicado no campo de cupom da tela de pagamento\./);
-    assert.match(h, /class="ed-phone ed-phone-moldura"/);
-    assert.match(h, /res\.cloudinary\.com\/dlzrfhwin\/image\/upload\/f_auto,q_auto,w_640\/v1782664582\/Tela_HOJE_Diariamente_shzi7c\.png/);
-    assert.equal(/\/telas\/pt\/hoje/.test(h), false, "sem a arte das lojas");
+    // a imagem do hero é a mesma do lançamento (pedido do dono, 27/10/2026)
+    assert.match(h, /<div class="ed-phone"><picture/);
+    assert.match(h, /src="\/telas\/pt\/hoje-560\.jpg"/);
+    assert.equal(/ed-phone-moldura|Tela_HOJE|cloudinary/i.test(h), false, "sem o mockup antigo");
     assert.equal(/abre em breve|Me avise quando abrir|89,90|99,98|149,90/.test(h), false);
     // as decisões do dono no PR #3 valem também aqui
     semDuracaoDoEstudante(h, "/estudante em standby");
@@ -290,6 +288,23 @@ test("standby: a /estudante é a da produção (R$ 77,00 sobre R$ 137,90, formul
   const lancada = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(true), true)));
   assert.match(lancada, /<small>R\$<\/small>89,90/);
   assert.equal(/77,00|137,90|cloudinary/.test(lancada), false);
+});
+
+test("standby: o HTML da /estudante não tem nenhum Tela_* do Cloudinary e tem /telas/pt/hoje, com o preço e o formulário da produção", () => {
+  for (const aberto of [false, true]) {
+    const h = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(aberto), false)));
+    assert.equal(/Tela_[A-Z]+_Diariamente/.test(h), false, "nenhum mockup Tela_* do Cloudinary");
+    assert.equal(/res\.cloudinary\.com[^"]*Tela_/.test(h), false);
+    // a arte Hoje das lojas, em WebP e com o JPEG de reserva, com prioridade
+    assert.match(h, /srcSet="\/telas\/pt\/hoje-360\.webp 360w, \/telas\/pt\/hoje-560\.webp 560w, \/telas\/pt\/hoje-840\.webp 840w"/);
+    assert.match(h, /<img src="\/telas\/pt\/hoje-560\.jpg" alt="[^"]+" width="1320" height="2868" loading="eager" fetchPriority="high"/);
+    assert.equal((h.match(/\/telas\/pt\/hoje-560\.jpg/g) || []).length, 1, "uma tela só no hero");
+    // o resto, como a produção
+    assert.match(h, /R\$ 77,00/);
+    assert.match(h, /R\$ 137,90/);
+    assert.match(h, /Solicitar minha condição/);
+    assert.match(h, /Sua provocação de hoje\. <b>Só a de hoje\.<\/b>/);
+  }
 });
 
 test("/estudante aberta e fechada, no lançamento e depois: nenhuma promessa de duração pela graduação", () => {
@@ -309,7 +324,7 @@ test("fonte: nenhum texto de estudante promete o preço pela graduação inteira
     ["app", "estudante", "page.tsx"], ["app", "es", "estudiantes", "page.tsx"],
     ["components", "Oferta.tsx"], ["components", "CtaEstudante.tsx"], ["components", "BlocoPreco.tsx"],
     ["components", "BlocoOferta.tsx"], ["components", "EstudanteEspera.tsx"], ["config.ts"], ["lib", "i18n.ts"], ["lib", "seo.ts"],
-    ["components", "estudante-atual", "BlocoPrecoAtual.tsx"], ["components", "estudante-atual", "TelaHojeAtual.tsx"],
+    ["components", "estudante-atual", "BlocoPrecoAtual.tsx"],
     ["components", "EstudanteForm.tsx"],
   ]) {
     const t = semComentarios(fs.readFileSync(arq(...f), "utf8"));
