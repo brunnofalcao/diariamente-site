@@ -42,30 +42,50 @@ export const HOMES = ["/", "/es", "/es-es", "/pt-pt"] as const;
 export const ROTA_INTERNA_RW = "/mundo";
 
 /**
- * SITE DE VENDAS EM STANDBY (chave de lançamento desligada,
- * config/lancamento.ts). O site de vendas de cada mercado, exatamente como
- * vai ao ar, mora nestes endereços enquanto as homes mostram a lista de
- * espera: noindex, fora do sitemap, sem hreflang. Ligada a chave, cada um
- * redireciona para a home real do mercado (HOME_DO_MERCADO).
+ * SITE DE VENDAS EM STANDBY, a "vitrine" (chave de lançamento desligada,
+ * config/lancamento.ts). O site de vendas de cada mercado, como vai ao ar
+ * quando a venda dele abrir, mora nestes endereços enquanto as homes
+ * mostram a lista de espera: noindex, fora do sitemap, sem hreflang.
+ * Ligada a chave, cada um redireciona para a home real do mercado
+ * (HOME_DO_MERCADO).
+ *
+ * O idioma (ou o mercado) vem PRIMEIRO no endereço, como nas homes e nas
+ * outras páginas em espanhol (/es/estudiantes): /es/vendas, e não
+ * /vendas/es (pedido do dono, 27/10/2026: "sempre o idioma vira
+ * primeiro"). O PT | ES e o seletor de país da vitrine levam a estes
+ * endereços.
  */
 export const VENDAS_DO_MERCADO: Record<Mercado, string> = {
   br: "/vendas",
-  la: "/vendas/es",
-  es: "/vendas/es-es",
-  pt: "/vendas/pt-pt",
-  rw: "/vendas/mundo",
+  la: "/es/vendas",
+  es: "/es-es/vendas",
+  pt: "/pt-pt/vendas",
+  rw: "/mundo/vendas",
 };
 
-/** /vendas ou /vendas/qualquer-coisa. */
+/**
+ * Endereços da vitrine até 27/10/2026, com o mercado DEPOIS de /vendas.
+ * Links que já saíram com eles continuam funcionando: em standby levam ao
+ * endereço novo (VENDAS_DO_MERCADO), ligada a chave, à home real do
+ * mercado, com os parâmetros da URL (decidirRota, passo 0).
+ */
+export const VITRINE_ANTIGA: Record<string, Mercado> = {
+  "/vendas/es": "la",
+  "/vendas/es-es": "es",
+  "/vendas/pt-pt": "pt",
+  "/vendas/mundo": "rw",
+};
+
+/** Um dos cinco endereços da vitrine, ou um caminho abaixo dele. */
 export function ehVitrine(pathname: string): boolean {
-  return pathname === "/vendas" || pathname.startsWith("/vendas/");
+  return Object.values(VENDAS_DO_MERCADO).some((base) => pathname === base || pathname.startsWith(base + "/"));
 }
 
 /**
- * Prévias antigas do site de vendas. Em standby, cada uma leva ao /vendas
- * do mercado. Ligada a chave, /embreve e /es/embreve redirecionam para "/"
- * e "/es" (a própria página faz isso) e /pt-pt/embreve e /es-es/embreve
- * voltam a ser as prévias do dono (PR #3).
+ * Prévias antigas do site de vendas. Em standby, cada uma leva à vitrine
+ * do mercado. Ligada a chave, /embreve e /es/embreve redirecionam para
+ * "/" e "/es" (a própria página faz isso) e /pt-pt/embreve e
+ * /es-es/embreve voltam a ser as prévias do dono (PR #3).
  */
 export const PREVIAS_ANTIGAS: Record<string, string> = {
   "/embreve": VENDAS_DO_MERCADO.br,
@@ -74,9 +94,15 @@ export const PREVIAS_ANTIGAS: Record<string, string> = {
   "/es-es/embreve": VENDAS_DO_MERCADO.es,
 };
 
-/** Ligada a chave: cada endereço de /vendas leva à home real do mercado. */
-const VENDAS_PARA_HOME: Record<string, string> = {};
-for (const m of MERCADOS_VALIDOS) VENDAS_PARA_HOME[VENDAS_DO_MERCADO[m]] = HOME_DO_MERCADO[m];
+/** Standby: o endereço antigo da vitrine leva ao novo. */
+const VITRINE_ANTIGA_PARA_NOVA: Record<string, string> = {};
+/** Ligada a chave: a vitrine, nova ou antiga, leva à home real do mercado. */
+const VITRINE_PARA_HOME: Record<string, string> = {};
+for (const m of MERCADOS_VALIDOS) VITRINE_PARA_HOME[VENDAS_DO_MERCADO[m]] = HOME_DO_MERCADO[m];
+for (const [antigo, m] of Object.entries(VITRINE_ANTIGA)) {
+  VITRINE_ANTIGA_PARA_NOVA[antigo] = VENDAS_DO_MERCADO[m];
+  VITRINE_PARA_HOME[antigo] = HOME_DO_MERCADO[m];
+}
 
 /** Cookie da escolha de mercado: 180 dias, gravado pelo ?mercado=. */
 export const COOKIE_MERCADO = "dm_market";
@@ -186,15 +212,17 @@ function comTudo(destino: string, busca: URLSearchParams): string {
  * A decisão inteira, sem depender do Next (o middleware só aplica).
  * Ordem:
  *   0. endereços que dependem só da chave de lançamento (robô incluído:
- *      é mudança de endereço, não de país). Standby: as prévias antigas
- *      (/embreve...) vão para o /vendas do mercado. Lançado: /vendas e
- *      /vendas/* vão para a home real do mercado.
+ *      é mudança de endereço, não de país), com todos os parâmetros.
+ *      Standby: as prévias antigas (/embreve...) e os endereços antigos
+ *      da vitrine (/vendas/es...) vão para a vitrine do mercado
+ *      (/es/vendas...). Lançado: a vitrine, nova ou antiga, vai para a
+ *      home real do mercado.
  *   1. robô e prévia de link: sempre a página pedida
  *   2. ?mercado=xx (seletor do rodapé e PT | ES): grava o cookie e vai
  *      para a home daquele mercado; ?lang=pt|es antigo vira br|la, SÓ nas
  *      homes e só com a chave ligada (as páginas de obrigado usam ?lang=
  *      para escolher o idioma; em standby, a home abre como na produção).
- *      Em standby, dentro de /vendas, vai para o /vendas do mercado, sem
+ *      Em standby, dentro da vitrine, vai para a vitrine do mercado, sem
  *      cookie.
  *   3. o endereço interno do resto do mundo, pedido direto: lançado, volta
  *      para "/"; standby, a página responde 404, como antes do lançamento
@@ -209,7 +237,9 @@ export function decidirRota(p: Pedido): Decisao {
   const lancado = p.lancado === true;
   const busca = new URLSearchParams(p.busca.replace(/^\?/, ""));
 
-  const fixo = lancado ? VENDAS_PARA_HOME[p.pathname] : PREVIAS_ANTIGAS[p.pathname];
+  const fixo = lancado
+    ? VITRINE_PARA_HOME[p.pathname]
+    : PREVIAS_ANTIGAS[p.pathname] ?? VITRINE_ANTIGA_PARA_NOVA[p.pathname];
   if (fixo) return { tipo: "redirecionar", destino: comTudo(fixo, busca), vary: false };
 
   if (ehRobo(p.userAgent)) return { tipo: "seguir", vary: true };

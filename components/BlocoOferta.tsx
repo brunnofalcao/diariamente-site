@@ -3,7 +3,7 @@
 import {
   MERCADOS, precoFinal, porMes, formatar, linkCheckout, lancamentoVigente,
   dataDoLancamento, pendente, precoEstudante, porMesEstudante, pagamentoAgora,
-  percentualDoLancamento, regraDoLancamento,
+  percentualDoLancamento, regraDoLancamento, precoCheio,
   type Mercado,
 } from "@/config/pricing";
 import { ESTUDANTE, periodoEstudante } from "@/config";
@@ -26,29 +26,42 @@ import { ListaEsperaForm } from "@/components/ListaEsperaForm";
    Nunca: duas moedas, duas opções de plano, campo de cupom, contador,
    conversão na tela, valor de parcela.
 
-   Brasil no lançamento (até FIM_DO_LANCAMENTO): o preço da oferta de
-   lançamento, a regra dela (3 primeiros anos, depois o preço cheio, que
-   é o que o checkout diz) e "Pagamento à vista": a oferta de lançamento
-   não parcela. Depois da data: o preço cheio e "À vista, ou em até 12x
-   no cartão com acréscimo", sem valor de parcela (a Hotmart calcula, e
-   o parcelado custa mais que o equivalente mensal da manchete).
+   Brasil no lançamento (até FIM_DO_LANCAMENTO): acima da manchete, o
+   preço oficial riscado ("Preço oficial: R$ 149,90 por ano"; pedido do
+   dono, 27/10/2026: não estava claro que o preço oficial é R$ 149,90 e
+   que só agora sai por 33% a menos); o preço da oferta de lançamento; a
+   regra dela (3 primeiros anos, o desconto sobre o preço oficial, depois
+   o preço cheio, que é o que o checkout diz); "Pagamento à vista" (a
+   oferta de lançamento não parcela) e o prazo. O percentual sai da
+   conta (percentualDoLancamento), nunca escrito à mão. Depois da data,
+   ou com o lançamento desligado (ativo: false): nada riscado, o preço
+   cheio e "À vista, ou em até 12x no cartão com acréscimo", sem valor de
+   parcela (a Hotmart calcula, e o parcelado custa mais que o equivalente
+   mensal da manchete). Mercado sem lançamento (lancamento: null): nada
+   riscado.
 
    Mercado com vendaAberta: false (hoje la, es, pt e rw): o bloco vira a
-   lista de espera daquele mercado, sem preço nenhum. Exceção: `previa`
-   (só nas prévias internas /pt-pt/embreve e /es-es/embreve), que mostra
-   o bloco de venda para revisão, com o botão desabilitado.
+   lista de espera daquele mercado, sem preço nenhum. Exceções:
+     `vitrine`  o site de vendas em standby (/vendas, /es/vendas,
+                /es-es/vendas, /pt-pt/vendas, /mundo/vendas). Todo
+                mercado aparece como vai ao ar quando a venda dele abrir:
+                o bloco de venda, com o botão abrindo o checkout de
+                verdade da Hotmart (o link do mercado em
+                config/pricing.ts). Decisão do dono, 27/10/2026: "Já pode
+                colocar o link do checkout. Quero testar a jornada
+                inteira." Até então o botão da vitrine levava ao próprio
+                bloco até DM_WEBHOOK_V2_OK=1 (DM_VENDA_LIBERADA); essa
+                trava saiu. A do lançamento público continua
+                (scripts/checar-precos.js).
+     `previa`   só nas prévias internas /pt-pt/embreve e /es-es/embreve
+                (chave ligada), que mostram o bloco de venda para
+                revisão, com o botão desabilitado.
 
    `momento` vem do servidor: a data de término do lançamento é conferida
    contra a mesma hora no HTML e na hidratação. Depois da hidratação, o
    components/Home.tsx confere de novo com o relógio do navegador e
    troca o `momento` se o lançamento já acabou.
 
-   `vitrine`: o site de vendas em standby (/vendas/*). Até
-   DM_WEBHOOK_V2_OK=1 (DM_VENDA_LIBERADA, gravada pelo next.config.js), o
-   botão fica com o mesmo texto e o mesmo visual, mas leva ao próprio
-   bloco (#preco) em vez de abrir o checkout: quem pagasse antes do
-   webhook do app ficaria sem conta. A lista de espera embutida segue a
-   vitrine (o texto pt-PT só aparece no que vai ao ar).
    ===================================================================== */
 
 const C = {
@@ -98,8 +111,11 @@ export function BlocoOferta({ mercado, momento, previa = false, vitrine = false 
   const o = MERCADOS[mercado];
   const t = o.textos;
 
+  // Na vitrine, a venda de todo mercado aparece aberta (ver o topo).
+  const vendaVisivel = o.vendaAberta || vitrine;
+
   /* ------------------------- LISTA DE ESPERA ------------------------- */
-  if (!o.vendaAberta && !previa) {
+  if (!vendaVisivel && !previa) {
     return (
       <div style={moldura}>
         <Cabecalho titulo={t.titulo} selo={o.espera.selo} />
@@ -118,12 +134,13 @@ export function BlocoOferta({ mercado, momento, previa = false, vitrine = false 
   const pct = percentualDoLancamento(mercado, momento);
   const link = linkCheckout(mercado, momento);
   // Só chega aqui com a venda fechada na prévia interna.
-  const fechado = !o.vendaAberta;
+  const fechado = !vendaVisivel;
   // Link pendente só acontece em build de teste: em produção a trava não
   // deixa o build sair sem o link (scripts/checar-precos.js).
   const semLink = pendente(link) || fechado;
-  // /vendas/* em standby, antes de DM_WEBHOOK_V2_OK=1: mesmo botão, sem checkout.
-  const bloqueado = vitrine && process.env.DM_VENDA_LIBERADA !== "1";
+  // Preço oficial riscado, só com o lançamento valendo (null fora dele).
+  const cheio = precoCheio(mercado, momento);
+  const ancora = cheio && t.ancora ? cheio : null;
   const valor = precoFinal(mercado, momento);
   const mensal = formatar(mercado, porMes(mercado, momento));
   const anual = formatar(mercado, valor);
@@ -139,9 +156,19 @@ export function BlocoOferta({ mercado, momento, previa = false, vitrine = false 
       <div style={miolo}>
         <p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: C.n300 }}>{t.proposta}</p>
 
+        {/* PREÇO OFICIAL riscado, logo acima da manchete, na mesma
+            unidade do preço oficial (por ano). O rótulo é o que o leitor
+            de tela lê antes do valor riscado (<s> não é anunciado). */}
+        {ancora && (
+          <p style={{ margin: "18px 0 0", fontSize: 14.5, lineHeight: 1.4, color: C.n400 }}>
+            {t.ancora}:{" "}
+            <s style={{ textDecorationThickness: "1.5px", textDecorationColor: C.n300 }}>{ancora} {t.totalSufixo}</s>
+          </p>
+        )}
+
         {/* MANCHETE: equivalente mensal. Só equivalência, nunca um plano
             mensal: o handoff proíbe vender mensalidade. */}
-        <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 18, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: ancora ? 6 : 18, flexWrap: "wrap" }}>
           <span style={{ fontFamily: C.serif, fontSize: "clamp(42px,5vw,54px)", lineHeight: 1, letterSpacing: "-.02em", color: "#fff" }}>
             {mensal}
           </span>
@@ -152,8 +179,8 @@ export function BlocoOferta({ mercado, momento, previa = false, vitrine = false 
         </div>
 
         {/* TOTAL ANUAL. Com o lançamento valendo, a regra inteira, como o
-            checkout diz: o preço vale nos 3 primeiros anos e depois passa
-            ao preço cheio a cada ano. */}
+            checkout diz: o preço vale nos 3 primeiros anos, com o desconto
+            sobre o preço oficial, e depois passa ao preço cheio a cada ano. */}
         <p style={{ margin: "10px 0 0", fontSize: 15, lineHeight: 1.6, color: C.n200 }}>
           <strong style={{ color: "#fff", fontWeight: 600 }}>{anual}</strong> {t.totalSufixo}
           {regra ? ` ${regra}` : ""}
@@ -173,13 +200,12 @@ export function BlocoOferta({ mercado, momento, previa = false, vitrine = false 
         )}
 
         <a
-          href={semLink ? undefined : bloqueado ? "#preco" : link}
-          target={bloqueado && !semLink ? undefined : "_blank"}
-          rel={bloqueado && !semLink ? undefined : "noopener noreferrer"}
+          href={semLink ? undefined : link}
+          target="_blank"
+          rel="noopener noreferrer"
           aria-disabled={semLink || undefined}
           onClick={(e) => {
             if (semLink) { e.preventDefault(); return; }
-            if (bloqueado) return;
             registrarInicioDeCheckout({ id: `anual-${mercado}`, nome: `Diariamente Anual · ${mercado.toUpperCase()}`, valor, moeda: o.moeda });
           }}
           style={{

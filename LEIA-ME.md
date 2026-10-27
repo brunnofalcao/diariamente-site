@@ -3,11 +3,14 @@
 > **STANDBY (27/10/2026, decisão do dono).** O site de vendas está pronto e
 > desligado por uma chave: `DM_SITE_LANCADO` (`config/lancamento.ts`).
 > Desligada (padrão), as homes mostram a lista de espera, como antes, e o
-> site de vendas, exatamente como vai ao ar, fica em **`/vendas`** (Brasil),
-> `/vendas/es`, `/vendas/es-es`, `/vendas/pt-pt` e `/vendas/mundo`, com
-> noindex e fora do sitemap. A trava do webhook (`DM_WEBHOOK_V2_OK`) e a de
-> preços só avisam enquanto a chave está desligada; em compensação, os
-> botões de `/vendas` só abrem o checkout com `DM_WEBHOOK_V2_OK=1`. A
+> site de vendas, exatamente como vai ao ar, fica na vitrine, com o idioma
+> na frente: **`/vendas`** (Brasil), `/es/vendas`, `/es-es/vendas`,
+> `/pt-pt/vendas` e `/mundo/vendas`, com noindex e fora do sitemap (os
+> antigos `/vendas/es`... redirecionam para eles). Na vitrine todos os
+> mercados aparecem com a venda aberta e os botões abrem o checkout de
+> verdade da Hotmart (decisão do dono, 27/10/2026). A trava do webhook
+> (`DM_WEBHOOK_V2_OK`) e a de preços só avisam enquanto a chave está
+> desligada e voltam a parar o build de produção quando ela for ligada. A
 > `/estudante` e a `/sobre` ficam como na produção (formulário aberto,
 > R$ 77,00 sobre R$ 137,90). O que ainda muda para o público já no merge
 > está em `docs/LANCAMENTO.md`. Para lançar:

@@ -32,15 +32,16 @@ const SLUGS: Record<Chave, Record<Lang, string>> = {
   // USD e EUR), então cada mercado com preço próprio tem URL própria.
   homePt:      { pt: "/pt-pt",         es: "/pt-pt" },
   homeEs:      { pt: "/es-es",         es: "/es-es" },
-  // Site de vendas em STANDBY (chave de lançamento desligada,
-  // config/lancamento.ts): /vendas e /vendas/es, mais /vendas/es-es,
-  // /vendas/pt-pt e /vendas/mundo (lib/mercado.ts, VENDAS_DO_MERCADO).
-  // Privado: noindex e fora do sitemap. Ligada a chave, redirecionam para
-  // a home real do mercado. As prévias antigas (/embreve, /es/embreve,
-  // /pt-pt/embreve, /es-es/embreve) levam para cá em standby; ligada a
-  // chave, /embreve e /es/embreve vão para "/" e "/es", e as duas de
-  // pt-pt e es-es voltam a ser as prévias do dono (PR #3).
-  vendas:      { pt: "/vendas",        es: "/vendas/es" },
+  // Site de vendas em STANDBY, a vitrine (chave de lançamento desligada,
+  // config/lancamento.ts): /vendas e /es/vendas, mais /es-es/vendas,
+  // /pt-pt/vendas e /mundo/vendas (lib/mercado.ts, VENDAS_DO_MERCADO),
+  // com o idioma na frente, como /es/estudiantes. Privado: noindex e fora
+  // do sitemap. Ligada a chave, redirecionam para a home real do mercado.
+  // As prévias antigas (/embreve, /es/embreve, /pt-pt/embreve,
+  // /es-es/embreve) levam para cá em standby; ligada a chave, /embreve e
+  // /es/embreve vão para "/" e "/es", e as duas de pt-pt e es-es voltam a
+  // ser as prévias do dono (PR #3).
+  vendas:      { pt: "/vendas",        es: "/es/vendas" },
   estudante:   { pt: "/estudante",     es: "/es/estudiantes" },
   sobre:       { pt: "/sobre",         es: "/es/acerca-de" },
   termos:      { pt: "/termos",        es: "/es/condicionesdeuso" },

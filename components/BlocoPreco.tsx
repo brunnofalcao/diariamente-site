@@ -132,8 +132,10 @@ export function BlocoPreco() {
   const offPct = de > 0 ? Math.round((1 - por / de) * 100) : 0;
   const mes = MERCADOS.br.textos.mes;
   // "nos 3 primeiros anos. Depois, R$ 149,90 por ano." enquanto o
-  // lançamento vale; null depois.
-  const regra = regraDoLancamento("br", agora);
+  // lançamento vale; null depois. Sem o "33% a menos que o preço
+  // oficial" do bloco de oferta da home: aqui as diferenças mostradas são
+  // as do estudante, e um percentual sobre outra base confundiria.
+  const regra = regraDoLancamento("br", agora, { semPercentual: true });
 
   if (!ESTUDANTE.mostrarPreco) {
     return (

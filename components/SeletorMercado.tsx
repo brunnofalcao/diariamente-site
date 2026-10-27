@@ -12,9 +12,10 @@ import { VENDAS_DO_MERCADO } from "@/lib/mercado";
    Resto do mundo não aparece: ele não tem página própria, é a "/" com o
    bloco em dólar, e chega pelo IP.
 
-   Com `vitrine` (site de vendas em standby, em /vendas/*), cada link leva
-   direto ao /vendas daquele mercado (lib/mercado.ts, VENDAS_DO_MERCADO),
-   sem cookie: quem revisa o site de vendas não sai dele.
+   Com `vitrine` (site de vendas em standby: /vendas, /es/vendas,
+   /es-es/vendas, /pt-pt/vendas), cada link leva direto à vitrine daquele
+   mercado (lib/mercado.ts, VENDAS_DO_MERCADO), sem cookie: quem revisa o
+   site de vendas não sai dele.
    ===================================================================== */
 
 const OPCOES: [Exclude<Mercado, "rw">, string][] = [
@@ -38,7 +39,7 @@ export function SeletorMercado({
   titulo: string;
   /** true: em linha, separado por ponto (página "em breve"). */
   linha?: boolean;
-  /** true: no site de vendas em standby (/vendas/*). */
+  /** true: no site de vendas em standby (a vitrine). */
   vitrine?: boolean;
 }) {
   return (

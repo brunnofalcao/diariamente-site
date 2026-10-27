@@ -29,9 +29,11 @@ import { SITE_LANCADO } from "@/config/lancamento";
    home de todos os mercados, com o rodapé da produção (só a frase da
    marca) e o formulário em português do Brasil também em /pt-pt. A
    assinatura, o seletor de país e o português de Portugal entram com a
-   chave ligada e em /vendas/*. Com `vitrine` (/vendas/es e
-   /vendas/es-es), o logo e o seletor de país levam ao /vendas de cada
-   mercado.
+   chave ligada e com `vitrine`; com `vitrine`, o logo e o seletor de
+   país levam à vitrine de cada mercado (lib/mercado.ts,
+   VENDAS_DO_MERCADO). As páginas da vitrine (/vendas, /es/vendas...)
+   não chegam mais aqui: lá todo mercado aparece com a venda aberta
+   (components/PaginaDoMercado.tsx).
    ===================================================================== */
 
 const T = {

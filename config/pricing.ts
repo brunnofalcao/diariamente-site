@@ -48,6 +48,13 @@
    (vendaAberta: false) até o dono confirmar a abertura. Fechado, o
    mercado não exige link; aberto, a trava confere o link dele. Todo
    build lista os mercados fechados, para a decisão ficar à vista.
+
+   Na VITRINE (site de vendas em standby: /vendas, /es/vendas,
+   /es-es/vendas, /pt-pt/vendas, /mundo/vendas), todo mercado aparece com
+   a venda aberta e o botão abre o link dele daqui, já, mesmo com
+   vendaAberta: false (decisão do dono, 27/10/2026: "Já pode colocar o
+   link do checkout. Quero testar a jornada inteira."). vendaAberta e
+   semVenda continuam decidindo o lançamento público.
    --------------------------------------------------------------------- */
 export const PRODUTO_HOTMART = "7448309";
 const CHECKOUT_BRL = "https://pay.hotmart.com/K105072021O?off=fhrttdh8";
@@ -139,11 +146,15 @@ export type Oferta = {
     titulo: string;
     proposta: string;
     mes: string;
+    /** Rótulo do preço cheio riscado, acima da manchete, enquanto o
+        preço de lançamento vale ("Preço oficial: R$ 149,90 por ano"). */
+    ancora?: string;
     /** Junto da manchete quando o preço de lançamento vale. */
     mesLancamento?: string;
     totalSufixo: string;
-    /** Depois do total, com o lançamento valendo. {anos} e {cheio} saem
-        do config (anos do lançamento e preço cheio formatado). */
+    /** Depois do total, com o lançamento valendo. {anos}, {pct} e
+        {cheio} saem do config (anos do lançamento, desconto sobre o preço
+        cheio, percentualDoLancamento, e preço cheio formatado). */
     lancamentoRegra?: string;
     pagamento: string;
     /** No lugar de `pagamento` com o lançamento valendo. */
@@ -204,9 +215,13 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       titulo: "Seu Diariamente por um ano",
       proposta: "Uma provocação, uma reflexão, uma ação possível. Todos os dias.",
       mes: "/mês",
+      // Pedido do dono (27/10/2026): deixar claro que o preço oficial é
+      // R$ 149,90 e que, só agora, sai por 33% a menos. O número do
+      // desconto vem da conta ({pct}), nunca escrito à mão.
+      ancora: "Preço oficial",
       mesLancamento: "no lançamento",
       totalSufixo: "por ano",
-      lancamentoRegra: "nos {anos} primeiros anos. Depois, {cheio} por ano.",
+      lancamentoRegra: "nos {anos} primeiros anos, {pct}% a menos que o preço oficial. Depois, {cheio} por ano.",
       // Sem valor de parcela: a Hotmart calcula. E o parcelado tem
       // acréscimo (o checkout da fhrttdh8 mostrou 12x de R$ 16,40 em
       // 12/10/2026): "com acréscimo" impede ler, ao lado da manchete
@@ -216,7 +231,7 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       botao: "Começar meu ano",
       renovacao: "Renova a cada ano. Cancele quando quiser.",
       renovacaoMesmoValor: "Renova a cada ano pelo mesmo valor. Cancele quando quiser.",
-      prazo: "Preço de lançamento até",
+      prazo: "Preço de lançamento só até",
       estudante: "Sou estudante",
       nota: "por um ano · Garantia de 7 dias",
     },
@@ -506,7 +521,8 @@ export function vendeAgora(m: Mercado): boolean {
   return MERCADOS[m].vendaAberta && !pendente(MERCADOS[m].checkout);
 }
 
-/** Preço cheio riscado: só existe enquanto o preço de lançamento vale. */
+/** Preço cheio riscado ("Preço oficial", textos.ancora): só existe
+    enquanto o preço de lançamento vale. */
 export function precoCheio(m: Mercado, agora: number = Date.now()): string | null {
   return lancamentoVigente(m, agora) ? formatar(m, MERCADOS[m].anual) : null;
 }
@@ -523,13 +539,26 @@ export function percentualDoLancamento(m: Mercado, agora: number = Date.now()): 
   return pct > 0 ? pct : null;
 }
 
-/** "nos 3 primeiros anos. Depois, R$ 149,90 por ano.", com o lançamento
-    valendo. null fora dele. */
-export function regraDoLancamento(m: Mercado, agora: number = Date.now()): string | null {
+/** "nos 3 primeiros anos, 33% a menos que o preço oficial. Depois,
+    R$ 149,90 por ano.", com o lançamento valendo. null fora dele.
+
+    O {pct} é o percentualDoLancamento (arredondado para baixo, o mesmo
+    número do selo "33% OFF"). `semPercentual` tira o trecho do {pct},
+    da vírgula até o ponto: a /estudante (components/BlocoPreco.tsx)
+    compara o lançamento com o preço de estudante e mostra as próprias
+    diferenças; outro percentual ali, sobre outra base, confundiria. O
+    trecho também sai se o desconto não chegar a 1%. */
+export function regraDoLancamento(
+  m: Mercado,
+  agora: number = Date.now(),
+  opcoes: { semPercentual?: boolean } = {},
+): string | null {
   const o = MERCADOS[m];
   const regra = o.textos.lancamentoRegra;
   if (!o.lancamento || !regra || !lancamentoVigente(m, agora)) return null;
-  return regra.replace("{anos}", String(o.lancamento.anos)).replace("{cheio}", formatar(m, o.anual));
+  const pct = opcoes.semPercentual ? null : percentualDoLancamento(m, agora);
+  const comPct = pct === null ? regra.replace(/,[^,.]*\{pct\}[^.]*(?=\.)/, "") : regra.replace("{pct}", String(pct));
+  return comPct.replace("{anos}", String(o.lancamento.anos)).replace("{cheio}", formatar(m, o.anual));
 }
 
 const MESES_PT = [

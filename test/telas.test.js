@@ -151,8 +151,8 @@ test("home do Brasil com o estudante aberto: \"Sou estudante\" com R$ 89,90 por 
   const h = html(blocoOferta(config(true)), { mercado: "br", momento: LANCAMENTO });
   assert.match(h, /href="\/estudante"/);
   assert.match(h, /Sou estudante: R\$ 7,49\/mês · R\$ 89,90 por ano · cobrança anual/);
-  semDuracaoDoEstudante(h.replace(/R\$ 99,98<\/strong> por ano nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\./, ""), "home");
-  assert.match(h, /R\$ 99,98<\/strong> por ano nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\./);
+  semDuracaoDoEstudante(h.replace(/R\$ 99,98<\/strong> por ano nos 3 primeiros anos, 33% a menos que o preço oficial\. Depois, R\$ 149,90 por ano\./, ""), "home");
+  assert.match(h, /R\$ 99,98<\/strong> por ano nos 3 primeiros anos, 33% a menos que o preço oficial\. Depois, R\$ 149,90 por ano\./);
 });
 
 test("home do Brasil com o estudante FECHADO: nenhum link nem preço de estudante", () => {

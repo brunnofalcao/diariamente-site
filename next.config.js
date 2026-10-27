@@ -21,6 +21,11 @@
    HSTS a Vercel já manda, e o domínio .app só abre em HTTPS por regra
    do próprio domínio.
    ===================================================================== */
+/* Site de vendas em standby, a "vitrine": os mesmos cinco endereços de
+   lib/mercado.ts (VENDAS_DO_MERCADO), com o idioma na frente
+   (test/standby.test.js confere que as duas listas batem). */
+const VITRINE = ["/vendas", "/es/vendas", "/es-es/vendas", "/pt-pt/vendas", "/mundo/vendas"];
+
 const CABECALHOS_DE_PROTECAO = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -51,12 +56,15 @@ const nextConfig = {
   async headers() {
     return [
       { source: "/:path*", headers: CABECALHOS_DE_PROTECAO },
-      // Site de vendas em standby: além do <meta robots> da página
-      // (lib/seo.ts, metadataDaVitrine), o cabeçalho, que vale também para
-      // o que não é HTML. Ligada a chave de lançamento, estes endereços só
-      // redirecionam para as homes.
-      { source: "/vendas", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
-      { source: "/vendas/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+      // Site de vendas em standby (a vitrine): além do <meta robots> da
+      // página (lib/seo.ts, metadataDaVitrine), o cabeçalho, que vale
+      // também para o que não é HTML. "/vendas/:path*" cobre ainda os
+      // endereços antigos (/vendas/es...), que só redirecionam. Ligada a
+      // chave de lançamento, todos eles só redirecionam para as homes.
+      ...VITRINE.flatMap((base) => [
+        { source: base, headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+        { source: `${base}/:path*`, headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+      ]),
     ];
   },
 };
@@ -91,11 +99,16 @@ const nextConfig = {
    vale "1" com a chave de lançamento ligada: em standby a /estudante é
    a da produção (app/estudante/page.tsx) e o fluxo novo não abre.
 
-   VENDA LIBERADA: DM_VENDA_LIBERADA, também calculada aqui. "1" com a
-   chave de lançamento ligada ou com DM_WEBHOOK_V2_OK=1. Vazia, os botões
-   do site de vendas em standby (/vendas/*) ficam com o mesmo texto e o
-   mesmo visual, mas levam ao bloco de preço em vez de abrir o checkout:
-   quem pagasse antes do webhook do app ficaria sem conta.
+   CHECKOUT DA VITRINE: os botões do site de vendas em standby (/vendas,
+   /es/vendas, /es-es/vendas, /pt-pt/vendas, /mundo/vendas) abrem o
+   checkout de verdade da Hotmart, sem depender de variável nenhuma.
+   Decisão do dono, 27/10/2026: "Já pode colocar o link do checkout.
+   Quero testar a jornada inteira." Até então a DM_VENDA_LIBERADA,
+   calculada aqui, segurava esses botões no bloco de preço até
+   DM_WEBHOOK_V2_OK=1; saiu. A trava do LANÇAMENTO não mudou: com
+   DM_SITE_LANCADO=1, o build de produção continua exigindo
+   DM_WEBHOOK_V2_OK=1 (scripts/checar-precos.js). Contexto em
+   docs/LANCAMENTO.md.
    ===================================================================== */
 const { PHASE_PRODUCTION_BUILD } = require("next/constants");
 const { checarEnderecoDoProjeto } = require("./scripts/checar-endereco");
@@ -124,14 +137,12 @@ module.exports = (phase) => {
   if (bloqueios.length) throw new Error(bloqueios.join(" "));
   const estudante = estudanteDoProjeto(process.env);
   const lancado = siteLancado(process.env);
-  const webhookOk = String(process.env.DM_WEBHOOK_V2_OK || "").trim() === "1";
   return {
     ...nextConfig,
     env: {
       ...nextConfig.env,
       DM_ESTUDANTE_ABERTO: lancado && estudante.aberto ? "1" : "",
       DM_SITE_LANCADO: lancado ? "1" : "",
-      DM_VENDA_LIBERADA: lancado || webhookOk ? "1" : "",
     },
   };
 };
