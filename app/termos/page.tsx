@@ -1,5 +1,6 @@
 import { metadataDaPagina } from "@/lib/seo";
-import { EMPRESA, SITE, GARANTIA, identificacaoDoGrupo } from "@/config";
+import { EMPRESA, SITE, GARANTIA } from "@/config";
+import { IdentificacaoDoGrupo } from "@/components/CnpjsDoGrupo";
 import { LegalShell } from "@/components/LegalShell";
 
 export const metadata = metadataDaPagina("termos", "pt");
@@ -15,7 +16,7 @@ export default function Termos() {
         adquirir e utilizar o Diariamente, você ("usuário") declara ter lido, compreendido e
         aceito integralmente estes Termos.
       </p>
-      <p>{identificacaoDoGrupo("pt")}</p>
+      <p><IdentificacaoDoGrupo lang="pt" /></p>
 
       <h2>1. O que é o Diariamente</h2>
       <p>

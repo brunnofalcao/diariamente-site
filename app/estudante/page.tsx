@@ -1,5 +1,6 @@
 import { metadataDaPagina } from "@/lib/seo";
-import { SITE, EMPRESA, PROVA, GARANTIA, SCREENSHOTS, ESTUDANTE, rodapeDoGrupo, responsavelDoGrupo } from "@/config";
+import { SITE, EMPRESA, PROVA, GARANTIA, SCREENSHOTS, ESTUDANTE, responsavelDoGrupo } from "@/config";
+import { RodapeDoGrupo } from "@/components/CnpjsDoGrupo";
 import { OfficialLogo } from "@/components/Brand";
 import { BlocoPreco } from "@/components/BlocoPreco";
 import { EstudanteForm } from "@/components/EstudanteForm";
@@ -516,7 +517,7 @@ export default function Estudante() {
         <footer className="ed-footer">
           <div className="ed-wrap ed-footer-row">
             <p>
-              © {new Date().getFullYear()} {rodapeDoGrupo("pt")} ·{" "}
+              © {new Date().getFullYear()} <RodapeDoGrupo lang="pt" /> ·{" "}
               {SITE.dominioVisivel}
             </p>
             <nav aria-label="Links institucionais">

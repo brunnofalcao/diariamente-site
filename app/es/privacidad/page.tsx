@@ -1,4 +1,5 @@
-import { EMPRESA, SITE, identificacaoDoGrupo } from "@/config";
+import { EMPRESA, SITE } from "@/config";
+import { IdentificacaoDoGrupo } from "@/components/CnpjsDoGrupo";
 import { LegalShell } from "@/components/LegalShell";
 import { metadataDaPagina } from "@/lib/seo";
 import { caminho } from "@/lib/rotas";
@@ -24,7 +25,7 @@ export default function Privacidad() {
       </p>
 
       <h2>1. Quién es el responsable del tratamiento</h2>
-      <p>{identificacaoDoGrupo("es")}</p>
+      <p><IdentificacaoDoGrupo lang="es" /></p>
       <p>
         <strong>{EMPRESA.marca}®</strong>, a través de las empresas del grupo identificadas
         arriba, es la responsable del tratamiento.

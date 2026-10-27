@@ -1,4 +1,5 @@
-import { EMPRESA, LOJAS, SITE, rodapeDoGrupo } from "@/config";
+import { EMPRESA, LOJAS, SITE } from "@/config";
+import { RodapeDoGrupo } from "@/components/CnpjsDoGrupo";
 import { LockupVertical } from "@/components/Brand";
 
 /* =====================================================================
@@ -103,7 +104,7 @@ export function Rodape() {
 
         <div className="rp-base">
           <p>
-            © {ano} {rodapeDoGrupo("pt")}
+            © {ano} <RodapeDoGrupo lang="pt" />
             <br />
             {SITE.dominioVisivel}
           </p>

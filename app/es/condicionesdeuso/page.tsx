@@ -1,4 +1,5 @@
-import { EMPRESA, SITE, GARANTIA, identificacaoDoGrupo } from "@/config";
+import { EMPRESA, SITE, GARANTIA } from "@/config";
+import { IdentificacaoDoGrupo } from "@/components/CnpjsDoGrupo";
 import { LegalShell } from "@/components/LegalShell";
 import { metadataDaPagina } from "@/lib/seo";
 
@@ -35,7 +36,7 @@ export default function CondicionesDeUso() {
         utilizar Diariamente, tú (&ldquo;usuario&rdquo;) declaras haber leído, comprendido y
         aceptado íntegramente estas Condiciones.
       </p>
-      <p>{identificacaoDoGrupo("es")}</p>
+      <p><IdentificacaoDoGrupo lang="es" /></p>
 
       <h2>1. Qué es Diariamente</h2>
       <p>

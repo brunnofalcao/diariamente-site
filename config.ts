@@ -263,9 +263,10 @@ export const TRACKING = {
 // O Diariamente é um produto da marca Science Play®, operado por um
 // GRUPO de empresas (decisão de Brunno, 26/10/2026). Os textos não ficam
 // presos a um CNPJ: Termos e Política falam em "Science Play" e UMA
-// linha de identificação lista as empresas do grupo. As frases saem das
-// funções abaixo; nenhuma página escreve razão social ou CNPJ à mão
-// (testes/empresas-do-grupo.test.mjs confere).
+// linha de identificação lista as empresas do grupo. As frases são as das
+// funções abaixo; as páginas as exibem por components/CnpjsDoGrupo.tsx,
+// que mantém cada CNPJ inteiro na mesma linha. Nenhuma página escreve
+// razão social ou CNPJ à mão (testes/empresas-do-grupo.test.mjs confere).
 // Razões sociais e CNPJs copiados dos cartões CNPJ. Não inventar número
 // de documento: tem peso jurídico.
 // ---------------------------------------------------------------------
@@ -291,7 +292,11 @@ export const EMPRESA = {
   // Falcão14, que processa o pagamento.
   endereco:
     "SRTVN Quadra 702, Conjunto P, Edifício Radio Center, Asa Norte, Brasília/DF, CEP 70.719-900, Brasil",
-  vigenciaLegal: "Junho de 2026",
+  // "Última atualização" dos Termos e da Política (pt e es). Mudou o texto
+  // de um deles, muda aqui: a cláusula 11 dos Termos e a seção final da
+  // Política prometem a data. Outubro de 2026: a identificação passou a
+  // ser o grupo Science Play (decisão de 26/10/2026).
+  vigenciaLegal: "Outubro de 2026",
 };
 
 type IdiomaLegal = "pt" | "es";
@@ -302,7 +307,8 @@ function emLista(itens: string[], lang: IdiomaLegal): string {
   return `${itens.slice(0, -1).join(", ")} ${lang === "es" ? "y" : "e"} ${itens[itens.length - 1]}`;
 }
 
-/** A linha de identificação aprovada: aparece UMA vez nos Termos e na Política. */
+/** A linha de identificação aprovada: aparece UMA vez nos Termos e na Política
+ *  (exibida por IdentificacaoDoGrupo, em components/CnpjsDoGrupo.tsx). */
 export function identificacaoDoGrupo(lang: IdiomaLegal = "pt"): string {
   const empresas = emLista(
     EMPRESA.grupo.map((e) => `${e.razaoSocial} (CNPJ ${e.cnpj})`),
@@ -313,7 +319,8 @@ export function identificacaoDoGrupo(lang: IdiomaLegal = "pt"): string {
     : `O Diariamente é um produto ${EMPRESA.marca}®, operado pelas empresas do grupo ${EMPRESA.marca}: ${empresas}.`;
 }
 
-/** Rodapé curto: "Science Play® · grupo Science Play · CNPJs a, b e c". */
+/** Rodapé curto: "Science Play® · grupo Science Play · CNPJs a, b e c"
+ *  (exibido por RodapeDoGrupo, em components/CnpjsDoGrupo.tsx). */
 export function rodapeDoGrupo(lang: IdiomaLegal = "pt"): string {
   const cnpjs = emLista(EMPRESA.grupo.map((e) => e.cnpj), lang);
   return `${EMPRESA.marca}® · grupo ${EMPRESA.marca} · CNPJs ${cnpjs}`;
