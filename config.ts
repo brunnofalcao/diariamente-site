@@ -297,6 +297,8 @@ export const EMPRESA = {
   // Política prometem a data. Outubro de 2026: a identificação passou a
   // ser o grupo Science Play (decisão de 26/10/2026).
   vigenciaLegal: "Outubro de 2026",
+  // A mesma data nas páginas em espanhol.
+  vigenciaLegalEs: "Octubre de 2026",
 };
 
 type IdiomaLegal = "pt" | "es";

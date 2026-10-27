@@ -15,7 +15,7 @@ export const metadata = metadataDaPagina("privacidade", "es");
 
 export default function Privacidad() {
   return (
-    <LegalShell lang="es" titulo="Política de Privacidad" atualizado={EMPRESA.vigenciaLegal}>
+    <LegalShell lang="es" titulo="Política de Privacidad" atualizado={EMPRESA.vigenciaLegalEs}>
       <p>
         Esta Política explica cómo tratamos los datos personales en Diariamente. Se aplica a
         todas las personas usuarias, en Brasil y fuera de él, y fue redactada para atender

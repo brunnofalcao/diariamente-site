@@ -27,7 +27,7 @@ export const metadata = metadataDaPagina("termos", "es");
 
 export default function CondicionesDeUso() {
   return (
-    <LegalShell lang="es" titulo="Condiciones de Uso" atualizado={EMPRESA.vigenciaLegal}>
+    <LegalShell lang="es" titulo="Condiciones de Uso" atualizado={EMPRESA.vigenciaLegalEs}>
       <p>
         Estas Condiciones de Uso (&ldquo;Condiciones&rdquo;) rigen el acceso y el uso de
         Diariamente, producto digital compuesto por la aplicación y por el contenido de
