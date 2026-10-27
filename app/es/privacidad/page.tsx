@@ -4,6 +4,8 @@ import { metadataDaPagina } from "@/lib/seo";
 import { caminho } from "@/lib/rotas";
 import { RevisarCookies } from "@/components/RevisarCookies";
 import { Titularidade } from "@/components/Titularidade";
+import { SITE_LANCADO } from "@/config/lancamento";
+import { PrivacidadDaProducao } from "@/components/legais-da-producao/Privacidad";
 
 /* =====================================================================
    POLÍTICA DE PRIVACIDAD · ES
@@ -15,6 +17,8 @@ import { Titularidade } from "@/components/Titularidade";
 export const metadata = metadataDaPagina("privacidade", "es");
 
 export default function Privacidad() {
+  // Standby: o texto da produção de hoje (docs/LANCAMENTO.md).
+  if (!SITE_LANCADO) return <PrivacidadDaProducao />;
   return (
     <LegalShell lang="es" titulo="Política de Privacidad" atualizado={EMPRESA.vigenciaLegalEs}>
       <p>

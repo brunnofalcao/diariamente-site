@@ -9,6 +9,8 @@ import { TRACKING } from "@/config";
  * página: sem o aceite, nenhum desses scripts pode carregar (é o que a
  * Política de Privacidade, seção 8, promete). Como ele só existe no
  * navegador depois do aceite, nada daqui vai no HTML do servidor.
+ * Exceção enquanto o site está em STANDBY: fora de /vendas, o
+ * Consentimento o monta direto, como a produção de hoje.
  *
  * Carrega os scripts só quando TRACKING.ativo === true e o ID existe.
  * Aqui ficam apenas a base e o PageView; os eventos de conversão saem de

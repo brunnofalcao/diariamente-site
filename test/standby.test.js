@@ -600,3 +600,53 @@ test("doc do lançamento existe e explica a chave, /vendas e a trava", () => {
   assert.equal(/[\u2013\u2014]/.test(doc), false, "sem travessão");
   assert.equal(/\bcompra(r|s)?\b/i.test(doc), false, "sem a palavra vetada no texto do site");
 });
+
+/* ----------------- páginas legais e medição em standby ----------------- */
+
+const LEGAIS = [
+  ["termos", "page.tsx", "Termos", "TermosDaProducao"],
+  ["privacidade", "page.tsx", "Privacidade", "PrivacidadeDaProducao"],
+  ["es/privacidad", "page.tsx", "Privacidad", "PrivacidadDaProducao"],
+  ["es/condicionesdeuso", "page.tsx", "CondicionesDeUso", "CondicionesDeUsoDaProducao"],
+];
+
+test("standby: as quatro páginas legais mostram o texto da produção; ligada a chave, o texto do PR #3", () => {
+  for (const [dir, arquivo, modulo, comp] of LEGAIS) {
+    const fonte = fs.readFileSync(arq("app", ...dir.split("/"), arquivo), "utf8");
+    assert.match(fonte, new RegExp(`if \\(!SITE_LANCADO\\) return <${comp} />;`), dir);
+    const pagina = (lancadoNoBuild) => carregarTs(arq("app", ...dir.split("/"), arquivo), {
+      "@/lib/seo": { metadataDaPagina: () => ({}) }, "@/config": C, "@/lib/rotas": R,
+      "@/config/lancamento": { SITE_LANCADO: lancadoNoBuild },
+      [`@/components/legais-da-producao/${modulo}`]: { [comp]: () => React.createElement("main", null, "TEXTO-DA-PRODUCAO") },
+      "@/components/LegalShell": { LegalShell: ({ children }) => React.createElement("main", null, "TEXTO-NOVO", children) },
+      "@/components/Titularidade": { Titularidade: () => null },
+      "@/components/RevisarCookies": { RevisarCookies: () => null },
+      "react/jsx-runtime": jsx,
+    }, { jsx: true }).default;
+    const ver = (F) => renderToStaticMarkup(React.createElement(F));
+    assert.equal(ver(pagina(false)), "<main>TEXTO-DA-PRODUCAO</main>", dir);
+    assert.match(ver(pagina(true)), /^<main>TEXTO-NOVO/, dir);
+    // a cópia da produção não tem a seção nova do PR #3
+    const producao = fs.readFileSync(arq("components", "legais-da-producao", `${modulo}.tsx`), "utf8");
+    assert.equal(/Titularidade|RevisarCookies|metadataDaPagina|export default/.test(producao), false, modulo);
+    assert.match(producao, /<IdentificacaoDoGrupo lang="(pt|es)" \/>/, modulo);
+  }
+});
+
+test("standby: fora de /vendas, GA4 e Pixel montam direto e sem aviso, como na produção; em /vendas e com a chave ligada, só com o aceite", () => {
+  const consentimento = (lancadoNoBuild, pathname) => carregarTs(arq("components", "Consentimento.tsx"), {
+    react: React, "react/jsx-runtime": jsx,
+    "next/navigation": { usePathname: () => pathname },
+    "@/components/Tracking": { Tracking: () => React.createElement("i", null, "MEDICAO") },
+    "@/lib/rotas": R, "@/lib/mercado": M,
+    "@/lib/cookies": { lerEscolha: () => null, gravarEscolha: () => {}, apagarCookiesDeMedicao: () => {} },
+    "@/config/lancamento": { SITE_LANCADO: lancadoNoBuild },
+  }, { jsx: true }).Consentimento;
+  const ver = (lancadoNoBuild, pathname) =>
+    renderToStaticMarkup(React.createElement(consentimento(lancadoNoBuild, pathname), null, "PAGINA"));
+  for (const p of ["/", "/es", "/pt-pt", "/estudante", "/privacidade", "/obrigado-aprovado"]) {
+    assert.equal(ver(false, p), "<i>MEDICAO</i>PAGINA", p);
+  }
+  for (const p of ["/vendas", "/vendas/es", "/vendas/pt-pt"]) assert.equal(ver(false, p), "PAGINA", p);
+  for (const p of ["/", "/estudante", "/privacidade"]) assert.equal(ver(true, p), "PAGINA", p);
+});

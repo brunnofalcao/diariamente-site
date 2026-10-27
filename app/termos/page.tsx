@@ -2,10 +2,14 @@ import { metadataDaPagina } from "@/lib/seo";
 import { EMPRESA, SITE, GARANTIA } from "@/config";
 import { LegalShell } from "@/components/LegalShell";
 import { Titularidade } from "@/components/Titularidade";
+import { SITE_LANCADO } from "@/config/lancamento";
+import { TermosDaProducao } from "@/components/legais-da-producao/Termos";
 
 export const metadata = metadataDaPagina("termos", "pt");
 
 export default function Termos() {
+  // Standby: o texto da produção de hoje (docs/LANCAMENTO.md).
+  if (!SITE_LANCADO) return <TermosDaProducao />;
   return (
     <LegalShell lang="pt" titulo="Termos de Uso" atualizado={EMPRESA.vigenciaLegal}>
       <p>

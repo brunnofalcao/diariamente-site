@@ -20,6 +20,11 @@ const PERMITIDOS = new Set([
   "app/privacidade/page.tsx",
   "app/es/condicionesdeuso/page.tsx",
   "app/es/privacidad/page.tsx",
+  // Texto da produção servido em standby (config/lancamento.ts); sai no lançamento.
+  "components/legais-da-producao/Termos.tsx",
+  "components/legais-da-producao/Privacidade.tsx",
+  "components/legais-da-producao/CondicionesDeUso.tsx",
+  "components/legais-da-producao/Privacidad.tsx",
 ]);
 
 function arquivos(dir) {

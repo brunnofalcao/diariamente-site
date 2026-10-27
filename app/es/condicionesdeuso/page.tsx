@@ -2,6 +2,8 @@ import { EMPRESA, SITE, GARANTIA } from "@/config";
 import { LegalShell } from "@/components/LegalShell";
 import { Titularidade } from "@/components/Titularidade";
 import { metadataDaPagina } from "@/lib/seo";
+import { SITE_LANCADO } from "@/config/lancamento";
+import { CondicionesDeUsoDaProducao } from "@/components/legais-da-producao/CondicionesDeUso";
 
 /* =====================================================================
    /es/condicionesdeuso
@@ -27,6 +29,8 @@ import { metadataDaPagina } from "@/lib/seo";
 export const metadata = metadataDaPagina("termos", "es");
 
 export default function CondicionesDeUso() {
+  // Standby: o texto da produção de hoje (docs/LANCAMENTO.md).
+  if (!SITE_LANCADO) return <CondicionesDeUsoDaProducao />;
   return (
     <LegalShell lang="es" titulo="Condiciones de Uso" atualizado={EMPRESA.vigenciaLegalEs}>
       <p>

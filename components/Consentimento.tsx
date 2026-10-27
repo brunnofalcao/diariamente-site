@@ -4,6 +4,8 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { usePathname } from "next/navigation";
 import { Tracking } from "@/components/Tracking";
 import { caminho } from "@/lib/rotas";
+import { ehVitrine } from "@/lib/mercado";
+import { SITE_LANCADO } from "@/config/lancamento";
 import { apagarCookiesDeMedicao, gravarEscolha, lerEscolha, type Escolha } from "@/lib/cookies";
 import type { Lang } from "@/lib/i18n";
 
@@ -29,6 +31,13 @@ import type { Lang } from "@/lib/i18n";
    impede rolar, ler ou clicar. Recusar e Aceitar têm o mesmo tamanho e
    ficam lado a lado.
 
+   STANDBY (config/lancamento.ts): fora de /vendas, o site fica como a
+   produção de hoje, sem aviso e com GA4 e Pixel montados direto (o
+   contexto vale "aceito", então o Purchase das páginas de obrigado
+   também sai). O aviso só aparece em /vendas/*, como vai ao ar. Ligada
+   a chave, vale o aviso em todas as páginas. Decisão de Meta e Analytics
+   fica para depois do lançamento (dono, 27/10/2026).
+
    Acessibilidade de um aviso fixo no rodapé da tela:
    - Ele vem ANTES da página no documento (mesmo aparecendo embaixo): quem
      navega por teclado ou leitor de tela encontra o aviso primeiro, e não
@@ -51,6 +60,7 @@ export function useConsentimento(): Estado {
 }
 
 export function Consentimento({ children }: { children: React.ReactNode }) {
+  const comoAProducao = !SITE_LANCADO && !ehVitrine(usePathname() ?? "/");
   const [estado, setEstado] = useState<Estado>("carregando");
 
   useEffect(() => {
@@ -65,6 +75,15 @@ export function Consentimento({ children }: { children: React.ReactNode }) {
     if (escolha === "recusado") apagarCookiesDeMedicao();
     setEstado(escolha);
   }, []);
+
+  if (comoAProducao) {
+    return (
+      <ContextoConsentimento.Provider value="aceito">
+        <Tracking />
+        {children}
+      </ContextoConsentimento.Provider>
+    );
+  }
 
   return (
     <ContextoConsentimento.Provider value={estado}>

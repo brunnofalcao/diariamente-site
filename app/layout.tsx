@@ -132,7 +132,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         {/* GA4 e Pixel da Meta NÃO entram aqui direto: o Consentimento mostra
             o aviso de cookies e só monta o <Tracking /> depois do Aceitar.
-            Recusar, ou não escolher, não carrega nada (política, seção 8). */}
+            Recusar, ou não escolher, não carrega nada (política, seção 8).
+            Em STANDBY, fora de /vendas, monta direto, como a produção de hoje. */}
         <Consentimento>{children}</Consentimento>
       </body>
     </html>

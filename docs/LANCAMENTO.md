@@ -40,7 +40,9 @@ não muda nada.
 | `/api/estudante/solicitar` | a da produção (sem o 503) | 503 enquanto o estudante estiver fechado |
 | `/estudante/ativar` | volta sempre para `/estudante` | abre a oferta oficial com o cupom |
 | `/sobre` | as linhas de preço da produção (R$ 197, R$ 137,90) | o preço de `config/pricing.ts` |
-| obrigado, legais | iguais nos dois estados, e diferentes da produção atual em: ver "O que muda para o público já no merge em standby" | iguais |
+| Termos, Política, Condiciones, Privacidad | **o texto da produção** (`components/legais-da-producao`) | o texto novo do PR #3 |
+| aviso de cookies, GA4 e Pixel | fora de `/vendas`, **como a produção**: sem aviso, medição direta; em `/vendas/*`, o aviso | o aviso em todas as páginas |
+| obrigado | iguais nos dois estados (diferenças da produção atual em "O que muda para o público já no merge em standby") | iguais |
 
 `/vendas/*` em standby:
 
@@ -66,28 +68,18 @@ não muda nada.
 
 ## O que muda para o público já no merge em standby
 
-O standby mantém as homes, a `/estudante`, a `/sobre` e as rotas como a
-produção (main) mostra hoje. O que ainda muda para quem visita, já no
-merge, com a chave desligada:
+O standby mantém as homes, a `/estudante`, a `/sobre`, as páginas legais,
+a medição (GA4 e Pixel sem aviso de cookies, fora de `/vendas`) e as rotas
+como a produção (main) mostra hoje. Atenção: a Política publicada (seção 8)
+diz que medição e publicidade só são ativadas com consentimento, dado no
+aviso do primeiro acesso; a produção de hoje já não cumpre isso, e o standby
+mantém como está (decisão do dono: Meta e Analytics ficam para depois). Para
+ligar o aviso já no standby, tirar o ramo `comoAProducao` de
+`components/Consentimento.tsx`. Depois do lançamento, apagar
+`components/legais-da-producao/`.
 
-- **Páginas legais** (Termos, Política de Privacidade, Condiciones de uso e
-  Privacidad): o texto do PR #3. Seção 1 nova, "Quem é a titular do
-  Diariamente App" (a identificação do grupo Science Play), as seções
-  seguintes renumeradas e a garantia e os cookies reescritos.
-  "Última atualização: Outubro de 2026" continua. Para manter o texto da
-  produção até o lançamento, seria preciso servir em standby o corpo das
-  quatro páginas de origin/main (não foi feito).
-- **Aviso de cookies** em todas as páginas públicas: GA4, Pixel da Meta e o
-  Purchase das páginas de obrigado só rodam depois do "Aceitar". Na
-  produção eles carregam sem aviso, embora a Política publicada (seção 8)
-  já diga que só são ativados com consentimento, manifestado no aviso do
-  primeiro acesso. Ficou de propósito: voltar ao jeito da produção poria
-  medição sem consentimento, contra a própria Política e a LGPD (e o RGPD
-  em /pt-pt e /es-es). Efeito: a medição da lista de espera e o Purchase de
-  reserva (o oficial é o da Hotmart) passam a contar só quem aceita. Para
-  voltar ao jeito da produção em standby: em `components/Consentimento.tsx`,
-  quando `!SITE_LANCADO && !ehVitrine(pathname)`, montar o `<Tracking />`
-  direto, sem o aviso, e entregar o contexto como "aceito".
+O que ainda muda para quem visita, já no merge, com a chave desligada:
+
 - **Fontes**: Literata e Inter passam a carregar. Na produção a folha do
   Google Fonts fica em `media="print"` e não chega à tela.
 - **/estudante**, de propósito, em três pontos do texto: sem a promessa do
