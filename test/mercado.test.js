@@ -248,9 +248,11 @@ test("mercados fora do Brasil: sem lançamento e todos fechados até o dono conf
   assert.equal(P.vendeAgora("br"), true);
 });
 
-test("texto do lançamento: preço dos 3 primeiros anos e depois o cheio, só à vista", () => {
+test("texto do lançamento: preço dos 3 primeiros anos, o desconto sobre o oficial e depois o cheio, só à vista", () => {
   const t = P.MERCADOS.br.textos;
-  assert.equal(t.lancamentoRegra, "nos {anos} primeiros anos. Depois, {cheio} por ano.");
+  assert.equal(t.lancamentoRegra, "nos {anos} primeiros anos, {pct}% a menos que o preço oficial. Depois, {cheio} por ano.");
+  assert.equal(t.ancora, "Preço oficial");
+  assert.equal(t.prazo, "Preço de lançamento só até");
   assert.equal(t.pagamentoLancamento, "Pagamento à vista");
   // parcelado com acréscimo (o checkout da fhrttdh8 parcela com acréscimo),
   // separado do equivalente mensal da manchete

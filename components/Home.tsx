@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { TEASER, ATIVOS, TELA_PROPORCAO, cld, dicionario, type Lang, type Dict } from "@/lib/i18n";
+import { TEASER, ATIVOS, TELA_PROPORCAO, FOTO_LARGURAS, FOTO_FALLBACK, FOTO_PROPORCAO, dicionario, type Lang, type Dict } from "@/lib/i18n";
 import { caminho } from "@/lib/rotas";
 import { SITE, ESTUDANTE } from "@/config";
 import { registrarInicioDeCheckout } from "@/lib/medicao";
@@ -17,6 +17,13 @@ import { formatar, precoFinal, precoCheio, linkCheckout, precoEstudante, pendent
    Tokens Brandbook 5.0. Estilos inline + um bloco de media
    queries (nada depende de globals.css).
    ───────────────────────────────────────────────────────────── */
+
+/** Texto só para leitor de tela: o rótulo "Preço oficial" do valor
+    riscado na barra fixa e no CTA final (<s> não é anunciado). */
+const somenteLeitor: React.CSSProperties = {
+  position: "absolute", width: 1, height: 1, padding: 0, margin: -1,
+  overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap", border: 0,
+};
 
 const C = {
   s0: "#0A0E0E", s1: "#111616", s2: "#181D1D",
@@ -141,11 +148,16 @@ const Shield = ({ s = 20 }: { s?: number }) => (
  * com a venda fechada, para o dono revisar texto e preço antes de abrir;
  * com a venda fechada, nenhum botão abre o pagamento.
  *
- * `vitrine`: o site de vendas em standby (/vendas, /vendas/es...,
- * components/PaginaDoMercado.tsx). A página é a mesma do lançamento; só
- * os links para outro mercado (PT | ES e o seletor de país) levam ao
- * /vendas daquele mercado, e não à home pública, que ainda é a lista de
- * espera.
+ * `vitrine`: o site de vendas em standby (/vendas, /es/vendas,
+ * /es-es/vendas, /pt-pt/vendas, /mundo/vendas;
+ * components/PaginaDoMercado.tsx). A página é a mesma do lançamento, com
+ * a venda do mercado ABERTA, mesmo onde vendaAberta ainda é false (la,
+ * es, pt e rw): o bloco de oferta, a barra fixa e o CTA final mostram o
+ * preço, e os botões abrem o checkout de verdade da Hotmart (decisão do
+ * dono, 27/10/2026: "Já pode colocar o link do checkout. Quero testar a
+ * jornada inteira."). Os links para outro mercado (PT | ES e o seletor
+ * de país) levam à vitrine daquele mercado, com o idioma na frente
+ * (/es/vendas), e não à home pública, que ainda é a lista de espera.
  */
 export function Home({ lang, mercado, momento, previa = false, vitrine = false }: { lang: Lang; mercado?: Mercado; momento?: number; previa?: boolean; vitrine?: boolean }) {
   // Mercado define moeda e checkout; idioma define o texto. São eixos
@@ -177,15 +189,17 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
     return () => clearTimeout(relogio);
   }, [mkt, agora]);
   // Venda aberta e link de verdade. Sem isso, os botões levam ao bloco,
-  // que mostra a lista de espera do mercado. Na prévia com a venda
-  // fechada, o bloco mostra o preço, mas nenhum botão abre o pagamento.
-  const vende = oferta.vendaAberta || previa;
+  // que mostra a lista de espera do mercado. Na vitrine, a venda de todo
+  // mercado aparece aberta, com o checkout de verdade. Na prévia com a
+  // venda fechada, o bloco mostra o preço, mas nenhum botão abre o
+  // pagamento.
+  const vendaVisivel = oferta.vendaAberta || vitrine;
+  const vende = vendaVisivel || previa;
   const linkFinal = linkCheckout(mkt, agora);
-  // /vendas/* em standby, antes de DM_WEBHOOK_V2_OK=1 (DM_VENDA_LIBERADA,
-  // next.config.js): o botão final fica com o mesmo texto e o mesmo visual,
-  // mas leva ao bloco de preço em vez de abrir o checkout.
-  const checkoutBloqueado = vitrine && process.env.DM_VENDA_LIBERADA !== "1";
-  const semLink = pendente(linkFinal) || !oferta.vendaAberta || checkoutBloqueado;
+  const semLink = pendente(linkFinal) || !vendaVisivel;
+  // Preço oficial riscado ao lado do preço de lançamento (barra fixa e CTA
+  // final), na mesma unidade do preço ao lado. null fora do lançamento.
+  const cheio = precoCheio(mkt, agora);
   // O <html lang> vive no layout raiz, que e servidor e nao conhece a
   // rota. Sincronizamos aqui: leitor de tela e buscador precisam do
   // idioma certo no elemento raiz, nao so num div interno.
@@ -198,7 +212,8 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
   // mandaria a pessoa de volta.
   const parPt: Mercado = mkt === "es" ? "pt" : mkt === "rw" ? "rw" : mkt === "pt" ? "pt" : "br";
   const parEs: Mercado = mkt === "pt" || mkt === "es" ? "es" : "la";
-  // No site de vendas em standby (/vendas/*), PT | ES fica dentro de /vendas.
+  // No site de vendas em standby (a vitrine), PT | ES fica na vitrine:
+  // /vendas e /es/vendas, com o idioma na frente.
   const enderecoDo = (m: Mercado) => (vitrine ? VENDAS_DO_MERCADO[m] : `/?mercado=${m}`);
 
   const [typed, setTyped] = useState("");
@@ -520,9 +535,15 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
               </div>
             </div>
             <div style={{ minWidth: 0 }}>
+              {/* Foto da manhã do idioma da página (lib/i18n.ts, FOTO_*): WebP
+                  do próprio domínio e JPEG de reserva. width e height (4:5)
+                  reservam o espaço antes de a imagem chegar. */}
               <div style={{ borderRadius: 16, overflow: "hidden", border: `1px solid ${C.line}`, aspectRatio: "4/5", background: C.s1 }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={cld(IMG.lifestyle, "f_auto,q_auto,w_900")} srcSet={[600, 900, 1200].map((w) => `${cld(IMG.lifestyle, `f_auto,q_auto,w_${w}`)} ${w}w`).join(", ")} sizes="(min-width:900px) 520px, 92vw" alt={t.photoAlt} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                <picture style={{ display: "block", width: "100%", height: "100%" }}>
+                  <source type="image/webp" srcSet={FOTO_LARGURAS.map((w) => `${IMG.manha}-${w}.webp ${w}w`).join(", ")} sizes="(min-width:900px) 520px, 92vw" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`${IMG.manha}-${FOTO_FALLBACK}.jpg`} alt={t.photoAlt} width={FOTO_PROPORCAO.largura} height={FOTO_PROPORCAO.altura} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                </picture>
               </div>
             </div>
           </div>
@@ -800,7 +821,17 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
               ) : (
                 <a href="#preco" style={btnPrimary}>{vende ? oferta.textos.botao : oferta.espera.botao}</a>
               )}
-              <span style={{ fontSize: 13, fontWeight: 500, color: C.n400 }}>
+              {/* balance: com o preço riscado, a linha passa de 375 px e
+                  quebra em duas do mesmo tamanho, sem "dias" sozinho. */}
+              <span style={{ fontSize: 13, fontWeight: 500, color: C.n400, textWrap: "balance" as never }}>
+                {/* No lançamento, o preço oficial riscado ao lado, por ano
+                    como o de lançamento ("R$ 149,90 R$ 99,98 por um ano"). */}
+                {vende && cheio && (
+                  <>
+                    {oferta.textos.ancora && <span style={somenteLeitor}>{oferta.textos.ancora}: </span>}
+                    <s style={{ textDecorationThickness: "1.5px" }}>{cheio}</s>{" "}
+                  </>
+                )}
                 {vende ? `${formatar(mkt, precoFinal(mkt, agora))} ${oferta.textos.nota}` : oferta.espera.nota}
               </span>
             </div>
@@ -877,10 +908,14 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
             {vende ? (
               <>
                 <div style={{ fontFamily: C.serif, fontSize: 20, lineHeight: 1 }}>
-                  {precoCheio(mkt, agora) && (
-                    <s style={{ fontSize: 13, color: C.n400, fontFamily: "var(--font-sans)", marginRight: 6 }}>
-                      {precoCheio(mkt, agora)}
-                    </s>
+                  {/* Preço oficial riscado, por ano como o de lançamento. */}
+                  {cheio && (
+                    <>
+                      {oferta.textos.ancora && <span style={somenteLeitor}>{oferta.textos.ancora}: </span>}
+                      <s style={{ fontSize: 13, color: C.n400, fontFamily: "var(--font-sans)", marginRight: 6 }}>
+                        {cheio}
+                      </s>
+                    </>
                   )}
                   {formatar(mkt, precoFinal(mkt, agora))}
                 </div>

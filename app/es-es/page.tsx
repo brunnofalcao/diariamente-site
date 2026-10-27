@@ -10,7 +10,7 @@ import { metadataDoMercado } from "@/lib/seo";
    vendaAberta: true. Para revisar a página de vendas antes disso:
    /es-es/embreve (prévia noindex, com a chave de lançamento ligada).
    Em standby (config/lancamento.ts), é a lista de espera de qualquer
-   jeito; o que vai ao ar: /vendas/es-es.
+   jeito; o que vai ao ar: /es-es/vendas.
    ===================================================================== */
 
 export const revalidate = 3600;

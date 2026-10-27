@@ -31,10 +31,12 @@ import type { Lang } from "@/lib/i18n";
    impede rolar, ler ou clicar. Recusar e Aceitar têm o mesmo tamanho e
    ficam lado a lado.
 
-   STANDBY (config/lancamento.ts): fora de /vendas, o site fica como a
+   STANDBY (config/lancamento.ts): fora da vitrine, o site fica como a
    produção de hoje, sem aviso e com GA4 e Pixel montados direto (o
    contexto vale "aceito", então o Purchase das páginas de obrigado
-   também sai). O aviso só aparece em /vendas/*, como vai ao ar. Ligada
+   também sai). O aviso só aparece na vitrine (/vendas, /es/vendas,
+   /es-es/vendas, /pt-pt/vendas, /mundo/vendas; lib/mercado.ts,
+   ehVitrine), como vai ao ar. Ligada
    a chave, vale o aviso em todas as páginas. Decisão de Meta e Analytics
    fica para depois do lançamento (dono, 27/10/2026).
 
@@ -136,11 +138,11 @@ html{scroll-padding-bottom:calc(var(--dm-ck-h,220px) + 32px + env(safe-area-inse
 `;
 
 /** "/es", "/es/...", "/es-es" e "/es-es/..." são espanhol. "/estudante" NÃO é (por isso não basta startsWith("/es")).
-    No site de vendas em standby, "/vendas/es" e "/vendas/es-es" também são. */
+    A vitrine em espanhol (/es/vendas e /es-es/vendas) cai nessa regra: o idioma vem primeiro no endereço. */
 function idiomaDaRota(pathname: string | null): Lang {
   const p = pathname ?? "/";
   const es = (base: string) => p === base || p.startsWith(base + "/");
-  return es("/es") || es("/es-es") || es("/vendas/es") || es("/vendas/es-es") ? "es" : "pt";
+  return es("/es") || es("/es-es") ? "es" : "pt";
 }
 
 function AvisoCookies({ onEscolha }: { onEscolha: (e: Escolha) => void }) {

@@ -173,7 +173,8 @@ export function metadataDaPagina(chave: Chave, lang: Lang): Metadata {
  * hreflang. Usado nas prévias do dono (/pt-pt/embreve e /es-es/embreve,
  * com a chave de lançamento ligada). Canonical apontando para "/" aqui
  * faria o Google tratar a home como cópia da prévia. O site de vendas em
- * standby (/vendas/*) usa metadataDaVitrine, logo abaixo.
+ * standby (a vitrine, /vendas, /es/vendas...) usa metadataDaVitrine, logo
+ * abaixo.
  */
 export function metadataPrivada(chave: Chave, lang: Lang): Metadata {
   const { title, description } = TEXTOS[chave][lang];
@@ -281,22 +282,26 @@ export function metadataDoMercado(mercado: MercadoComHome, lancado: boolean = SI
 }
 
 /* =====================================================================
-   SITE DE VENDAS EM STANDBY · /vendas, /vendas/es, /vendas/es-es,
-   /vendas/pt-pt e /vendas/mundo
+   SITE DE VENDAS EM STANDBY (a vitrine) · /vendas, /es/vendas,
+   /es-es/vendas, /pt-pt/vendas e /mundo/vendas
    ---------------------------------------------------------------------
-   Título e descrição que a home do mercado vai ter no lançamento, e:
+   Título e descrição de VENDA que a home do mercado vai ter quando a
+   venda dele abrir: na vitrine todo mercado aparece com a venda aberta
+   (components/PaginaDoMercado.tsx), inclusive la e es, cuja home
+   pública ainda é a lista de espera. O resto do mundo usa os do Brasil
+   (a "/" que ele divide). E:
      - noindex, nofollow: endereço de trabalho, não de busca;
      - canonical para si mesma e SEM hreflang. O layout raiz declara
        canonical "/" e o Next mescla isso nas páginas filhas: sem esta
-       linha, /vendas diria ao Google que é cópia da home pública.
-   Nenhuma página pública aponta para /vendas (sitemap, hreflang e
-   canonical vêm de lib/rotas.ts e de HREFLANG, sem /vendas).
+       linha, a vitrine diria ao Google que é cópia da home pública.
+   Nenhuma página pública aponta para a vitrine (sitemap, hreflang e
+   canonical vêm de lib/rotas.ts e de HREFLANG, sem ela).
    ===================================================================== */
 export function metadataDaVitrine(mercado: Mercado): Metadata {
-  const doLancamento = metadataDoMercado(mercado === "rw" ? "br" : mercado, true);
+  const { title, description } = TEXTOS_DO_MERCADO[mercado === "rw" ? "br" : mercado].venda;
   return {
-    title: doLancamento.title,
-    description: doLancamento.description,
+    title,
+    description,
     alternates: { canonical: urlAbsoluta(VENDAS_DO_MERCADO[mercado]) },
     robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
   };

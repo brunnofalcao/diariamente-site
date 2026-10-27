@@ -6,7 +6,7 @@ import { metadataDoMercado } from "@/lib/seo";
    ---------------------------------------------------------------------
    STANDBY (chave de lançamento desligada, config/lancamento.ts): "/"
    mostra a lista de espera ("Em breve"), como antes do lançamento, e o
-   site de vendas fica em /vendas (app/vendas/page.tsx).
+   site de vendas fica na vitrine, /vendas (app/vendas/page.tsx).
 
    Com a chave ligada, "/" é o site de vendas. Preço, oferta de
    lançamento e link do checkout saem de config/pricing.ts (mercado br).

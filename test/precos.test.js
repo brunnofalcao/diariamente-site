@@ -25,7 +25,9 @@ test("até 16/11/2026 (Brasília): R$ 99,98 por ano, R$ 8,33/mês, oferta de lan
     assert.equal(/12x/.test(P.pagamentoAgora("br", agora)), false);
     assert.equal(txt(P.precoCheio("br", agora)), "R$ 149,90");
     assert.equal(P.percentualDoLancamento("br", agora), 33);
-    assert.equal(txt(P.regraDoLancamento("br", agora)), "nos 3 primeiros anos. Depois, R$ 149,90 por ano.");
+    assert.equal(txt(P.regraDoLancamento("br", agora)), "nos 3 primeiros anos, 33% a menos que o preço oficial. Depois, R$ 149,90 por ano.");
+    // a /estudante usa a regra sem o percentual (components/BlocoPreco.tsx)
+    assert.equal(txt(P.regraDoLancamento("br", agora, { semPercentual: true })), "nos 3 primeiros anos. Depois, R$ 149,90 por ano.");
   }
   assert.equal(P.dataDoLancamento("br"), "16 de novembro");
 });
@@ -96,4 +98,23 @@ test("estudante: o desconto do cupom deixa o preço exato em R$ 89,90 ou abaixo,
   assert.ok(exato <= 8990 && Math.round(exato) === 8990, String(exato));
   assert.equal(P.precoEstudante(), 89.9);
   assert.equal(P.porMesEstudante(), 7.49);
+});
+
+test("regra do lançamento: o {pct} sai da conta; sem desconto de 1% ou mais, o trecho do percentual some", () => {
+  const br = P.MERCADOS.br;
+  const original = br.lancamento.anual;
+  try {
+    // 10% a menos: R$ 134,91 sobre R$ 149,90
+    br.lancamento.anual = 134.91;
+    assert.equal(P.percentualDoLancamento("br", ANTES), 10);
+    assert.equal(txt(P.regraDoLancamento("br", ANTES)), "nos 3 primeiros anos, 10% a menos que o preço oficial. Depois, R$ 149,90 por ano.");
+    // menos de 1% de desconto: nenhum "0% a menos"
+    br.lancamento.anual = 149.0;
+    assert.equal(P.percentualDoLancamento("br", ANTES), null);
+    assert.equal(txt(P.regraDoLancamento("br", ANTES)), "nos 3 primeiros anos. Depois, R$ 149,90 por ano.");
+  } finally {
+    br.lancamento.anual = original;
+  }
+  // nenhum percentual escrito à mão nos textos do config
+  assert.equal(/\d+\s*%/.test(JSON.stringify(P.MERCADOS)), false);
 });

@@ -9,7 +9,7 @@ import { metadataDoMercado } from "@/lib/seo";
    como antes da virada. Para abrir a venda: em config/pricing.ts,
    mercado la, vendaAberta: true (a trava do build exige o link do plano).
    Em standby (chave de lançamento desligada, config/lancamento.ts), é a
-   lista de espera de qualquer jeito; o que vai ao ar: /vendas/es.
+   lista de espera de qualquer jeito; o que vai ao ar: /es/vendas.
    ===================================================================== */
 
 export const revalidate = 3600;

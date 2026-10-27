@@ -10,11 +10,14 @@ import { metadataDaVitrine } from "@/lib/seo";
    preço, oferta, link e botões (config/pricing.ts, mercado br).
 
    noindex, nofollow, fora do sitemap e sem hreflang (metadataDaVitrine).
-   Os links para outro mercado ficam dentro de /vendas. Ligada a chave, o
-   middleware redireciona este endereço para "/".
+   Os links para outro mercado ficam na vitrine, com o idioma na frente
+   (/es/vendas, /es-es/vendas, /pt-pt/vendas; lib/mercado.ts,
+   VENDAS_DO_MERCADO). Ligada a chave, o middleware redireciona este
+   endereço para "/".
 
-   O botão abre o checkout de verdade da Hotmart: pagar por aqui antes do
-   passo (a) do LEIA-ME (webhook do app) deixa a pessoa sem conta.
+   O botão abre o checkout de verdade da Hotmart: até 16/11/2026, a
+   oferta de lançamento (lf63bgdd). Decisão do dono, 27/10/2026: "Já
+   pode colocar o link do checkout. Quero testar a jornada inteira."
    ===================================================================== */
 
 // Mesma cadência das homes: o preço de lançamento sai sozinho no dia

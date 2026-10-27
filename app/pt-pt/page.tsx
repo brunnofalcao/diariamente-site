@@ -11,7 +11,7 @@ import { metadataDoMercado } from "@/lib/seo";
    exige o link do plano EUR). Para revisar o bloco de 29,99 € antes
    disso: /pt-pt/embreve (prévia noindex, com a chave de lançamento
    ligada). Em standby (config/lancamento.ts), é a lista de espera de
-   qualquer jeito; o que vai ao ar: /vendas/pt-pt.
+   qualquer jeito; o que vai ao ar: /pt-pt/vendas.
    ===================================================================== */
 
 export const revalidate = 3600;

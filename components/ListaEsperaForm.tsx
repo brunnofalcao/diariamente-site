@@ -105,13 +105,13 @@ export function ListaEsperaForm({
   botao?: string;
   /** Motivo da coleta e confirmação, quando não é a abertura do produto. */
   textos?: { legal1?: string; okT?: string; okD?: string };
-  /** Site de vendas em standby (/vendas/*): o texto que vai ao ar. */
+  /** Site de vendas em standby (a vitrine, lib/mercado.ts): o texto que vai ao ar. */
   vitrine?: boolean;
 }) {
   const o = MERCADOS[mercado];
   const lang = o.idioma;
   // Português de Portugal só no que vai ao ar (chave de lançamento ligada,
-  // ou /vendas/*). Em standby, a lista de espera de /pt-pt fica em
+  // ou a vitrine). Em standby, a lista de espera de /pt-pt fica em
   // português do Brasil, como na produção.
   const ptPT = o.locale === "pt-PT" && (SITE_LANCADO || vitrine);
   const t = { ...(ptPT ? T.ptPT : T[lang]), ...(textos || {}) };

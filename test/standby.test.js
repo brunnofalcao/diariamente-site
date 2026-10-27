@@ -1,7 +1,10 @@
 // Testes do STANDBY do site de vendas (decisão do dono, 27/10/2026):
 // a chave de lançamento (config/lancamento.ts, DM_SITE_LANCADO), o
-// roteamento das homes e de /vendas, o noindex, o sitemap, os
-// redirecionamentos das prévias antigas e a trava do build em standby.
+// roteamento das homes e da vitrine (/vendas, /es/vendas, /es-es/vendas,
+// /pt-pt/vendas, /mundo/vendas), o noindex, o sitemap, os
+// redirecionamentos das prévias e dos endereços antigos, todos os
+// mercados com a venda aberta e o checkout de verdade na vitrine, o preço
+// oficial riscado e a trava do build em standby.
 // Rodar com: npm test   (ou node --test test/*.test.js)
 const test = require("node:test");
 const assert = require("node:assert/strict");
@@ -143,52 +146,91 @@ test("páginas internas abrem como foram pedidas nos dois estados (obrigado, leg
   }
 });
 
-/* --------------------------- standby: /vendas --------------------------- */
+/* --------------------------- standby: a vitrine --------------------------- */
 
-test("os cinco endereços de /vendas, um por mercado", () => {
-  assert.deepEqual(M.VENDAS_DO_MERCADO, {
-    br: "/vendas", la: "/vendas/es", es: "/vendas/es-es", pt: "/vendas/pt-pt", rw: "/vendas/mundo",
-  });
-  assert.equal(M.ehVitrine("/vendas"), true);
-  assert.equal(M.ehVitrine("/vendas/es-es"), true);
-  assert.equal(M.ehVitrine("/vendasx"), false);
-  assert.equal(M.ehVitrine("/"), false);
-});
+const VITRINE_NOVA = { br: "/vendas", la: "/es/vendas", es: "/es-es/vendas", pt: "/pt-pt/vendas", rw: "/mundo/vendas" };
+const VITRINE_VELHA = { "/vendas/es": "/es/vendas", "/vendas/es-es": "/es-es/vendas", "/vendas/pt-pt": "/pt-pt/vendas", "/vendas/mundo": "/mundo/vendas" };
 
-test("standby: /vendas/* abre como foi pedido, de qualquer país, sem cookie nem reescrita", () => {
-  for (const pathname of Object.values(M.VENDAS_DO_MERCADO)) {
-    for (const x of [{ pais: "BR" }, { pais: "PT" }, { pais: "US" }, { cookie: "es", pais: "MX" }, { userAgent: GOOGLEBOT }]) {
-      assert.equal(standby({ pathname, ...x }).tipo, "seguir", `${pathname} ${JSON.stringify(x)}`);
-    }
+test("os cinco endereços da vitrine, um por mercado, com o idioma na frente", () => {
+  assert.deepEqual(M.VENDAS_DO_MERCADO, VITRINE_NOVA);
+  for (const caminho of Object.values(VITRINE_NOVA)) {
+    assert.equal(M.ehVitrine(caminho), true, caminho);
+    assert.equal(M.ehVitrine(caminho + "/qualquer"), true, caminho);
+    assert.equal(M.ehVitrine(caminho + "x"), false, caminho);
+  }
+  // nenhum endereço público é vitrine
+  for (const p of [
+    "/", "/es", "/es-es", "/pt-pt", "/mundo", "/estudante", "/es/estudiantes", "/sobre", "/es/acerca-de",
+    "/termos", "/privacidade", "/es/privacidad", "/es/condicionesdeuso", "/obrigado", "/obrigado-aprovado",
+    "/embreve", "/es/embreve", "/vendasx", "/es/vendasx",
+  ]) {
+    assert.equal(M.ehVitrine(p), false, p);
   }
 });
 
-test("standby: ?mercado= dentro de /vendas fica em /vendas (sem gravar cookie)", () => {
-  assert.deepEqual(standby({ pathname: "/vendas", busca: "?mercado=la" }), { tipo: "redirecionar", destino: "/vendas/es", vary: false });
-  assert.deepEqual(standby({ pathname: "/vendas/es", busca: "?mercado=pt&utm_source=ig" }), { tipo: "redirecionar", destino: "/vendas/pt-pt?utm_source=ig", vary: false });
-  assert.deepEqual(standby({ pathname: "/vendas/pt-pt", busca: "?mercado=es" }), { tipo: "redirecionar", destino: "/vendas/es-es", vary: false });
-  assert.deepEqual(standby({ pathname: "/vendas/es-es", busca: "?mercado=br" }), { tipo: "redirecionar", destino: "/vendas", vary: false });
-  assert.deepEqual(standby({ pathname: "/vendas", busca: "?mercado=rw" }), { tipo: "redirecionar", destino: "/vendas/mundo", vary: false });
+test("standby: a vitrine abre como foi pedida, de qualquer país, sem cookie nem reescrita", () => {
+  for (const pathname of Object.values(M.VENDAS_DO_MERCADO)) {
+    for (const x of [{ pais: "BR" }, { pais: "PT" }, { pais: "US" }, { cookie: "es", pais: "MX" }, { idiomas: "es-MX" }]) {
+      assert.deepEqual(standby({ pathname, ...x }), { tipo: "seguir", vary: false }, `${pathname} ${JSON.stringify(x)}`);
+    }
+    assert.equal(standby({ pathname, userAgent: GOOGLEBOT }).tipo, "seguir", pathname);
+  }
 });
 
-test("standby: prévias antigas levam ao /vendas do mercado, com utm, até para robô", () => {
-  const casos = { "/embreve": "/vendas", "/es/embreve": "/vendas/es", "/pt-pt/embreve": "/vendas/pt-pt", "/es-es/embreve": "/vendas/es-es" };
+test("standby: PT | ES e ?mercado= dentro da vitrine ficam na vitrine (sem gravar cookie)", () => {
+  assert.deepEqual(standby({ pathname: "/vendas", busca: "?mercado=la" }), { tipo: "redirecionar", destino: "/es/vendas", vary: false });
+  assert.deepEqual(standby({ pathname: "/es/vendas", busca: "?mercado=pt&utm_source=ig" }), { tipo: "redirecionar", destino: "/pt-pt/vendas?utm_source=ig", vary: false });
+  assert.deepEqual(standby({ pathname: "/pt-pt/vendas", busca: "?mercado=es" }), { tipo: "redirecionar", destino: "/es-es/vendas", vary: false });
+  assert.deepEqual(standby({ pathname: "/es-es/vendas", busca: "?mercado=br" }), { tipo: "redirecionar", destino: "/vendas", vary: false });
+  assert.deepEqual(standby({ pathname: "/vendas", busca: "?mercado=rw" }), { tipo: "redirecionar", destino: "/mundo/vendas", vary: false });
+  assert.deepEqual(standby({ pathname: "/mundo/vendas", busca: "?mercado=la" }), { tipo: "redirecionar", destino: "/es/vendas", vary: false });
+});
+
+test("standby: os endereços antigos da vitrine (/vendas/es...) levam aos novos, 307 com todos os parâmetros, até para robô", () => {
+  assert.deepEqual(M.VITRINE_ANTIGA, { "/vendas/es": "la", "/vendas/es-es": "es", "/vendas/pt-pt": "pt", "/vendas/mundo": "rw" });
+  for (const [de, para] of Object.entries(VITRINE_VELHA)) {
+    for (const x of [{ pais: "BR" }, { pais: "US" }, { userAgent: GOOGLEBOT }, { cookie: "pt" }]) {
+      assert.deepEqual(standby({ pathname: de, ...x }), { tipo: "redirecionar", destino: para, vary: false }, `${de} ${JSON.stringify(x)}`);
+    }
+    assert.equal(standby({ pathname: de, busca: "?utm_source=ig&fbclid=x" }).destino, `${para}?utm_source=ig&fbclid=x`, de);
+    // a query vai inteira; o ?mercado= decide no pedido seguinte, já na vitrine
+    assert.equal(standby({ pathname: de, busca: "?mercado=br&utm_source=ig" }).destino, `${para}?mercado=br&utm_source=ig`, de);
+  }
+  // o middleware aplica a decisão como redirecionamento (NextResponse.redirect, 307)
+  const fonte = fs.readFileSync(arq("middleware.ts"), "utf8");
+  assert.match(fonte, /r = NextResponse\.redirect\(new URL\(d\.destino, req\.url\)\);/);
+  // e as páginas antigas saíram do app/ (só o redirecionamento responde)
+  for (const de of Object.keys(VITRINE_VELHA)) {
+    assert.equal(fs.existsSync(arq("app", ...de.split("/").filter(Boolean), "page.tsx")), false, de);
+  }
+});
+
+test("standby: prévias antigas levam à vitrine do mercado, com utm, até para robô", () => {
+  const casos = { "/embreve": "/vendas", "/es/embreve": "/es/vendas", "/pt-pt/embreve": "/pt-pt/vendas", "/es-es/embreve": "/es-es/vendas" };
   assert.deepEqual(M.PREVIAS_ANTIGAS, casos);
   for (const [de, para] of Object.entries(casos)) {
     assert.deepEqual(standby({ pathname: de, pais: "BR" }), { tipo: "redirecionar", destino: para, vary: false }, de);
     assert.deepEqual(standby({ pathname: de, userAgent: GOOGLEBOT }), { tipo: "redirecionar", destino: para, vary: false }, de);
     assert.equal(standby({ pathname: de, busca: "?utm_source=ig&fbclid=x" }).destino, `${para}?utm_source=ig&fbclid=x`, de);
   }
-  // a página de /embreve e /es/embreve repete a regra (caso o middleware não rode)
-  assert.match(fs.readFileSync(arq("app", "embreve", "page.tsx"), "utf8"), /SITE_LANCADO \? "\/" : "\/vendas"/);
-  assert.match(fs.readFileSync(arq("app", "es", "embreve", "page.tsx"), "utf8"), /SITE_LANCADO \? "\/es" : "\/vendas\/es"/);
+  // a página de /embreve e /es/embreve repete a regra (caso o middleware não
+  // rode), com os endereços de lib/mercado.ts, sem caminho escrito à mão
+  const embreve = fs.readFileSync(arq("app", "embreve", "page.tsx"), "utf8");
+  const esEmbreve = fs.readFileSync(arq("app", "es", "embreve", "page.tsx"), "utf8");
+  assert.match(embreve, /SITE_LANCADO \? HOME_DO_MERCADO\.br : VENDAS_DO_MERCADO\.br/);
+  assert.match(esEmbreve, /SITE_LANCADO \? HOME_DO_MERCADO\.la : VENDAS_DO_MERCADO\.la/);
+  for (const f of [embreve, esEmbreve]) assert.equal(/"\/vendas/.test(f), false);
 });
 
-test("lançado: /vendas e /vendas/* redirecionam para a home real do mercado, até para robô", () => {
-  const casos = { "/vendas": "/", "/vendas/es": "/es", "/vendas/es-es": "/es-es", "/vendas/pt-pt": "/pt-pt", "/vendas/mundo": "/" };
+test("lançado: a vitrine, nova ou antiga, redireciona para a home real do mercado, até para robô", () => {
+  const casos = {
+    "/vendas": "/", "/es/vendas": "/es", "/es-es/vendas": "/es-es", "/pt-pt/vendas": "/pt-pt", "/mundo/vendas": "/",
+    "/vendas/es": "/es", "/vendas/es-es": "/es-es", "/vendas/pt-pt": "/pt-pt", "/vendas/mundo": "/",
+  };
   for (const [de, para] of Object.entries(casos)) {
     assert.deepEqual(lancado({ pathname: de, pais: "BR" }), { tipo: "redirecionar", destino: para, vary: false }, de);
     assert.deepEqual(lancado({ pathname: de, userAgent: GOOGLEBOT }), { tipo: "redirecionar", destino: para, vary: false }, de);
+    assert.equal(lancado({ pathname: de, busca: "?utm_source=ig" }).destino, `${para}?utm_source=ig`, de);
   }
   // ?mercado= vai junto e decide no passo seguinte (cookie e home do mercado)
   assert.equal(lancado({ pathname: "/vendas", busca: "?mercado=la&utm_source=ig" }).destino, "/?mercado=la&utm_source=ig");
@@ -197,9 +239,12 @@ test("lançado: /vendas e /vendas/* redirecionam para a home real do mercado, at
   for (const de of ["/embreve", "/es/embreve", "/pt-pt/embreve", "/es-es/embreve"]) {
     assert.deepEqual(lancado({ pathname: de, pais: "BR" }), { tipo: "seguir", vary: false }, de);
   }
+  // /mundo continua a rota interna do resto do mundo; /mundo/vendas não é ela
+  assert.equal(lancado({ pathname: "/mundo" }).destino, "/");
+  assert.deepEqual(standby({ pathname: "/mundo/vendas", pais: "US" }), { tipo: "seguir", vary: false });
 });
 
-test("uma página para cada endereço de /vendas, com o mercado certo, noindex e a página do lançamento", () => {
+test("uma página para cada endereço da vitrine, com o mercado certo, noindex e a página do lançamento", () => {
   for (const [mercado, caminho] of Object.entries(M.VENDAS_DO_MERCADO)) {
     const arquivo = arq("app", ...caminho.split("/").filter(Boolean), "page.tsx");
     assert.ok(fs.existsSync(arquivo), arquivo);
@@ -208,11 +253,20 @@ test("uma página para cada endereço de /vendas, com o mercado certo, noindex e
     assert.match(fonte, new RegExp(`<PaginaDoMercado mercado="${mercado}" vitrine />`), arquivo);
     assert.match(fonte, /export const revalidate = 3600;/, arquivo);
   }
+  // nenhum layout nos segmentos das homes: a vitrine herda só o layout raiz
+  for (const seg of ["es", "es-es", "pt-pt", "mundo", "vendas"]) {
+    for (const nome of ["layout.tsx", "template.tsx", "not-found.tsx", "error.tsx", "loading.tsx"]) {
+      assert.equal(fs.existsSync(arq("app", seg, nome)), false, `app/${seg}/${nome}`);
+    }
+  }
+  // o 404 de /mundo em standby é do page.tsx de /mundo, não da rota filha
+  assert.match(fs.readFileSync(arq("app", "mundo", "page.tsx"), "utf8"), /if \(!SITE_LANCADO\) notFound\(\);/);
+  assert.equal(/next\/navigation|notFound\(\);/.test(fs.readFileSync(arq("app", "mundo", "vendas", "page.tsx"), "utf8")), false);
 });
 
 /* ------------------------------ indexação ------------------------------ */
 
-test("/vendas/*: noindex, nofollow, canonical próprio e SEM hreflang", () => {
+test("vitrine: noindex, nofollow, canonical para si mesma, SEM hreflang e o título de venda do mercado", () => {
   const S = seo(false);
   for (const [mercado, caminho] of Object.entries(M.VENDAS_DO_MERCADO)) {
     const m = S.metadataDaVitrine(mercado);
@@ -221,15 +275,24 @@ test("/vendas/*: noindex, nofollow, canonical próprio e SEM hreflang", () => {
     assert.equal(m.robots.googleBot.index, false, mercado);
     assert.deepEqual(m.alternates, { canonical: DOMINIO + caminho }, mercado);
     assert.equal("openGraph" in m, false, mercado);
-    // o título é o que a home do mercado terá no lançamento
-    const doLancamento = S.metadataDoMercado(mercado === "rw" ? "br" : mercado, true);
-    assert.equal(m.title, doLancamento.title, mercado);
-    assert.equal(m.description, doLancamento.description, mercado);
   }
-  assert.equal(S.metadataDaVitrine("br").title, "Diariamente · uma prática diária de hábitos e bem-estar");
+  // o título é o de VENDA do mercado, também onde a home pública ainda é a
+  // lista de espera (la e es): a vitrine mostra a venda aberta
+  const venda = {
+    br: ["Diariamente · uma prática diária de hábitos e bem-estar", S.metadataDoMercado("br", true).description],
+    rw: ["Diariamente · uma prática diária de hábitos e bem-estar", S.metadataDoMercado("br", true).description],
+    pt: ["Diariamente · uma prática diária de hábitos e bem-estar", "Uma provocação por dia que termina numa ação possível ainda hoje. Porque interromper não significa abandonar."],
+    es: ["Diariamente · una práctica diaria de hábitos y bienestar", "Una provocación por día que termina en una acción posible hoy mismo. Porque interrumpir no significa abandonar."],
+    la: ["Diariamente · una práctica diaria de hábitos y bienestar", "Una provocación por día que termina en una acción posible hoy mismo. Porque interrumpir no significa abandonar."],
+  };
+  for (const [mercado, [title, description]] of Object.entries(venda)) {
+    assert.equal(S.metadataDaVitrine(mercado).title, title, mercado);
+    assert.equal(S.metadataDaVitrine(mercado).description, description, mercado);
+  }
+  assert.equal(/próximamente|em breve/i.test(JSON.stringify(Object.keys(venda).map((m) => S.metadataDaVitrine(m)))), false);
 });
 
-test("next.config.js: X-Robots-Tag noindex em /vendas e /vendas/*", async () => {
+test("next.config.js: X-Robots-Tag noindex nos cinco endereços da vitrine (e abaixo deles), e só neles", async () => {
   const fabrica = require(arq("next.config.js"));
   const aviso = console.warn;
   console.warn = () => {};
@@ -239,11 +302,14 @@ test("next.config.js: X-Robots-Tag noindex em /vendas e /vendas/*", async () => 
   } finally {
     console.warn = aviso;
   }
-  for (const source of ["/vendas", "/vendas/:path*"]) {
-    const r = regras.find((x) => x.source === source);
-    assert.ok(r, source);
-    assert.deepEqual(r.headers, [{ key: "X-Robots-Tag", value: "noindex, nofollow" }], source);
+  const comNoindex = regras.filter((r) => r.headers.some((h) => h.key === "X-Robots-Tag"));
+  const esperado = Object.values(M.VENDAS_DO_MERCADO).flatMap((base) => [base, `${base}/:path*`]);
+  assert.deepEqual(comNoindex.map((r) => r.source).sort(), esperado.sort());
+  for (const r of comNoindex) {
+    assert.deepEqual(r.headers, [{ key: "X-Robots-Tag", value: "noindex, nofollow" }], r.source);
   }
+  // "/vendas/:path*" cobre os endereços antigos (/vendas/es...), que só redirecionam
+  assert.ok(esperado.includes("/vendas/:path*"));
   // o resto do site não recebe noindex
   assert.equal(regras.find((x) => x.source === "/:path*").headers.some((h) => h.key === "X-Robots-Tag"), false);
 });
@@ -271,7 +337,7 @@ test("standby: homes públicas indexáveis, com o título da lista de espera e o
   assert.equal(S.metadataDoMercado("pt", true).title, "Diariamente · uma prática diária de hábitos e bem-estar");
 });
 
-test("nenhuma página pública aponta para /vendas (canonical, hreflang, Open Graph)", () => {
+test("nenhuma página pública aponta para a vitrine (canonical, hreflang, Open Graph)", () => {
   for (const lancadoNoBuild of [false, true]) {
     const S = seo(lancadoNoBuild);
     const publicas = [
@@ -286,7 +352,7 @@ test("nenhuma página pública aponta para /vendas (canonical, hreflang, Open Gr
     }
   }
   assert.ok(R.PRIVADAS.includes("vendas"));
-  assert.deepEqual(R.parDeIdiomas("vendas"), { pt: "/vendas", es: "/vendas/es" });
+  assert.deepEqual(R.parDeIdiomas("vendas"), { pt: M.VENDAS_DO_MERCADO.br, es: M.VENDAS_DO_MERCADO.la });
 });
 
 test("sitemap: as 12 URLs públicas de sempre, sem /vendas, sem /embreve e sem /mundo", () => {
@@ -320,37 +386,40 @@ function pagina(lancadoNoBuild) {
   return (mercado, vitrine) => renderToStaticMarkup(React.createElement(PaginaDoMercado, { mercado, vitrine }));
 }
 
-test("standby: as homes públicas mostram a lista de espera; /vendas mostra o que vai ao ar", () => {
+test("standby: as homes públicas mostram a lista de espera; a vitrine mostra o site de vendas de TODOS os mercados", () => {
   const ver = pagina(false);
   for (const m of ["br", "pt", "la", "es", "rw"]) {
     assert.match(ver(m, false), new RegExp(`data-c="EmBreve" data-m="${m}" data-v="false"`), m);
+    // a vitrine: a página inteira de vendas, inclusive la e es (semVenda "pagina")
+    assert.match(ver(m, true), new RegExp(`data-c="Home" data-m="${m}" data-v="true"`), m);
   }
-  // /vendas: igual à home do lançamento, com os links dentro de /vendas
-  assert.match(ver("br", true), /data-c="Home" data-m="br" data-v="true"/);
-  assert.match(ver("pt", true), /data-c="Home" data-m="pt" data-v="true"/);
-  assert.match(ver("rw", true), /data-c="Home" data-m="rw" data-v="true"/);
-  assert.match(ver("la", true), /data-c="EmBreve" data-m="la" data-v="true"/);
-  assert.match(ver("es", true), /data-c="EmBreve" data-m="es" data-v="true"/);
 });
 
-test("lançado: a home pública de cada mercado é a mesma que /vendas mostrava (PR #3)", () => {
+test("lançado: as homes públicas seguem vendaAberta e semVenda; a vitrine continua mostrando a venda aberta", () => {
   const ver = pagina(true);
-  const antes = pagina(false);
-  for (const m of ["br", "pt", "la", "es", "rw"]) {
-    assert.equal(ver(m, false).replace(/data-v="false"/, ""), antes(m, true).replace(/data-v="true"/, ""), m);
-  }
-  assert.match(ver("br", false), /data-c="Home"/);
-  assert.match(ver("la", false), /data-c="EmBreve"/);
+  // br, pt e rw: o site de vendas (pt e rw com a lista de espera no bloco)
+  for (const m of ["br", "pt", "rw"]) assert.match(ver(m, false), new RegExp(`data-c="Home" data-m="${m}" data-v="false"`), m);
+  // la e es: a lista de espera inteira, como no PR #3
+  for (const m of ["la", "es"]) assert.match(ver(m, false), new RegExp(`data-c="EmBreve" data-m="${m}" data-v="false"`), m);
+  // a vitrine, se o middleware não redirecionasse, segue as regras públicas
+  for (const m of ["br", "pt", "rw"]) assert.match(ver(m, true), new RegExp(`data-c="Home" data-m="${m}" data-v="false"`), m);
+  for (const m of ["la", "es"]) assert.match(ver(m, true), new RegExp(`data-c="EmBreve" data-m="${m}" data-v="false"`), m);
+  // vendaAberta e semVenda não mudaram: o lançamento público segue fechado fora do Brasil
+  assert.deepEqual(
+    Object.fromEntries(["br", "la", "es", "pt", "rw"].map((m) => [m, [P.MERCADOS[m].vendaAberta, P.MERCADOS[m].semVenda]])),
+    { br: [true, "bloco"], la: [false, "pagina"], es: [false, "pagina"], pt: [false, "bloco"], rw: [false, "bloco"] },
+  );
 });
 
-test("seletor de país: na home pública grava o mercado (?mercado=); em /vendas leva ao /vendas do mercado", () => {
+test("seletor de país: na home pública grava o mercado (?mercado=); na vitrine leva à vitrine do mercado, com o idioma na frente", () => {
   const { SeletorMercado } = carregarTs(arq("components", "SeletorMercado.tsx"), { "@/lib/mercado": M, "react/jsx-runtime": jsx }, { jsx: true });
   const publico = renderToStaticMarkup(React.createElement(SeletorMercado, { atual: "br", titulo: "País" }));
   for (const m of ["br", "pt", "es", "la"]) assert.ok(publico.includes(`href="/?mercado=${m}"`), m);
   assert.equal(/\/vendas/.test(publico), false);
   const vitrine = renderToStaticMarkup(React.createElement(SeletorMercado, { atual: "br", titulo: "País", vitrine: true }));
   for (const m of ["br", "pt", "es", "la"]) assert.ok(vitrine.includes(`href="${M.VENDAS_DO_MERCADO[m]}"`), m);
-  assert.equal(/\?mercado=/.test(vitrine), false);
+  for (const h of ["/vendas", "/pt-pt/vendas", "/es-es/vendas", "/es/vendas"]) assert.ok(vitrine.includes(`href="${h}"`), h);
+  assert.equal(/\?mercado=|\/vendas\//.test(vitrine), false);
 });
 
 /** components/EmBreve.tsx com a chave de lançamento do build. */
@@ -372,7 +441,8 @@ test("standby: o rodapé das homes da lista de espera é o da produção (sem as
     assert.match(h, lang === "pt" ? /Uma prática diária de hábitos e bem-estar\./ : /Una práctica diaria de hábitos y bienestar\./);
     assert.match(h, /data-vitrine="false"/);
   }
-  // /vendas/es e /vendas/es-es mostram o rodapé que vai ao ar
+  // com `vitrine`, o rodapé que vai ao ar (as páginas da vitrine não usam
+  // mais o EmBreve: lá todo mercado aparece com a venda aberta)
   const vitrine = renderToStaticMarkup(React.createElement(EmBreve, { lang: "es", mercado: "es", vitrine: true }));
   assert.match(vitrine, /Diariamente App by Science Play/);
   assert.match(vitrine, /data-vitrine="true"/);
@@ -382,14 +452,14 @@ test("standby: o rodapé das homes da lista de espera é o da produção (sem as
   assert.match(lancada, /href="\/\?mercado=es"/);
 });
 
-test("lista de espera (EmBreve): logo e seletor ficam em /vendas na vitrine; na home pública, como hoje", () => {
+test("lista de espera (EmBreve): com `vitrine`, logo e seletor ficam na vitrine; na home pública, como hoje", () => {
   const EmBreve = emBreve(false);
   const publica = renderToStaticMarkup(React.createElement(EmBreve, { lang: "es", mercado: "la" }));
   assert.match(publica, /<a href="\/es" aria-label="Diariamente">/);
   assert.match(publica, /Todavía no es hoy/);
   const vitrine = renderToStaticMarkup(React.createElement(EmBreve, { lang: "es", mercado: "es", vitrine: true }));
-  assert.match(vitrine, /<a href="\/vendas\/es-es" aria-label="Diariamente">/);
-  assert.match(vitrine, /href="\/vendas\/es"/);
+  assert.match(vitrine, /<a href="\/es-es\/vendas" aria-label="Diariamente">/);
+  assert.match(vitrine, /href="\/es\/vendas"/);
   assert.match(vitrine, /href="\/vendas"/);
   assert.equal(/\?mercado=/.test(vitrine), false);
   assert.match(vitrine, /data-mercado="es"/);
@@ -410,12 +480,16 @@ test("site de vendas (Home): PT | ES e o seletor seguem a vitrine", () => {
   assert.equal((fonte.match(/`\/\?mercado=\$\{/g) || []).length, 1);
 });
 
-test("aviso de cookies em espanhol também em /vendas/es e /vendas/es-es", () => {
+test("aviso de cookies em espanhol também em /es/vendas e /es-es/vendas (o idioma vem primeiro no endereço)", () => {
   const fonte = fs.readFileSync(arq("components", "Consentimento.tsx"), "utf8");
-  assert.match(fonte, /es\("\/vendas\/es"\) \|\| es\("\/vendas\/es-es"\)/);
+  const corpo = fonte.match(/function idiomaDaRota\(pathname: string \| null\): Lang \{([\s\S]*?)\n\}/)[1];
+  // eslint-disable-next-line no-new-func
+  const idiomaDaRota = new Function("pathname", corpo.replace(/const es = \(base: string\)/, "const es = (base)"));
+  for (const p of ["/es", "/es/vendas", "/es-es", "/es-es/vendas", "/es/estudiantes"]) assert.equal(idiomaDaRota(p), "es", p);
+  for (const p of ["/", "/vendas", "/pt-pt/vendas", "/mundo/vendas", "/estudante", "/vendas/es"]) assert.equal(idiomaDaRota(p), "pt", p);
 });
 
-test("standby: a lista de espera de /pt-pt fica em português do Brasil, como na produção; pt-PT só em /vendas/pt-pt e com a chave ligada", () => {
+test("standby: a lista de espera de /pt-pt fica em português do Brasil, como na produção; pt-PT só com `vitrine` e com a chave ligada", () => {
   const form = (lancadoNoBuild) => carregarTs(arq("components", "ListaEsperaForm.tsx"), {
     react: React, "react/jsx-runtime": jsx, "@/components/Brand": { Simbolo: () => null },
     "@/lib/consentimento": carregarTs(arq("lib", "consentimento.ts")),
@@ -435,7 +509,7 @@ test("standby: a lista de espera de /pt-pt fica em português do Brasil, como na
   assert.match(fs.readFileSync(arq("components", "EmBreve.tsx"), "utf8"), /<ListaEsperaForm mercado=\{mkt\} origem="em-breve" vitrine=\{vitrine\} \/>/);
 });
 
-/* -------------------- /vendas: checkout só depois do webhook -------------------- */
+/* ------------------ vitrine: checkout de verdade, já ------------------ */
 
 /** next.config.js com estas variáveis, como o build gravaria. */
 function envDoBuild(vars) {
@@ -454,64 +528,249 @@ function envDoBuild(vars) {
   }
 }
 
-test("next.config.js: DM_VENDA_LIBERADA só com a chave ligada ou com DM_WEBHOOK_V2_OK=1; o estudante novo só com a chave ligada", () => {
-  assert.equal(envDoBuild({}).DM_VENDA_LIBERADA, "");
-  assert.equal(envDoBuild({ DM_VENDA_LIBERADA: "1" }).DM_VENDA_LIBERADA, "", "posta à mão não vale");
-  assert.equal(envDoBuild({ DM_WEBHOOK_V2_OK: "0" }).DM_VENDA_LIBERADA, "");
-  assert.equal(envDoBuild({ DM_WEBHOOK_V2_OK: "1" }).DM_VENDA_LIBERADA, "1");
-  assert.equal(envDoBuild({ DM_SITE_LANCADO: "1" }).DM_VENDA_LIBERADA, "1");
+test("next.config.js: a trava DM_VENDA_LIBERADA saiu; o estudante novo só com a chave ligada", () => {
+  for (const vars of [{}, { DM_WEBHOOK_V2_OK: "1" }, { DM_SITE_LANCADO: "1" }, { DM_VENDA_LIBERADA: "1" }]) {
+    assert.equal("DM_VENDA_LIBERADA" in envDoBuild(vars), false, JSON.stringify(vars));
+  }
   const estudantePronto = { WA_TEMPLATE_ESTUDANTE: "diariamente_estudante_aprovado_v2", HOTMART_PRODUCT_ID: "7448309", STUDENT_DISCOUNT: "0.40027" };
   assert.equal(envDoBuild(estudantePronto).DM_ESTUDANTE_ABERTO, "", "standby: a /estudante é a da produção");
   assert.equal(envDoBuild({ ...estudantePronto, DM_SITE_LANCADO: "1" }).DM_ESTUDANTE_ABERTO, "1");
+  // nenhum arquivo do site lê mais a variável
+  for (const f of [
+    ["next.config.js"], ["middleware.ts"], ["components", "BlocoOferta.tsx"], ["components", "Home.tsx"],
+    ["components", "PaginaDoMercado.tsx"], ["config", "lancamento.ts"], ["lib", "mercado.ts"],
+  ]) {
+    assert.equal(/process\.env\.DM_VENDA_LIBERADA|DM_VENDA_LIBERADA:/.test(fs.readFileSync(arq(...f), "utf8")), false, f.join("/"));
+  }
 });
 
-/** BlocoOferta com DM_VENDA_LIBERADA como o build gravaria. */
-function blocoOferta(liberada) {
+const LANCAMENTO_VALE = Date.parse("2026-10-20T12:00:00-03:00");
+const DEPOIS_DO_LANCAMENTO = Date.parse("2026-11-17T12:00:00-03:00");
+/** Sem o espaço que não quebra e sem os marcadores de texto do React. */
+const limpo = (h) => h.replace(/ /g, " ").replace(/<!-- -->/g, "");
+
+/** Os componentes de verdade (Home, BlocoOferta, EmBreve, PaginaDoMercado,
+    SeletorMercado), com a chave de lançamento do build. Só a lista de
+    espera, a arte das lojas, o rodapé do grupo e a medição são de mentira. */
+function componentesReais(lancadoNoBuild = false) {
+  const I = carregarTs(arq("lib", "i18n.ts"));
   const C2 = carregarTs(arq("config.ts"), { "@/config/pricing": P });
-  const B = carregarTs(arq("components", "BlocoOferta.tsx"), {
-    "@/config": C2, "@/config/pricing": P, "@/lib/rotas": R,
-    "@/lib/medicao": { registrarInicioDeCheckout() {} },
-    "@/components/ListaEsperaForm": { ListaEsperaForm: () => null },
-    "react/jsx-runtime": jsx,
-  }, { jsx: true }).BlocoOferta;
-  return (props) => {
-    const antes = process.env.DM_VENDA_LIBERADA;
-    if (liberada) process.env.DM_VENDA_LIBERADA = "1";
-    else delete process.env.DM_VENDA_LIBERADA;
-    try {
-      return renderToStaticMarkup(React.createElement(B, { mercado: "br", momento: Date.parse("2026-10-20T12:00:00-03:00"), ...props }));
-    } finally {
-      if (antes === undefined) delete process.env.DM_VENDA_LIBERADA;
-      else process.env.DM_VENDA_LIBERADA = antes;
-    }
+  const Seletor = carregarTs(arq("components", "SeletorMercado.tsx"), { "@/lib/mercado": M, "react/jsx-runtime": jsx }, { jsx: true });
+  const Lista = { ListaEsperaForm: (p) => React.createElement("form", { "data-lista": p.mercado }) };
+  const medicao = { registrarInicioDeCheckout() {} };
+  const Bloco = carregarTs(arq("components", "BlocoOferta.tsx"), {
+    "@/config": C2, "@/config/pricing": P, "@/lib/rotas": R, "@/lib/medicao": medicao,
+    "@/components/ListaEsperaForm": Lista, "react/jsx-runtime": jsx,
+  }, { jsx: true });
+  const { Home } = carregarTs(arq("components", "Home.tsx"), {
+    react: React, "react/jsx-runtime": jsx, "@/lib/i18n": I, "@/lib/rotas": R, "@/config": C2,
+    "@/lib/medicao": medicao, "@/components/CnpjsDoGrupo": { RodapeDoGrupo: () => null },
+    "@/components/BlocoOferta": Bloco, "@/components/TelaDaLoja": { TelaDaLoja: () => null, RAIO_DA_TELA: 40 },
+    "@/components/SeletorMercado": Seletor, "@/lib/mercado": M, "@/config/pricing": P,
+  }, { jsx: true });
+  const { EmBreve } = carregarTs(arq("components", "EmBreve.tsx"), {
+    "@/components/Brand": { LockupHorizontal: () => null }, "@/components/ListaEsperaForm": Lista,
+    "@/components/SeletorMercado": Seletor, "@/lib/mercado": M, "@/config": C2,
+    "@/config/lancamento": { SITE_LANCADO: lancadoNoBuild }, "react/jsx-runtime": jsx,
+  }, { jsx: true });
+  const { PaginaDoMercado } = carregarTs(arq("components", "PaginaDoMercado.tsx"), {
+    "@/components/Home": { Home }, "@/components/EmBreve": { EmBreve }, "@/config/pricing": P,
+    "@/config/lancamento": { SITE_LANCADO: lancadoNoBuild }, "react/jsx-runtime": jsx,
+  }, { jsx: true });
+  return {
+    BlocoOferta: Bloco.BlocoOferta,
+    bloco: (props) => limpo(renderToStaticMarkup(React.createElement(Bloco.BlocoOferta, { momento: LANCAMENTO_VALE, ...props }))),
+    home: (mercado, props = {}) =>
+      limpo(renderToStaticMarkup(React.createElement(Home, { lang: P.MERCADOS[mercado].idioma, mercado, momento: LANCAMENTO_VALE, ...props }))),
+    pagina: (mercado, vitrine = false) => limpo(renderToStaticMarkup(React.createElement(PaginaDoMercado, { mercado, vitrine }))),
   };
 }
 
-test("standby: em /vendas, sem DM_WEBHOOK_V2_OK=1, o botão do bloco de oferta não abre o checkout (mesmo texto e mesmo visual)", () => {
-  const bloqueado = blocoOferta(false)({ vitrine: true });
-  assert.equal(/pay\.hotmart\.com/.test(bloqueado), false);
-  const rotulo = P.MERCADOS.br.textos.botao;
-  assert.ok(bloqueado.includes(`">${rotulo}</a>`), rotulo);
-  assert.match(bloqueado, /<a href="#preco" style="[^"]*background:#27BDBE[^"]*cursor:pointer">/);
-  assert.equal(/aria-disabled|not-allowed|target="_blank"/.test(bloqueado), false);
-  // com o webhook confirmado, o mesmo botão abre o checkout de lançamento
-  const liberado = blocoOferta(true)({ vitrine: true });
-  assert.match(liberado, /href="https:\/\/pay\.hotmart\.com\/K105072021O\?off=lf63bgdd" target="_blank"/);
-  // fora da vitrine (homes públicas com a chave ligada), sempre o checkout
-  assert.match(blocoOferta(false)({}), /href="https:\/\/pay\.hotmart\.com\/K105072021O\?off=lf63bgdd"/);
-  // o texto e o estilo do botão são os mesmos com e sem o bloqueio
-  const botao = (h) => h.match(new RegExp(`<a [^>]*>${rotulo}</a>`))[0].replace(/ href="[^"]*"| target="_blank"| rel="noopener noreferrer"/g, "");
-  assert.equal(botao(bloqueado), botao(liberado));
+const OFERTA_DA_VITRINE = { br: "lf63bgdd", la: "uevhmhy2", es: "iuoufnf6", pt: "3n484jbe", rw: "uevhmhy2" };
+const checkouts = (h) => (h.match(/href="https:\/\/pay\.hotmart\.com\/[^"]*"/g) || []).map((x) => x.slice(6, -1));
+
+test("vitrine: todo mercado é o site de vendas, com o botão abrindo o checkout de verdade da Hotmart", () => {
+  const { home } = componentesReais(false);
+  for (const [m, off] of Object.entries(OFERTA_DA_VITRINE)) {
+    const h = home(m, { vitrine: true });
+    const link = `https://pay.hotmart.com/K105072021O?off=${off}`;
+    assert.equal(P.linkCheckout(m, LANCAMENTO_VALE), link, m);
+    // o botão do bloco de oferta e o do CTA final, os dois para o checkout do mercado
+    assert.deepEqual(checkouts(h), [link, link], m);
+    assert.equal((h.match(/target="_blank" rel="noopener noreferrer"/g) || []).length >= 2, true, m);
+    // preço na moeda do mercado, o botão de venda, sem lista de espera e sem "Prévia interna"
+    assert.ok(h.includes(limpo(P.formatar(m, P.precoFinal(m, LANCAMENTO_VALE)))), m);
+    assert.ok(h.includes(`>${P.MERCADOS[m].textos.botao}</a>`), m);
+    assert.equal(/data-lista|Prévia interna|aria-disabled|not-allowed/.test(h), false, m);
+    assert.equal(h.includes(P.MERCADOS[m].espera.botao), false, m);
+  }
+  // depois do lançamento, o Brasil abre a oferta oficial
+  assert.deepEqual(checkouts(home("br", { vitrine: true, momento: DEPOIS_DO_LANCAMENTO })), Array(2).fill("https://pay.hotmart.com/K105072021O?off=fhrttdh8"));
 });
 
-test("Home.tsx: o botão final de /vendas segue a mesma regra (sem checkout até DM_WEBHOOK_V2_OK=1)", () => {
+test("vitrine: a foto da manhã no idioma da página, do próprio domínio, com espaço reservado e lazy", () => {
+  const { home } = componentesReais(false);
+  for (const m of ["br", "la", "es", "pt", "rw"]) {
+    const lang = P.MERCADOS[m].idioma;
+    const base = `/fotos/manha-${lang}`;
+    const h = home(m, { vitrine: true });
+    assert.ok(h.includes(`<picture style="display:block;width:100%;height:100%"><source type="image/webp" srcSet="${base}-600.webp 600w, ${base}-900.webp 900w, ${base}-1200.webp 1200w" sizes="(min-width:900px) 520px, 92vw"/>`), m);
+    assert.match(h, new RegExp(`<img src="${base}-900\\.jpg" alt="(Uma mão|Una mano)[^"]+" width="1200" height="1500" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block"/></picture>`), m);
+    // o quadro 4:5 da seção continua o mesmo
+    assert.match(h, /aspect-ratio:4\/5;background:[^"]+"><picture/, m);
+    assert.equal(/cloudinary[^"]*Lifestyle|caderno|cuaderno/i.test(h), false, m);
+  }
+});
+
+test("vitrine (PaginaDoMercado): la e es também saem como site de vendas, com o link do mercado", () => {
+  const { pagina } = componentesReais(false);
+  for (const [m, off] of Object.entries(OFERTA_DA_VITRINE)) {
+    const h = pagina(m, true);
+    const esperado = m === "br" ? P.linkCheckout("br", Date.now()) : `https://pay.hotmart.com/K105072021O?off=${off}`;
+    assert.ok(checkouts(h).length >= 2, m);
+    for (const link of checkouts(h)) assert.equal(link, esperado, m);
+    assert.match(h, new RegExp(`<div id="dm-root" lang="${P.MERCADOS[m].idioma}"`), m);
+    assert.equal(/Todavía no es hoy|Ainda não é hoje/.test(h), false, m);
+  }
+});
+
+test("standby: \"/\" e \"/es\" (e as outras homes públicas) continuam \"Em breve\", sem checkout nenhum", () => {
+  const { pagina } = componentesReais(false);
+  const br = pagina("br");
+  assert.match(br, /Em breve/);
+  assert.match(br, /Ainda não é hoje\./);
+  const la = pagina("la");
+  assert.match(la, /Próximamente/);
+  assert.match(la, /Todavía no es hoy\./);
+  for (const m of ["br", "la", "es", "pt", "rw"]) {
+    const h = pagina(m);
+    assert.equal(/pay\.hotmart\.com/.test(h), false, m);
+    assert.match(h, /data-lista=/, m);
+    assert.equal(/id="dm-root"/.test(h), false, m);
+  }
+  // as páginas públicas usam a PaginaDoMercado sem `vitrine`
+  for (const [arquivo, m] of [[["page.tsx"], "br"], [["es", "page.tsx"], "la"], [["es-es", "page.tsx"], "es"], [["pt-pt", "page.tsx"], "pt"]]) {
+    assert.match(fs.readFileSync(arq("app", ...arquivo), "utf8"), new RegExp(`<PaginaDoMercado mercado="${m}" />`), arquivo.join("/"));
+  }
+});
+
+test("lançado: só o Brasil vende na home pública; /es segue a lista de espera e /pt-pt, a lista no bloco", () => {
+  const { pagina } = componentesReais(true);
+  assert.ok(checkouts(pagina("br")).length >= 2);
+  for (const m of ["la", "es"]) {
+    const h = pagina(m);
+    assert.equal(/pay\.hotmart\.com/.test(h), false, m);
+    assert.match(h, /Próximamente/, m);
+  }
+  for (const m of ["pt", "rw"]) {
+    const h = pagina(m);
+    assert.equal(/pay\.hotmart\.com/.test(h), false, m);
+    assert.match(h, new RegExp(`data-lista="${m}"`), m);
+  }
+});
+
+test("prévias do dono (previa) seguem como estavam: bloco de venda, botão sem pagamento e a nota de prévia interna", () => {
+  const { bloco } = componentesReais(true);
+  const h = bloco({ mercado: "pt", previa: true });
+  assert.equal(/pay\.hotmart\.com/.test(h), false);
+  assert.match(h, /aria-disabled="true"/);
+  assert.match(h, /Prévia interna: a venda deste mercado ainda está fechada/);
+  // fora da vitrine e sem prévia, mercado fechado continua lista de espera
+  assert.match(bloco({ mercado: "pt" }), /data-lista="pt"/);
+});
+
+test("vitrine: PT | ES e o seletor de país levam aos endereços novos, com o idioma na frente", () => {
+  const { home } = componentesReais(false);
+  const idiomas = (h) => h.match(/role="group" aria-label="Idioma \/ Idioma"[\s\S]*?<\/div>/)[0];
+  const casos = { br: ["/vendas", "/es/vendas"], la: ["/vendas", "/es/vendas"], es: ["/pt-pt/vendas", "/es-es/vendas"], pt: ["/pt-pt/vendas", "/es-es/vendas"], rw: ["/mundo/vendas", "/es/vendas"] };
+  for (const [m, [pt, es]] of Object.entries(casos)) {
+    const h = home(m, { vitrine: true });
+    const grupo = idiomas(h);
+    assert.match(grupo, new RegExp(`<a href="${pt}"[^>]*>PT</a>`), m);
+    assert.match(grupo, new RegExp(`<a href="${es}"[^>]*>ES</a>`), m);
+    for (const v of ["/vendas", "/pt-pt/vendas", "/es-es/vendas", "/es/vendas"]) assert.ok(h.includes(`href="${v}"`), `${m} ${v}`);
+    assert.equal(/href="\/vendas\/|\?mercado=/.test(h), false, m);
+  }
+  // fora da vitrine, PT | ES gravam o mercado, como hoje
+  assert.match(idiomas(home("br")), /<a href="\/\?mercado=la"[^>]*>ES<\/a>/);
+});
+
+test("vitrine: o idioma de cada página (o <html lang> é trocado na hidratação, como em /es)", () => {
   const fonte = fs.readFileSync(arq("components", "Home.tsx"), "utf8");
-  assert.match(fonte, /const checkoutBloqueado = vitrine && process\.env\.DM_VENDA_LIBERADA !== "1";/);
-  assert.match(fonte, /const semLink = pendente\(linkFinal\) \|\| !oferta\.vendaAberta \|\| checkoutBloqueado;/);
-  assert.match(fonte, /<BlocoOferta mercado=\{mkt\} momento=\{agora\} previa=\{previa\} vitrine=\{vitrine\} \/>/);
-  // o único link para o checkout no corpo da Home é o do botão final, e só sem semLink
-  assert.match(fonte, /\{vende && !semLink \? \(\s*<a href=\{linkFinal\}/);
-  assert.equal((fonte.match(/href=\{linkFinal\}/g) || []).length, 1);
+  assert.match(fonte, /document\.documentElement\.lang = oferta\.locale;/);
+  assert.deepEqual(
+    Object.fromEntries(Object.keys(VITRINE_NOVA).map((m) => [VITRINE_NOVA[m], P.MERCADOS[m].locale])),
+    { "/vendas": "pt-BR", "/es/vendas": "es-419", "/es-es/vendas": "es-ES", "/pt-pt/vendas": "pt-PT", "/mundo/vendas": "pt-BR" },
+  );
+  // o conteúdo já sai do servidor marcado com o idioma
+  const { home } = componentesReais(false);
+  assert.match(home("la", { vitrine: true }), /<div id="dm-root" lang="es"/);
+  assert.match(home("pt", { vitrine: true }), /<div id="dm-root" lang="pt"/);
+});
+
+/* ------------------------- preço oficial riscado ------------------------- */
+
+test("card do Brasil no lançamento: \"Preço oficial\" com R$ 149,90 riscado, 33% a menos e o prazo", () => {
+  const { bloco } = componentesReais(false);
+  for (const vitrine of [true, false]) {
+    const h = bloco({ mercado: "br", vitrine });
+    assert.match(h, /<p style="margin:18px 0 0;font-size:14.5px;line-height:1.4;color:#8A9494">Preço oficial: <s style="text-decoration-thickness:1.5px;text-decoration-color:#AAB2B2">R\$ 149,90 por ano<\/s><\/p>/);
+    // logo acima da manchete mensal
+    const ancora = h.indexOf("Preço oficial: ");
+    const manchete = h.indexOf(">R$ 8,33</span>");
+    assert.ok(ancora > 0 && manchete > ancora, "o preço oficial vem antes da manchete");
+    assert.match(h, /R\$ 8,33<\/span><span [^>]*>\/mês<\/span><span [^>]*>no lançamento<\/span>/);
+    assert.match(h, /<strong [^>]*>R\$ 99,98<\/strong> por ano nos 3 primeiros anos, 33% a menos que o preço oficial\. Depois, R\$ 149,90 por ano\./);
+    assert.match(h, /<\/svg>Pagamento à vista<\/div>/);
+    assert.match(h, />Preço de lançamento só até 16 de novembro\.<\/p>/);
+    assert.match(h, />33% OFF<\/span>/);
+    assert.equal((h.match(/<s[ >]/g) || []).length, 1);
+  }
+  // o percentual vem da conta, igual ao do selo
+  assert.equal(P.percentualDoLancamento("br", LANCAMENTO_VALE), 33);
+});
+
+test("card do Brasil depois do lançamento (ou com o lançamento desligado): nada riscado, só o preço cheio", () => {
+  const { bloco } = componentesReais(false);
+  const depois = bloco({ mercado: "br", vitrine: true, momento: DEPOIS_DO_LANCAMENTO });
+  const br = P.MERCADOS.br;
+  const ativo = br.lancamento.ativo;
+  let desligado;
+  try {
+    br.lancamento.ativo = false;
+    desligado = bloco({ mercado: "br", vitrine: true });
+  } finally {
+    br.lancamento.ativo = ativo;
+  }
+  for (const h of [depois, desligado]) {
+    assert.equal(/Preço oficial|<s[ >]|a menos que o preço oficial|OFF<|Preço de lançamento/.test(h), false);
+    assert.match(h, />R\$ 12,49<\/span>/);
+    assert.match(h, /<strong [^>]*>R\$ 149,90<\/strong> por ano<\/p>/);
+    assert.match(h, /À vista, ou em até 12x no cartão com acréscimo/);
+  }
+});
+
+test("mercados sem lançamento: nenhum \"Preço oficial\", nada riscado", () => {
+  const { bloco, home } = componentesReais(false);
+  for (const m of ["la", "es", "pt", "rw"]) {
+    assert.equal(P.MERCADOS[m].lancamento, null, m);
+    for (const h of [bloco({ mercado: m, vitrine: true }), home(m, { vitrine: true })]) {
+      assert.equal(/Preço oficial|Precio oficial|<s[ >]|a menos que/.test(h), false, m);
+    }
+  }
+});
+
+test("barra fixa e CTA final do Brasil: o preço oficial riscado ao lado do de lançamento, na mesma unidade", () => {
+  const { home } = componentesReais(false);
+  const h = home("br", { vitrine: true });
+  // card, CTA final e barra fixa
+  assert.equal((h.match(/<s[ >]/g) || []).length, 3);
+  // CTA final: R$ 149,90 riscado ao lado de R$ 99,98 por ano
+  assert.match(h, /<span style="position:absolute;[^"]*">Preço oficial: <\/span><s style="text-decoration-thickness:1.5px">R\$ 149,90<\/s> R\$ 99,98 por um ano · Garantia de 7 dias<\/span>/);
+  // barra fixa: R$ 149,90 riscado antes de R$ 99,98
+  assert.match(h, /<span style="position:absolute;[^"]*">Preço oficial: <\/span><s style="font-size:13px;color:#8A9494;font-family:var\(--font-sans\);margin-right:6px">R\$ 149,90<\/s>R\$ 99,98<\/div>/);
+  // depois do lançamento, nada riscado em lugar nenhum
+  assert.equal(/<s[ >]|Preço oficial/.test(home("br", { vitrine: true, momento: DEPOIS_DO_LANCAMENTO })), false);
 });
 
 /* ------------------------- /sobre em standby ------------------------- */
@@ -592,9 +851,16 @@ test("next.config.js em build de produção da Vercel: standby não para; ligada
   }
 });
 
-test("doc do lançamento existe e explica a chave, /vendas e a trava", () => {
+test("doc do lançamento existe e explica a chave, a vitrine, o checkout ligado nela, o preço oficial e a trava", () => {
   const doc = fs.readFileSync(arq("docs", "LANCAMENTO.md"), "utf8");
-  for (const termo of ["DM_SITE_LANCADO", "/vendas", "DM_WEBHOOK_V2_OK", "noindex", "/vendas/es", "/vendas/pt-pt", "/vendas/es-es", "/vendas/mundo"]) {
+  for (const termo of [
+    "DM_SITE_LANCADO", "DM_WEBHOOK_V2_OK", "noindex", "/vendas", "/es/vendas", "/es-es/vendas", "/pt-pt/vendas", "/mundo/vendas",
+    // os endereços antigos e para onde vão
+    "/vendas/es", "/vendas/pt-pt", "/vendas/es-es", "/vendas/mundo",
+    // a decisão do checkout, com a frase do dono, a data e o contexto do webhook
+    "Já pode colocar o link do checkout. Quero testar a jornada inteira.", "27/10/2026", "21/10/2026",
+    "HOTMART_WEBHOOK_V2=1", "DM_VENDA_LIBERADA", "Preço oficial", "Eu quero acessar todas as paginas de vendas que temos.",
+  ]) {
     assert.ok(doc.includes(termo), termo);
   }
   assert.equal(/[\u2013\u2014]/.test(doc), false, "sem travessão");
@@ -639,7 +905,7 @@ test("standby: as quatro páginas legais mostram o texto da produção; ligada a
   }
 });
 
-test("standby: fora de /vendas, GA4 e Pixel montam direto e sem aviso, como na produção; em /vendas e com a chave ligada, só com o aceite", () => {
+test("standby: fora da vitrine, GA4 e Pixel montam direto e sem aviso, como na produção; na vitrine e com a chave ligada, só com o aceite", () => {
   const consentimento = (lancadoNoBuild, pathname) => carregarTs(arq("components", "Consentimento.tsx"), {
     react: React, "react/jsx-runtime": jsx,
     "next/navigation": { usePathname: () => pathname },
@@ -650,9 +916,9 @@ test("standby: fora de /vendas, GA4 e Pixel montam direto e sem aviso, como na p
   }, { jsx: true }).Consentimento;
   const ver = (lancadoNoBuild, pathname) =>
     renderToStaticMarkup(React.createElement(consentimento(lancadoNoBuild, pathname), null, "PAGINA"));
-  for (const p of ["/", "/es", "/pt-pt", "/estudante", "/privacidade", "/obrigado-aprovado"]) {
+  for (const p of ["/", "/es", "/es-es", "/pt-pt", "/mundo", "/estudante", "/es/estudiantes", "/privacidade", "/obrigado-aprovado"]) {
     assert.equal(ver(false, p), "<i>MEDICAO</i>PAGINA", p);
   }
-  for (const p of ["/vendas", "/vendas/es", "/vendas/pt-pt"]) assert.equal(ver(false, p), "PAGINA", p);
+  for (const p of Object.values(VITRINE_NOVA)) assert.equal(ver(false, p), "PAGINA", p);
   for (const p of ["/", "/estudante", "/privacidade"]) assert.equal(ver(true, p), "PAGINA", p);
 });

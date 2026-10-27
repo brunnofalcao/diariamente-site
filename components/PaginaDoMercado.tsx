@@ -14,15 +14,20 @@ import { SITE_LANCADO } from "@/config/lancamento";
    CHAVE DE LANÇAMENTO (config/lancamento.ts):
      desligada (standby)  as homes públicas mostram a lista de espera
                           ("Em breve"), como antes do lançamento; o site de
-                          vendas aparece só com `vitrine`, em /vendas/*
+                          vendas aparece só com `vitrine`
      ligada               as homes públicas são o site de vendas
 
-   `vitrine`: as páginas /vendas, /vendas/es, /vendas/es-es,
-   /vendas/pt-pt e /vendas/mundo. Mostram o que a home do mercado vai
-   mostrar no lançamento, e os links entre mercados ficam dentro de
-   /vendas (lib/mercado.ts, VENDAS_DO_MERCADO).
+   `vitrine`: as páginas /vendas, /es/vendas, /es-es/vendas,
+   /pt-pt/vendas e /mundo/vendas (lib/mercado.ts, VENDAS_DO_MERCADO).
+   Cada uma mostra o site de vendas do mercado como ele vai ao ar QUANDO
+   A VENDA DELE ABRIR: a página inteira, com o bloco de oferta de venda
+   (preço na moeda do mercado e o botão para o checkout de verdade),
+   inclusive la, es, pt e rw, que seguem com vendaAberta: false no
+   lançamento público (decisão do dono, 27/10/2026: "Eu quero acessar
+   todas as paginas de vendas que temos."). Os links entre mercados ficam
+   na vitrine.
 
-   Com a venda do mercado fechada (vendaAberta: false):
+   Fora da vitrine, com a venda do mercado fechada (vendaAberta: false):
      semVenda "bloco"   a página de vendas, com a lista de espera no
                         lugar do bloco de oferta (pt e rw)
      semVenda "pagina"  a home inteira é a lista de espera (la e es,
@@ -35,11 +40,15 @@ import { SITE_LANCADO } from "@/config/lancamento";
 
 export function PaginaDoMercado({ mercado, vitrine = false }: { mercado: Mercado; vitrine?: boolean }) {
   const o = MERCADOS[mercado];
-  if (!SITE_LANCADO && !vitrine) {
+  // Ligada a chave, a vitrine some: o middleware leva à home real e, se a
+  // página chegar a renderizar, ela segue as regras públicas do mercado
+  // (fechado continua sem venda).
+  const naVitrine = vitrine && !SITE_LANCADO;
+  if (!SITE_LANCADO && !naVitrine) {
     return <EmBreve lang={o.idioma} mercado={mercado} />;
   }
-  if (!o.vendaAberta && o.semVenda === "pagina") {
-    return <EmBreve lang={o.idioma} mercado={mercado} vitrine={vitrine} />;
+  if (!naVitrine && !o.vendaAberta && o.semVenda === "pagina") {
+    return <EmBreve lang={o.idioma} mercado={mercado} />;
   }
-  return <Home lang={o.idioma} mercado={mercado} momento={Date.now()} vitrine={vitrine} />;
+  return <Home lang={o.idioma} mercado={mercado} momento={Date.now()} vitrine={naVitrine} />;
 }

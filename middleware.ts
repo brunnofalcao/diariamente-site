@@ -15,9 +15,14 @@ import { SITE_LANCADO } from "@/config/lancamento";
 
    STANDBY (chave desligada, padrão): as homes mostram a lista de espera
    e cada país vai para a sua home, como a produção antes do lançamento,
-   SEM a reescrita de "/" para /mundo. As prévias antigas (/embreve,
-   /es/embreve, /pt-pt/embreve, /es-es/embreve) vão para o /vendas do
-   mercado, onde fica o site de vendas.
+   SEM a reescrita de "/" para /mundo. O site de vendas de cada mercado
+   fica na vitrine, com o idioma na frente (/vendas, /es/vendas,
+   /es-es/vendas, /pt-pt/vendas e /mundo/vendas; lib/mercado.ts,
+   VENDAS_DO_MERCADO), e abre como foi pedido, de qualquer país. As
+   prévias antigas (/embreve, /es/embreve, /pt-pt/embreve,
+   /es-es/embreve) e os endereços antigos da vitrine (/vendas/es,
+   /vendas/es-es, /vendas/pt-pt, /vendas/mundo) redirecionam (307, com
+   os parâmetros) para a vitrine do mercado.
 
    LANÇADO (DM_SITE_LANCADO=1 no build):
 
@@ -29,7 +34,9 @@ import { SITE_LANCADO } from "@/config/lancamento";
      - resto do mundo fica em "/", reescrita para a rota interna com o
        bloco em dólar
      - utm, fbclid e gclid seguem junto em todo redirecionamento
-     - /vendas e /vendas/* redirecionam para a home real do mercado
+     - a vitrine (/vendas, /es/vendas, /es-es/vendas, /pt-pt/vendas,
+       /mundo/vendas) e os endereços antigos dela (/vendas/es...)
+       redirecionam para a home real do mercado
 
    Vary: país, idioma e cookie. Sem isso o CDN pode servir o
    redirecionamento em cache para todo mundo.
@@ -77,6 +84,8 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   // Fora do middleware: api, assets do Next, arquivos de ícone e tudo que
-  // tenha extensão. Middleware em asset é custo puro.
+  // tenha extensão. Middleware em asset é custo puro. A vitrine
+  // (/es/vendas, /mundo/vendas...) e os endereços antigos dela passam por
+  // aqui.
   matcher: ["/((?!api|_next/static|_next/image|icon|apple-icon|opengraph-image|favicon|robots|sitemap|.*\\..*).*)"],
 };

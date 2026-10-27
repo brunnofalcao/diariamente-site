@@ -25,7 +25,8 @@
    STANDBY (chave de lançamento desligada; decisão do dono, 27/10/2026).
    Tudo o que está acima trava o LANÇAMENTO. Enquanto DM_SITE_LANCADO não
    for "1" (config/lancamento.ts), as homes mostram a lista de espera e o
-   site de vendas fica em /vendas (noindex): nada disso para o build de
+   site de vendas fica na vitrine (/vendas, /es/vendas, /es-es/vendas,
+   /pt-pt/vendas e /mundo/vendas, noindex): nada disso para o build de
    produção, que precisa continuar publicando em standby. O que travaria
    o lançamento sai como aviso no log ("ao ligar a chave, o build de
    produção TRAVARIA por isto"), com o mesmo texto (emStandby, mais
@@ -33,7 +34,14 @@
    estão aqui: o build de produção da Vercel com venda aberta e sem
    DM_WEBHOOK_V2_OK=1 falha, e o deploy anterior (standby) continua no ar.
    checarPrecos, a regra em si, não muda: a chave entra só no
-   checarPrecosDoProjeto, que o next.config.js chama. A trava do endereço
+   checarPrecosDoProjeto, que o next.config.js chama.
+
+   CHECKOUT NA VITRINE (decisão do dono, 27/10/2026: "Já pode colocar o
+   link do checkout. Quero testar a jornada inteira."): em standby, os
+   botões da vitrine abrem o checkout de verdade da Hotmart, em todos os
+   mercados, sem esperar DM_WEBHOOK_V2_OK=1. A ordem do item 4 acima
+   continua valendo para o LANÇAMENTO público: com a chave ligada, o
+   build de produção sem DM_WEBHOOK_V2_OK=1 para. A trava do endereço
    (scripts/checar-endereco.js) não depende da chave: os Termos e a
    Política são públicos nos dois estados.
 
@@ -575,11 +583,11 @@ function siteLancado(env = {}) {
 function emStandby(r) {
   const base =
     "Site em STANDBY (DM_SITE_LANCADO desligada): as homes mostram a lista de espera e o site de vendas " +
-    "fica em /vendas, /vendas/es, /vendas/es-es, /vendas/pt-pt e /vendas/mundo (noindex). A trava de preços " +
-    "e a do webhook (DM_WEBHOOK_V2_OK) não param este build; voltam a valer quando a chave for ligada " +
-    "(docs/LANCAMENTO.md). Em standby, os botões de /vendas só abrem o checkout com DM_WEBHOOK_V2_OK=1, e a " +
-    "/estudante é a da produção (formulário aberto, R$ 77,00); o que vem abaixo sobre o estudante vale para o " +
-    "fluxo novo, com a chave ligada.";
+    "fica na vitrine: /vendas, /es/vendas, /es-es/vendas, /pt-pt/vendas e /mundo/vendas (noindex). A trava de " +
+    "preços e a do webhook (DM_WEBHOOK_V2_OK) não param este build; voltam a valer quando a chave for ligada " +
+    "(docs/LANCAMENTO.md). Na vitrine, todos os mercados aparecem com a venda aberta e os botões abrem o " +
+    "checkout de verdade da Hotmart (decisão do dono, 27/10/2026), e a /estudante é a da produção (formulário " +
+    "aberto, R$ 77,00); o que vem abaixo sobre o estudante vale para o fluxo novo, com a chave ligada.";
   if (r.ok) return { ...r, standby: true, mensagem: r.mensagem ? `${base} ${r.mensagem}` : base };
   return {
     ...r, ok: true, standby: true,

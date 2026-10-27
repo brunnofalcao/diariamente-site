@@ -42,7 +42,7 @@ export const I18N = {
     p3: "O inimigo não é a falta de motivação. É o abandono silencioso. O Diariamente foi construído no ponto exato onde você costuma parar.",
     vEyebrow: "Agora imagine o contrário",
     vText: "Chegar ao fim do ano sem ter faltado com a pessoa mais importante: você. Um dia de cada vez, sem recomeçar do zero toda segunda.",
-    photoAlt: "Mesa de um dia comum ao amanhecer, com caderno aberto e café",
+    photoAlt: "Uma mão segura o celular com a provocação do dia aberta no Diariamente, ao lado de uma xícara de café, na luz da manhã.",
     hH2: "O ritual diário em três movimentos.",
     hSub: "Sempre a mesma estrutura. O que muda é o texto, e o que você faz com ele.",
     steps: [
@@ -146,7 +146,7 @@ export const I18N = {
     p3: "El enemigo no es la falta de motivación. Es el abandono silencioso. Diariamente fue construido en el punto exacto donde sueles parar.",
     vEyebrow: "Ahora imagina lo contrario",
     vText: "Llegar al final del año sin haberle fallado a la persona más importante: tú. Un día a la vez, sin volver a empezar de cero cada lunes.",
-    photoAlt: "Mesa de un día común al amanecer, con cuaderno abierto y café",
+    photoAlt: "Una mano sostiene un teléfono con la provocación del día abierta en Diariamente, junto a una taza de café, con la luz de la mañana.",
     hH2: "El ritual diario en tres movimientos.",
     hSub: "Siempre la misma estructura. Lo que cambia es el texto, y lo que haces con él.",
     steps: [
@@ -242,10 +242,9 @@ export function cld(url: string, tx: string): string {
    Cada idioma tem o SEU conjunto de imagens e links. Trocar a foto, a
    ficha da loja ou o checkout do site espanhol nao encosta no portugues.
 
-   As telas do app ja tem a versao em espanhol (as mesmas das lojas). A
-   foto de estilo de vida e o badge da Google Play ainda sao os do
-   portugues: quando houver a versao em espanhol, basta trocar AQUI, no
-   bloco `es`.
+   As telas do app e a foto da manha ja tem a versao em espanhol. O badge
+   da Google Play ainda e o do portugues: quando houver a versao em
+   espanhol, basta trocar AQUI, no bloco `es`.
 
    ATENCAO nos links de loja:
      - `appStore` termina em /br/ no portugues. Para o espanhol, troque
@@ -292,9 +291,29 @@ const telasDo = (lang: Lang) => ({
   leitura: `/telas/${lang}/leitura`,
 });
 
+/* FOTO DA MANHÃ · seção "Problema + virada" (components/Home.tsx)
+   ---------------------------------------------------------------------
+   Uma mão segura o celular com a provocação do dia aberta no app, numa
+   mesa de madeira com café, na luz da manhã. Entrou em 27/10/2026 no
+   lugar da foto do caderno (Cloudinary, Lifestyle_Diariamente), a pedido
+   do dono: "trocar essa foto por outra que faça sentido". A cena foi
+   gerada por IA e a tela é a real, da arte 02-leitura das lojas, uma
+   versão por idioma (pt e es); só a tela muda entre as duas.
+
+   Mesmo esquema das telas: WebP nas três larguras de FOTO_LARGURAS e um
+   JPEG na largura FOTO_FALLBACK para o navegador sem WebP, em
+   public/fotos: <base>-<largura>.webp e <base>-<FOTO_FALLBACK>.jpg. Quadro
+   4:5 (FOTO_PROPORCAO), o mesmo do cartão da seção, então o cover não
+   corta nada. Trocar a foto: gerar os quatro arquivos com o mesmo nome. */
+export const FOTO_LARGURAS = [600, 900, 1200] as const;
+/** Largura do JPEG de reserva (navegador sem WebP). */
+export const FOTO_FALLBACK = 900;
+/** Proporção da foto (largura e altura em pixels), 4:5. */
+export const FOTO_PROPORCAO = { largura: 1200, altura: 1500 } as const;
+
 const IMG_PT = {
   ...telasDo("pt"),
-  lifestyle: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782699619/Lifestyle_Diariamente_yur3mm.png",
+  manha: "/fotos/manha-pt",
   appStore: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1783609634/Apple_Store_Branca_usar_no_fundo_escuro_tp7rgw.svg",
   googlePlay: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1783609634/GetItOnGooglePlay_Badge_Web_color_Portuguese-Brazil_rl6hba.svg",
 };
@@ -314,6 +333,8 @@ export const ATIVOS: Record<Lang, { img: typeof IMG_PT; links: typeof LINKS_PT }
       ...IMG_PT,
       // Artes das lojas em espanhol (interface e legenda em espanhol).
       ...telasDo("es"),
+      // Foto da manhã com a tela do app em espanhol.
+      manha: "/fotos/manha-es",
       // [TROCAR] badge da Google Play em espanhol
     },
     links: {
@@ -377,7 +398,7 @@ const PT_PT: Record<string, unknown> = {
   p2: "O problema nunca foi disciplina. É que ninguém te deu um sistema para continuar: só conteúdo. E conteúdo parado não muda ninguém.",
   p3: "O inimigo não é a falta de motivação. É o abandono silencioso. O Diariamente foi construído no ponto exato onde costumas parar.",
   vText: "Chegar ao fim do ano sem teres faltado à pessoa mais importante: tu. Um dia de cada vez, sem recomeçar do zero todas as segundas.",
-  photoAlt: "Mesa de um dia comum ao amanhecer, com caderno aberto e café",
+  photoAlt: "Uma mão segura o telemóvel com a provocação do dia aberta no Diariamente, ao lado de uma chávena de café, à luz da manhã.",
   hSub: "Sempre a mesma estrutura. O que muda é o texto, e o que fazes com ele.",
   steps: [
     ["Provocação", "Um texto curto que interrompe o automático. Todos os dias, um só. Sem antecipar, sem acumular."],

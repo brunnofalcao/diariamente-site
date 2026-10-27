@@ -13,7 +13,7 @@ import { SITE } from "@/config";
    fechada, o botão não abre o pagamento (Home com `previa`).
 
    STANDBY (chave de lançamento desligada, config/lancamento.ts): este
-   endereço leva a /vendas/pt-pt, o site em standby, como vai ao ar (o
+   endereço leva a /pt-pt/vendas, a vitrine, como vai ao ar (o
    middleware decide, lib/mercado.ts, PREVIAS_ANTIGAS). Esta prévia volta
    a abrir quando a chave for ligada. */
 

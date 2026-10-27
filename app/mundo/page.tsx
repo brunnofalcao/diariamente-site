@@ -20,7 +20,8 @@ import { SITE_LANCADO } from "@/config/lancamento";
 
    STANDBY (chave de lançamento desligada, config/lancamento.ts): não há
    reescrita e /mundo responde 404, como antes do lançamento. O que vai
-   ao ar para o resto do mundo pode ser visto em /vendas/mundo.
+   ao ar para o resto do mundo pode ser visto em /mundo/vendas (rota
+   irmã, app/mundo/vendas/page.tsx: o 404 daqui não a alcança).
    ===================================================================== */
 
 export const revalidate = 3600;
