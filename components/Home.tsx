@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { TEASER, ATIVOS, TELA_PROPORCAO, cld, dicionario, type Lang, type Dict } from "@/lib/i18n";
+import { TEASER, ATIVOS, TELA_PROPORCAO, FOTO_LARGURAS, FOTO_FALLBACK, FOTO_PROPORCAO, dicionario, type Lang, type Dict } from "@/lib/i18n";
 import { caminho } from "@/lib/rotas";
 import { SITE, ESTUDANTE } from "@/config";
 import { registrarInicioDeCheckout } from "@/lib/medicao";
@@ -535,9 +535,15 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
               </div>
             </div>
             <div style={{ minWidth: 0 }}>
+              {/* Foto da manhã do idioma da página (lib/i18n.ts, FOTO_*): WebP
+                  do próprio domínio e JPEG de reserva. width e height (4:5)
+                  reservam o espaço antes de a imagem chegar. */}
               <div style={{ borderRadius: 16, overflow: "hidden", border: `1px solid ${C.line}`, aspectRatio: "4/5", background: C.s1 }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={cld(IMG.lifestyle, "f_auto,q_auto,w_900")} srcSet={[600, 900, 1200].map((w) => `${cld(IMG.lifestyle, `f_auto,q_auto,w_${w}`)} ${w}w`).join(", ")} sizes="(min-width:900px) 520px, 92vw" alt={t.photoAlt} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                <picture style={{ display: "block", width: "100%", height: "100%" }}>
+                  <source type="image/webp" srcSet={FOTO_LARGURAS.map((w) => `${IMG.manha}-${w}.webp ${w}w`).join(", ")} sizes="(min-width:900px) 520px, 92vw" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`${IMG.manha}-${FOTO_FALLBACK}.jpg`} alt={t.photoAlt} width={FOTO_PROPORCAO.largura} height={FOTO_PROPORCAO.altura} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                </picture>
               </div>
             </div>
           </div>

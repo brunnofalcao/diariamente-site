@@ -607,6 +607,20 @@ test("vitrine: todo mercado é o site de vendas, com o botão abrindo o checkout
   assert.deepEqual(checkouts(home("br", { vitrine: true, momento: DEPOIS_DO_LANCAMENTO })), Array(2).fill("https://pay.hotmart.com/K105072021O?off=fhrttdh8"));
 });
 
+test("vitrine: a foto da manhã no idioma da página, do próprio domínio, com espaço reservado e lazy", () => {
+  const { home } = componentesReais(false);
+  for (const m of ["br", "la", "es", "pt", "rw"]) {
+    const lang = P.MERCADOS[m].idioma;
+    const base = `/fotos/manha-${lang}`;
+    const h = home(m, { vitrine: true });
+    assert.ok(h.includes(`<picture style="display:block;width:100%;height:100%"><source type="image/webp" srcSet="${base}-600.webp 600w, ${base}-900.webp 900w, ${base}-1200.webp 1200w" sizes="(min-width:900px) 520px, 92vw"/>`), m);
+    assert.match(h, new RegExp(`<img src="${base}-900\\.jpg" alt="(Uma mão|Una mano)[^"]+" width="1200" height="1500" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block"/></picture>`), m);
+    // o quadro 4:5 da seção continua o mesmo
+    assert.match(h, /aspect-ratio:4\/5;background:[^"]+"><picture/, m);
+    assert.equal(/cloudinary[^"]*Lifestyle|caderno|cuaderno/i.test(h), false, m);
+  }
+});
+
 test("vitrine (PaginaDoMercado): la e es também saem como site de vendas, com o link do mercado", () => {
   const { pagina } = componentesReais(false);
   for (const [m, off] of Object.entries(OFERTA_DA_VITRINE)) {

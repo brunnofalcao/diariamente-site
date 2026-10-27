@@ -192,3 +192,59 @@ test("/estudante: a arte Hoje em português, com prioridade (primeira dobra) e s
   // a pílula: numa linha em tela estreita, limitada pela tela
   assert.match(css, /\.ed-phone-tag \{\s*white-space: normal; text-align: center; width: max-content; max-width: calc\(100vw - 40px\);/);
 });
+
+/* ----------------------------- foto da manhã ------------------------------ */
+// Decisão do dono, 27/10/2026: "Precisamos trocar essa foto por outra que faça
+// sentido". Saiu a foto do caderno (Cloudinary); entrou a mão com o celular e a
+// provocação do dia aberta no app, uma versão por idioma (só a tela muda).
+
+const FOTOS = ["pt", "es"].flatMap((lang) => [
+  ...[600, 900, 1200].map((w) => `manha-${lang}-${w}.webp`),
+  `manha-${lang}-900.jpg`,
+]);
+
+test("foto da manhã: WebP nas três larguras e JPEG de reserva, em pt e es, no quadro 4:5 e leves", () => {
+  assert.deepEqual([...I.FOTO_LARGURAS], [600, 900, 1200]);
+  assert.equal(I.FOTO_FALLBACK, 900);
+  assert.deepEqual([I.FOTO_PROPORCAO.largura, I.FOTO_PROPORCAO.altura], [1200, 1500]);
+  const altura = (w) => Math.round((w * I.FOTO_PROPORCAO.altura) / I.FOTO_PROPORCAO.largura);
+  for (const lang of ["pt", "es"]) {
+    assert.equal(I.ATIVOS[lang].img.manha, `/fotos/manha-${lang}`);
+    for (const w of I.FOTO_LARGURAS) {
+      const arquivo = path.join(raiz, "public", "fotos", `manha-${lang}-${w}.webp`);
+      assert.ok(fs.existsSync(arquivo), arquivo);
+      const t = tamanhoDoWebp(fs.readFileSync(arquivo));
+      assert.deepEqual([t.largura, t.altura], [w, altura(w)], arquivo);
+      const limite = w === 1200 ? 130 : w === 900 ? 90 : 50;
+      assert.ok(fs.statSync(arquivo).size <= limite * 1024, `${arquivo} pesado demais`);
+    }
+    const jpg = path.join(raiz, "public", "fotos", `manha-${lang}-${I.FOTO_FALLBACK}.jpg`);
+    assert.ok(fs.existsSync(jpg), jpg);
+    const t = tamanhoDoJpeg(fs.readFileSync(jpg));
+    assert.deepEqual([t.largura, t.altura], [I.FOTO_FALLBACK, altura(I.FOTO_FALLBACK)], jpg);
+    assert.ok(fs.statSync(jpg).size <= 110 * 1024, `${jpg} pesado demais`);
+  }
+  // só o que o site usa: nada de PNG original
+  assert.deepEqual(fs.readdirSync(path.join(raiz, "public", "fotos")).sort(), [...FOTOS].sort());
+});
+
+test("foto da manhã: sem a foto antiga do Cloudinary e com o texto alternativo da cena nova, sem travessão", () => {
+  for (const f of [["lib", "i18n.ts"], ["components", "Home.tsx"]]) {
+    // o código, sem os comentários (o de lib/i18n.ts conta a troca)
+    const fonte = fs.readFileSync(path.join(raiz, ...f), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    assert.equal(/Lifestyle_Diariamente|lifestyle/i.test(fonte), false, f.join("/"));
+  }
+  const pt = I.dicionario("pt", "br");
+  const ptPt = I.dicionario("pt", "pt");
+  const es = I.dicionario("es", "la");
+  const esEs = I.dicionario("es", "es");
+  assert.equal(pt.photoAlt, "Uma mão segura o celular com a provocação do dia aberta no Diariamente, ao lado de uma xícara de café, na luz da manhã.");
+  assert.equal(ptPt.photoAlt, "Uma mão segura o telemóvel com a provocação do dia aberta no Diariamente, ao lado de uma chávena de café, à luz da manhã.");
+  assert.equal(es.photoAlt, "Una mano sostiene un teléfono con la provocación del día abierta en Diariamente, junto a una taza de café, con la luz de la mañana.");
+  assert.equal(esEs.photoAlt, es.photoAlt);
+  assert.equal(I.dicionario("pt", "rw").photoAlt, pt.photoAlt);
+  for (const d of [pt, ptPt, es]) {
+    assert.equal(/[–—]/.test(d.photoAlt), false, d.photoAlt);
+    assert.equal(/\bcompr(a|ar)\b|caderno|cuaderno/i.test(d.photoAlt), false, d.photoAlt);
+  }
+});
