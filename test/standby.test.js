@@ -401,8 +401,9 @@ test("lançado: as homes públicas seguem vendaAberta e semVenda; a vitrine cont
   for (const m of ["br", "pt", "rw"]) assert.match(ver(m, false), new RegExp(`data-c="Home" data-m="${m}" data-v="false"`), m);
   // la e es: a lista de espera inteira, como no PR #3
   for (const m of ["la", "es"]) assert.match(ver(m, false), new RegExp(`data-c="EmBreve" data-m="${m}" data-v="false"`), m);
-  // a vitrine (se o middleware não redirecionasse) seria o site de vendas
-  for (const m of ["br", "pt", "la", "es", "rw"]) assert.match(ver(m, true), /data-c="Home"/, m);
+  // a vitrine, se o middleware não redirecionasse, segue as regras públicas
+  for (const m of ["br", "pt", "rw"]) assert.match(ver(m, true), new RegExp(`data-c="Home" data-m="${m}" data-v="false"`), m);
+  for (const m of ["la", "es"]) assert.match(ver(m, true), new RegExp(`data-c="EmBreve" data-m="${m}" data-v="false"`), m);
   // vendaAberta e semVenda não mudaram: o lançamento público segue fechado fora do Brasil
   assert.deepEqual(
     Object.fromEntries(["br", "la", "es", "pt", "rw"].map((m) => [m, [P.MERCADOS[m].vendaAberta, P.MERCADOS[m].semVenda]])),

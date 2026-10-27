@@ -41,8 +41,10 @@
 >
 > **(a) Primeiro, no app.** Na Hotmart, o webhook do produto 7448309
 > reconfigurado para o app, e a chave `HOTMART_WEBHOOK_V2` na **posição 1**
-> no Railway (`docs/HOTMART-WEBHOOK-V2.md`, no repositório do app). Sem
-> isso, quem paga fica sem conta. **Feito isso, na Vercel, Settings,
+> no Railway (`docs/HOTMART-WEBHOOK-V2.md`, no repositório do app). Hoje
+> (27/10/2026) a rota antiga do app (posição 0) já cria a conta, mas grava
+> no log do Railway o e-mail e o link de ativação de cada conta nova; a
+> posição 1 resolve isso. **Feito isso, na Vercel, Settings,
 > Environment Variables, Production: `DM_WEBHOOK_V2_OK=1`.** É a
 > confirmação de que o passo (a) foi feito: sem ela, o build de produção
 > da Vercel **trava** (`scripts/checar-precos.js`) enquanto algum mercado

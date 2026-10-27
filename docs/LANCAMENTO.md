@@ -123,6 +123,15 @@ testar a jornada inteira."
   pendente para o lançamento público (passo 1 de "Para lançar").
 - Quem pagar pela vitrine paga de verdade: para testar a jornada sem
   custo, reembolse pela Hotmart depois (a garantia é de 7 dias).
+- Ofertas em dólar e em euro: chegam ao app pelo mesmo webhook do 7448309,
+  mas a criação de conta por elas ainda não foi testada. O checkout em
+  dólar (`uevhmhy2`) abre em espanhol, inclusive para quem vem de
+  `/mundo/vendas`, que é em português.
+- Um pagamento de teste que volte da Hotmart para `/obrigado-aprovado` entra
+  no GA4 e no Pixel (fora da vitrine a medição segue como a produção), em
+  real (`components/PurchaseTracking.tsx`), mesmo se foi em dólar ou euro.
+- Ligada a chave, a vitrine segue as regras públicas mesmo se chegar a
+  renderizar (`components/PaginaDoMercado.tsx`): mercado fechado não vende.
 - O formulário da lista de espera continua gravando contatos de verdade
   onde ainda aparece (homes públicas em standby).
 

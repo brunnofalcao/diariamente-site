@@ -40,11 +40,15 @@ import { SITE_LANCADO } from "@/config/lancamento";
 
 export function PaginaDoMercado({ mercado, vitrine = false }: { mercado: Mercado; vitrine?: boolean }) {
   const o = MERCADOS[mercado];
-  if (!SITE_LANCADO && !vitrine) {
+  // Ligada a chave, a vitrine some: o middleware leva à home real e, se a
+  // página chegar a renderizar, ela segue as regras públicas do mercado
+  // (fechado continua sem venda).
+  const naVitrine = vitrine && !SITE_LANCADO;
+  if (!SITE_LANCADO && !naVitrine) {
     return <EmBreve lang={o.idioma} mercado={mercado} />;
   }
-  if (!vitrine && !o.vendaAberta && o.semVenda === "pagina") {
+  if (!naVitrine && !o.vendaAberta && o.semVenda === "pagina") {
     return <EmBreve lang={o.idioma} mercado={mercado} />;
   }
-  return <Home lang={o.idioma} mercado={mercado} momento={Date.now()} vitrine={vitrine} />;
+  return <Home lang={o.idioma} mercado={mercado} momento={Date.now()} vitrine={naVitrine} />;
 }
