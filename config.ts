@@ -260,13 +260,27 @@ export const TRACKING = {
 
 // ---------------------------------------------------------------------
 // EMPRESA / SUPORTE / LEGAL
-// CNPJ e razão social: [TROCAR] pelo documento oficial da Science Play.
-// Não inventar número de documento — tem peso jurídico.
+// O Diariamente é um produto da marca Science Play®, operado por um
+// GRUPO de empresas (decisão de Brunno, 26/10/2026). Os textos não ficam
+// presos a um CNPJ: Termos e Política falam em "Science Play" e UMA
+// linha de identificação lista as empresas do grupo. As frases são as das
+// funções abaixo; as páginas as exibem por components/CnpjsDoGrupo.tsx,
+// que mantém cada CNPJ inteiro na mesma linha. Nenhuma página escreve
+// razão social ou CNPJ à mão (testes/empresas-do-grupo.test.mjs confere).
+// Razões sociais e CNPJs copiados dos cartões CNPJ. Não inventar número
+// de documento: tem peso jurídico.
 // ---------------------------------------------------------------------
 export const EMPRESA = {
   marca: "Science Play",
-  razaoSocial: "Science Play Cursos LTDA",
-  cnpj: "33.612.911/0001-29",
+  // A ordem é a da linha de identificação aprovada.
+  grupo: [
+    // Titular da conta de desenvolvedor da Apple (App Store).
+    { razaoSocial: "Science Play Audiobook LTDA", cnpj: "33.619.144/0001-80" },
+    // A que os textos legais citavam sozinha até out/2026.
+    { razaoSocial: "Science Play Cursos LTDA", cnpj: "33.612.911/0001-29" },
+    // Processa o pagamento e emite a nota fiscal.
+    { razaoSocial: "Falcão14 Organização de Feiras LTDA", cnpj: "33.616.206/0001-08" },
+  ],
   // Dois canais, papéis distintos: contato para institucional e imprensa,
   // suporte para quem já é assinante e precisa de ajuda.
   contatoEmail: "contato@scienceplay.com",
@@ -274,9 +288,51 @@ export const EMPRESA = {
   site: "https://www.scienceplay.com",
   instagram: "scienceplay",
   linkedin: "scienceplay",
-  endereco: "[TROCAR: endereço completo da empresa, recomendado nos legais]",
-  vigenciaLegal: "Junho de 2026",
+  // Endereço de contato do grupo: sede da Science Play Cursos e da
+  // Falcão14, que processa o pagamento.
+  endereco:
+    "SRTVN Quadra 702, Conjunto P, Edifício Radio Center, Asa Norte, Brasília/DF, CEP 70.719-900, Brasil",
+  // "Última atualização" dos Termos e da Política (pt e es). Mudou o texto
+  // de um deles, muda aqui: a cláusula 11 dos Termos e a seção final da
+  // Política prometem a data. Outubro de 2026: a identificação passou a
+  // ser o grupo Science Play (decisão de 26/10/2026).
+  vigenciaLegal: "Outubro de 2026",
+  // A mesma data nas páginas em espanhol.
+  vigenciaLegalEs: "Octubre de 2026",
 };
+
+type IdiomaLegal = "pt" | "es";
+
+/** "a, b e c" em português, "a, b y c" em espanhol. */
+function emLista(itens: string[], lang: IdiomaLegal): string {
+  if (itens.length < 2) return itens.join("");
+  return `${itens.slice(0, -1).join(", ")} ${lang === "es" ? "y" : "e"} ${itens[itens.length - 1]}`;
+}
+
+/** A linha de identificação aprovada: aparece UMA vez nos Termos e na Política
+ *  (exibida por IdentificacaoDoGrupo, em components/CnpjsDoGrupo.tsx). */
+export function identificacaoDoGrupo(lang: IdiomaLegal = "pt"): string {
+  const empresas = emLista(
+    EMPRESA.grupo.map((e) => `${e.razaoSocial} (CNPJ ${e.cnpj})`),
+    lang,
+  );
+  return lang === "es"
+    ? `Diariamente es un producto ${EMPRESA.marca}®, operado por las empresas del grupo ${EMPRESA.marca}: ${empresas}.`
+    : `O Diariamente é um produto ${EMPRESA.marca}®, operado pelas empresas do grupo ${EMPRESA.marca}: ${empresas}.`;
+}
+
+/** Rodapé curto: "Science Play® · grupo Science Play · CNPJs a, b e c"
+ *  (exibido por RodapeDoGrupo, em components/CnpjsDoGrupo.tsx). */
+export function rodapeDoGrupo(lang: IdiomaLegal = "pt"): string {
+  const cnpjs = emLista(EMPRESA.grupo.map((e) => e.cnpj), lang);
+  return `${EMPRESA.marca}® · grupo ${EMPRESA.marca} · CNPJs ${cnpjs}`;
+}
+
+/** Campo "Responsável" dos resumos factuais (sobre, acerca-de, estudante). */
+export function responsavelDoGrupo(lang: IdiomaLegal = "pt"): string {
+  const nomes = emLista(EMPRESA.grupo.map((e) => e.razaoSocial), lang);
+  return `${EMPRESA.marca}® (grupo ${EMPRESA.marca}: ${nomes})`;
+}
 
 // ---------------------------------------------------------------------
 // ESTUDANTE — condição exclusiva (/estudante)

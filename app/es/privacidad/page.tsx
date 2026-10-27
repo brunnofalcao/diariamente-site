@@ -1,4 +1,5 @@
 import { EMPRESA, SITE } from "@/config";
+import { IdentificacaoDoGrupo } from "@/components/CnpjsDoGrupo";
 import { LegalShell } from "@/components/LegalShell";
 import { metadataDaPagina } from "@/lib/seo";
 import { caminho } from "@/lib/rotas";
@@ -14,7 +15,7 @@ export const metadata = metadataDaPagina("privacidade", "es");
 
 export default function Privacidad() {
   return (
-    <LegalShell lang="es" titulo="Política de Privacidad" atualizado={EMPRESA.vigenciaLegal}>
+    <LegalShell lang="es" titulo="Política de Privacidad" atualizado={EMPRESA.vigenciaLegalEs}>
       <p>
         Esta Política explica cómo tratamos los datos personales en Diariamente. Se aplica a
         todas las personas usuarias, en Brasil y fuera de él, y fue redactada para atender
@@ -24,12 +25,13 @@ export default function Privacidad() {
       </p>
 
       <h2>1. Quién es el responsable del tratamiento</h2>
+      <p><IdentificacaoDoGrupo lang="es" /></p>
       <p>
-        <strong>{EMPRESA.razaoSocial}</strong>, inscrita en el CNPJ nº {EMPRESA.cnpj}, es la
-        responsable del tratamiento. Diariamente es un producto operado por ella.
+        <strong>{EMPRESA.marca}®</strong>, a través de las empresas del grupo identificadas
+        arriba, es la responsable del tratamiento.
       </p>
       <p>
-        {/* Endereço ainda não confirmado (config.ts): a linha some em vez de mostrar a nota interna. */}
+        {/* Se o endereço voltar a ser nota interna "[...]" (config.ts), a linha some em vez de mostrá-la. */}
         {!EMPRESA.endereco.startsWith("[") && (
           <>
             Dirección: {EMPRESA.endereco}
@@ -137,7 +139,7 @@ export default function Privacidad() {
       </p>
       <p>Las categorías de destinatarios son:</p>
       <ul>
-        <li>empresas controladas, controladoras o bajo control común de {EMPRESA.razaoSocial};</li>
+        <li>empresas controladas, controladoras o bajo control común de las empresas del grupo identificadas en la sección 1;</li>
         <li>socios comerciales en acciones conjuntas de educación, contenido y eventos;</li>
         <li>patrocinadores de acciones, eventos y contenidos de Diariamente o de Science Play.</li>
       </ul>

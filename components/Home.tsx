@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { TEASER, ATIVOS, cld, dicionario, type Lang, type Dict } from "@/lib/i18n";
 import { caminho } from "@/lib/rotas";
+import { RodapeDoGrupo } from "@/components/CnpjsDoGrupo";
 import { BlocoOferta } from "@/components/BlocoOferta";
 import { formatar, precoFinal, precoCheio, linkCheckout, precoEstudante, MERCADOS, type Mercado } from "@/config/pricing";
 
@@ -793,7 +794,7 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
           </div>
           <hr style={{ height: 1, border: 0, background: C.line, margin: "clamp(32px,5vw,44px) 0 20px" }} />
           <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "12px 24px" }}>
-            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.n400 }}>© 2026 Science Play® · Science Play Cursos LTDA · CNPJ 33.612.911/0001-29 · diariamente.app</p>
+            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.n400 }}>© 2026 <RodapeDoGrupo lang={lang} /> · diariamente.app</p>
             <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
               {[.3, .4, .5, .6, .75, .9].map((o, i) => <i key={i} style={{ display: "block", width: 10, height: 4, borderRadius: 999, background: C.p500, opacity: o }} />)}
               <i style={{ display: "block", width: 22, height: 4, borderRadius: 999, background: C.p500 }} />

@@ -1,5 +1,5 @@
 import { metadataDaPagina } from "@/lib/seo";
-import { SITE, EMPRESA, PLANO_APP, ESTUDANTE } from "@/config";
+import { SITE, EMPRESA, PLANO_APP, ESTUDANTE, responsavelDoGrupo } from "@/config";
 import { LockupHorizontal } from "@/components/Brand";
 
 /* =====================================================================
@@ -88,7 +88,7 @@ export default function Sobre() {
                 <li><b>Duração:</b> 365 dias, uma provocação por dia</li>
                 <li><b>Preço:</b> R$ 197 · R$ 137,90 na condição de lançamento, ou 12x de R$ 14,26 no cartão (total R$ 171,12)</li>
                 <li><b>Garantia:</b> 7 dias, incondicional</li>
-                <li><b>Responsáveis:</b> Science Play · Science Play</li>
+                <li><b>Responsáveis:</b> {responsavelDoGrupo("pt")}</li>
                 <li><b>Inscrição:</b> {SITE.dominioVisivel} · acesso enviado por e-mail</li>
               </ul>
             </div>
