@@ -599,6 +599,12 @@ test("doc do lançamento existe e explica a chave, /vendas e a trava", () => {
   }
   assert.equal(/[\u2013\u2014]/.test(doc), false, "sem travessão");
   assert.equal(/\bcompra(r|s)?\b/i.test(doc), false, "sem a palavra vetada no texto do site");
+  // a /estudante em standby: o fluxo da produção, com a arte Hoje das lojas no hero
+  const linha = doc.split("\n").find((l) => l.startsWith("| `/estudante` |"));
+  assert.match(linha, /R\$ 77,00 sobre R\$ 137,90/);
+  assert.match(linha, /a imagem do hero já é a arte Hoje das lojas, a pedido do dono/);
+  assert.equal(/mockup do Cloudinary/.test(linha), false);
+  assert.match(doc, /\*\*\/estudante, imagem do hero\*\*: a arte Hoje da App Store/);
 });
 
 /* ----------------- páginas legais e medição em standby ----------------- */

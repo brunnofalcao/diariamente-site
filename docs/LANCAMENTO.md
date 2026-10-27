@@ -35,7 +35,7 @@ não muda nada.
 | `/vendas/mundo` | o que a `/` vai mostrar fora de BR, PT, ES e América Latina | redireciona para `/` |
 | `/embreve`, `/es/embreve` | levam a `/vendas` e `/vendas/es` | levam a `/` e `/es` |
 | `/pt-pt/embreve`, `/es-es/embreve` | levam a `/vendas/pt-pt` e `/vendas/es-es` | prévias do dono (29,99 €), noindex |
-| `/estudante` | **a da produção**: formulário aberto, R$ 77,00 sobre R$ 137,90, mockup do Cloudinary (`components/estudante-atual`) | R$ 89,90 por ano, arte das lojas; fechada sozinha até a Vercel ter as três chaves |
+| `/estudante` | **a da produção**: formulário aberto, R$ 77,00 sobre R$ 137,90 (`components/estudante-atual`); a imagem do hero já é a arte Hoje das lojas, a pedido do dono | R$ 89,90 por ano, a mesma arte das lojas; fechada sozinha até a Vercel ter as três chaves |
 | `/es/estudiantes` | com o "¿Estudias en Brasil?" que leva à `/estudante` | o mesmo link, só com o estudante aberto |
 | `/api/estudante/solicitar` | a da produção (sem o 503) | 503 enquanto o estudante estiver fechado |
 | `/estudante/ativar` | volta sempre para `/estudante` | abre a oferta oficial com o cupom |
@@ -82,6 +82,13 @@ O que ainda muda para quem visita, já no merge, com a chave desligada:
 
 - **Fontes**: Literata e Inter passam a carregar. Na produção a folha do
   Google Fonts fica em `media="print"` e não chega à tela.
+- **/estudante, imagem do hero**: a arte Hoje da App Store em português
+  (`/telas/pt/hoje`, `components/TelaDaLoja.tsx`), a mesma do lançamento,
+  sem moldura de celular (280 px no celular, 300 px no computador), no
+  lugar do mockup Tela_HOJE do Cloudinary com a interface antiga do app.
+  Pedido do dono em 27/10/2026: atualizar todas as telas do app no site.
+  Texto, preço, formulário e a pílula "Sua provocação de hoje. Só a de
+  hoje." seguem os da produção.
 - **/estudante**, de propósito, em três pontos do texto: sem a promessa do
   preço pela graduação inteira e com "Solicitar não gera compromisso" no
   lugar da frase com a palavra vetada (decisões do dono no PR #3), e o prazo

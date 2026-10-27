@@ -8,7 +8,6 @@ import { ATIVOS, dicionario } from "@/lib/i18n";
 import { MERCADOS, formatar, precoEstudante, porMesEstudante } from "@/config/pricing";
 import { BlocoPreco } from "@/components/BlocoPreco";
 import { BlocoPrecoAtual } from "@/components/estudante-atual/BlocoPrecoAtual";
-import { TelaHojeAtual } from "@/components/estudante-atual/TelaHojeAtual";
 import { EstudanteForm } from "@/components/EstudanteForm";
 import { EstudanteEspera } from "@/components/EstudanteEspera";
 import { EstudanteSticky } from "@/components/EstudanteSticky";
@@ -34,9 +33,11 @@ import "./estudante.css";
    STANDBY (chave de lançamento desligada, config/lancamento.ts): a
    /estudante da produção (main, 0a25ffa). Formulário aberto, como hoje,
    preço de R$ 77,00 sobre R$ 137,90 (components/estudante-atual,
-   ESTUDANTE_ATUAL em config.ts), o mockup Tela_HOJE do Cloudinary no hero
-   e o subtítulo do formulário da main. A API também segue a da main
-   (app/api/estudante/solicitar/route.js). Três diferenças de texto em
+   ESTUDANTE_ATUAL em config.ts) e o subtítulo do formulário da main.
+   A imagem do hero já é a arte Hoje das lojas, a mesma do lançamento
+   (pedido do dono em 27/10/2026: atualizar todas as telas do app no
+   site); o mockup Tela_HOJE do Cloudinary saiu. A API também segue a
+   da main (app/api/estudante/solicitar/route.js). Três diferenças de texto em
    relação à main, de propósito: sem a promessa do preço pela graduação
    inteira e com "Solicitar não gera compromisso" no lugar da frase com a
    palavra vetada (decisões do dono no PR #3), e o prazo do
@@ -234,7 +235,8 @@ export default function Estudante() {
   };
 
   // A arte Hoje da App Store em português, a mesma da página de vendas
-  // (lib/i18n.ts, telasDo), com o mesmo texto alternativo.
+  // (lib/i18n.ts, telasDo), com o mesmo texto alternativo. Vale nos dois
+  // estados da chave: em standby também (pedido do dono, 27/10/2026).
   const telaHoje = ATIVOS.pt.img.hoje;
   const altTelaHoje = dicionario("pt", "br").t1alt;
 
@@ -305,18 +307,14 @@ export default function Estudante() {
             </div>
 
             <div className="ed-hero-visual">
-              {/* Standby: o mockup da produção, na moldura de celular. */}
-              <div className={ATUAL ? "ed-phone ed-phone-moldura" : "ed-phone"}>
-                {ATUAL ? (
-                  <TelaHojeAtual />
-                ) : (
+              {/* A arte já traz o aparelho: sem moldura de celular. */}
+              <div className="ed-phone">
                 <TelaDaLoja
                   base={telaHoje}
                   alt={altTelaHoje}
                   sizes="(min-width: 1024px) 300px, (min-width: 400px) 280px, 70vw"
                   prioridade
                 />
-                )}
                 <span className="ed-phone-tag">
                   Sua provocação de hoje. <b>Só a de hoje.</b>
                 </span>

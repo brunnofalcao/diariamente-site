@@ -87,18 +87,17 @@ test("o site em português usa as telas pt e o espanhol, as telas es (sem os moc
   for (const lang of ["pt", "es"]) {
     for (const tela of TELAS) assert.equal(I.ATIVOS[lang].img[tela], `/telas/${lang}/${tela}`, `${lang} ${tela}`);
   }
-  for (const f of [["lib", "i18n.ts"], ["components", "Home.tsx"], ["app", "estudante", "page.tsx"]]) {
+  // Nenhum mockup antigo no código, nem na /estudante em standby
+  // (pedido do dono em 27/10/2026: atualizar todas as telas do app).
+  for (const f of [["lib", "i18n.ts"], ["components", "Home.tsx"], ["app", "estudante", "page.tsx"], ["config.ts"]]) {
     const fonte = fs.readFileSync(path.join(raiz, ...f), "utf8");
     assert.equal(/Tela_(HOJE|DIAS|ACOES|RITMO)_Diariamente_[a-z0-9]+\.png/.test(fonte), false, f.join("/"));
     assert.equal(/SCREENSHOTS\./.test(fonte), false, f.join("/"));
   }
-  // No config.ts, só o mockup Hoje da /estudante da produção, servida em
-  // standby (ESTUDANTE_ATUAL.telaHoje); o site de vendas não usa.
   const config = fs.readFileSync(path.join(raiz, "config.ts"), "utf8");
   assert.equal(/SCREENSHOTS/.test(config.replace(/\/\/.*$/gm, "")), false);
-  const mockups = config.match(/Tela_(HOJE|DIAS|ACOES|RITMO)_Diariamente_[a-z0-9]+\.png/g) || [];
-  assert.deepEqual(mockups, ["Tela_HOJE_Diariamente_shzi7c.png"]);
-  assert.match(config, /telaHoje: "https:\/\/res\.cloudinary\.com\/dlzrfhwin\/image\/upload\/v1782664582\/Tela_HOJE_Diariamente_shzi7c\.png"/);
+  assert.equal(/telaHoje/.test(config), false, "sem ESTUDANTE_ATUAL.telaHoje");
+  assert.equal(fs.existsSync(path.join(raiz, "components", "estudante-atual", "TelaHojeAtual.tsx")), false);
   const fonte = fs.readFileSync(path.join(raiz, "lib", "i18n.ts"), "utf8");
   assert.equal(/\[TROCAR\] prints com a interface em espanhol/.test(fonte), false);
 });
@@ -172,19 +171,24 @@ test("Home: as quatro telas do tour e a do fim da página são artes das lojas, 
   assert.equal(/function Tela\(/.test(fonte), false);
 });
 
-test("/estudante: a arte Hoje em português, com prioridade (primeira dobra) e sem a moldura antiga", () => {
+test("/estudante: a arte Hoje em português, com prioridade (primeira dobra) e sem a moldura antiga, nos dois estados da chave", () => {
   const fonte = fs.readFileSync(path.join(raiz, "app", "estudante", "page.tsx"), "utf8");
   assert.match(fonte, /const telaHoje = ATIVOS\.pt\.img\.hoje;/);
-  assert.match(fonte, /<TelaDaLoja\s+base=\{telaHoje\}\s+alt=\{altTelaHoje\}[\s\S]*?prioridade\s+\/>/);
-  // A moldura antiga só volta em standby, com classes próprias
-  // (components/estudante-atual/TelaHojeAtual.tsx): a .ed-phone do
-  // lançamento fica sem moldura.
-  assert.match(fonte, /className=\{ATUAL \? "ed-phone ed-phone-moldura" : "ed-phone"\}/);
+  assert.match(fonte, /<TelaDaLoja\s+base=\{telaHoje\}\s+alt=\{altTelaHoje\}\s+sizes="\(min-width: 1024px\) 300px, \(min-width: 400px\) 280px, 70vw"\s+prioridade\s+\/>/);
+  // Um hero só, sem ramo de standby: a .ed-phone, sem moldura.
+  assert.match(fonte, /<div className="ed-phone">/);
+  assert.equal(/TelaHojeAtual|ed-phone-moldura/.test(fonte), false);
+  assert.equal(/className=\{ATUAL[^}]*ed-phone/.test(fonte), false);
   const css = fs.readFileSync(path.join(raiz, "app", "estudante", "estudante.css"), "utf8");
-  assert.equal(/\.ed-phone-shot/.test(css), false);
-  const regraDoLancamento = css.match(/\n\.ed-phone \{[^}]*\}/)[0];
-  assert.equal(/border|padding|box-shadow/.test(regraDoLancamento), false, regraDoLancamento);
-  const proporcoes = css.match(/[^{}]*\{[^{}]*aspect-ratio:\s*1170\s*\/\s*2532[^{}]*\}/g) || [];
-  assert.equal(proporcoes.length, 1);
-  assert.match(proporcoes[0], /\n\.ed-phone-moldura-shot \{/);
+  assert.equal(/\.ed-phone-shot|ed-phone-moldura/.test(css), false);
+  // 280px no celular, 300px no computador, sem borda, recuo nem sombra
+  // (os cantos e o filete vêm do TelaDaLoja)
+  const regra = css.match(/\n\.ed-phone \{[^}]*\}/)[0];
+  assert.match(regra, /width: min\(280px, 70vw\)/);
+  assert.equal(/border|padding|box-shadow/.test(regra), false, regra);
+  assert.match(css, /@media \(min-width: 1024px\) \{ \.ed-phone \{ width: 300px; \} \}/);
+  // nenhuma proporção do mockup antigo (1170 x 2532)
+  assert.equal(/aspect-ratio:\s*1170\s*\/\s*2532/.test(css), false);
+  // a pílula: numa linha em tela estreita, limitada pela tela
+  assert.match(css, /\.ed-phone-tag \{\s*white-space: normal; text-align: center; width: max-content; max-width: calc\(100vw - 40px\);/);
 });
