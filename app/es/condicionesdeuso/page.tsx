@@ -1,4 +1,4 @@
-import { EMPRESA, SITE, GARANTIA } from "@/config";
+import { EMPRESA, SITE, GARANTIA, identificacaoDoGrupo } from "@/config";
 import { LegalShell } from "@/components/LegalShell";
 import { metadataDaPagina } from "@/lib/seo";
 
@@ -10,7 +10,8 @@ import { metadataDaPagina } from "@/lib/seo";
    O texto foi vertido para o espanhol preservando o sentido e a estrutura
    do original. O que NÃO mudou, de propósito:
 
-   - o fornecedor continua sendo uma empresa brasileira (CNPJ)
+   - o fornecedor continua sendo brasileiro: a Science Play®, por meio
+     das empresas do grupo, todas com CNPJ (ver EMPRESA.grupo)
    - a lei aplicável e o foro continuam sendo os do Brasil
    - o prazo de arrependimento citado é o do CDC brasileiro
 
@@ -29,11 +30,12 @@ export default function CondicionesDeUso() {
       <p>
         Estas Condiciones de Uso (&ldquo;Condiciones&rdquo;) rigen el acceso y el uso de
         Diariamente, producto digital compuesto por la aplicación y por el contenido de
-        provocaciones diarias, ofrecido por {EMPRESA.razaoSocial}, inscrita en el CNPJ
-        nº {EMPRESA.cnpj} (&ldquo;Science Play&rdquo;, &ldquo;nosotros&rdquo;). Al adquirir y
+        provocaciones diarias, ofrecido por {EMPRESA.marca}®, a través de las empresas del
+        grupo identificadas abajo (&ldquo;Science Play&rdquo;, &ldquo;nosotros&rdquo;). Al adquirir y
         utilizar Diariamente, tú (&ldquo;usuario&rdquo;) declaras haber leído, comprendido y
         aceptado íntegramente estas Condiciones.
       </p>
+      <p>{identificacaoDoGrupo("es")}</p>
 
       <h2>1. Qué es Diariamente</h2>
       <p>
@@ -62,7 +64,7 @@ export default function CondicionesDeUso() {
       <h2>3. Propiedad intelectual</h2>
       <p>
         Todo el contenido, la marca, la identidad visual y el software son protegidos por la
-        legislación de propiedad intelectual y pertenecen a {EMPRESA.razaoSocial}. La
+        legislación de propiedad intelectual y pertenecen a {EMPRESA.marca}. La
         adquisición no transfiere ningún derecho de titularidad.
       </p>
 

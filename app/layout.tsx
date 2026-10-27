@@ -126,10 +126,18 @@ function StructuredData() {
       LOJAS.appStore,
       LOJAS.googlePlay,
     ],
+    // A realizadora é a MARCA Science Play; as empresas do grupo que a
+    // operam entram como subOrganization, com razão social e CNPJ.
     parentOrganization: {
       "@type": "Organization",
-      name: EMPRESA.razaoSocial,
+      name: EMPRESA.marca,
       url: EMPRESA.site,
+      subOrganization: EMPRESA.grupo.map((e) => ({
+        "@type": "Organization",
+        name: e.razaoSocial,
+        legalName: e.razaoSocial,
+        taxID: e.cnpj,
+      })),
     },
   };
 

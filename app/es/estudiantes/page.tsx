@@ -80,7 +80,8 @@ export default function Estudiantes() {
           </p>
 
           <p className="caption" style={{ marginTop: "var(--sp4)", color: "var(--n-500)" }}>
-            Responsable del tratamiento: {EMPRESA.razaoSocial}. Consulta la{" "}
+            Responsable del tratamiento: {EMPRESA.marca}®, a través de las empresas del grupo{" "}
+            {EMPRESA.marca}. Consulta la{" "}
             <a href={caminho("privacidade", "es")} className="teal">Política de Privacidad</a>.
           </p>
 

@@ -1,4 +1,4 @@
-import { EMPRESA, SITE } from "@/config";
+import { EMPRESA, SITE, identificacaoDoGrupo } from "@/config";
 import { LegalShell } from "@/components/LegalShell";
 import { metadataDaPagina } from "@/lib/seo";
 import { caminho } from "@/lib/rotas";
@@ -44,13 +44,14 @@ export default function Privacidade() {
       </p>
 
       <h2>1. Quem é o responsável pelo tratamento</h2>
+      <p>{identificacaoDoGrupo("pt")}</p>
       <p>
-        <strong>{EMPRESA.razaoSocial}</strong>, inscrita no CNPJ nº {EMPRESA.cnpj}, é a
-        controladora dos dados (&ldquo;responsável pelo tratamento&rdquo; no RGPD;
-        &ldquo;controladora&rdquo; na LGPD). O Diariamente é um produto operado por ela.
+        A <strong>{EMPRESA.marca}®</strong>, por meio das empresas do grupo identificadas
+        acima, é a controladora dos dados (&ldquo;responsável pelo tratamento&rdquo; no RGPD;
+        &ldquo;controladora&rdquo; na LGPD).
       </p>
       <p>
-        {/* Endereço ainda não confirmado (config.ts): a linha some em vez de mostrar a nota interna. */}
+        {/* Se o endereço voltar a ser nota interna "[...]" (config.ts), a linha some em vez de mostrá-la. */}
         {!EMPRESA.endereco.startsWith("[") && (
           <>
             Endereço: {EMPRESA.endereco}
@@ -157,7 +158,7 @@ export default function Privacidade() {
       </p>
       <p>As categorias de destinatários são:</p>
       <ul>
-        <li>empresas controladas, controladoras ou sob controle comum da {EMPRESA.razaoSocial};</li>
+        <li>empresas controladas, controladoras ou sob controle comum das empresas do grupo identificadas na seção 1;</li>
         <li>parceiros comerciais em ações conjuntas de educação, conteúdo e eventos;</li>
         <li>patrocinadores de ações, eventos e conteúdos do Diariamente ou da Science Play.</li>
       </ul>

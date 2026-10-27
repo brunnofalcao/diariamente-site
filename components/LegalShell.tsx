@@ -1,4 +1,4 @@
-import { SITE, EMPRESA } from "@/config";
+import { SITE, EMPRESA, rodapeDoGrupo } from "@/config";
 import { Wordmark } from "@/components/Brand";
 import type { Lang } from "@/lib/i18n";
 import { caminho } from "@/lib/rotas";
@@ -45,7 +45,7 @@ export function LegalShell({
 
           <div className="divider" />
           <p className="caption muted">
-            {EMPRESA.marca} · {EMPRESA.razaoSocial} · CNPJ {EMPRESA.cnpj} ·{" "}
+            {rodapeDoGrupo(lang)} ·{" "}
             <a href={`mailto:${EMPRESA.suporteEmail}`} className="teal">{EMPRESA.suporteEmail}</a>
           </p>
         </div>
