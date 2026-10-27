@@ -87,11 +87,18 @@ test("o site em português usa as telas pt e o espanhol, as telas es (sem os moc
   for (const lang of ["pt", "es"]) {
     for (const tela of TELAS) assert.equal(I.ATIVOS[lang].img[tela], `/telas/${lang}/${tela}`, `${lang} ${tela}`);
   }
-  for (const f of [["lib", "i18n.ts"], ["config.ts"], ["components", "Home.tsx"], ["app", "estudante", "page.tsx"]]) {
+  for (const f of [["lib", "i18n.ts"], ["components", "Home.tsx"], ["app", "estudante", "page.tsx"]]) {
     const fonte = fs.readFileSync(path.join(raiz, ...f), "utf8");
     assert.equal(/Tela_(HOJE|DIAS|ACOES|RITMO)_Diariamente_[a-z0-9]+\.png/.test(fonte), false, f.join("/"));
     assert.equal(/SCREENSHOTS\./.test(fonte), false, f.join("/"));
   }
+  // No config.ts, só o mockup Hoje da /estudante da produção, servida em
+  // standby (ESTUDANTE_ATUAL.telaHoje); o site de vendas não usa.
+  const config = fs.readFileSync(path.join(raiz, "config.ts"), "utf8");
+  assert.equal(/SCREENSHOTS/.test(config.replace(/\/\/.*$/gm, "")), false);
+  const mockups = config.match(/Tela_(HOJE|DIAS|ACOES|RITMO)_Diariamente_[a-z0-9]+\.png/g) || [];
+  assert.deepEqual(mockups, ["Tela_HOJE_Diariamente_shzi7c.png"]);
+  assert.match(config, /telaHoje: "https:\/\/res\.cloudinary\.com\/dlzrfhwin\/image\/upload\/v1782664582\/Tela_HOJE_Diariamente_shzi7c\.png"/);
   const fonte = fs.readFileSync(path.join(raiz, "lib", "i18n.ts"), "utf8");
   assert.equal(/\[TROCAR\] prints com a interface em espanhol/.test(fonte), false);
 });
@@ -148,9 +155,18 @@ test("TelaDaLoja: <picture> com WebP do próprio domínio, JPEG de reserva, espa
 test("Home: as quatro telas do tour e a do fim da página são artes das lojas, com o texto alternativo do idioma", () => {
   const fonte = fs.readFileSync(path.join(raiz, "components", "Home.tsx"), "utf8");
   assert.match(fonte, /import \{ TelaDaLoja, RAIO_DA_TELA \} from "@\/components\/TelaDaLoja"/);
-  assert.match(fonte, /\[IMG\.hoje, t\.t1t, t\.t1d, t\.t1alt\], \[IMG\.dias, t\.t2t, t\.t2d, t\.t2alt\], \[IMG\.acoes, t\.t3t, t\.t3d, t\.t3alt\], \[IMG\.ritmo, t\.t4t, t\.t4d, t\.t4alt\]/);
-  assert.match(fonte, /<TelaDaLoja base=\{src\} alt=\{alt\} sizes="\(min-width:900px\) 232px, \(min-width:375px\) 240px, 64vw" \/>/);
-  assert.match(fonte, /<TelaDaLoja base=\{IMG\.leitura\} alt=\{t\.finAlt\}/);
+  // O "Hoje" do tour ("a provocação do dia, limpa") é a arte da leitura em
+  // modo foco; a arte Hoje, com o painel do dia, fica no fim da página.
+  assert.match(fonte, /\[IMG\.leitura, t\.t1t, t\.t1d, t\.finAlt\], \[IMG\.dias, t\.t2t, t\.t2d, t\.t2alt\], \[IMG\.acoes, t\.t3t, t\.t3d, t\.t3alt\], \[IMG\.ritmo, t\.t4t, t\.t4d, t\.t4alt\]/);
+  // colunas de 260px no computador: a grade na largura da página
+  assert.match(fonte, /<TelaDaLoja base=\{src\} alt=\{alt\} sizes="\(min-width:900px\) 260px, \(min-width:375px\) 240px, 64vw" \/>/);
+  assert.match(fonte, /\[data-tour\]\{display:grid;grid-template-columns:repeat\(4,minmax\(0,1fr\)\);gap:24px;overflow:visible;padding:0;margin:0\}/);
+  assert.equal(/\[data-tour\][^}]*max-width/.test(fonte), false, "a grade do tour não fica recuada");
+  assert.match(fonte, /<TelaDaLoja base=\{IMG\.hoje\} alt=\{t\.t1alt\}/);
+  // o corte do fim cai no vão entre o aviso "Semana passada" e o cartão da semana (y 1662 a 1686 de 2868)
+  assert.match(fonte, /paddingTop: `\$\{\(58\.4 \* TELA_PROPORCAO\.altura\) \/ TELA_PROPORCAO\.largura\}%`/);
+  const corte = 0.584 * 2868;
+  assert.ok(corte > 1662 && corte < 1686, String(corte));
   // nenhuma tela com prioridade na Home: todas estão abaixo da primeira dobra
   assert.equal(/<TelaDaLoja[^>]*prioridade/.test(fonte), false);
   assert.equal(/function Tela\(/.test(fonte), false);
@@ -160,7 +176,15 @@ test("/estudante: a arte Hoje em português, com prioridade (primeira dobra) e s
   const fonte = fs.readFileSync(path.join(raiz, "app", "estudante", "page.tsx"), "utf8");
   assert.match(fonte, /const telaHoje = ATIVOS\.pt\.img\.hoje;/);
   assert.match(fonte, /<TelaDaLoja\s+base=\{telaHoje\}\s+alt=\{altTelaHoje\}[\s\S]*?prioridade\s+\/>/);
+  // A moldura antiga só volta em standby, com classes próprias
+  // (components/estudante-atual/TelaHojeAtual.tsx): a .ed-phone do
+  // lançamento fica sem moldura.
+  assert.match(fonte, /className=\{ATUAL \? "ed-phone ed-phone-moldura" : "ed-phone"\}/);
   const css = fs.readFileSync(path.join(raiz, "app", "estudante", "estudante.css"), "utf8");
   assert.equal(/\.ed-phone-shot/.test(css), false);
-  assert.equal(/aspect-ratio:\s*1170\s*\/\s*2532/.test(css), false);
+  const regraDoLancamento = css.match(/\n\.ed-phone \{[^}]*\}/)[0];
+  assert.equal(/border|padding|box-shadow/.test(regraDoLancamento), false, regraDoLancamento);
+  const proporcoes = css.match(/[^{}]*\{[^{}]*aspect-ratio:\s*1170\s*\/\s*2532[^{}]*\}/g) || [];
+  assert.equal(proporcoes.length, 1);
+  assert.match(proporcoes[0], /\n\.ed-phone-moldura-shot \{/);
 });

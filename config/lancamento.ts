@@ -6,7 +6,10 @@
 
    DESLIGADA (padrão, agora) · STANDBY
      - "/", "/es", "/es-es" e "/pt-pt" mostram a lista de espera ("Em
-       breve"), como a produção antes do lançamento. O middleware continua
+       breve"), como a produção antes do lançamento; a /estudante e a
+       /sobre também ficam como na produção. O que ainda muda para o
+       público já no merge está em docs/LANCAMENTO.md ("O que muda para o
+       público já no merge em standby"). O middleware continua
        levando cada país à home dele, mas NÃO reescreve "/" para /mundo.
      - O site de vendas, exatamente como vai ao ar (mesmos componentes,
        preço, oferta e botões), fica em /vendas (Brasil), /vendas/es
@@ -17,7 +20,9 @@
        /vendas do mercado.
      - A trava de preços e a do webhook (DM_WEBHOOK_V2_OK) não param o
        build: o que travaria o lançamento sai como aviso no log
-       (scripts/checar-precos.js, emStandby).
+       (scripts/checar-precos.js, emStandby). Em compensação, sem
+       DM_WEBHOOK_V2_OK=1 os botões de /vendas não abrem o checkout
+       (DM_VENDA_LIBERADA, next.config.js).
 
    LIGADA (DM_SITE_LANCADO=1 nas variáveis de Production da Vercel e um
    novo deploy) · LANÇAMENTO

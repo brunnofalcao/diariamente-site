@@ -204,7 +204,11 @@ function Field({
 }
 
 // ------------------------------ componente ------------------------------
-export function EstudanteForm() {
+export function EstudanteForm({
+  // Em standby, a /estudante passa o subtítulo da produção
+  // (ESTUDANTE_ATUAL.subtituloDoFormulario, config.ts).
+  subtitulo = "Leva cerca de um minuto. O código chega no seu WhatsApp, com um botão que abre o pagamento com o desconto já aplicado.",
+}: { subtitulo?: string } = {}) {
   const [dados, setDados] = useState<Dados>(VAZIO);
   const [erros, setErros] = useState<Partial<Record<Campo, string>>>({});
   const [etapa, setEtapa] = useState(0);
@@ -389,10 +393,7 @@ export function EstudanteForm() {
         Solicite seu código
       </span>
       <h2 className="ed-form-h">Sua condição de estudante</h2>
-      <p className="ed-form-sub">
-        Leva cerca de um minuto. O código chega no seu WhatsApp, com um botão que abre o
-        pagamento com o desconto já aplicado.
-      </p>
+      <p className="ed-form-sub">{subtitulo}</p>
 
       <div className="ed-prog">
         <div className="ed-prog-bar">

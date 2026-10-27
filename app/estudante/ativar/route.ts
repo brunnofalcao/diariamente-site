@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { MERCADOS, linkComCupom, pendente } from "@/config/pricing";
+import { SITE_LANCADO } from "@/config/lancamento";
 
 /* =====================================================================
    /estudante/ativar?cupom=CODIGO · ponte do botão do WhatsApp
@@ -23,6 +24,11 @@ import { MERCADOS, linkComCupom, pendente } from "@/config/pricing";
 
    Sem o link preenchido, ou com código fora do formato, volta para
    /estudante em vez de abrir um checkout quebrado.
+
+   STANDBY (chave de lançamento desligada, config/lancamento.ts): volta
+   sempre para /estudante. A /estudante é a da produção, o WhatsApp sai
+   com o modelo de hoje (lib/whatsapp.js) e nenhum endereço público pode
+   abrir o checkout do produto 7448309 antes do lançamento.
    ===================================================================== */
 
 export const dynamic = "force-dynamic";
@@ -30,7 +36,7 @@ export const dynamic = "force-dynamic";
 export function GET(req: NextRequest) {
   const cupom = (req.nextUrl.searchParams.get("cupom") || "").trim().toUpperCase();
   const base = MERCADOS.br.checkout;
-  if (!/^[A-Z0-9_-]{1,25}$/.test(cupom) || pendente(base)) {
+  if (!SITE_LANCADO || !/^[A-Z0-9_-]{1,25}$/.test(cupom) || pendente(base)) {
     return NextResponse.redirect(new URL("/estudante", req.url), 307);
   }
   return NextResponse.redirect(linkComCupom(base, cupom), 307);

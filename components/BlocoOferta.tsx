@@ -42,6 +42,13 @@ import { ListaEsperaForm } from "@/components/ListaEsperaForm";
    contra a mesma hora no HTML e na hidratação. Depois da hidratação, o
    components/Home.tsx confere de novo com o relógio do navegador e
    troca o `momento` se o lançamento já acabou.
+
+   `vitrine`: o site de vendas em standby (/vendas/*). Até
+   DM_WEBHOOK_V2_OK=1 (DM_VENDA_LIBERADA, gravada pelo next.config.js), o
+   botão fica com o mesmo texto e o mesmo visual, mas leva ao próprio
+   bloco (#preco) em vez de abrir o checkout: quem pagasse antes do
+   webhook do app ficaria sem conta. A lista de espera embutida segue a
+   vitrine (o texto pt-PT só aparece no que vai ao ar).
    ===================================================================== */
 
 const C = {
@@ -87,7 +94,7 @@ function Cabecalho({ titulo, selo }: { titulo: string; selo?: string }) {
 const moldura: React.CSSProperties = { background: C.s2, border: "1px solid rgba(39,189,190,.32)", borderRadius: 16, overflow: "hidden" };
 const miolo: React.CSSProperties = { padding: "clamp(20px,3vw,28px)" };
 
-export function BlocoOferta({ mercado, momento, previa = false }: { mercado: Mercado; momento: number; previa?: boolean }) {
+export function BlocoOferta({ mercado, momento, previa = false, vitrine = false }: { mercado: Mercado; momento: number; previa?: boolean; vitrine?: boolean }) {
   const o = MERCADOS[mercado];
   const t = o.textos;
 
@@ -99,7 +106,7 @@ export function BlocoOferta({ mercado, momento, previa = false }: { mercado: Mer
         <div style={miolo}>
           <p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: C.n300 }}>{t.proposta}</p>
           <p style={{ margin: "14px 0 0", fontSize: 15.5, lineHeight: 1.6, color: C.n200 }}>{o.espera.texto}</p>
-          <ListaEsperaForm mercado={mercado} origem="oferta" embutido botao={o.espera.botao} />
+          <ListaEsperaForm mercado={mercado} origem="oferta" embutido botao={o.espera.botao} vitrine={vitrine} />
         </div>
       </div>
     );
@@ -115,6 +122,8 @@ export function BlocoOferta({ mercado, momento, previa = false }: { mercado: Mer
   // Link pendente só acontece em build de teste: em produção a trava não
   // deixa o build sair sem o link (scripts/checar-precos.js).
   const semLink = pendente(link) || fechado;
+  // /vendas/* em standby, antes de DM_WEBHOOK_V2_OK=1: mesmo botão, sem checkout.
+  const bloqueado = vitrine && process.env.DM_VENDA_LIBERADA !== "1";
   const valor = precoFinal(mercado, momento);
   const mensal = formatar(mercado, porMes(mercado, momento));
   const anual = formatar(mercado, valor);
@@ -164,12 +173,13 @@ export function BlocoOferta({ mercado, momento, previa = false }: { mercado: Mer
         )}
 
         <a
-          href={semLink ? undefined : link}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={semLink ? undefined : bloqueado ? "#preco" : link}
+          target={bloqueado && !semLink ? undefined : "_blank"}
+          rel={bloqueado && !semLink ? undefined : "noopener noreferrer"}
           aria-disabled={semLink || undefined}
           onClick={(e) => {
             if (semLink) { e.preventDefault(); return; }
+            if (bloqueado) return;
             registrarInicioDeCheckout({ id: `anual-${mercado}`, nome: `Diariamente Anual · ${mercado.toUpperCase()}`, valor, moeda: o.moeda });
           }}
           style={{

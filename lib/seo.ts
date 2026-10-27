@@ -210,8 +210,10 @@ export function metadataPrivada(chave: Chave, lang: Lang): Metadata {
    "próximamente" quando o mercado ainda é só a lista de espera
    (config/pricing.ts, vendaAberta e semVenda). Em standby (chave de
    lançamento desligada, config/lancamento.ts), toda home é a lista de
-   espera e usa o texto de espera; o do Brasil é o da produção antes do
-   lançamento ("Diariamente · em breve").
+   espera e o título e a descrição são os da produção antes do
+   lançamento: "/" e "/es" com o texto de espera ("Diariamente · em
+   breve", "Diariamente · próximamente"); /pt-pt e /es-es com o texto de
+   venda, que é o que a produção sempre declarou para elas.
    ===================================================================== */
 
 import { HOME_DO_MERCADO, VENDAS_DO_MERCADO } from "@/lib/mercado";
@@ -250,7 +252,10 @@ export function metadataDoMercado(mercado: MercadoComHome, lancado: boolean = SI
   const o = MERCADOS[mercado];
   const lang: Lang = o.idioma;
   const mostraVenda = lancado && (o.vendaAberta || o.semVenda === "bloco");
-  const { title, description } = TEXTOS_DO_MERCADO[mercado][mostraVenda ? "venda" : "espera"];
+  // Standby: /pt-pt e /es-es mantêm o título e a descrição da produção,
+  // que são os de venda (lib/seo.ts da main, homePt e homeEs).
+  const chave = mostraVenda || (!lancado && (mercado === "pt" || mercado === "es")) ? "venda" : "espera";
+  const { title, description } = TEXTOS_DO_MERCADO[mercado][chave];
   const proprio = urlAbsoluta(HOME_DO_MERCADO[mercado]);
   const imagem = IMAGEM_DA_PREVIA[lang];
   // O grupo das quatro homes: o mesmo em todas elas e no sitemap.

@@ -577,7 +577,9 @@ function emStandby(r) {
     "Site em STANDBY (DM_SITE_LANCADO desligada): as homes mostram a lista de espera e o site de vendas " +
     "fica em /vendas, /vendas/es, /vendas/es-es, /vendas/pt-pt e /vendas/mundo (noindex). A trava de preços " +
     "e a do webhook (DM_WEBHOOK_V2_OK) não param este build; voltam a valer quando a chave for ligada " +
-    "(docs/LANCAMENTO.md).";
+    "(docs/LANCAMENTO.md). Em standby, os botões de /vendas só abrem o checkout com DM_WEBHOOK_V2_OK=1, e a " +
+    "/estudante é a da produção (formulário aberto, R$ 77,00); o que vem abaixo sobre o estudante vale para o " +
+    "fluxo novo, com a chave ligada.";
   if (r.ok) return { ...r, standby: true, mensagem: r.mensagem ? `${base} ${r.mensagem}` : base };
   return {
     ...r, ok: true, standby: true,

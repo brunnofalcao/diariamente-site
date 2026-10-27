@@ -35,7 +35,12 @@ não muda nada.
 | `/vendas/mundo` | o que a `/` vai mostrar fora de BR, PT, ES e América Latina | redireciona para `/` |
 | `/embreve`, `/es/embreve` | levam a `/vendas` e `/vendas/es` | levam a `/` e `/es` |
 | `/pt-pt/embreve`, `/es-es/embreve` | levam a `/vendas/pt-pt` e `/vendas/es-es` | prévias do dono (29,99 €), noindex |
-| obrigado, legais, sobre, estudante | iguais nos dois estados | iguais |
+| `/estudante` | **a da produção**: formulário aberto, R$ 77,00 sobre R$ 137,90, mockup do Cloudinary (`components/estudante-atual`) | R$ 89,90 por ano, arte das lojas; fechada sozinha até a Vercel ter as três chaves |
+| `/es/estudiantes` | com o "¿Estudias en Brasil?" que leva à `/estudante` | o mesmo link, só com o estudante aberto |
+| `/api/estudante/solicitar` | a da produção (sem o 503) | 503 enquanto o estudante estiver fechado |
+| `/estudante/ativar` | volta sempre para `/estudante` | abre a oferta oficial com o cupom |
+| `/sobre` | as linhas de preço da produção (R$ 197, R$ 137,90) | o preço de `config/pricing.ts` |
+| obrigado, legais | iguais nos dois estados, e diferentes da produção atual em: ver "O que muda para o público já no merge em standby" | iguais |
 
 `/vendas/*` em standby:
 
@@ -48,10 +53,67 @@ não muda nada.
   `/vendas`;
 - os links entre mercados (PT | ES, seletor de país, logo da lista de
   espera) ficam dentro de `/vendas` (`lib/mercado.ts`, `VENDAS_DO_MERCADO`);
-- **o botão abre o checkout de verdade da Hotmart.** Quem pagar por ali
-  antes do passo 1 abaixo fica sem conta no app. Use `/vendas` para ver, não
-  para pagar. O formulário da lista de espera de `/vendas` grava contatos de
-  verdade.
+- **os botões não abrem o checkout enquanto faltar `DM_WEBHOOK_V2_OK=1`**
+  (passo 1 abaixo): texto e visual iguais aos do lançamento, mas o clique
+  leva ao bloco de preço (`DM_VENDA_LIBERADA`, gravada pelo
+  `next.config.js`). Quem pagasse antes do webhook do app ficaria sem conta.
+  Com `DM_WEBHOOK_V2_OK=1` e um novo deploy, os botões de `/vendas` passam
+  a abrir o checkout de verdade;
+- o card "Condição de estudante" e o "Sou estudante" só aparecem com a
+  chave ligada (e as três chaves do estudante na Vercel): em standby a
+  `/estudante` é a da produção, com outro preço;
+- o formulário da lista de espera de `/vendas` grava contatos de verdade.
+
+## O que muda para o público já no merge em standby
+
+O standby mantém as homes, a `/estudante`, a `/sobre` e as rotas como a
+produção (main) mostra hoje. O que ainda muda para quem visita, já no
+merge, com a chave desligada:
+
+- **Páginas legais** (Termos, Política de Privacidade, Condiciones de uso e
+  Privacidad): o texto do PR #3. Seção 1 nova, "Quem é a titular do
+  Diariamente App" (a identificação do grupo Science Play), as seções
+  seguintes renumeradas e a garantia e os cookies reescritos.
+  "Última atualização: Outubro de 2026" continua. Para manter o texto da
+  produção até o lançamento, seria preciso servir em standby o corpo das
+  quatro páginas de origin/main (não foi feito).
+- **Aviso de cookies** em todas as páginas públicas: GA4, Pixel da Meta e o
+  Purchase das páginas de obrigado só rodam depois do "Aceitar". Na
+  produção eles carregam sem aviso, embora a Política publicada (seção 8)
+  já diga que só são ativados com consentimento, manifestado no aviso do
+  primeiro acesso. Ficou de propósito: voltar ao jeito da produção poria
+  medição sem consentimento, contra a própria Política e a LGPD (e o RGPD
+  em /pt-pt e /es-es). Efeito: a medição da lista de espera e o Purchase de
+  reserva (o oficial é o da Hotmart) passam a contar só quem aceita. Para
+  voltar ao jeito da produção em standby: em `components/Consentimento.tsx`,
+  quando `!SITE_LANCADO && !ehVitrine(pathname)`, montar o `<Tracking />`
+  direto, sem o aviso, e entregar o contexto como "aceito".
+- **Fontes**: Literata e Inter passam a carregar. Na produção a folha do
+  Google Fonts fica em `media="print"` e não chega à tela.
+- **/estudante**, de propósito, em três pontos do texto: sem a promessa do
+  preço pela graduação inteira e com "Solicitar não gera compromisso" no
+  lugar da frase com a palavra vetada (decisões do dono no PR #3), e o prazo
+  do código em "até 10 minutos" (a API agenda o envio para 5 minutos depois
+  e o cron tenta até 5 vezes; os "2 minutos" da produção não eram verdade).
+  O mesmo prazo em `/estudante/solicitacaorecebida` e, em `/es/estudiantes`,
+  "llega por WhatsApp en unos minutos" no lugar de "el proceso es
+  inmediato" e "el precio de entrada" no lugar de "mientras estás cursando".
+- **/estudante/ativar** existe (307 para `/estudante`); na produção, 404.
+- **/obrigado?lang=es** e **/em-breve** levam os parâmetros junto
+  (`/obrigado-aprovado?lang=es`, utm). Na produção, `/obrigado` perde o
+  `?lang=es`.
+- **Lista de espera nas homes**: o logo de `/pt-pt` e de `/es-es` leva à
+  própria home (na produção, a `/` e a `/es`); o WhatsApp vem com o código
+  do país do mercado (+351 em `/pt-pt`, +34 em `/es-es`; na produção, +55 e
+  vazio); o formulário manda mercado, idioma e origem, e o RD recebe a tag
+  `mercado-xx`.
+- **Busca e prévia de link**: o sitemap lista as quatro homes primeiro (as
+  mesmas 12 URLs, em outra ordem), com o grupo de hreflang das quatro homes
+  em cada uma; `/pt-pt` declara `og:locale` pt_PT, e `/pt-pt` e `/es-es`
+  ganham `og:image`; o JSON-LD de Product e o preço do MobileApplication
+  saíram do layout (a produção declara R$ 137,90 em toda página; em
+  standby, nenhuma página pública declara preço). Títulos e descrições das
+  quatro homes são os da produção.
 
 ## A trava do build
 

@@ -14,10 +14,13 @@ const P = carregarTs(path.join(raiz, "config", "pricing.ts"));
 const nextServer = {
   NextResponse: { redirect: (url, status) => ({ location: String(url), status }) },
 };
-const ativar = carregarTs(path.join(raiz, "app", "estudante", "ativar", "route.ts"), {
+/** /estudante/ativar com a chave de lançamento do build. */
+const rotaAtivar = (lancado) => carregarTs(path.join(raiz, "app", "estudante", "ativar", "route.ts"), {
   "next/server": nextServer,
   "@/config/pricing": P,
+  "@/config/lancamento": { SITE_LANCADO: lancado },
 });
+const ativar = rotaAtivar(true);
 
 function pedido(busca) {
   const url = `https://diariamente.app/estudante/ativar${busca}`;
@@ -34,6 +37,15 @@ test("/estudante/ativar nunca abre a oferta de lançamento nem o checkout antigo
   const r = ativar.GET(pedido("?cupom=diariaestabcd2345"));
   assert.match(r.location, /off=fhrttdh8&offDiscount=DIARIAESTABCD2345$/);
   assert.equal(/lf63bgdd|L107085210M|h82bllbx/.test(r.location), false);
+});
+
+test("standby: /estudante/ativar volta sempre para /estudante, até com código válido (nenhum checkout do 7448309)", () => {
+  const standby = rotaAtivar(false);
+  for (const busca of ["?cupom=DIARIAESTABCD2345", ""]) {
+    const r = standby.GET(pedido(busca));
+    assert.equal(r.status, 307, busca);
+    assert.equal(r.location, "https://diariamente.app/estudante", busca);
+  }
 });
 
 test("/estudante/ativar com código ausente ou fora do formato volta para /estudante", () => {
@@ -65,18 +77,26 @@ function comEnv(vars, fn) {
   }
 }
 
-test("WA_TEMPLATE_ESTUDANTE: padrão diariamente_estudante_aprovado; nome válido vale; inválido volta ao padrão", () => {
+test("WA_TEMPLATE_ESTUDANTE (chave ligada): padrão diariamente_estudante_aprovado; nome válido vale; inválido volta ao padrão", () => {
   assert.equal(W.MODELO_ESTUDANTE_PADRAO, "diariamente_estudante_aprovado");
-  comEnv({ WA_TEMPLATE_ESTUDANTE: undefined }, () => assert.equal(W.modeloEstudante(), "diariamente_estudante_aprovado"));
-  comEnv({ WA_TEMPLATE_ESTUDANTE: "  " }, () => assert.equal(W.modeloEstudante(), "diariamente_estudante_aprovado"));
-  comEnv({ WA_TEMPLATE_ESTUDANTE: "diariamente_estudante_aprovado_v2" }, () =>
+  const L = { DM_SITE_LANCADO: "1" };
+  comEnv({ ...L, WA_TEMPLATE_ESTUDANTE: undefined }, () => assert.equal(W.modeloEstudante(), "diariamente_estudante_aprovado"));
+  comEnv({ ...L, WA_TEMPLATE_ESTUDANTE: "  " }, () => assert.equal(W.modeloEstudante(), "diariamente_estudante_aprovado"));
+  comEnv({ ...L, WA_TEMPLATE_ESTUDANTE: "diariamente_estudante_aprovado_v2" }, () =>
     assert.equal(W.modeloEstudante(), "diariamente_estudante_aprovado_v2"));
   const aviso = console.warn;
   console.warn = () => {};
   try {
-    comEnv({ WA_TEMPLATE_ESTUDANTE: "Diariamente-V2" }, () => assert.equal(W.modeloEstudante(), "diariamente_estudante_aprovado"));
+    comEnv({ ...L, WA_TEMPLATE_ESTUDANTE: "Diariamente-V2" }, () => assert.equal(W.modeloEstudante(), "diariamente_estudante_aprovado"));
   } finally {
     console.warn = aviso;
+  }
+});
+
+test("standby: o WhatsApp do estudante sai sempre com o modelo de hoje, como na produção", () => {
+  for (const chave of [undefined, "", "0"]) {
+    comEnv({ DM_SITE_LANCADO: chave, WA_TEMPLATE_ESTUDANTE: "diariamente_estudante_aprovado_v2" }, () =>
+      assert.equal(W.modeloEstudante(), "diariamente_estudante_aprovado", String(chave)));
   }
 });
 
@@ -89,7 +109,7 @@ test("o envio da aprovação usa o modelo configurado e manda só o nome e o có
   };
   try {
     await comEnv(
-      { WHATSAPP_PHONE_NUMBER_ID: "000", WHATSAPP_TOKEN: "token-de-teste", WA_TEMPLATE_ESTUDANTE: "diariamente_estudante_aprovado_v2" },
+      { DM_SITE_LANCADO: "1", WHATSAPP_PHONE_NUMBER_ID: "000", WHATSAPP_TOKEN: "token-de-teste", WA_TEMPLATE_ESTUDANTE: "diariamente_estudante_aprovado_v2" },
       () => W.whatsapp.aprovado("5500000000000", "Fulana", "DIARIAESTABCD2345")
     );
   } finally {
@@ -220,11 +240,11 @@ async function semLog(fn) {
   }
 }
 
-test("fluxo FECHADO: /api/estudante/solicitar responde 503 sem ler o pedido, sem banco e sem cupom", async () => {
+test("fluxo FECHADO (chave ligada): /api/estudante/solicitar responde 503 sem ler o pedido, sem banco e sem cupom", async () => {
   const { rota, banco, cupons } = carregarSolicitar();
   for (const valor of [undefined, "", "0", "true"]) {
     const r = await semLog(() =>
-      comEnvAsync({ DM_ESTUDANTE_ABERTO: valor, STUDENT_DISCOUNT: "0.40027" }, () => rota.POST(pedidoEstudante()))
+      comEnvAsync({ DM_SITE_LANCADO: "1", DM_ESTUDANTE_ABERTO: valor, STUDENT_DISCOUNT: "0.40027" }, () => rota.POST(pedidoEstudante()))
     );
     assert.equal(r.status, 503, String(valor));
     const corpo = await r.json();
@@ -236,11 +256,27 @@ test("fluxo FECHADO: /api/estudante/solicitar responde 503 sem ler o pedido, sem
   assert.equal(cupons.length, 0, "nenhum cupom criado na Hotmart");
 });
 
+test("standby: /api/estudante/solicitar é a da produção, sem o 503 (a /estudante de hoje tem o formulário aberto)", async () => {
+  const { rota, cupons } = carregarSolicitar();
+  for (const chave of [undefined, ""]) {
+    const r = await semLog(() =>
+      comEnvAsync({ DM_SITE_LANCADO: chave, DM_ESTUDANTE_ABERTO: undefined, STUDENT_DISCOUNT: "0.42" }, () => rota.POST(pedidoEstudante()))
+    );
+    assert.equal(r.status, 200, String(chave));
+    const corpo = await r.json();
+    assert.equal(corpo.ok, true, JSON.stringify(corpo));
+    assert.equal(corpoLido, true);
+  }
+  assert.equal(cupons.length, 2);
+  // o desconto é o da Vercel, como na main
+  assert.equal(cupons[0].desconto, 0.42);
+});
+
 test("fluxo ABERTO: a mesma rota grava o lead, cria o cupom e agenda o WhatsApp para depois da janela", async () => {
   const { rota, banco, cupons } = carregarSolicitar();
   const antes = Date.now();
   const r = await semLog(() =>
-    comEnvAsync({ DM_ESTUDANTE_ABERTO: "1", STUDENT_DISCOUNT: "0.40027" }, () => rota.POST(pedidoEstudante()))
+    comEnvAsync({ DM_SITE_LANCADO: "1", DM_ESTUDANTE_ABERTO: "1", STUDENT_DISCOUNT: "0.40027" }, () => rota.POST(pedidoEstudante()))
   );
   assert.equal(r.status, 200);
   const corpo = await r.json();

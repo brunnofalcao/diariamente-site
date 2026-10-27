@@ -193,12 +193,12 @@ test("/sobre: o equivalente mensal não encosta no parcelamento, e o parcelado d
 
 /* ------------------------- /estudante, página inteira ------------------------- */
 
-function paginaEstudante(C) {
+function paginaEstudante(C, lancado = true) {
   const Brand = carregarTs(arq("components", "Brand.tsx"), { "react/jsx-runtime": jsx }, { jsx: true });
   const ListaEsperaForm = carregarTs(arq("components", "ListaEsperaForm.tsx"), {
     react: React, "react/jsx-runtime": jsx, "@/components/Brand": Brand,
     "@/lib/consentimento": carregarTs(arq("lib", "consentimento.ts")),
-    "@/lib/rotas": rotas, "@/config/pricing": P,
+    "@/lib/rotas": rotas, "@/config/pricing": P, "@/config/lancamento": { SITE_LANCADO: lancado },
   }, { jsx: true });
   const EstudanteEspera = carregarTs(arq("components", "EstudanteEspera.tsx"), {
     "@/config/pricing": P, "@/components/ListaEsperaForm": ListaEsperaForm, "react/jsx-runtime": jsx,
@@ -207,6 +207,14 @@ function paginaEstudante(C) {
   return carregarTs(arq("app", "estudante", "page.tsx"), {
     "@/lib/seo": { metadataDaPagina: () => ({}) },
     "@/config": C, "@/config/pricing": P,
+    "@/config/lancamento": { SITE_LANCADO: lancado },
+    // standby: a /estudante da produção (components/estudante-atual)
+    "@/components/estudante-atual/BlocoPrecoAtual": carregarTs(arq("components", "estudante-atual", "BlocoPrecoAtual.tsx"), {
+      "@/config": C, "react/jsx-runtime": jsx,
+    }, { jsx: true }),
+    "@/components/estudante-atual/TelaHojeAtual": carregarTs(arq("components", "estudante-atual", "TelaHojeAtual.tsx"), {
+      "@/config": C, "react/jsx-runtime": jsx,
+    }, { jsx: true }),
     "@/components/Brand": Brand,
     // a arte Hoje das lojas no hero (components/TelaDaLoja.tsx)
     "@/components/TelaDaLoja": carregarTs(arq("components", "TelaDaLoja.tsx"), {
@@ -214,8 +222,9 @@ function paginaEstudante(C) {
     }, { jsx: true }),
     "@/lib/i18n": i18n,
     "@/components/BlocoPreco": { BlocoPreco: blocoPreco(C) },
-    // o formulário real usa o roteador do Next; aqui basta saber se ele entra
-    "@/components/EstudanteForm": { EstudanteForm: () => React.createElement("div", { id: "formulario-cpf" }) },
+    // o formulário real usa o roteador do Next; aqui basta saber se ele
+    // entra, e com qual subtítulo
+    "@/components/EstudanteForm": { EstudanteForm: (p) => React.createElement("div", { id: "formulario-cpf" }, p.subtitulo || "") },
     "@/components/EstudanteEspera": EstudanteEspera,
     "@/components/EstudanteSticky": EstudanteSticky,
     // rodapé com a linha curta do grupo Science Play (decisão de 26/10/2026)
@@ -252,6 +261,37 @@ test("/estudante ABERTA: o formulário de sempre e os botões de solicitar", () 
   semDuracaoDoEstudante(h, "/estudante");
 });
 
+test("standby: a /estudante é a da produção (R$ 77,00 sobre R$ 137,90, formulário aberto, mockup do Cloudinary)", () => {
+  // Em standby o fluxo da produção abre mesmo sem as chaves do estudante.
+  for (const aberto of [false, true]) {
+    const h = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(aberto), false)));
+    assert.match(h, /R\$ 77,00/);
+    assert.match(h, /R\$ 137,90/);
+    assert.match(h, /<small>R\$<\/small>77,00/);
+    assert.match(h, /R\$ 60,90 OFF/);
+    assert.match(h, /44% a menos que o valor que qualquer pessoa paga hoje\. menos de R\$ 0,22 por dia, por um ano inteiro de provocação diária\./);
+    assert.match(h, /Quem entra hoje pelo site<\/span><span class="ed-econ-v">R\$ 137,90<\/span><span class="ed-econ-d">menos de R\$ 0,38 por dia<\/span>/);
+    assert.match(h, /Preço estudante<\/span><span class="ed-review-v">R\$ 77,00 no ano \(valor cheio R\$ 137,90\)<\/span>/);
+    assert.equal(/Pagamento<\/span>/.test(h), false, "sem a linha de pagamento do lançamento");
+    assert.match(h, /Solicitar minha condição/);
+    assert.match(h, /Solicitar meu código/);
+    assert.match(h, /formulario-cpf/);
+    assert.match(h, /O código chega no seu WhatsApp e é aplicado no campo de cupom da tela de pagamento\./);
+    assert.match(h, /class="ed-phone ed-phone-moldura"/);
+    assert.match(h, /res\.cloudinary\.com\/dlzrfhwin\/image\/upload\/f_auto,q_auto,w_640\/v1782664582\/Tela_HOJE_Diariamente_shzi7c\.png/);
+    assert.equal(/\/telas\/pt\/hoje/.test(h), false, "sem a arte das lojas");
+    assert.equal(/abre em breve|Me avise quando abrir|89,90|99,98|149,90/.test(h), false);
+    // as decisões do dono no PR #3 valem também aqui
+    semDuracaoDoEstudante(h, "/estudante em standby");
+    assert.equal(/\bcompra(r|s)?\b/i.test(h), false);
+    assert.match(h, /em até 10 minutos/);
+  }
+  // ligada a chave, volta a ser a do lançamento
+  const lancada = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(true), true)));
+  assert.match(lancada, /<small>R\$<\/small>89,90/);
+  assert.equal(/77,00|137,90|cloudinary/.test(lancada), false);
+});
+
 test("/estudante aberta e fechada, no lançamento e depois: nenhuma promessa de duração pela graduação", () => {
   for (const momento of [LANCAMENTO, DEPOIS]) {
     for (const aberto of [true, false]) {
@@ -269,6 +309,8 @@ test("fonte: nenhum texto de estudante promete o preço pela graduação inteira
     ["app", "estudante", "page.tsx"], ["app", "es", "estudiantes", "page.tsx"],
     ["components", "Oferta.tsx"], ["components", "CtaEstudante.tsx"], ["components", "BlocoPreco.tsx"],
     ["components", "BlocoOferta.tsx"], ["components", "EstudanteEspera.tsx"], ["config.ts"], ["lib", "i18n.ts"], ["lib", "seo.ts"],
+    ["components", "estudante-atual", "BlocoPrecoAtual.tsx"], ["components", "estudante-atual", "TelaHojeAtual.tsx"],
+    ["components", "EstudanteForm.tsx"],
   ]) {
     const t = semComentarios(fs.readFileSync(arq(...f), "utf8"));
     const achou = t.match(DURACAO_DA_GRADUACAO);

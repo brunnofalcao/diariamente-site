@@ -1,11 +1,14 @@
 import { metadataDaPagina } from "@/lib/seo";
-import { SITE, EMPRESA, PROVA, GARANTIA, ESTUDANTE, periodoEstudante, responsavelDoGrupo } from "@/config";
+import { SITE, EMPRESA, PROVA, GARANTIA, ESTUDANTE, ESTUDANTE_ATUAL, periodoEstudante, responsavelDoGrupo } from "@/config";
+import { SITE_LANCADO } from "@/config/lancamento";
 import { RodapeDoGrupo } from "@/components/CnpjsDoGrupo";
 import { OfficialLogo } from "@/components/Brand";
 import { TelaDaLoja } from "@/components/TelaDaLoja";
 import { ATIVOS, dicionario } from "@/lib/i18n";
 import { MERCADOS, formatar, precoEstudante, porMesEstudante } from "@/config/pricing";
 import { BlocoPreco } from "@/components/BlocoPreco";
+import { BlocoPrecoAtual } from "@/components/estudante-atual/BlocoPrecoAtual";
+import { TelaHojeAtual } from "@/components/estudante-atual/TelaHojeAtual";
 import { EstudanteForm } from "@/components/EstudanteForm";
 import { EstudanteEspera } from "@/components/EstudanteEspera";
 import { EstudanteSticky } from "@/components/EstudanteSticky";
@@ -28,7 +31,21 @@ import "./estudante.css";
 
    NADA de número inventado: prova vem de PROVA/GARANTIA no config.
 
-   Dois estados, decididos no build (ESTUDANTE.aberto, config.ts):
+   STANDBY (chave de lançamento desligada, config/lancamento.ts): a
+   /estudante da produção (main, 0a25ffa). Formulário aberto, como hoje,
+   preço de R$ 77,00 sobre R$ 137,90 (components/estudante-atual,
+   ESTUDANTE_ATUAL em config.ts), o mockup Tela_HOJE do Cloudinary no hero
+   e o subtítulo do formulário da main. A API também segue a da main
+   (app/api/estudante/solicitar/route.js). Três diferenças de texto em
+   relação à main, de propósito: sem a promessa do preço pela graduação
+   inteira e com "Solicitar não gera compromisso" no lugar da frase com a
+   palavra vetada (decisões do dono no PR #3), e o prazo do
+   código de ESTUDANTE.esperaMinutos (10 minutos: a API agenda o envio
+   para 5 minutos depois e o cron tenta até 5 vezes; os "2 minutos" da
+   main não eram verdade).
+
+   LIGADA a chave, dois estados, decididos no build (ESTUDANTE.aberto,
+   config.ts):
      aberto   o formulário pede o código, e o cupom pessoal nasce na
               Hotmart
      fechado  falta configuração na Vercel (o log do build diz qual):
@@ -37,8 +54,10 @@ import "./estudante.css";
               nada emite cupom.
    ===================================================================== */
 
+// Standby: a /estudante da produção, com o formulário aberto.
+const ATUAL = !SITE_LANCADO;
 // Fluxo do cupom pessoal aberto neste build?
-const ABERTO = ESTUDANTE.aberto;
+const ABERTO = ATUAL || ESTUDANTE.aberto;
 const CTA = ABERTO ? "Solicitar minha condição" : "Me avise quando abrir";
 
 const TITULO = "Diariamente para estudantes · condição exclusiva de graduação";
@@ -188,10 +207,15 @@ const RESUMO: [string, string][] = [
   ["Condição", "Exclusiva para estudantes de graduação"],
   ["Formato", "Aplicativo para iPhone e Android, uma provocação por dia"],
   ["Duração", "365 provocações, uma liberada a cada dia"],
-  ["Preço estudante", `${formatar("br", precoEstudante())} ${periodoEstudante()} (equivale a ${formatar("br", porMesEstudante())}/mês; valor cheio ${formatar("br", MERCADOS.br.anual)})`],
-  // O cupom vai na oferta oficial, que parcela com acréscimo: o equivalente
-  // mensal não é parcela. Sem valor de parcela (a Hotmart calcula).
-  ["Pagamento", `${formatar("br", precoEstudante())} ${ESTUDANTE.pagamento}`],
+  ...(ATUAL
+    ? // Standby: a linha de preço da produção (main), sem a de pagamento.
+      ([["Preço estudante", `R$ ${ESTUDANTE_ATUAL.preco} no ano (valor cheio R$ ${ESTUDANTE_ATUAL.precoDe})`]] as [string, string][])
+    : ([
+        ["Preço estudante", `${formatar("br", precoEstudante())} ${periodoEstudante()} (equivale a ${formatar("br", porMesEstudante())}/mês; valor cheio ${formatar("br", MERCADOS.br.anual)})`],
+        // O cupom vai na oferta oficial, que parcela com acréscimo: o equivalente
+        // mensal não é parcela. Sem valor de parcela (a Hotmart calcula).
+        ["Pagamento", `${formatar("br", precoEstudante())} ${ESTUDANTE.pagamento}`],
+      ] as [string, string][])),
   ["Entrega", "Código pessoal enviado por WhatsApp"],
   ["Público", "Estudantes de graduação de qualquer curso"],
   ["Autores", "Science Play"],
@@ -281,13 +305,18 @@ export default function Estudante() {
             </div>
 
             <div className="ed-hero-visual">
-              <div className="ed-phone">
+              {/* Standby: o mockup da produção, na moldura de celular. */}
+              <div className={ATUAL ? "ed-phone ed-phone-moldura" : "ed-phone"}>
+                {ATUAL ? (
+                  <TelaHojeAtual />
+                ) : (
                 <TelaDaLoja
                   base={telaHoje}
                   alt={altTelaHoje}
                   sizes="(min-width: 1024px) 300px, (min-width: 400px) 280px, 70vw"
                   prioridade
                 />
+                )}
                 <span className="ed-phone-tag">
                   Sua provocação de hoje. <b>Só a de hoje.</b>
                 </span>
@@ -425,7 +454,7 @@ export default function Estudante() {
             </div>
 
             <div className="ed-reveal">
-              <BlocoPreco />
+              {ATUAL ? <BlocoPrecoAtual /> : <BlocoPreco />}
             </div>
 
             <div className="ed-actions" style={{ justifyContent: "center", marginTop: "clamp(28px, 4vw, 40px)" }}>
@@ -487,7 +516,11 @@ export default function Estudante() {
               </div>
             </aside>
 
-            {ABERTO ? <EstudanteForm /> : <EstudanteEspera />}
+            {ABERTO ? (
+              <EstudanteForm subtitulo={ATUAL ? ESTUDANTE_ATUAL.subtituloDoFormulario : undefined} />
+            ) : (
+              <EstudanteEspera />
+            )}
           </div>
         </section>
 

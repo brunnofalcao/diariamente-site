@@ -63,10 +63,11 @@ const CSS = `
 [data-tour]{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 20px 12px;margin:0 -20px;scrollbar-width:none}
 [data-tour]::-webkit-scrollbar{display:none}
 /* As artes das lojas (1320 x 2868) são mais altas que os mockups antigos
-   (500 x 889): 240px no celular e colunas de 232px no computador deixam
-   cada tela com uns 520px e 505px de altura. */
+   (500 x 889): 240px no celular e colunas de 260px no computador (a grade
+   na largura da página, como os cartões de cima) deixam cada tela com uns
+   520px e 565px de altura. */
 [data-tour]>*{flex:0 0 min(64vw,240px);scroll-snap-align:center}
-@media (min-width:900px){[data-tour]{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;overflow:visible;padding:0;margin:0 auto;max-width:1000px}[data-tour]>*{flex:none}}
+@media (min-width:900px){[data-tour]{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;overflow:visible;padding:0;margin:0}[data-tour]>*{flex:none}}
 [data-cols2]{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
 @media (min-width:768px){[data-cols2]{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}
 [data-price]{display:grid;gap:24px;grid-template-areas:"card" "value";grid-template-columns:minmax(0,1fr)}
@@ -180,7 +181,11 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
   // fechada, o bloco mostra o preço, mas nenhum botão abre o pagamento.
   const vende = oferta.vendaAberta || previa;
   const linkFinal = linkCheckout(mkt, agora);
-  const semLink = pendente(linkFinal) || !oferta.vendaAberta;
+  // /vendas/* em standby, antes de DM_WEBHOOK_V2_OK=1 (DM_VENDA_LIBERADA,
+  // next.config.js): o botão final fica com o mesmo texto e o mesmo visual,
+  // mas leva ao bloco de preço em vez de abrir o checkout.
+  const checkoutBloqueado = vitrine && process.env.DM_VENDA_LIBERADA !== "1";
+  const semLink = pendente(linkFinal) || !oferta.vendaAberta || checkoutBloqueado;
   // O <html lang> vive no layout raiz, que e servidor e nao conhece a
   // rota. Sincronizamos aqui: leitor de tela e buscador precisam do
   // idioma certo no elemento raiz, nao so num div interno.
@@ -580,10 +585,12 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
             <h2 style={h2}>{t.aH2}</h2>
           </div>
           <div data-tour="1">
-            {/* Artes das lojas no idioma da página (lib/i18n.ts, telasDo). */}
-            {[[IMG.hoje, t.t1t, t.t1d, t.t1alt], [IMG.dias, t.t2t, t.t2d, t.t2alt], [IMG.acoes, t.t3t, t.t3d, t.t3alt], [IMG.ritmo, t.t4t, t.t4d, t.t4alt]].map(([src, title, desc, alt]) => (
+            {/* Artes das lojas no idioma da página (lib/i18n.ts, telasDo).
+                Hoje ("a provocação do dia, limpa") é a arte da leitura em
+                modo foco; a arte Hoje, com o painel do dia, fica no fim. */}
+            {[[IMG.leitura, t.t1t, t.t1d, t.finAlt], [IMG.dias, t.t2t, t.t2d, t.t2alt], [IMG.acoes, t.t3t, t.t3d, t.t3alt], [IMG.ritmo, t.t4t, t.t4d, t.t4alt]].map(([src, title, desc, alt]) => (
               <figure key={title} style={{ margin: 0, minWidth: 0 }}>
-                <TelaDaLoja base={src} alt={alt} sizes="(min-width:900px) 232px, (min-width:375px) 240px, 64vw" />
+                <TelaDaLoja base={src} alt={alt} sizes="(min-width:900px) 260px, (min-width:375px) 240px, 64vw" />
                 <figcaption style={{ marginTop: 14 }}>
                   <div style={{ fontWeight: 600, fontSize: 17, lineHeight: 1.3, letterSpacing: "-.01em" }}>{title}</div>
                   <p style={{ margin: "4px 0 0", fontSize: 14, lineHeight: 1.55, color: C.n400 }}>{desc}</p>
@@ -671,7 +678,7 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
               {/* Preço, moeda, oferta e checkout vêm de config/pricing.ts.
                   Antes estavam escritos aqui dentro (R$ 197, R$ 137, ,90,
                   30% OFF), o que impedia ter mercado por geografia. */}
-              <BlocoOferta mercado={mkt} momento={agora} previa={previa} />
+              <BlocoOferta mercado={mkt} momento={agora} previa={previa} vitrine={vitrine} />
             </div>
 
             <div data-area="value">
@@ -797,12 +804,14 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
                 {vende ? `${formatar(mkt, precoFinal(mkt, agora))} ${oferta.textos.nota}` : oferta.espera.nota}
               </span>
             </div>
-            {/* A arte da leitura (Uma provocação por dia) sobe do pé do cartão:
-                aparecem a legenda e o alto do aparelho, 62% da altura. */}
+            {/* A arte Hoje (Saúde mental todo dia) sobe do pé do cartão:
+                58,4% da altura. O corte cai no vão entre o aviso "Semana
+                passada" e o cartão da semana (y 1662 a 1686 de 2868, em pt
+                e es), sem cortar texto. */}
             <div style={{ width: "min(64vw,260px)", margin: "clamp(32px,4vw,48px) auto 0" }}>
-              <div style={{ position: "relative", paddingTop: `${(62 * TELA_PROPORCAO.altura) / TELA_PROPORCAO.largura}%`, overflow: "hidden", borderRadius: `${RAIO_DA_TELA}px ${RAIO_DA_TELA}px 0 0` }}>
+              <div style={{ position: "relative", paddingTop: `${(58.4 * TELA_PROPORCAO.altura) / TELA_PROPORCAO.largura}%`, overflow: "hidden", borderRadius: `${RAIO_DA_TELA}px ${RAIO_DA_TELA}px 0 0` }}>
                 <div style={{ position: "absolute", top: 0, left: 0, right: 0 }}>
-                  <TelaDaLoja base={IMG.leitura} alt={t.finAlt} sizes="(min-width:407px) 260px, 64vw" style={{ boxShadow: "0 0 0 1px rgba(255,255,255,.07)" }} />
+                  <TelaDaLoja base={IMG.hoje} alt={t.t1alt} sizes="(min-width:407px) 260px, 64vw" style={{ boxShadow: "0 0 0 1px rgba(255,255,255,.07)" }} />
                 </div>
               </div>
             </div>

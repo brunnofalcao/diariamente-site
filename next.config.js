@@ -87,7 +87,15 @@ const nextConfig = {
    scripts/checar-precos.js), e gravada pelo `env` do Next no servidor e
    no navegador. Não se põe à mão: o valor da Vercel é sobrescrito. "1"
    abre o fluxo do cupom pessoal; vazio o fecha (home sem link para a
-   /estudante, lista de espera no lugar do formulário, API em 503).
+   /estudante, lista de espera no lugar do formulário, API em 503). Só
+   vale "1" com a chave de lançamento ligada: em standby a /estudante é
+   a da produção (app/estudante/page.tsx) e o fluxo novo não abre.
+
+   VENDA LIBERADA: DM_VENDA_LIBERADA, também calculada aqui. "1" com a
+   chave de lançamento ligada ou com DM_WEBHOOK_V2_OK=1. Vazia, os botões
+   do site de vendas em standby (/vendas/*) ficam com o mesmo texto e o
+   mesmo visual, mas levam ao bloco de preço em vez de abrir o checkout:
+   quem pagasse antes do webhook do app ficaria sem conta.
    ===================================================================== */
 const { PHASE_PRODUCTION_BUILD } = require("next/constants");
 const { checarEnderecoDoProjeto } = require("./scripts/checar-endereco");
@@ -115,12 +123,15 @@ module.exports = (phase) => {
   }
   if (bloqueios.length) throw new Error(bloqueios.join(" "));
   const estudante = estudanteDoProjeto(process.env);
+  const lancado = siteLancado(process.env);
+  const webhookOk = String(process.env.DM_WEBHOOK_V2_OK || "").trim() === "1";
   return {
     ...nextConfig,
     env: {
       ...nextConfig.env,
-      DM_ESTUDANTE_ABERTO: estudante.aberto ? "1" : "",
-      DM_SITE_LANCADO: siteLancado(process.env) ? "1" : "",
+      DM_ESTUDANTE_ABERTO: lancado && estudante.aberto ? "1" : "",
+      DM_SITE_LANCADO: lancado ? "1" : "",
+      DM_VENDA_LIBERADA: lancado || webhookOk ? "1" : "",
     },
   };
 };

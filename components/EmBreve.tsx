@@ -7,6 +7,7 @@ import type { Lang } from "@/lib/i18n";
 import { HOME_DO_MERCADO, VENDAS_DO_MERCADO } from "@/lib/mercado";
 import type { Mercado } from "@/config/pricing";
 import { EMPRESA } from "@/config";
+import { SITE_LANCADO } from "@/config/lancamento";
 
 /* =====================================================================
    EM BREVE · lista de espera
@@ -25,8 +26,12 @@ import { EMPRESA } from "@/config";
    Hoje é a home de /es (América Latina) e /es-es (Espanha) enquanto o
    acervo em espanhol não está revisado (config/pricing.ts, semVenda).
    Em standby (chave de lançamento desligada, config/lancamento.ts), é a
-   home de todos os mercados. Com `vitrine` (/vendas/es e /vendas/es-es),
-   o logo e o seletor de país levam ao /vendas de cada mercado.
+   home de todos os mercados, com o rodapé da produção (só a frase da
+   marca) e o formulário em português do Brasil também em /pt-pt. A
+   assinatura, o seletor de país e o português de Portugal entram com a
+   chave ligada e em /vendas/*. Com `vitrine` (/vendas/es e
+   /vendas/es-es), o logo e o seletor de país levam ao /vendas de cada
+   mercado.
    ===================================================================== */
 
 const T = {
@@ -93,7 +98,7 @@ export function EmBreve({ lang = "pt", mercado, vitrine = false }: { lang?: Lang
           ))}
         </ul>
 
-        <ListaEsperaForm mercado={mkt} origem="em-breve" />
+        <ListaEsperaForm mercado={mkt} origem="em-breve" vitrine={vitrine} />
       </section>
 
       <footer className="eb-foot">
@@ -102,9 +107,14 @@ export function EmBreve({ lang = "pt", mercado, vitrine = false }: { lang?: Lang
         </span>
         <p>{t.rodape}</p>
         {/* Rodapé de todas as páginas: só a assinatura (decisão do dono,
-            12/10/2026). Os dados da titular ficam nos Termos e na Política. */}
-        <p>{EMPRESA.assinatura}</p>
-        <SeletorMercado atual={mkt} titulo="País" linha vitrine={vitrine} />
+            12/10/2026). Os dados da titular ficam nos Termos e na Política.
+            Em standby, as homes públicas ficam com o rodapé da produção. */}
+        {(SITE_LANCADO || vitrine) && (
+          <>
+            <p>{EMPRESA.assinatura}</p>
+            <SeletorMercado atual={mkt} titulo="País" linha vitrine={vitrine} />
+          </>
+        )}
       </footer>
     </main>
   );

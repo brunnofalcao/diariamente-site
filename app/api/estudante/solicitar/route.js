@@ -19,6 +19,11 @@
  * regra "1 CPF = 1 lead" num pedido que o estudante nao conseguiria
  * ativar. A /estudante, fechada, nem mostra o formulario; isto cobre
  * pagina antiga em cache e POST direto.
+ *
+ * STANDBY (DM_SITE_LANCADO vazio, config/lancamento.ts): a /estudante e
+ * a da producao, com o formulario aberto, e esta rota faz o que a da
+ * main faz (sem o 503). DM_ESTUDANTE_ABERTO so vale "1" com a chave
+ * ligada (next.config.js).
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -77,7 +82,7 @@ function cpfValido(cpf) {
 export async function POST(req) {
   let lead = null;
 
-  if (process.env.DM_ESTUDANTE_ABERTO !== '1') {
+  if (process.env.DM_SITE_LANCADO === '1' && process.env.DM_ESTUDANTE_ABERTO !== '1') {
     console.error('[estudante] fluxo fechado neste build (DM_ESTUDANTE_ABERTO); ver o aviso "Estudante FECHADO" no log do build');
     return Response.json({
       ok: false,

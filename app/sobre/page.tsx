@@ -1,6 +1,7 @@
 import { metadataDaPagina } from "@/lib/seo";
 import { SITE, EMPRESA, responsavelDoGrupo } from "@/config";
 import { MERCADOS, formatar, mensal, precoFinal, porMes, lancamentoVigente, dataDoLancamento } from "@/config/pricing";
+import { SITE_LANCADO } from "@/config/lancamento";
 import { LockupHorizontal } from "@/components/Brand";
 
 /* =====================================================================
@@ -34,6 +35,13 @@ export const metadata = metadataDaPagina("sobre", "pt");
 // Refaz a cada hora: o preço de lançamento sai sozinho depois da data
 // de término (config/pricing.ts), como nas homes.
 export const revalidate = 3600;
+
+// STANDBY (chave de lançamento desligada, config/lancamento.ts): as duas
+// linhas de preço da produção (main, 0a25ffa), como estão hoje. A oferta
+// de lançamento (config/pricing.ts) só aparece aqui com a chave ligada,
+// junto com o site de vendas.
+const ACESSO_ATUAL = "R$ 197 (R$ 137,90 na condição de lançamento)";
+const PRECO_ATUAL = "R$ 197 · R$ 137,90 na condição de lançamento, ou 12x de R$ 14,26 no cartão (total R$ 171,12)";
 
 export default function Sobre() {
   // Preço do Brasil, de config/pricing.ts. Sem valor de parcela: a Hotmart
@@ -103,7 +111,7 @@ export default function Sobre() {
               </p>
               <p>
                 <strong className="teal">Acesso:</strong> assinatura anual. Diariamente App,
-                {" "}{cheio} por ano{condicao}. São 365 textos por ano; na
+                {" "}{SITE_LANCADO ? `${cheio} por ano${condicao}` : ACESSO_ATUAL}. São 365 textos por ano; na
                 renovação, um ciclo novo de conteúdo inédito. Garantia de 7 dias.
                 Realização Science Play.
               </p>
@@ -112,7 +120,11 @@ export default function Sobre() {
                 <li><b>Categoria:</b> prática diária de hábitos e bem-estar</li>
                 <li><b>Formato:</b> aplicativo para iPhone e Android</li>
                 <li><b>Duração:</b> 365 dias, uma provocação por dia</li>
-                <li><b>Preço:</b> {cheio} por ano à vista (equivale a {cheioMes}/mês), ou em até 12x no cartão com acréscimo{condicaoLista}</li>
+                {SITE_LANCADO ? (
+                  <li><b>Preço:</b> {cheio} por ano à vista (equivale a {cheioMes}/mês), ou em até 12x no cartão com acréscimo{condicaoLista}</li>
+                ) : (
+                  <li><b>Preço:</b> {PRECO_ATUAL}</li>
+                )}
                 <li><b>Garantia:</b> 7 dias, incondicional</li>
                 <li><b>Responsáveis:</b> {responsavelDoGrupo("pt")}</li>
                 <li><b>Inscrição:</b> {SITE.dominioVisivel} · acesso enviado por e-mail</li>

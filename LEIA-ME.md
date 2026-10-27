@@ -6,7 +6,11 @@
 > site de vendas, exatamente como vai ao ar, fica em **`/vendas`** (Brasil),
 > `/vendas/es`, `/vendas/es-es`, `/vendas/pt-pt` e `/vendas/mundo`, com
 > noindex e fora do sitemap. A trava do webhook (`DM_WEBHOOK_V2_OK`) e a de
-> preços só avisam enquanto a chave está desligada. Para lançar:
+> preços só avisam enquanto a chave está desligada; em compensação, os
+> botões de `/vendas` só abrem o checkout com `DM_WEBHOOK_V2_OK=1`. A
+> `/estudante` e a `/sobre` ficam como na produção (formulário aberto,
+> R$ 77,00 sobre R$ 137,90). O que ainda muda para o público já no merge
+> está em `docs/LANCAMENTO.md`. Para lançar:
 > `DM_SITE_LANCADO=1` na Vercel (Production) e um novo deploy, depois do
 > passo (a) abaixo. Tudo em **`docs/LANCAMENTO.md`**. A tabela e o quadro
 > abaixo descrevem o site com a chave LIGADA.

@@ -192,7 +192,8 @@ function comTudo(destino: string, busca: URLSearchParams): string {
  *   1. robô e prévia de link: sempre a página pedida
  *   2. ?mercado=xx (seletor do rodapé e PT | ES): grava o cookie e vai
  *      para a home daquele mercado; ?lang=pt|es antigo vira br|la, SÓ nas
- *      homes (as páginas de obrigado usam ?lang= para escolher o idioma).
+ *      homes e só com a chave ligada (as páginas de obrigado usam ?lang=
+ *      para escolher o idioma; em standby, a home abre como na produção).
  *      Em standby, dentro de /vendas, vai para o /vendas do mercado, sem
  *      cookie.
  *   3. o endereço interno do resto do mundo, pedido direto: lançado, volta
@@ -215,7 +216,9 @@ export function decidirRota(p: Pedido): Decisao {
 
   const naVitrine = !lancado && ehVitrine(p.pathname);
   const ehHome = (HOMES as readonly string[]).includes(p.pathname);
-  const legado = ehHome ? busca.get("lang") : null;
+  // ?lang= antigo: só com a chave ligada. Em standby, a home pedida abre
+  // como na produção, sem redirecionar nem gravar cookie.
+  const legado = ehHome && lancado ? busca.get("lang") : null;
   const pedido = mercadoValido(busca.get("mercado")) ?? (legado === "es" ? "la" : legado === "pt" ? "br" : null);
   if (pedido && naVitrine) {
     return { tipo: "redirecionar", destino: comBusca(VENDAS_DO_MERCADO[pedido], busca), vary: false };

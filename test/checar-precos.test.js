@@ -445,18 +445,22 @@ test("estudanteDoProjeto lê o config real: fechado sem a Vercel, aberto com as 
   assert.equal(estudanteDoProjeto(PRONTO).aberto, true);
 });
 
-test("next.config.js grava DM_ESTUDANTE_ABERTO no build: vazio por padrão, \"1\" com o estudante pronto", () => {
+test("next.config.js grava DM_ESTUDANTE_ABERTO no build: vazio por padrão e em standby, \"1\" com a chave ligada e o estudante pronto", () => {
   const fabrica = require(path.join(__dirname, "..", "next.config.js"));
   const aviso = console.warn;
   const antes = { ...process.env };
   console.warn = () => {};
   try {
-    for (const k of ["WA_TEMPLATE_ESTUDANTE", "HOTMART_PRODUCT_ID", "STUDENT_DISCOUNT", "DM_TEMPLATE_ESTUDANTE_OK", "DM_ESTUDANTE_ABERTO"]) delete process.env[k];
+    for (const k of ["WA_TEMPLATE_ESTUDANTE", "HOTMART_PRODUCT_ID", "STUDENT_DISCOUNT", "DM_TEMPLATE_ESTUDANTE_OK", "DM_ESTUDANTE_ABERTO", "DM_SITE_LANCADO"]) delete process.env[k];
     assert.equal(fabrica("phase-development-server").env.DM_ESTUDANTE_ABERTO, "");
     // valor posto à mão na Vercel não vale: é recalculado
     process.env.DM_ESTUDANTE_ABERTO = "1";
     assert.equal(fabrica("phase-development-server").env.DM_ESTUDANTE_ABERTO, "");
+    // standby: as três chaves do estudante não abrem o fluxo novo (a
+    // /estudante é a da produção)
     Object.assign(process.env, PRONTO);
+    assert.equal(fabrica("phase-development-server").env.DM_ESTUDANTE_ABERTO, "");
+    process.env.DM_SITE_LANCADO = "1";
     assert.equal(fabrica("phase-development-server").env.DM_ESTUDANTE_ABERTO, "1");
   } finally {
     console.warn = aviso;

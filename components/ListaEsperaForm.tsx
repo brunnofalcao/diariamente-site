@@ -5,6 +5,7 @@ import { Simbolo } from "@/components/Brand";
 import { OPCOES, VERSAO_CONSENTIMENTO } from "@/lib/consentimento";
 import { caminho } from "@/lib/rotas";
 import { MERCADOS, type Mercado } from "@/config/pricing";
+import { SITE_LANCADO } from "@/config/lancamento";
 
 /* =====================================================================
    FORMULÁRIO DA LISTA DE ESPERA · um só, para a página "em breve" e para
@@ -92,6 +93,7 @@ export function ListaEsperaForm({
   embutido = false,
   botao,
   textos,
+  vitrine = false,
 }: {
   mercado: Mercado;
   /** "em-breve" (página inteira), "oferta" (bloco de oferta) ou
@@ -103,10 +105,16 @@ export function ListaEsperaForm({
   botao?: string;
   /** Motivo da coleta e confirmação, quando não é a abertura do produto. */
   textos?: { legal1?: string; okT?: string; okD?: string };
+  /** Site de vendas em standby (/vendas/*): o texto que vai ao ar. */
+  vitrine?: boolean;
 }) {
   const o = MERCADOS[mercado];
   const lang = o.idioma;
-  const t = { ...(o.locale === "pt-PT" ? T.ptPT : T[lang]), ...(textos || {}) };
+  // Português de Portugal só no que vai ao ar (chave de lançamento ligada,
+  // ou /vendas/*). Em standby, a lista de espera de /pt-pt fica em
+  // português do Brasil, como na produção.
+  const ptPT = o.locale === "pt-PT" && (SITE_LANCADO || vitrine);
+  const t = { ...(ptPT ? T.ptPT : T[lang]), ...(textos || {}) };
   const sufixo = embutido ? "-oferta" : "";
 
   const [nome, setNome] = useState("");

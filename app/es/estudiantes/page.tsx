@@ -1,4 +1,5 @@
 import { EMPRESA, GARANTIA, ESTUDANTE } from "@/config";
+import { SITE_LANCADO } from "@/config/lancamento";
 import { LockupHorizontal } from "@/components/Brand";
 import { metadataDaPagina } from "@/lib/seo";
 import { caminho } from "@/lib/rotas";
@@ -72,9 +73,12 @@ export default function Estudiantes() {
           <FormularioGlobal lang="es" />
 
           {/* Só com o fluxo do cupom pessoal aberto neste build
-              (ESTUDANTE.aberto, config.ts). O código sai pelo cron, minutos
-              depois do pedido: "inmediato" não era verdade. */}
-          {ESTUDANTE.aberto && (
+              (ESTUDANTE.aberto, config.ts), ou em standby (chave de
+              lançamento desligada, config/lancamento.ts), quando a
+              /estudante é a da produção, com o formulário aberto. O código
+              sai pelo cron, minutos depois do pedido: "inmediato" não era
+              verdade. */}
+          {(ESTUDANTE.aberto || !SITE_LANCADO) && (
           <p className="caption" style={{ marginTop: "var(--sp8)", color: "var(--n-500)" }}>
             ¿Estudias en Brasil?{" "}
             <a href={caminho("estudante", "pt")} className="teal" hrefLang="pt-BR">

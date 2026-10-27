@@ -264,11 +264,15 @@ export function cld(url: string, tx: string): string {
    do mundo usam as pt; a América Latina e a Espanha, as es.
 
    Tela do site   arte da loja (pt)     arte da loja (es)
-   hoje           01-hoje               01-hoje
+   hoje           01-hoje               01-hoje      (fim da página)
    dias           07-dias               07-dias
    acoes          03-acao (Sua vez)     08-acoes (Centro de ações)
    ritmo          06-ritmo              06-ritmo
-   leitura        02-leitura            02-leitura   (fim da página)
+   leitura        02-leitura            02-leitura   (tour, no "Hoje")
+
+   Na seção "O app" (components/Home.tsx), o item Hoje ("A provocação do
+   dia, limpa") mostra a 02-leitura, a provocação em modo foco; a 01-hoje,
+   com o painel do dia, fica no fim da página. A /estudante usa a 01-hoje.
 
    Cada tela existe em WebP nas três larguras de TELA_LARGURAS e em JPEG na
    largura TELA_FALLBACK, para o navegador que não abre WebP (Safari 13 e

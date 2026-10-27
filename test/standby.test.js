@@ -114,6 +114,17 @@ test("standby: o middleware NÃO reescreve \"/\" para /mundo (resto do mundo fic
   assert.equal(lancado({ pathname: "/mundo" }).destino, "/");
 });
 
+test("standby: ?lang= antigo não redireciona nem grava cookie (a home pedida abre, como na produção)", () => {
+  for (const pathname of ["/", "/es", "/pt-pt", "/es-es"]) {
+    for (const busca of ["?lang=es", "?lang=pt", "?lang=es&utm_source=ig"]) {
+      const d = standby({ pathname, busca, pais: pathname === "/" ? "BR" : pathname === "/es" ? "MX" : pathname === "/pt-pt" ? "PT" : "ES" });
+      assert.deepEqual(d, { tipo: "seguir", vary: true }, pathname + busca);
+    }
+  }
+  // lançado, o seletor antigo volta a valer nas homes
+  assert.deepEqual(lancado({ busca: "?lang=es", pais: "BR" }), { tipo: "redirecionar", destino: "/es", cookie: "la", vary: true });
+});
+
 test("standby: ?mercado= nas páginas públicas grava o cookie e vai para a home do mercado, como hoje", () => {
   assert.deepEqual(standby({ busca: "?mercado=pt", pais: "BR" }), { tipo: "redirecionar", destino: "/pt-pt", cookie: "pt", vary: true });
   assert.deepEqual(standby({ pathname: "/termos", busca: "?mercado=la" }), { tipo: "redirecionar", destino: "/es", cookie: "la", vary: true });
@@ -247,9 +258,14 @@ test("standby: homes públicas indexáveis, com o título da lista de espera e o
   assert.deepEqual(br.alternates.languages, {
     "pt-BR": DOMINIO, "pt-PT": DOMINIO + "/pt-pt", "es-ES": DOMINIO + "/es-es", es: DOMINIO + "/es", "x-default": DOMINIO,
   });
-  assert.equal(S.metadataDoMercado("pt").title, "Diariamente · em breve em Portugal");
+  // /pt-pt e /es-es: o título e a descrição que a produção (main) sempre
+  // declarou para elas, mesmo mostrando a lista de espera
+  assert.equal(S.metadataDoMercado("pt").title, "Diariamente · uma prática diária de hábitos e bem-estar");
+  assert.equal(S.metadataDoMercado("pt").description, "Uma provocação por dia que termina numa ação possível ainda hoje. Porque interromper não significa abandonar.");
+  assert.equal(S.metadataDoMercado("es").title, "Diariamente · una práctica diaria de hábitos y bienestar");
+  assert.equal(S.metadataDoMercado("es").description, "Una provocación por día que termina en una acción posible hoy mismo. Porque interrumpir no significa abandonar.");
   assert.equal(S.metadataDoMercado("la").title, "Diariamente · próximamente");
-  assert.equal(S.metadataDoMercado("es").title, "Diariamente · próximamente");
+  assert.equal(S.metadataDoMercado("la").description, "Una práctica diaria de hábitos y bienestar. Todavía no es hoy, pero está cerca. Déjanos tu contacto y te avisamos el día que abra.");
   // lançado, "/" volta ao título de vendas (PR #3)
   assert.equal(seo(true).metadataDoMercado("br").title, "Diariamente · uma prática diária de hábitos e bem-estar");
   assert.equal(S.metadataDoMercado("pt", true).title, "Diariamente · uma prática diária de hábitos e bem-estar");
@@ -337,17 +353,40 @@ test("seletor de país: na home pública grava o mercado (?mercado=); em /vendas
   assert.equal(/\?mercado=/.test(vitrine), false);
 });
 
-test("lista de espera (EmBreve): logo e seletor ficam em /vendas na vitrine; na home pública, como hoje", () => {
-  const { EmBreve } = carregarTs(arq("components", "EmBreve.tsx"), {
+/** components/EmBreve.tsx com a chave de lançamento do build. */
+function emBreve(lancadoNoBuild) {
+  return carregarTs(arq("components", "EmBreve.tsx"), {
     "@/components/Brand": { LockupHorizontal: () => null },
-    "@/components/ListaEsperaForm": { ListaEsperaForm: (p) => React.createElement("form", { "data-mercado": p.mercado }) },
+    "@/components/ListaEsperaForm": { ListaEsperaForm: (p) => React.createElement("form", { "data-mercado": p.mercado, "data-vitrine": String(Boolean(p.vitrine)) }) },
     "@/components/SeletorMercado": carregarTs(arq("components", "SeletorMercado.tsx"), { "@/lib/mercado": M, "react/jsx-runtime": jsx }, { jsx: true }),
-    "@/lib/mercado": M, "@/config": C, "react/jsx-runtime": jsx,
-  }, { jsx: true });
+    "@/lib/mercado": M, "@/config": C, "@/config/lancamento": { SITE_LANCADO: lancadoNoBuild }, "react/jsx-runtime": jsx,
+  }, { jsx: true }).EmBreve;
+}
+
+test("standby: o rodapé das homes da lista de espera é o da produção (sem assinatura e sem seletor de país)", () => {
+  const EmBreve = emBreve(false);
+  for (const [lang, mercado] of [["pt", "br"], ["pt", "pt"], ["es", "la"], ["es", "es"]]) {
+    const h = renderToStaticMarkup(React.createElement(EmBreve, { lang, mercado }));
+    assert.equal(/Diariamente App by Science Play/.test(h), false, mercado);
+    assert.equal(/\?mercado=|Portugal|España|América Latina/.test(h), false, mercado);
+    assert.match(h, lang === "pt" ? /Uma prática diária de hábitos e bem-estar\./ : /Una práctica diaria de hábitos y bienestar\./);
+    assert.match(h, /data-vitrine="false"/);
+  }
+  // /vendas/es e /vendas/es-es mostram o rodapé que vai ao ar
+  const vitrine = renderToStaticMarkup(React.createElement(EmBreve, { lang: "es", mercado: "es", vitrine: true }));
+  assert.match(vitrine, /Diariamente App by Science Play/);
+  assert.match(vitrine, /data-vitrine="true"/);
+  // ligada a chave, as homes es ganham assinatura e seletor (PR #3)
+  const lancada = renderToStaticMarkup(React.createElement(emBreve(true), { lang: "es", mercado: "la" }));
+  assert.match(lancada, /Diariamente App by Science Play/);
+  assert.match(lancada, /href="\/\?mercado=es"/);
+});
+
+test("lista de espera (EmBreve): logo e seletor ficam em /vendas na vitrine; na home pública, como hoje", () => {
+  const EmBreve = emBreve(false);
   const publica = renderToStaticMarkup(React.createElement(EmBreve, { lang: "es", mercado: "la" }));
   assert.match(publica, /<a href="\/es" aria-label="Diariamente">/);
   assert.match(publica, /Todavía no es hoy/);
-  assert.match(publica, /href="\/\?mercado=es"/);
   const vitrine = renderToStaticMarkup(React.createElement(EmBreve, { lang: "es", mercado: "es", vitrine: true }));
   assert.match(vitrine, /<a href="\/vendas\/es-es" aria-label="Diariamente">/);
   assert.match(vitrine, /href="\/vendas\/es"/);
@@ -374,6 +413,126 @@ test("site de vendas (Home): PT | ES e o seletor seguem a vitrine", () => {
 test("aviso de cookies em espanhol também em /vendas/es e /vendas/es-es", () => {
   const fonte = fs.readFileSync(arq("components", "Consentimento.tsx"), "utf8");
   assert.match(fonte, /es\("\/vendas\/es"\) \|\| es\("\/vendas\/es-es"\)/);
+});
+
+test("standby: a lista de espera de /pt-pt fica em português do Brasil, como na produção; pt-PT só em /vendas/pt-pt e com a chave ligada", () => {
+  const form = (lancadoNoBuild) => carregarTs(arq("components", "ListaEsperaForm.tsx"), {
+    react: React, "react/jsx-runtime": jsx, "@/components/Brand": { Simbolo: () => null },
+    "@/lib/consentimento": carregarTs(arq("lib", "consentimento.ts")),
+    "@/lib/rotas": R, "@/config/pricing": P, "@/config/lancamento": { SITE_LANCADO: lancadoNoBuild },
+  }, { jsx: true }).ListaEsperaForm;
+  const ver = (F, props) => renderToStaticMarkup(React.createElement(F, { mercado: "pt", origem: "em-breve", ...props }));
+  const publica = ver(form(false), {});
+  assert.match(publica, /Me avise quando abrir/);
+  assert.match(publica, /Você pode sair da lista a qualquer momento\. Veja a/);
+  assert.equal(/Avisem-me|Podes sair|Consulta a/.test(publica), false);
+  for (const h of [ver(form(false), { vitrine: true }), ver(form(true), {})]) {
+    assert.match(h, /Avisem-me quando abrir/);
+    assert.match(h, /Podes sair da lista a qualquer momento\. Consulta a/);
+  }
+  // o bloco de oferta passa a vitrine para a lista de espera embutida
+  assert.match(fs.readFileSync(arq("components", "BlocoOferta.tsx"), "utf8"), /<ListaEsperaForm mercado=\{mercado\} origem="oferta" embutido botao=\{o\.espera\.botao\} vitrine=\{vitrine\} \/>/);
+  assert.match(fs.readFileSync(arq("components", "EmBreve.tsx"), "utf8"), /<ListaEsperaForm mercado=\{mkt\} origem="em-breve" vitrine=\{vitrine\} \/>/);
+});
+
+/* -------------------- /vendas: checkout só depois do webhook -------------------- */
+
+/** next.config.js com estas variáveis, como o build gravaria. */
+function envDoBuild(vars) {
+  const fabrica = require(arq("next.config.js"));
+  const aviso = console.warn;
+  const antes = { ...process.env };
+  console.warn = () => {};
+  try {
+    for (const k of ["DM_SITE_LANCADO", "DM_WEBHOOK_V2_OK", "DM_VENDA_LIBERADA", "WA_TEMPLATE_ESTUDANTE", "HOTMART_PRODUCT_ID", "STUDENT_DISCOUNT"]) delete process.env[k];
+    Object.assign(process.env, vars);
+    return fabrica("phase-development-server").env;
+  } finally {
+    console.warn = aviso;
+    for (const k of Object.keys(process.env)) if (!(k in antes)) delete process.env[k];
+    Object.assign(process.env, antes);
+  }
+}
+
+test("next.config.js: DM_VENDA_LIBERADA só com a chave ligada ou com DM_WEBHOOK_V2_OK=1; o estudante novo só com a chave ligada", () => {
+  assert.equal(envDoBuild({}).DM_VENDA_LIBERADA, "");
+  assert.equal(envDoBuild({ DM_VENDA_LIBERADA: "1" }).DM_VENDA_LIBERADA, "", "posta à mão não vale");
+  assert.equal(envDoBuild({ DM_WEBHOOK_V2_OK: "0" }).DM_VENDA_LIBERADA, "");
+  assert.equal(envDoBuild({ DM_WEBHOOK_V2_OK: "1" }).DM_VENDA_LIBERADA, "1");
+  assert.equal(envDoBuild({ DM_SITE_LANCADO: "1" }).DM_VENDA_LIBERADA, "1");
+  const estudantePronto = { WA_TEMPLATE_ESTUDANTE: "diariamente_estudante_aprovado_v2", HOTMART_PRODUCT_ID: "7448309", STUDENT_DISCOUNT: "0.40027" };
+  assert.equal(envDoBuild(estudantePronto).DM_ESTUDANTE_ABERTO, "", "standby: a /estudante é a da produção");
+  assert.equal(envDoBuild({ ...estudantePronto, DM_SITE_LANCADO: "1" }).DM_ESTUDANTE_ABERTO, "1");
+});
+
+/** BlocoOferta com DM_VENDA_LIBERADA como o build gravaria. */
+function blocoOferta(liberada) {
+  const C2 = carregarTs(arq("config.ts"), { "@/config/pricing": P });
+  const B = carregarTs(arq("components", "BlocoOferta.tsx"), {
+    "@/config": C2, "@/config/pricing": P, "@/lib/rotas": R,
+    "@/lib/medicao": { registrarInicioDeCheckout() {} },
+    "@/components/ListaEsperaForm": { ListaEsperaForm: () => null },
+    "react/jsx-runtime": jsx,
+  }, { jsx: true }).BlocoOferta;
+  return (props) => {
+    const antes = process.env.DM_VENDA_LIBERADA;
+    if (liberada) process.env.DM_VENDA_LIBERADA = "1";
+    else delete process.env.DM_VENDA_LIBERADA;
+    try {
+      return renderToStaticMarkup(React.createElement(B, { mercado: "br", momento: Date.parse("2026-10-20T12:00:00-03:00"), ...props }));
+    } finally {
+      if (antes === undefined) delete process.env.DM_VENDA_LIBERADA;
+      else process.env.DM_VENDA_LIBERADA = antes;
+    }
+  };
+}
+
+test("standby: em /vendas, sem DM_WEBHOOK_V2_OK=1, o botão do bloco de oferta não abre o checkout (mesmo texto e mesmo visual)", () => {
+  const bloqueado = blocoOferta(false)({ vitrine: true });
+  assert.equal(/pay\.hotmart\.com/.test(bloqueado), false);
+  const rotulo = P.MERCADOS.br.textos.botao;
+  assert.ok(bloqueado.includes(`">${rotulo}</a>`), rotulo);
+  assert.match(bloqueado, /<a href="#preco" style="[^"]*background:#27BDBE[^"]*cursor:pointer">/);
+  assert.equal(/aria-disabled|not-allowed|target="_blank"/.test(bloqueado), false);
+  // com o webhook confirmado, o mesmo botão abre o checkout de lançamento
+  const liberado = blocoOferta(true)({ vitrine: true });
+  assert.match(liberado, /href="https:\/\/pay\.hotmart\.com\/K105072021O\?off=lf63bgdd" target="_blank"/);
+  // fora da vitrine (homes públicas com a chave ligada), sempre o checkout
+  assert.match(blocoOferta(false)({}), /href="https:\/\/pay\.hotmart\.com\/K105072021O\?off=lf63bgdd"/);
+  // o texto e o estilo do botão são os mesmos com e sem o bloqueio
+  const botao = (h) => h.match(new RegExp(`<a [^>]*>${rotulo}</a>`))[0].replace(/ href="[^"]*"| target="_blank"| rel="noopener noreferrer"/g, "");
+  assert.equal(botao(bloqueado), botao(liberado));
+});
+
+test("Home.tsx: o botão final de /vendas segue a mesma regra (sem checkout até DM_WEBHOOK_V2_OK=1)", () => {
+  const fonte = fs.readFileSync(arq("components", "Home.tsx"), "utf8");
+  assert.match(fonte, /const checkoutBloqueado = vitrine && process\.env\.DM_VENDA_LIBERADA !== "1";/);
+  assert.match(fonte, /const semLink = pendente\(linkFinal\) \|\| !oferta\.vendaAberta \|\| checkoutBloqueado;/);
+  assert.match(fonte, /<BlocoOferta mercado=\{mkt\} momento=\{agora\} previa=\{previa\} vitrine=\{vitrine\} \/>/);
+  // o único link para o checkout no corpo da Home é o do botão final, e só sem semLink
+  assert.match(fonte, /\{vende && !semLink \? \(\s*<a href=\{linkFinal\}/);
+  assert.equal((fonte.match(/href=\{linkFinal\}/g) || []).length, 1);
+});
+
+/* ------------------------- /sobre em standby ------------------------- */
+
+test("standby: a /sobre mostra as linhas de preço da produção; ligada a chave, o preço de config/pricing.ts", () => {
+  const fonte = fs.readFileSync(arq("app", "sobre", "page.tsx"), "utf8");
+  const sobre = (lancadoNoBuild) => carregarTs(arq("app", "sobre", "page.tsx"), {
+    "@/lib/seo": { metadataDaPagina: () => ({}) }, "@/config": C, "@/config/pricing": P,
+    "@/config/lancamento": { SITE_LANCADO: lancadoNoBuild },
+    "@/components/Brand": { LockupHorizontal: () => null }, "react/jsx-runtime": jsx,
+  }, { jsx: true }).default;
+  const ver = (F) => renderToStaticMarkup(React.createElement(F)).replace(/<!-- -->/g, "");
+  const standbyH = ver(sobre(false));
+  assert.match(standbyH, /assinatura anual\. Diariamente App, R\$ 197 \(R\$ 137,90 na condição de lançamento\)\. São 365 textos por ano/);
+  assert.match(standbyH, /<li><b>Preço:<\/b> R\$ 197 · R\$ 137,90 na condição de lançamento, ou 12x de R\$ 14,26 no cartão \(total R\$ 171,12\)<\/li>/);
+  assert.equal(/149,90|99,98|16 de novembro/.test(standbyH), false);
+  const lancadaH = ver(sobre(true)).replace(/\u00a0/g, " ");
+  assert.match(lancadaH, /R\$ 149,90 por ano/);
+  assert.equal(/137,90|R\$ 197/.test(lancadaH), false);
+  // a linha da produção está escrita uma vez só
+  assert.equal((fonte.match(/R\$ 137,90 na condição de lançamento/g) || []).length, 2);
 });
 
 /* --------------------------- trava em standby --------------------------- */
