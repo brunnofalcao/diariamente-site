@@ -212,6 +212,10 @@ function paginaEstudante(C) {
     "@/components/EstudanteForm": { EstudanteForm: () => React.createElement("div", { id: "formulario-cpf" }) },
     "@/components/EstudanteEspera": EstudanteEspera,
     "@/components/EstudanteSticky": EstudanteSticky,
+    // rodapé com a linha curta do grupo Science Play (decisão de 26/10/2026)
+    "@/components/CnpjsDoGrupo": carregarTs(arq("components", "CnpjsDoGrupo.tsx"), {
+      react: React, "@/config": C, "react/jsx-runtime": jsx,
+    }, { jsx: true }),
     "./estudante.css": {},
     "react/jsx-runtime": jsx,
   }, { jsx: true }).default;

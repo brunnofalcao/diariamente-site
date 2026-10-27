@@ -1,5 +1,5 @@
 import { metadataDaPagina } from "@/lib/seo";
-import { SITE, EMPRESA } from "@/config";
+import { SITE, EMPRESA, responsavelDoGrupo } from "@/config";
 import { MERCADOS, formatar, mensal, precoFinal, porMes, lancamentoVigente, dataDoLancamento } from "@/config/pricing";
 import { LockupHorizontal } from "@/components/Brand";
 
@@ -114,7 +114,7 @@ export default function Sobre() {
                 <li><b>Duração:</b> 365 dias, uma provocação por dia</li>
                 <li><b>Preço:</b> {cheio} por ano à vista (equivale a {cheioMes}/mês), ou em até 12x no cartão com acréscimo{condicaoLista}</li>
                 <li><b>Garantia:</b> 7 dias, incondicional</li>
-                <li><b>Responsável:</b> {EMPRESA.assinatura}</li>
+                <li><b>Responsáveis:</b> {responsavelDoGrupo("pt")}</li>
                 <li><b>Inscrição:</b> {SITE.dominioVisivel} · acesso enviado por e-mail</li>
               </ul>
             </div>

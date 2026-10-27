@@ -1,4 +1,4 @@
-import { EMPRESA } from "@/config";
+import { EMPRESA, responsavelDoGrupo } from "@/config";
 import { LockupHorizontal } from "@/components/Brand";
 import { metadataDaPagina } from "@/lib/seo";
 import { caminho } from "@/lib/rotas";
@@ -22,7 +22,7 @@ const RESUMO: [string, string][] = [
   ["Modelo", "Suscripción anual, contenido nuevo en cada ciclo"],
   ["Formato", "Aplicación para iPhone y Android"],
   ["Duración", "365 textos por año, uno liberado cada día"],
-  ["Responsable", EMPRESA.assinatura],
+  ["Responsable", responsavelDoGrupo("es")],
 ];
 
 export default function AcercaDe() {

@@ -2,10 +2,9 @@
    TRAVA DO ENDEREÇO DA EMPRESA
    ---------------------------------------------------------------------
    O endereço físico da empresa é obrigatório em loja on-line (Decreto
-   7.962/2013, art. 2º). Por decisão do dono (12/10/2026), ele aparece só
-   nos Termos e na Política de Privacidade (pt e es), junto com a razão
-   social e o CNPJ; o rodapé e as páginas de venda mostram só "Diariamente
-   App by Science Play". Ele mora num lugar só: a constante
+   7.962/2013, art. 2º). Ele aparece nos Termos e na Política de
+   Privacidade (pt e es), junto com a identificação do grupo Science Play
+   (decisão do dono, 26/10/2026). Ele mora num lugar só: a constante
    ENDERECO_DA_EMPRESA em config.ts.
 
    Enquanto essa constante tiver "[TROCAR" (em qualquer posição) ou estiver
@@ -92,8 +91,8 @@ function checarEndereco({ textoDoConfig, env = {} }) {
       mensagem:
         "Falta o endereço da empresa, e o site não pode ir ao ar sem ele " +
         "(Decreto 7.962/2013, art. 2º). Abra config.ts, procure " +
-        `${CONSTANTE} e troque o texto "[TROCAR..." pelo endereço completo do ` +
-        "cartão CNPJ da Science Play Cursos LTDA. Ele aparece nos Termos e na " +
+        `${CONSTANTE} e troque o texto "[TROCAR..." pelo endereço completo ` +
+        "de contato do grupo Science Play. Ele aparece nos Termos e na " +
         "Política de Privacidade (pt e es). " +
         "Para só testar o build na sua máquina, rode com " +
         'DM_ENDERECO_TESTE="Rua de Teste, 123".',

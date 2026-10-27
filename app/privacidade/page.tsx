@@ -45,8 +45,9 @@ export default function Privacidade() {
         Europeia (Regulamento UE 2016/679, &ldquo;RGPD&rdquo;).
       </p>
 
-      {/* Titular, dados completos e cláusula de titularidade (decisão do
-          dono, 12/10/2026). Mesmo texto dos Termos e das versões es. */}
+      {/* Identificação do grupo Science Play (decisão de 26/10/2026), dados
+          completos e cláusula de titularidade. Mesmo texto dos Termos e das
+          versões es. */}
       <h2>1. Quem é o responsável pelo tratamento</h2>
       <Titularidade lang="pt" doc="privacidade" />
       <p>
@@ -161,7 +162,7 @@ export default function Privacidade() {
       </p>
       <p>As categorias de destinatários são:</p>
       <ul>
-        <li>empresas controladas, controladoras ou sob controle comum da {EMPRESA.razaoSocial};</li>
+        <li>empresas controladas, controladoras ou sob controle comum das empresas do grupo identificadas na seção 1;</li>
         <li>parceiros comerciais em ações conjuntas de educação, conteúdo e eventos;</li>
         <li>patrocinadores de ações, eventos e conteúdos do Diariamente ou da Science Play.</li>
       </ul>

@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { TEASER, ATIVOS, cld, dicionario, type Lang, type Dict } from "@/lib/i18n";
 import { caminho } from "@/lib/rotas";
-import { EMPRESA, SITE, ESTUDANTE } from "@/config";
+import { SITE, ESTUDANTE } from "@/config";
 import { registrarInicioDeCheckout } from "@/lib/medicao";
+import { RodapeDoGrupo } from "@/components/CnpjsDoGrupo";
 import { BlocoOferta } from "@/components/BlocoOferta";
 import { SeletorMercado } from "@/components/SeletorMercado";
 import { HOME_DO_MERCADO } from "@/lib/mercado";
@@ -842,12 +843,11 @@ export function Home({ lang, mercado, momento, previa = false }: { lang: Lang; m
           </div>
           <hr style={{ height: 1, border: 0, background: C.line, margin: "clamp(32px,5vw,44px) 0 20px" }} />
           <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "12px 24px" }}>
-            {/* O app é global: no rodapé, só a assinatura "Diariamente App by
-                Science Play" (decisão do dono, 12/10/2026). Razão social, CNPJ
-                e endereço (Decreto 7.962/2013, art. 2º) ficam nos Termos e na
-                Política, a um clique daqui (config.ts, EMPRESA). */}
+            {/* Rodapé com a linha curta do grupo Science Play (decisão de
+                26/10/2026). Razão social e endereço (Decreto 7.962/2013,
+                art. 2º) ficam nos Termos e na Política, a um clique daqui. */}
             <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.n400 }}>
-              © {new Date(agora).getFullYear()} {EMPRESA.assinatura} · {SITE.dominioVisivel}
+              © {new Date(agora).getFullYear()} <RodapeDoGrupo lang={lang} /> · {SITE.dominioVisivel}
             </p>
             <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
               {[.3, .4, .5, .6, .75, .9].map((o, i) => <i key={i} style={{ display: "block", width: 10, height: 4, borderRadius: 999, background: C.p500, opacity: o }} />)}

@@ -93,12 +93,18 @@ function StructuredData() {
       LOJAS.appStore,
       LOJAS.googlePlay,
     ],
-    // Só a marca: o app é global, e a razão social fica nos Termos e na
-    // Política (decisão do dono, 12/10/2026).
+    // A realizadora é a MARCA Science Play; as empresas do grupo que a
+    // operam entram como subOrganization, com razão social e CNPJ.
     parentOrganization: {
       "@type": "Organization",
       name: EMPRESA.marca,
       url: EMPRESA.site,
+      subOrganization: EMPRESA.grupo.map((e) => ({
+        "@type": "Organization",
+        name: e.razaoSocial,
+        legalName: e.razaoSocial,
+        taxID: e.cnpj,
+      })),
     },
   };
 

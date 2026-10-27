@@ -11,7 +11,8 @@ import { metadataDaPagina } from "@/lib/seo";
    O texto foi vertido para o espanhol preservando o sentido e a estrutura
    do original. O que NÃO mudou, de propósito:
 
-   - o fornecedor continua sendo uma empresa brasileira (CNPJ)
+   - o fornecedor continua sendo brasileiro: a Science Play®, por meio
+     das empresas do grupo, todas com CNPJ (ver EMPRESA.grupo)
    - a lei aplicável e o foro continuam sendo os do Brasil
    - o prazo de arrependimento citado é o do CDC brasileiro
 
@@ -27,18 +28,19 @@ export const metadata = metadataDaPagina("termos", "es");
 
 export default function CondicionesDeUso() {
   return (
-    <LegalShell lang="es" titulo="Condiciones de Uso" atualizado={EMPRESA.vigenciaLegal}>
+    <LegalShell lang="es" titulo="Condiciones de Uso" atualizado={EMPRESA.vigenciaLegalEs}>
       <p>
         Estas Condiciones de Uso (&ldquo;Condiciones&rdquo;) rigen el acceso y el uso de
         Diariamente, producto digital compuesto por la aplicación y por el contenido de
-        provocaciones diarias, ofrecido por {EMPRESA.razaoSocial}, identificada en la
-        sección 1 (&ldquo;Science Play&rdquo;, &ldquo;nosotros&rdquo;). Al adquirir y
+        provocaciones diarias, ofrecido por {EMPRESA.marca}®, a través de las empresas del
+        grupo identificadas en la sección 1 (&ldquo;Science Play&rdquo;, &ldquo;nosotros&rdquo;). Al adquirir y
         utilizar Diariamente, tú (&ldquo;usuario&rdquo;) declaras haber leído, comprendido y
         aceptado íntegramente estas Condiciones.
       </p>
 
-      {/* Titular, datos completos y cláusula de titularidad (decisión del
-          dueño, 12/10/2026). Mismo texto de la Política y de la versión pt. */}
+      {/* Identificación del grupo Science Play (decisión del 26/10/2026),
+          datos completos y cláusula de titularidad. Mismo texto de la
+          Política y de la versión pt. */}
       <h2>1. Quién es la titular de Diariamente App</h2>
       <Titularidade lang="es" doc="termos" />
 
@@ -69,7 +71,7 @@ export default function CondicionesDeUso() {
       <h2>4. Propiedad intelectual</h2>
       <p>
         Todo el contenido, la marca, la identidad visual y el software son protegidos por la
-        legislación de propiedad intelectual y pertenecen a {EMPRESA.razaoSocial}. La
+        legislación de propiedad intelectual y pertenecen a {EMPRESA.marca}. La
         adquisición no transfiere ningún derecho de titularidad.
       </p>
 

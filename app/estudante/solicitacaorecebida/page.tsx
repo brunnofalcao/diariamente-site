@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { EMPRESA, ESTUDANTE, GARANTIA } from "@/config";
+import { RodapeDoGrupo } from "@/components/CnpjsDoGrupo";
 import { OfficialLogo } from "@/components/Brand";
 import "../estudante.css";
 
@@ -95,7 +96,7 @@ export default function SolicitacaoRecebida() {
       <footer className="ed-footer">
         <div className="ed-wrap ed-footer-row">
           <p>
-            © {new Date().getFullYear()} {EMPRESA.assinatura}
+            © {new Date().getFullYear()} <RodapeDoGrupo lang="pt" />
           </p>
           <nav aria-label="Links institucionais">
             <a href="/">Página inicial</a>

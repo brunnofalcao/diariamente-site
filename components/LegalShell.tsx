@@ -1,4 +1,5 @@
 import { SITE, EMPRESA } from "@/config";
+import { RodapeDoGrupo } from "@/components/CnpjsDoGrupo";
 import { Wordmark } from "@/components/Brand";
 import type { Lang } from "@/lib/i18n";
 import { caminho } from "@/lib/rotas";
@@ -7,10 +8,11 @@ import { caminho } from "@/lib/rotas";
    O "Voltar" e o logotipo levam para a home DO MESMO IDIOMA: um leitor
    espanhol que clica em voltar não pode cair no site em português.
 
-   A identificação completa da titular (razão social, CNPJ, endereço e
-   contatos, Decreto 7.962/2013, art. 2º) mora no CORPO dos Termos e da
-   Política, na seção 1 de cada um (components/Titularidade.tsx). O
-   rodapé daqui mostra só a assinatura, como o resto do site. */
+   A identificação completa do grupo Science Play (razão social e CNPJ
+   de cada empresa, endereço e contatos, Decreto 7.962/2013, art. 2º) mora
+   no CORPO dos Termos e da Política, na seção 1 de cada um
+   (components/Titularidade.tsx). Abaixo do texto, a linha curta do grupo
+   (RodapeDoGrupo), como nos outros rodapés (decisão de 26/10/2026). */
 
 const T = {
   pt: { voltar: "← Voltar", atualizado: "Última atualização:" },
@@ -48,13 +50,18 @@ export function LegalShell({
 
           <div className="legal-body stack">{children}</div>
 
+          <div className="divider" />
+          <p className="caption muted">
+            <RodapeDoGrupo lang={lang} /> ·{" "}
+            <a href={`mailto:${EMPRESA.suporteEmail}`} className="teal">{EMPRESA.suporteEmail}</a>
+          </p>
         </div>
       </section>
 
       <footer style={{ borderTop: "1px solid var(--border)", marginTop: "var(--sp12)", padding: "var(--sp10) 0" }}>
         <div className="wrap center">
           <p className="caption" style={{ color: "var(--n-600)" }}>
-            © {new Date().getFullYear()} {EMPRESA.assinatura} · {SITE.dominioVisivel}
+            © {new Date().getFullYear()} {EMPRESA.marca}® · {SITE.dominioVisivel}
           </p>
         </div>
       </footer>

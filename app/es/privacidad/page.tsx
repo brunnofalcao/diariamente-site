@@ -16,7 +16,7 @@ export const metadata = metadataDaPagina("privacidade", "es");
 
 export default function Privacidad() {
   return (
-    <LegalShell lang="es" titulo="Política de Privacidad" atualizado={EMPRESA.vigenciaLegal}>
+    <LegalShell lang="es" titulo="Política de Privacidad" atualizado={EMPRESA.vigenciaLegalEs}>
       <p>
         Esta Política explica cómo tratamos los datos personales en Diariamente. Se aplica a
         todas las personas usuarias, en Brasil y fuera de él, y fue redactada para atender
@@ -25,8 +25,9 @@ export default function Privacidad() {
         Europea (Reglamento UE 2016/679, &ldquo;RGPD&rdquo;).
       </p>
 
-      {/* Titular, datos completos y cláusula de titularidad (decisión del
-          dueño, 12/10/2026). Mismo texto de las Condiciones y de la versión pt. */}
+      {/* Identificación del grupo Science Play (decisión del 26/10/2026),
+          datos completos y cláusula de titularidad. Mismo texto de las
+          Condiciones y de la versión pt. */}
       <h2>1. Quién es el responsable del tratamiento</h2>
       <Titularidade lang="es" doc="privacidade" />
       <p>
@@ -139,7 +140,7 @@ export default function Privacidad() {
       </p>
       <p>Las categorías de destinatarios son:</p>
       <ul>
-        <li>empresas controladas, controladoras o bajo control común de {EMPRESA.razaoSocial};</li>
+        <li>empresas controladas, controladoras o bajo control común de las empresas del grupo identificadas en la sección 1;</li>
         <li>socios comerciales en acciones conjuntas de educación, contenido y eventos;</li>
         <li>patrocinadores de acciones, eventos y contenidos de Diariamente o de Science Play.</li>
       </ul>

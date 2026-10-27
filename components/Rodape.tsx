@@ -1,4 +1,5 @@
 import { EMPRESA, LOJAS, SITE } from "@/config";
+import { RodapeDoGrupo } from "@/components/CnpjsDoGrupo";
 import { LockupVertical } from "@/components/Brand";
 
 /* =====================================================================
@@ -102,10 +103,10 @@ export function Rodape() {
         <hr className="rp-linha" />
 
         <div className="rp-base">
-          {/* Só a assinatura: razão social, CNPJ e endereço ficam nos
-              Termos e na Política (decisão do dono, 12/10/2026). */}
+          {/* A linha curta do grupo Science Play (decisão de 26/10/2026);
+              razão social e endereço ficam nos Termos e na Política. */}
           <p>
-            © {ano} {EMPRESA.assinatura}
+            © {ano} <RodapeDoGrupo lang="pt" />
             <br />
             {SITE.dominioVisivel}
           </p>

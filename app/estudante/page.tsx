@@ -1,5 +1,6 @@
 import { metadataDaPagina } from "@/lib/seo";
-import { SITE, EMPRESA, PROVA, GARANTIA, SCREENSHOTS, ESTUDANTE, periodoEstudante } from "@/config";
+import { SITE, EMPRESA, PROVA, GARANTIA, SCREENSHOTS, ESTUDANTE, periodoEstudante, responsavelDoGrupo } from "@/config";
+import { RodapeDoGrupo } from "@/components/CnpjsDoGrupo";
 import { OfficialLogo } from "@/components/Brand";
 import { MERCADOS, formatar, precoEstudante, porMesEstudante } from "@/config/pricing";
 import { BlocoPreco } from "@/components/BlocoPreco";
@@ -198,7 +199,7 @@ const RESUMO: [string, string][] = [
   ["Entrega", "Código pessoal enviado por WhatsApp"],
   ["Público", "Estudantes de graduação de qualquer curso"],
   ["Autores", "Science Play"],
-  ["Responsável", EMPRESA.assinatura],
+  ["Responsável", responsavelDoGrupo("pt")],
   ["Garantia", `${GARANTIA.dias} dias`],
 ];
 
@@ -554,7 +555,7 @@ export default function Estudante() {
         <footer className="ed-footer">
           <div className="ed-wrap ed-footer-row">
             <p>
-              © {new Date().getFullYear()} {EMPRESA.assinatura} ·{" "}
+              © {new Date().getFullYear()} <RodapeDoGrupo lang="pt" /> ·{" "}
               {SITE.dominioVisivel}
             </p>
             <nav aria-label="Links institucionais">

@@ -12,13 +12,14 @@ export default function Termos() {
         Estes Termos de Uso ("Termos") regem o acesso e a utilização do Diariamente, produto
         digital de desenvolvimento profissional composto pelo aplicativo, pelo conteúdo de
         provocações diárias, oferecido pela{" "}
-        {EMPRESA.razaoSocial}, identificada na seção 1 ("Science Play", "nós"). Ao
+        {EMPRESA.marca}®, por meio das empresas do grupo identificadas na seção 1 ("Science Play", "nós"). Ao
         adquirir e utilizar o Diariamente, você ("usuário") declara ter lido, compreendido e
         aceito integralmente estes Termos.
       </p>
 
-      {/* Titular, dados completos e cláusula de titularidade (decisão do
-          dono, 12/10/2026). Mesmo texto da Política e das versões es. */}
+      {/* Identificação do grupo Science Play (decisão de 26/10/2026), dados
+          completos e cláusula de titularidade. Mesmo texto da Política e
+          das versões es. */}
       <h2>1. Quem é a titular do Diariamente App</h2>
       <Titularidade lang="pt" doc="termos" />
 
@@ -57,7 +58,7 @@ export default function Termos() {
       <p>
         Todo o conteúdo do Diariamente (textos, provocações, identidade visual, marca, software e
         demais elementos) é protegido por direitos autorais e de propriedade intelectual,
-        pertencendo à {EMPRESA.razaoSocial}. A aquisição concede ao usuário uma licença de uso pessoal e intransferível, não
+        pertencendo à {EMPRESA.marca}. A aquisição concede ao usuário uma licença de uso pessoal e intransferível, não
         exclusiva, e não transfere a titularidade de qualquer direito sobre o conteúdo.
       </p>
 
@@ -133,7 +134,7 @@ export default function Termos() {
       </p>
       <p>
         Contato: <a href={`mailto:${EMPRESA.suporteEmail}`}>{EMPRESA.suporteEmail}</a> ·{" "}
-        {EMPRESA.razaoSocial} · CNPJ {EMPRESA.cnpj}.
+        {EMPRESA.marca}® · {EMPRESA.endereco}.
       </p>
     </LegalShell>
   );

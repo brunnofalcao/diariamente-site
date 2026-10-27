@@ -173,19 +173,19 @@
 >    (direito do consumidor local; 14 dias na União Europeia).
 > 4. **Revisão jurídica da cláusula de titularidade.** O texto está em
 >    `components/Titularidade.tsx` (seção 1 dos Termos e da Política, pt e
->    es): a SCIENCE PLAY CURSOS LTDA é a titular e a responsável pelo
->    Diariamente App e pelos dados; os pagamentos são processados pela
->    Hotmart, que atua como intermediária (o texto NÃO diz quem contratou
->    a Hotmart); outra empresa do mesmo grupo pode aparecer como vendedora
->    em loja de aplicativos, na plataforma de pagamento ou em documento
->    fiscal, sem mudar a titularidade nem a responsabilidade (sem citar o
->    nome dela; um teste varre o repositório inteiro atrás do nome, da
->    fantasia e do CNPJ dela, guardados só como resumo SHA-256). **Merece
->    um olhar do jurídico**, inclusive para conferir que cada empresa que
->    pode aparecer é mesmo "do mesmo grupo econômico" e em nome de qual
->    CNPJ está a conta de produtor da Hotmart do 7448309.
+>    es). Desde a decisão do dono de 26/10/2026 (que substitui a de
+>    12/10/2026), a seção abre com a linha de identificação do grupo
+>    Science Play (Science Play Audiobook LTDA, Science Play Cursos LTDA e
+>    Falcão14 Organização de Feiras LTDA, com os CNPJs, vindos de
+>    `EMPRESA.grupo`): a Science Play®, por meio dessas empresas, é a
+>    titular e a responsável pelo Diariamente App e pelos dados; os
+>    pagamentos são processados pela Hotmart, que atua como intermediária
+>    (o texto NÃO diz quem contratou a Hotmart); qualquer empresa do grupo
+>    pode aparecer como vendedora em loja de aplicativos, na plataforma de
+>    pagamento ou em documento fiscal, sem mudar a titularidade nem a
+>    responsabilidade. **Merece um olhar do jurídico.**
 >    Base legal: o Decreto 7.962/2013, art. 2º, pede nome empresarial, CNPJ e endereço físico e eletrônico "em local de destaque e de fácil visualização" no site.
->    Por decisão do dono, esses dados ficam nos Termos e na Política, a um clique do rodapé, que mostra só "Diariamente App by Science Play" (risco aceito, a validar pelo jurídico).
+>    O rodapé de todas as páginas mostra a linha curta do grupo com os três CNPJs (`RodapeDoGrupo`, em `components/CnpjsDoGrupo.tsx`).
 >
 > - **Preços:** fonte única em `config/pricing.ts`, por mercado (moeda,
 >   preço anual, formato, link, textos do bloco, oferta de lançamento).
@@ -206,12 +206,14 @@
 >   aberta). Um HTML antigo em cache ainda pode mostrar o preço de
 >   lançamento por até uma hora para quem estiver sem JavaScript; daí a
 >   folga até 02:00 no item 2.
-> - **Empresa:** no rodapé de todas as páginas e nas páginas de venda (pt
->   e es), só `EMPRESA.assinatura` ("Diariamente App by Science Play"),
->   sem razão social, CNPJ nem endereço. Os dados completos (SCIENCE PLAY
->   CURSOS LTDA, CNPJ 33.612.911/0001-29, endereço conferido no cadastro
->   público em 12/10/2026, contato@ e suporte@) ficam só nos Termos e na
->   Política. O endereço mora em `ENDERECO_DA_EMPRESA`, no `config.ts`: a
+> - **Empresa:** grupo Science Play (decisão do dono, 26/10/2026). No
+>   rodapé de todas as páginas, a linha curta "Science Play® · grupo
+>   Science Play · CNPJs ..." (`RodapeDoGrupo`); nos Termos e na Política
+>   (pt e es), a linha de identificação com razão social e CNPJ de cada
+>   empresa, o endereço de contato do grupo, contato@ e suporte@. Razão
+>   social e CNPJ moram só em `EMPRESA.grupo` (`config.ts`); a página "Em
+>   breve" usa a assinatura curta (`EMPRESA.assinatura`, "Diariamente App
+>   by Science Play"). O endereço mora em `ENDERECO_DA_EMPRESA`, no `config.ts`: a
 >   trava do endereço continua (com `[TROCAR` em qualquer parte, o build
 >   falha) e hoje está satisfeita. **Build na sua máquina:** as rotas de
 >   API criam o cliente do Supabase ao carregar, então o `next build`
