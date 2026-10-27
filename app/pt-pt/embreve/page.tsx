@@ -10,7 +10,12 @@ import { SITE } from "@/config";
    Enquanto /pt-pt mostra a lista de espera no lugar do bloco de oferta
    (config/pricing.ts, pt com vendaAberta: false), é AQUI que o bloco de
    29,99 € fica visível para revisão antes de abrir Portugal. Com a venda
-   fechada, o botão não abre o pagamento (Home com `previa`). */
+   fechada, o botão não abre o pagamento (Home com `previa`).
+
+   STANDBY (chave de lançamento desligada, config/lancamento.ts): este
+   endereço leva a /vendas/pt-pt, o site em standby, como vai ao ar (o
+   middleware decide, lib/mercado.ts, PREVIAS_ANTIGAS). Esta prévia volta
+   a abrir quando a chave for ligada. */
 
 export const metadata: Metadata = {
   ...metadataPrivada("vendas", "pt"),

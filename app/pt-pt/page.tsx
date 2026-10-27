@@ -9,7 +9,9 @@ import { metadataDoMercado } from "@/lib/seo";
    espera de Portugal, sem preço. Para abrir a venda: em
    config/pricing.ts, mercado pt, vendaAberta: true (a trava do build
    exige o link do plano EUR). Para revisar o bloco de 29,99 € antes
-   disso: /pt-pt/embreve (prévia noindex).
+   disso: /pt-pt/embreve (prévia noindex, com a chave de lançamento
+   ligada). Em standby (config/lancamento.ts), é a lista de espera de
+   qualquer jeito; o que vai ao ar: /vendas/pt-pt.
    ===================================================================== */
 
 export const revalidate = 3600;

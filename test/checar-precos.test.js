@@ -507,11 +507,20 @@ test("produção sem nenhum mercado vendendo não exige a confirmação do webho
   assert.equal(/DM_WEBHOOK_V2_OK/.test(r.avisos.join(" ")), false);
 });
 
-test("hoje, o build de produção da Vercel trava até o dono confirmar o webhook", () => {
-  const r = checarPrecosDoProjeto({ VERCEL: "1", VERCEL_ENV: "production" });
+test("chave de lançamento ligada: o build de produção da Vercel trava até o dono confirmar o webhook", () => {
+  const r = checarPrecosDoProjeto({ VERCEL: "1", VERCEL_ENV: "production", DM_SITE_LANCADO: "1" });
   assert.equal(r.ok, false);
   assert.match(r.mensagem, /DM_WEBHOOK_V2_OK=1/);
-  assert.equal(checarPrecosDoProjeto({ VERCEL: "1", VERCEL_ENV: "production", DM_WEBHOOK_V2_OK: "1" }).ok, true);
+  assert.equal(checarPrecosDoProjeto({ VERCEL: "1", VERCEL_ENV: "production", DM_SITE_LANCADO: "1", DM_WEBHOOK_V2_OK: "1" }).ok, true);
+});
+
+test("hoje (standby, chave desligada), o build de produção da Vercel passa sem DM_WEBHOOK_V2_OK e diz o que travaria", () => {
+  const r = checarPrecosDoProjeto({ VERCEL: "1", VERCEL_ENV: "production" });
+  assert.equal(r.ok, true, r.mensagem);
+  assert.equal(r.standby, true);
+  assert.match(r.mensagem, /STANDBY/);
+  assert.match(r.mensagem, /TRAVARIA por isto/);
+  assert.match(r.mensagem, /DM_WEBHOOK_V2_OK=1/);
 });
 
 test("webhook e botão do WhatsApp nos avisos usam o SITE.dominio do config.ts, com www (sem www a Vercel responde 308)", () => {

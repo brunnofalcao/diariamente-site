@@ -169,10 +169,11 @@ export function metadataDaPagina(chave: Chave, lang: Lang): Metadata {
 }
 
 /**
- * Metadata de página PRIVADA: noindex, nofollow, sem canonical e sem
- * hreflang. Usado no site de vendas enquanto ele é estruturado em
- * /embreve. Canonical apontando para "/" aqui faria o Google tratar a
- * home "em breve" como cópia do site de vendas.
+ * Metadata de página PRIVADA: noindex, nofollow, canonical próprio e sem
+ * hreflang. Usado nas prévias do dono (/pt-pt/embreve e /es-es/embreve,
+ * com a chave de lançamento ligada). Canonical apontando para "/" aqui
+ * faria o Google tratar a home como cópia da prévia. O site de vendas em
+ * standby (/vendas/*) usa metadataDaVitrine, logo abaixo.
  */
 export function metadataPrivada(chave: Chave, lang: Lang): Metadata {
   const { title, description } = TEXTOS[chave][lang];
@@ -207,16 +208,28 @@ export function metadataPrivada(chave: Chave, lang: Lang): Metadata {
 
    Título e descrição seguem o que a home mostra: página de vendas, ou
    "próximamente" quando o mercado ainda é só a lista de espera
-   (config/pricing.ts, vendaAberta e semVenda).
+   (config/pricing.ts, vendaAberta e semVenda). Em standby (chave de
+   lançamento desligada, config/lancamento.ts), toda home é a lista de
+   espera e usa o texto de espera; o do Brasil é o da produção antes do
+   lançamento ("Diariamente · em breve").
    ===================================================================== */
 
-import { HOME_DO_MERCADO } from "@/lib/mercado";
+import { HOME_DO_MERCADO, VENDAS_DO_MERCADO } from "@/lib/mercado";
 import { MERCADOS, type Mercado } from "@/config/pricing";
+import { SITE_LANCADO } from "@/config/lancamento";
 
 type MercadoComHome = Exclude<Mercado, "rw">;
 
 const TEXTOS_DO_MERCADO: Record<MercadoComHome, { venda: Texto; espera: Texto }> = {
-  br: { venda: TEXTOS.home.pt, espera: TEXTOS.home.pt },
+  br: {
+    venda: TEXTOS.home.pt,
+    // Título e descrição de "/" na produção antes do lançamento (lista de espera).
+    espera: {
+      title: "Diariamente · em breve",
+      description:
+        "Uma prática diária de hábitos e bem-estar. Ainda não é hoje, mas está perto. Deixe seu contato e avisamos no dia em que abrir.",
+    },
+  },
   pt: {
     venda: { title: "Diariamente · uma prática diária de hábitos e bem-estar", description: "Uma provocação por dia que termina numa ação possível ainda hoje. Porque interromper não significa abandonar." },
     espera: { title: "Diariamente · em breve em Portugal", description: "Uma prática diária de hábitos e bem-estar. Ainda não é hoje, mas está perto. Deixa o teu contacto e avisamos no dia em que abrir." },
@@ -233,10 +246,10 @@ const TEXTOS_DO_MERCADO: Record<MercadoComHome, { venda: Texto; espera: Texto }>
 
 const OG_LOCALE: Record<MercadoComHome, string> = { br: "pt_BR", pt: "pt_PT", es: "es_ES", la: "es_LA" };
 
-export function metadataDoMercado(mercado: MercadoComHome): Metadata {
+export function metadataDoMercado(mercado: MercadoComHome, lancado: boolean = SITE_LANCADO): Metadata {
   const o = MERCADOS[mercado];
   const lang: Lang = o.idioma;
-  const mostraVenda = o.vendaAberta || o.semVenda === "bloco";
+  const mostraVenda = lancado && (o.vendaAberta || o.semVenda === "bloco");
   const { title, description } = TEXTOS_DO_MERCADO[mercado][mostraVenda ? "venda" : "espera"];
   const proprio = urlAbsoluta(HOME_DO_MERCADO[mercado]);
   const imagem = IMAGEM_DA_PREVIA[lang];
@@ -259,5 +272,27 @@ export function metadataDoMercado(mercado: MercadoComHome): Metadata {
     },
     twitter: { card: "summary_large_image", title, description, images: [imagem] },
     robots: { index: true, follow: true },
+  };
+}
+
+/* =====================================================================
+   SITE DE VENDAS EM STANDBY · /vendas, /vendas/es, /vendas/es-es,
+   /vendas/pt-pt e /vendas/mundo
+   ---------------------------------------------------------------------
+   Título e descrição que a home do mercado vai ter no lançamento, e:
+     - noindex, nofollow: endereço de trabalho, não de busca;
+     - canonical para si mesma e SEM hreflang. O layout raiz declara
+       canonical "/" e o Next mescla isso nas páginas filhas: sem esta
+       linha, /vendas diria ao Google que é cópia da home pública.
+   Nenhuma página pública aponta para /vendas (sitemap, hreflang e
+   canonical vêm de lib/rotas.ts e de HREFLANG, sem /vendas).
+   ===================================================================== */
+export function metadataDaVitrine(mercado: Mercado): Metadata {
+  const doLancamento = metadataDoMercado(mercado === "rw" ? "br" : mercado, true);
+  return {
+    title: doLancamento.title,
+    description: doLancamento.description,
+    alternates: { canonical: urlAbsoluta(VENDAS_DO_MERCADO[mercado]) },
+    robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
   };
 }

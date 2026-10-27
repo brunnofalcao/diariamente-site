@@ -64,17 +64,11 @@ export const LOGOS = {
 };
 
 // ---------------------------------------------------------------------
-// SCREENSHOTS / MOCKUPS 3D do app (Cloudinary)
-// Cole aqui as URLs dos mockups 3D gerados a partir dos prints reais.
-// Enquanto vazio (""), o site mostra o slot de marcação no lugar.
-// Telas reais do app: Hoje · Dias · Ações · Ritmo · Conta
+// TELAS DO APP: as artes das lojas, em public/telas/pt e public/telas/es
+// (lib/i18n.ts, telasDo; components/TelaDaLoja.tsx). Os mockups antigos
+// do Cloudinary (Tela_HOJE, Tela_DIAS, Tela_ACOES e Tela_RITMO) saíram do
+// site de vendas e da /estudante em 27/10/2026.
 // ---------------------------------------------------------------------
-export const SCREENSHOTS = {
-  hoje: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664582/Tela_HOJE_Diariamente_shzi7c.png",
-  dias: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664583/Tela_DIAS_Diariamente_i4dpih.png",
-  acoes: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664582/Tela_ACOES_Diariamente_nr8gwf.png",
-  ritmo: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664581/Tela_RITMO_Diariamente_mz9efm.png",
-};
 
 // Foto lifestyle (ambiente) — seção "virada". Foto cheia, não transparente.
 export const LIFESTYLE = "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782699619/Lifestyle_Diariamente_yur3mm.png";

@@ -1,7 +1,9 @@
 import { metadataDaPagina } from "@/lib/seo";
-import { SITE, EMPRESA, PROVA, GARANTIA, SCREENSHOTS, ESTUDANTE, periodoEstudante, responsavelDoGrupo } from "@/config";
+import { SITE, EMPRESA, PROVA, GARANTIA, ESTUDANTE, periodoEstudante, responsavelDoGrupo } from "@/config";
 import { RodapeDoGrupo } from "@/components/CnpjsDoGrupo";
 import { OfficialLogo } from "@/components/Brand";
+import { TelaDaLoja } from "@/components/TelaDaLoja";
+import { ATIVOS, dicionario } from "@/lib/i18n";
 import { MERCADOS, formatar, precoEstudante, porMesEstudante } from "@/config/pricing";
 import { BlocoPreco } from "@/components/BlocoPreco";
 import { EstudanteForm } from "@/components/EstudanteForm";
@@ -60,12 +62,6 @@ export const metadata = {
     "",
   ],
 };
-
-/* Cloudinary: formato e qualidade automáticos + largura sob medida.
-   Corta peso do hero sem tocar no asset original. */
-function cld(url: string, t: string): string {
-  return url.includes("/upload/") ? url.replace("/upload/", `/upload/${t}/`) : url;
-}
 
 /* ------------------------------ ícones ------------------------------ */
 function IcSun() {
@@ -213,7 +209,10 @@ export default function Estudante() {
     ],
   };
 
-  const telaHoje = SCREENSHOTS.hoje;
+  // A arte Hoje da App Store em português, a mesma da página de vendas
+  // (lib/i18n.ts, telasDo), com o mesmo texto alternativo.
+  const telaHoje = ATIVOS.pt.img.hoje;
+  const altTelaHoje = dicionario("pt", "br").t1alt;
 
   return (
     <>
@@ -283,16 +282,12 @@ export default function Estudante() {
 
             <div className="ed-hero-visual">
               <div className="ed-phone">
-                <div className="ed-phone-shot">
-                  <img
-                    src={cld(telaHoje, "f_auto,q_auto,w_640")}
-                    srcSet={`${cld(telaHoje, "f_auto,q_auto,w_360")} 360w, ${cld(telaHoje, "f_auto,q_auto,w_640")} 640w, ${cld(telaHoje, "f_auto,q_auto,w_900")} 900w`}
-                    sizes="(min-width: 1024px) 300px, 74vw"
-                    alt="Tela Hoje do aplicativo Diariamente, com a provocação do dia e o progresso da sequência"
-                    fetchPriority="high"
-                    decoding="async"
-                  />
-                </div>
+                <TelaDaLoja
+                  base={telaHoje}
+                  alt={altTelaHoje}
+                  sizes="(min-width: 1024px) 300px, (min-width: 400px) 280px, 70vw"
+                  prioridade
+                />
                 <span className="ed-phone-tag">
                   Sua provocação de hoje. <b>Só a de hoje.</b>
                 </span>

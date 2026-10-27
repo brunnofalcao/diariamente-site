@@ -11,7 +11,12 @@ import { SITE } from "@/config";
    vendaAberta: false e semVenda "pagina"), é AQUI que o texto de venda
    em espanhol e o bloco de 29,99 € ficam visíveis para revisão antes de
    abrir a Espanha (handoff, seção 9). Com a venda fechada, o botão não
-   abre o pagamento (Home com `previa`). */
+   abre o pagamento (Home com `previa`).
+
+   STANDBY (chave de lançamento desligada, config/lancamento.ts): este
+   endereço leva a /vendas/es-es, o site em standby, como vai ao ar (o
+   middleware decide, lib/mercado.ts, PREVIAS_ANTIGAS). Esta prévia volta
+   a abrir quando a chave for ligada. */
 
 export const metadata: Metadata = {
   ...metadataPrivada("vendas", "es"),

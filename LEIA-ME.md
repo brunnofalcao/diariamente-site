@@ -1,5 +1,16 @@
 # Diariamente · versão auditada para publicação
 
+> **STANDBY (27/10/2026, decisão do dono).** O site de vendas está pronto e
+> desligado por uma chave: `DM_SITE_LANCADO` (`config/lancamento.ts`).
+> Desligada (padrão), as homes mostram a lista de espera, como antes, e o
+> site de vendas, exatamente como vai ao ar, fica em **`/vendas`** (Brasil),
+> `/vendas/es`, `/vendas/es-es`, `/vendas/pt-pt` e `/vendas/mundo`, com
+> noindex e fora do sitemap. A trava do webhook (`DM_WEBHOOK_V2_OK`) e a de
+> preços só avisam enquanto a chave está desligada. Para lançar:
+> `DM_SITE_LANCADO=1` na Vercel (Production) e um novo deploy, depois do
+> passo (a) abaixo. Tudo em **`docs/LANCAMENTO.md`**. A tabela e o quadro
+> abaixo descrevem o site com a chave LIGADA.
+
 > **Lançamento do Brasil e mercados (out/2026, branch `claude/site-lancamento`, PR #3).**
 > O que vale é esta caixa; o resto do arquivo é o histórico das entregas
 > anteriores (inclusive a auditoria do dono, que descrevia o site oculto).

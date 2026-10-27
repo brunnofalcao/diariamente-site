@@ -58,6 +58,14 @@ export const I18N = {
     t2t: "Dias", t2d: "Os dias em que você veio. E os que não veio, sem alarme e sem culpa.",
     t3t: "Ações", t3d: "A reflexão vira tarefa concreta. Pensar vira fazer.",
     t4t: "Ritmo", t4d: "Suas voltas acumuladas e o lembrete diário no WhatsApp.",
+    // Texto alternativo das telas da seção "O app" e do fim da página: as
+    // artes da App Store (telasDo, mais abaixo). Primeiro a legenda que está
+    // desenhada na arte, depois o texto alternativo da loja.
+    t1alt: "Saúde mental todo dia. Três minutos para ler, refletir e agir. Tela Hoje do Diariamente com a data, o anel Seu dia e a provocação do dia.",
+    t2alt: "Seu ano em leituras. Dias lidos, favoritos e dias para recuperar. Calendário Dias com os dias lidos, recuperados e os favoritos.",
+    t3alt: "Da reflexão à ação. Escolha um passo possível para fazer ainda hoje. Cartão Sua vez com uma ação escrita, a opção Vou fazer marcada e o dia Hoje escolhido.",
+    t4alt: "Constância sem culpa. Voltas que nunca zeram e uma meta que você escolhe. Tela Ritmo com voltas acumuladas, semanas em ritmo e a meta da semana.",
+    finAlt: "Uma provocação por dia. Uma citação, uma pergunta e um texto curto para refletir. Leitura em modo foco com a citação, a pergunta do dia e o texto de reflexão.",
     oneH: "Um dia por vez. De propósito.",
     oneP1: "Quando dá para consumir tudo de uma vez, o domingo de empolgação come o ano inteiro e a segunda-feira fica sem nada. Aqui você tem o dia de hoje. Inteiro, sem pressa de terminar.",
     oneP2: "São 365 textos por ano, um para cada dia. No ano seguinte, na mesma data, um texto novo.",
@@ -154,6 +162,11 @@ export const I18N = {
     t2t: "Días", t2d: "Los días en que viniste. Y los que no, sin alarma y sin culpa.",
     t3t: "Acciones", t3d: "La reflexión se vuelve tarea concreta. Pensar se vuelve hacer.",
     t4t: "Ritmo", t4d: "Tus regresos acumulados y el recordatorio diario por WhatsApp.",
+    t1alt: "Salud mental cada día. Tres minutos para leer, reflexionar y actuar. Pantalla Hoy de Diariamente con la fecha, el anillo Tu día y la provocación del día.",
+    t2alt: "Tu año en lecturas. Días leídos, favoritos y días para recuperar. Calendario Días con los días leídos, recuperados y los favoritos.",
+    t3alt: "De la decisión al hecho. Todo lo que salió de la lectura y se volvió decisión. Centro de acciones con las acciones pendientes, las hechas y los recordatorios.",
+    t4alt: "Constancia sin culpa. Vueltas que nunca vuelven a cero y una meta a tu medida. Pantalla Ritmo con vueltas acumuladas, semanas en ritmo y la meta de la semana.",
+    finAlt: "Una provocación al día. Una cita, una pregunta y un texto breve para reflexionar. Lectura en modo enfoque con la cita, la pregunta del día y el texto de reflexión.",
     oneH: "Un día a la vez. A propósito.",
     oneP1: "Cuando se puede consumir todo de una vez, el domingo de entusiasmo se come el año entero y el lunes queda vacío. Aquí tienes el día de hoy. Entero, sin prisa por terminar.",
     oneP2: "Son 365 textos al año, uno para cada día. Al año siguiente, en la misma fecha, un texto nuevo.",
@@ -229,10 +242,10 @@ export function cld(url: string, tx: string): string {
    Cada idioma tem o SEU conjunto de imagens e links. Trocar a foto, a
    ficha da loja ou o checkout do site espanhol nao encosta no portugues.
 
-   Hoje o espanhol aponta para os mesmos arquivos do portugues: e o
-   estado de partida, nao a intencao final. Conforme forem produzidos os
-   prints com a interface em espanhol, a foto de estilo de vida e a
-   oferta em outra moeda, basta trocar AQUI, no bloco `es`.
+   As telas do app ja tem a versao em espanhol (as mesmas das lojas). A
+   foto de estilo de vida e o badge da Google Play ainda sao os do
+   portugues: quando houver a versao em espanhol, basta trocar AQUI, no
+   bloco `es`.
 
    ATENCAO nos links de loja:
      - `appStore` termina em /br/ no portugues. Para o espanhol, troque
@@ -243,11 +256,40 @@ export function cld(url: string, tx: string): string {
        lancamento) esta em config/pricing.ts.
    ===================================================================== */
 
+/* TELAS DO APP · as artes das lojas
+   ---------------------------------------------------------------------
+   As artes da App Store de iPhone 6,9" (1320 x 2868: fundo, legenda e o
+   aparelho com a tela), as mesmas enviadas às lojas em 26/10/2026, uma
+   pasta por idioma: public/telas/pt e public/telas/es. Portugal e o resto
+   do mundo usam as pt; a América Latina e a Espanha, as es.
+
+   Tela do site   arte da loja (pt)     arte da loja (es)
+   hoje           01-hoje               01-hoje
+   dias           07-dias               07-dias
+   acoes          03-acao (Sua vez)     08-acoes (Centro de ações)
+   ritmo          06-ritmo              06-ritmo
+   leitura        02-leitura            02-leitura   (fim da página)
+
+   Cada tela existe em WebP nas três larguras de TELA_LARGURAS e em JPEG na
+   largura TELA_FALLBACK, para o navegador que não abre WebP (Safari 13 e
+   anteriores): <base>-<largura>.webp e <base>-<TELA_FALLBACK>.jpg. Aqui
+   fica só a base; o <picture> está em components/TelaDaLoja.tsx.
+   Trocar uma tela: gerar os quatro arquivos com o mesmo nome. */
+export const TELA_LARGURAS = [360, 560, 840] as const;
+/** Largura do JPEG de reserva (navegador sem WebP). */
+export const TELA_FALLBACK = 560;
+/** Proporção das artes (largura e altura em pixels). */
+export const TELA_PROPORCAO = { largura: 1320, altura: 2868 } as const;
+const telasDo = (lang: Lang) => ({
+  hoje: `/telas/${lang}/hoje`,
+  dias: `/telas/${lang}/dias`,
+  acoes: `/telas/${lang}/acoes`,
+  ritmo: `/telas/${lang}/ritmo`,
+  leitura: `/telas/${lang}/leitura`,
+});
+
 const IMG_PT = {
-  hoje: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664582/Tela_HOJE_Diariamente_shzi7c.png",
-  dias: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664583/Tela_DIAS_Diariamente_i4dpih.png",
-  acoes: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664582/Tela_ACOES_Diariamente_nr8gwf.png",
-  ritmo: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664581/Tela_RITMO_Diariamente_mz9efm.png",
+  ...telasDo("pt"),
   lifestyle: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782699619/Lifestyle_Diariamente_yur3mm.png",
   appStore: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1783609634/Apple_Store_Branca_usar_no_fundo_escuro_tp7rgw.svg",
   googlePlay: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1783609634/GetItOnGooglePlay_Badge_Web_color_Portuguese-Brazil_rl6hba.svg",
@@ -266,7 +308,8 @@ export const ATIVOS: Record<Lang, { img: typeof IMG_PT; links: typeof LINKS_PT }
   es: {
     img: {
       ...IMG_PT,
-      // [TROCAR] prints com a interface em espanhol
+      // Artes das lojas em espanhol (interface e legenda em espanhol).
+      ...telasDo("es"),
       // [TROCAR] badge da Google Play em espanhol
     },
     links: {
@@ -341,6 +384,10 @@ const PT_PT: Record<string, unknown> = {
   t1d: "A provocação do dia, limpa. Nada compete pela tua atenção.",
   t2d: "Os dias em que vieste. E aqueles em que não vieste, sem alarme e sem culpa.",
   t4d: "As tuas voltas acumuladas e o lembrete diário no WhatsApp.",
+  // Portugal usa as artes em português do Brasil: a legenda vai como está
+  // desenhada na arte; a descrição da tela diz ecrã.
+  t1alt: "Saúde mental todo dia. Três minutos para ler, refletir e agir. Ecrã Hoje do Diariamente com a data, o anel Seu dia e a provocação do dia.",
+  t4alt: "Constância sem culpa. Voltas que nunca zeram e uma meta que você escolhe. Ecrã Ritmo com voltas acumuladas, semanas em ritmo e a meta da semana.",
   oneP1: "Quando dá para consumir tudo de uma vez, o domingo de entusiasmo come o ano inteiro e a segunda-feira fica sem nada. Aqui tens o dia de hoje. Inteiro, sem pressa de terminar.",
   oneStrong: "O Diariamente é diário. Tu não precisas de ser.",
   scP2: "As referências sustentam afirmações sobre o fenómeno, não sobre o produto. Não existe número mágico de dias, e ninguém pode prometer prazos. O Diariamente não trata, não diagnostica e não substitui acompanhamento profissional.",

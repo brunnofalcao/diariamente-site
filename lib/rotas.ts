@@ -32,13 +32,15 @@ const SLUGS: Record<Chave, Record<Lang, string>> = {
   // USD e EUR), então cada mercado com preço próprio tem URL própria.
   homePt:      { pt: "/pt-pt",         es: "/pt-pt" },
   homeEs:      { pt: "/es-es",         es: "/es-es" },
-  // Antigo endereço de trabalho do site de vendas. Desde a virada, o site
-  // de vendas é "/" e estes caminhos só redirecionam ("/embreve" para "/",
-  // "/es/embreve" para "/es"). As prévias do dono, "/pt-pt/embreve" e
-  // "/es-es/embreve", continuam páginas: mostram o bloco de venda de pt e
-  // es enquanto as homes desses mercados são a lista de espera. Todas
-  // fora do sitemap e com noindex.
-  vendas:      { pt: "/embreve",       es: "/es/embreve" },
+  // Site de vendas em STANDBY (chave de lançamento desligada,
+  // config/lancamento.ts): /vendas e /vendas/es, mais /vendas/es-es,
+  // /vendas/pt-pt e /vendas/mundo (lib/mercado.ts, VENDAS_DO_MERCADO).
+  // Privado: noindex e fora do sitemap. Ligada a chave, redirecionam para
+  // a home real do mercado. As prévias antigas (/embreve, /es/embreve,
+  // /pt-pt/embreve, /es-es/embreve) levam para cá em standby; ligada a
+  // chave, /embreve e /es/embreve vão para "/" e "/es", e as duas de
+  // pt-pt e es-es voltam a ser as prévias do dono (PR #3).
+  vendas:      { pt: "/vendas",        es: "/vendas/es" },
   estudante:   { pt: "/estudante",     es: "/es/estudiantes" },
   sobre:       { pt: "/sobre",         es: "/es/acerca-de" },
   termos:      { pt: "/termos",        es: "/es/condicionesdeuso" },

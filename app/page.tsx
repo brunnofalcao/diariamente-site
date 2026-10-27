@@ -4,7 +4,11 @@ import { metadataDoMercado } from "@/lib/seo";
 /* =====================================================================
    "/" · HOME DO BRASIL · site de vendas
    ---------------------------------------------------------------------
-   Desde a virada de lançamento, "/" é o site de vendas. Preço, oferta de
+   STANDBY (chave de lançamento desligada, config/lancamento.ts): "/"
+   mostra a lista de espera ("Em breve"), como antes do lançamento, e o
+   site de vendas fica em /vendas (app/vendas/page.tsx).
+
+   Com a chave ligada, "/" é o site de vendas. Preço, oferta de
    lançamento e link do checkout saem de config/pricing.ts (mercado br).
 
    Visitante de fora do Brasil, de Portugal, da Espanha e da América
@@ -12,8 +16,9 @@ import { metadataDoMercado } from "@/lib/seo";
    dólar), sem mudar a URL. Portugal, Espanha e América Latina vão para
    as suas homes (/pt-pt, /es-es, /es).
 
-   Para voltar à lista de espera: reverter o commit da virada (ou, na
-   Vercel, Instant Rollback para o deploy anterior).
+   Para voltar à lista de espera: desligar a chave (tirar DM_SITE_LANCADO
+   da Vercel e fazer um novo deploy) ou, na Vercel, Instant Rollback para o
+   deploy anterior.
    ===================================================================== */
 
 // A página se refaz a cada hora: é o que tira o preço de lançamento no

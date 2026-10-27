@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { TEASER, ATIVOS, cld, dicionario, type Lang, type Dict } from "@/lib/i18n";
+import { TEASER, ATIVOS, TELA_PROPORCAO, cld, dicionario, type Lang, type Dict } from "@/lib/i18n";
 import { caminho } from "@/lib/rotas";
 import { SITE, ESTUDANTE } from "@/config";
 import { registrarInicioDeCheckout } from "@/lib/medicao";
 import { RodapeDoGrupo } from "@/components/CnpjsDoGrupo";
 import { BlocoOferta } from "@/components/BlocoOferta";
+import { TelaDaLoja, RAIO_DA_TELA } from "@/components/TelaDaLoja";
 import { SeletorMercado } from "@/components/SeletorMercado";
-import { HOME_DO_MERCADO } from "@/lib/mercado";
+import { HOME_DO_MERCADO, VENDAS_DO_MERCADO } from "@/lib/mercado";
 import { formatar, precoFinal, precoCheio, linkCheckout, precoEstudante, pendente, lancamentoVigente, fimDoLancamento, MERCADOS, type Mercado } from "@/config/pricing";
 
 /* ─────────────────────────────────────────────────────────────
@@ -61,8 +62,11 @@ const CSS = `
 @media (min-width:768px){[data-steps]{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}}
 [data-tour]{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 20px 12px;margin:0 -20px;scrollbar-width:none}
 [data-tour]::-webkit-scrollbar{display:none}
-[data-tour]>*{flex:0 0 min(70vw,260px);scroll-snap-align:center}
-@media (min-width:900px){[data-tour]{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;overflow:visible;padding:0;margin:0}[data-tour]>*{flex:none}}
+/* As artes das lojas (1320 x 2868) são mais altas que os mockups antigos
+   (500 x 889): 240px no celular e colunas de 232px no computador deixam
+   cada tela com uns 520px e 505px de altura. */
+[data-tour]>*{flex:0 0 min(64vw,240px);scroll-snap-align:center}
+@media (min-width:900px){[data-tour]{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;overflow:visible;padding:0;margin:0 auto;max-width:1000px}[data-tour]>*{flex:none}}
 [data-cols2]{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
 @media (min-width:768px){[data-cols2]{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}
 [data-price]{display:grid;gap:24px;grid-template-areas:"card" "value";grid-template-columns:minmax(0,1fr)}
@@ -118,21 +122,6 @@ const Shield = ({ s = 20 }: { s?: number }) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2l8 3.5v5.8c0 5-3.4 9.3-8 10.7-4.6-1.4-8-5.7-8-10.7V5.5L12 2z" /><path d="M9 12l2 2 4-4" /></svg>
 );
 
-function Img({ src, alt, widths, sizes, priority }: { src: string; alt: string; widths: number[]; sizes: string; priority?: boolean }) {
-  return (
-    <img
-      src={cld(src, `f_auto,q_auto,w_${widths[1] ?? widths[0]}`)}
-      srcSet={widths.map((w) => `${cld(src, `f_auto,q_auto,w_${w}`)} ${w}w`).join(", ")}
-      sizes={sizes}
-      alt={alt}
-      loading={priority ? "eager" : "lazy"}
-      // eslint-disable-next-line @next/next/no-img-element
-      decoding="async"
-      style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
-    />
-  );
-}
-
 /**
  * Home — corpo compartilhado pelas duas rotas.
  *
@@ -150,8 +139,14 @@ function Img({ src, alt, widths, sizes, priority }: { src: string; alt: string; 
  * noindex e fora do sitemap). Mostra o bloco de oferta do mercado mesmo
  * com a venda fechada, para o dono revisar texto e preço antes de abrir;
  * com a venda fechada, nenhum botão abre o pagamento.
+ *
+ * `vitrine`: o site de vendas em standby (/vendas, /vendas/es...,
+ * components/PaginaDoMercado.tsx). A página é a mesma do lançamento; só
+ * os links para outro mercado (PT | ES e o seletor de país) levam ao
+ * /vendas daquele mercado, e não à home pública, que ainda é a lista de
+ * espera.
  */
-export function Home({ lang, mercado, momento, previa = false }: { lang: Lang; mercado?: Mercado; momento?: number; previa?: boolean }) {
+export function Home({ lang, mercado, momento, previa = false, vitrine = false }: { lang: Lang; mercado?: Mercado; momento?: number; previa?: boolean; vitrine?: boolean }) {
   // Mercado define moeda e checkout; idioma define o texto. São eixos
   // independentes: /pt-pt é português em euro, /es é espanhol em dólar.
   const mkt: Mercado = mercado ?? (lang === "es" ? "la" : "br");
@@ -198,6 +193,8 @@ export function Home({ lang, mercado, momento, previa = false }: { lang: Lang; m
   // mandaria a pessoa de volta.
   const parPt: Mercado = mkt === "es" ? "pt" : mkt === "rw" ? "rw" : mkt === "pt" ? "pt" : "br";
   const parEs: Mercado = mkt === "pt" || mkt === "es" ? "es" : "la";
+  // No site de vendas em standby (/vendas/*), PT | ES fica dentro de /vendas.
+  const enderecoDo = (m: Mercado) => (vitrine ? VENDAS_DO_MERCADO[m] : `/?mercado=${m}`);
 
   const [typed, setTyped] = useState("");
   const [done, setDone] = useState(false);
@@ -369,8 +366,8 @@ export function Home({ lang, mercado, momento, previa = false }: { lang: Lang; m
                 nova aba, e o navegador registra a escolha num cookie de um ano
                 para o middleware nao redirecionar de novo na proxima visita. */}
             <div role="group" aria-label="Idioma / Idioma" style={{ display: "inline-flex", alignItems: "center", height: 32, padding: 2, borderRadius: 999, border: "1px solid rgba(255,255,255,.12)", background: "rgba(255,255,255,.03)" }}>
-              <a href={`/?mercado=${parPt}`} hrefLang={MERCADOS[parPt].locale} aria-current={lang === "pt" ? "page" : undefined} style={{ ...langBtn(lang === "pt"), textDecoration: "none" }}>PT</a>
-              <a href={`/?mercado=${parEs}`} hrefLang={MERCADOS[parEs].locale} aria-current={lang === "es" ? "page" : undefined} style={{ ...langBtn(lang === "es"), textDecoration: "none" }}>ES</a>
+              <a href={enderecoDo(parPt)} hrefLang={MERCADOS[parPt].locale} aria-current={lang === "pt" ? "page" : undefined} style={{ ...langBtn(lang === "pt"), textDecoration: "none" }}>PT</a>
+              <a href={enderecoDo(parEs)} hrefLang={MERCADOS[parEs].locale} aria-current={lang === "es" ? "page" : undefined} style={{ ...langBtn(lang === "es"), textDecoration: "none" }}>ES</a>
             </div>
             <a href="#preco" data-desk="1" style={{ alignItems: "center", justifyContent: "center", height: 40, padding: "0 18px", borderRadius: 999, background: C.p500, color: C.onAccent, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>{ctaLabel}</a>
           </div>
@@ -583,12 +580,11 @@ export function Home({ lang, mercado, momento, previa = false }: { lang: Lang; m
             <h2 style={h2}>{t.aH2}</h2>
           </div>
           <div data-tour="1">
-            {[[IMG.hoje, t.t1t, t.t1d], [IMG.dias, t.t2t, t.t2d], [IMG.acoes, t.t3t, t.t3d], [IMG.ritmo, t.t4t, t.t4d]].map(([src, title, desc]) => (
+            {/* Artes das lojas no idioma da página (lib/i18n.ts, telasDo). */}
+            {[[IMG.hoje, t.t1t, t.t1d, t.t1alt], [IMG.dias, t.t2t, t.t2d, t.t2alt], [IMG.acoes, t.t3t, t.t3d, t.t3alt], [IMG.ritmo, t.t4t, t.t4d, t.t4alt]].map(([src, title, desc, alt]) => (
               <figure key={title} style={{ margin: 0, minWidth: 0 }}>
-                <div style={{ width: "100%", aspectRatio: "1170/2532" }}>
-                  <Img src={src} alt={title} widths={[360, 560, 800]} sizes="(min-width:900px) 250px, 70vw" />
-                </div>
-                <figcaption style={{ marginTop: 12 }}>
+                <TelaDaLoja base={src} alt={alt} sizes="(min-width:900px) 232px, (min-width:375px) 240px, 64vw" />
+                <figcaption style={{ marginTop: 14 }}>
                   <div style={{ fontWeight: 600, fontSize: 17, lineHeight: 1.3, letterSpacing: "-.01em" }}>{title}</div>
                   <p style={{ margin: "4px 0 0", fontSize: 14, lineHeight: 1.55, color: C.n400 }}>{desc}</p>
                 </figcaption>
@@ -801,8 +797,14 @@ export function Home({ lang, mercado, momento, previa = false }: { lang: Lang; m
                 {vende ? `${formatar(mkt, precoFinal(mkt, agora))} ${oferta.textos.nota}` : oferta.espera.nota}
               </span>
             </div>
-            <div style={{ width: "min(72vw,300px)", margin: "clamp(32px,4vw,48px) auto -22%", aspectRatio: "1170/2532" }}>
-              <Img src={IMG.dias} alt="" widths={[400, 600]} sizes="(min-width:900px) 300px, 72vw" />
+            {/* A arte da leitura (Uma provocação por dia) sobe do pé do cartão:
+                aparecem a legenda e o alto do aparelho, 62% da altura. */}
+            <div style={{ width: "min(64vw,260px)", margin: "clamp(32px,4vw,48px) auto 0" }}>
+              <div style={{ position: "relative", paddingTop: `${(62 * TELA_PROPORCAO.altura) / TELA_PROPORCAO.largura}%`, overflow: "hidden", borderRadius: `${RAIO_DA_TELA}px ${RAIO_DA_TELA}px 0 0` }}>
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0 }}>
+                  <TelaDaLoja base={IMG.leitura} alt={t.finAlt} sizes="(min-width:407px) 260px, 64vw" style={{ boxShadow: "0 0 0 1px rgba(255,255,255,.07)" }} />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -821,7 +823,7 @@ export function Home({ lang, mercado, momento, previa = false }: { lang: Lang; m
             </div>
             {/* SELETOR DE MERCADO · ?mercado=xx grava o cookie dm_market
                 (180 dias) e vence a geolocalização (components/SeletorMercado.tsx). */}
-            <SeletorMercado atual={mkt} titulo="País" />
+            <SeletorMercado atual={mkt} titulo="País" vitrine={vitrine} />
 
             <nav aria-label={t.ftInst} style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
               <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: C.p500, marginBottom: 4 }}>{t.ftInst}</span>

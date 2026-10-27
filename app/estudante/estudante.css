@@ -158,23 +158,15 @@
   background: radial-gradient(ellipse at 50% 45%, rgba(39,189,190,.16), transparent 66%);
   filter: blur(10px); pointer-events: none;
 }
+/* A arte Hoje da App Store (components/TelaDaLoja.tsx) já traz o fundo, a
+   legenda e o aparelho: sem moldura de celular por cima. A arte é mais
+   alta que o mockup antigo (1320 x 2868), por isso 280px no celular e
+   300px no computador, a altura que o aparelho antigo já ocupava.
+   width e height da imagem reservam o espaço: CLS zero. */
 .ed-phone {
-  position: relative; width: min(300px, 74vw); border-radius: 40px;
-  border: 1px solid var(--border-strong); background: var(--s-1);
-  padding: 10px;
-  box-shadow: 0 50px 110px rgba(0,0,0,.62), 0 0 0 1px rgba(39,189,190,.07);
+  position: relative; width: min(280px, 70vw);
 }
-@media (min-width: 1024px) { .ed-phone { width: 320px; } }
-/* Espaço reservado antes de a imagem carregar: CLS zero, sem depender
-   de saber a altura exata do asset. object-fit contain nunca deforma. */
-.ed-phone-shot {
-  position: relative; width: 100%; aspect-ratio: 1170 / 2532;
-  border-radius: 31px; overflow: hidden; background: var(--s-0);
-}
-.ed-phone-shot img {
-  display: block; width: 100%; height: 100%;
-  object-fit: contain; object-position: center;
-}
+@media (min-width: 1024px) { .ed-phone { width: 300px; } }
 .ed-phone-tag {
   position: absolute; left: 50%; bottom: -18px; transform: translateX(-50%);
   display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
@@ -584,10 +576,13 @@ html:not(.ed-js) .ed-reveal { opacity: 1; transform: none; }
 }
 
 /* 5. legenda do print: o nowrap fazia a pílula ficar mais larga que o
-      próprio aparelho em tela estreita. */
+      próprio aparelho em tela estreita. Posicionada em left: 50%, ela
+      só tinha metade da arte para caber e quebrava em três linhas. Agora
+      a largura é a da frase (max-content), com a tela como limite (20px de
+      cada lado): numa linha só, e quebra só em tela muito estreita. */
 @media (max-width: 420px) {
   .ed-phone-tag {
-    white-space: normal; text-align: center; max-width: 92%;
+    white-space: normal; text-align: center; width: max-content; max-width: calc(100vw - 40px);
     font-size: 11.5px; padding: 8px 14px; line-height: 1.35;
   }
 }

@@ -49,7 +49,15 @@ const nextConfig = {
   // entraria no próximo `git add .` do repositório público.
   agentRules: false,
   async headers() {
-    return [{ source: "/:path*", headers: CABECALHOS_DE_PROTECAO }];
+    return [
+      { source: "/:path*", headers: CABECALHOS_DE_PROTECAO },
+      // Site de vendas em standby: além do <meta robots> da página
+      // (lib/seo.ts, metadataDaVitrine), o cabeçalho, que vale também para
+      // o que não é HTML. Ligada a chave de lançamento, estes endereços só
+      // redirecionam para as homes.
+      { source: "/vendas", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+      { source: "/vendas/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+    ];
   },
 };
 
@@ -67,6 +75,13 @@ const nextConfig = {
    trabalho local. DM_ENDERECO_TESTE libera as duas para teste e é
    recusada em produção na Vercel.
 
+   CHAVE DE LANÇAMENTO: DM_SITE_LANCADO (config/lancamento.ts). Gravada
+   aqui, a cada build, pelo `env` do Next: "1" só se a variável da Vercel
+   for exatamente "1"; qualquer outra coisa é standby (vazio). Em standby,
+   a trava de preços e a do webhook (DM_WEBHOOK_V2_OK) só avisam
+   (scripts/checar-precos.js, emStandby); ligada, voltam a parar o build
+   de produção. A trava do endereço vale nos dois estados.
+
    CHAVE DO ESTUDANTE: DM_ESTUDANTE_ABERTO é CALCULADA aqui, a cada
    build, a partir das variáveis da Vercel (estadoDoEstudante, em
    scripts/checar-precos.js), e gravada pelo `env` do Next no servidor e
@@ -76,7 +91,7 @@ const nextConfig = {
    ===================================================================== */
 const { PHASE_PRODUCTION_BUILD } = require("next/constants");
 const { checarEnderecoDoProjeto } = require("./scripts/checar-endereco");
-const { checarPrecosDoProjeto, estudanteDoProjeto } = require("./scripts/checar-precos");
+const { checarPrecosDoProjeto, estudanteDoProjeto, siteLancado } = require("./scripts/checar-precos");
 
 module.exports = (phase) => {
   const travas = [
@@ -100,5 +115,12 @@ module.exports = (phase) => {
   }
   if (bloqueios.length) throw new Error(bloqueios.join(" "));
   const estudante = estudanteDoProjeto(process.env);
-  return { ...nextConfig, env: { ...nextConfig.env, DM_ESTUDANTE_ABERTO: estudante.aberto ? "1" : "" } };
+  return {
+    ...nextConfig,
+    env: {
+      ...nextConfig.env,
+      DM_ESTUDANTE_ABERTO: estudante.aberto ? "1" : "",
+      DM_SITE_LANCADO: siteLancado(process.env) ? "1" : "",
+    },
+  };
 };

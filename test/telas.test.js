@@ -16,6 +16,7 @@ const raiz = path.join(__dirname, "..");
 const arq = (...p) => path.join(raiz, ...p);
 const P = carregarTs(arq("config", "pricing.ts"));
 const rotas = carregarTs(arq("lib", "rotas.ts"));
+const i18n = carregarTs(arq("lib", "i18n.ts"));
 
 const LANCAMENTO = Date.parse("2026-10-20T12:00:00-03:00");
 const DEPOIS = Date.parse("2026-11-20T12:00:00-03:00");
@@ -207,6 +208,11 @@ function paginaEstudante(C) {
     "@/lib/seo": { metadataDaPagina: () => ({}) },
     "@/config": C, "@/config/pricing": P,
     "@/components/Brand": Brand,
+    // a arte Hoje das lojas no hero (components/TelaDaLoja.tsx)
+    "@/components/TelaDaLoja": carregarTs(arq("components", "TelaDaLoja.tsx"), {
+      "@/lib/i18n": i18n, "react/jsx-runtime": jsx,
+    }, { jsx: true }),
+    "@/lib/i18n": i18n,
     "@/components/BlocoPreco": { BlocoPreco: blocoPreco(C) },
     // o formulário real usa o roteador do Next; aqui basta saber se ele entra
     "@/components/EstudanteForm": { EstudanteForm: () => React.createElement("div", { id: "formulario-cpf" }) },

@@ -22,6 +22,21 @@
         variáveis de Production da Vercel. Preview e build local não
         travam por isso (só avisam).
 
+   STANDBY (chave de lançamento desligada; decisão do dono, 27/10/2026).
+   Tudo o que está acima trava o LANÇAMENTO. Enquanto DM_SITE_LANCADO não
+   for "1" (config/lancamento.ts), as homes mostram a lista de espera e o
+   site de vendas fica em /vendas (noindex): nada disso para o build de
+   produção, que precisa continuar publicando em standby. O que travaria
+   o lançamento sai como aviso no log ("ao ligar a chave, o build de
+   produção TRAVARIA por isto"), com o mesmo texto (emStandby, mais
+   abaixo). Ligada a chave, as travas voltam a valer exatamente como
+   estão aqui: o build de produção da Vercel com venda aberta e sem
+   DM_WEBHOOK_V2_OK=1 falha, e o deploy anterior (standby) continua no ar.
+   checarPrecos, a regra em si, não muda: a chave entra só no
+   checarPrecosDoProjeto, que o next.config.js chama. A trava do endereço
+   (scripts/checar-endereco.js) não depende da chave: os Termos e a
+   Política são públicos nos dois estados.
+
    O lançamento NÃO é cupom (decisão do dono, 12/10/2026): é uma oferta
    própria da Hotmart. Nenhum link de venda leva offDiscount; só o
    estudante usa cupom, e o dele é pessoal, criado pela API.
@@ -441,7 +456,8 @@ function checarPrecos({
       );
     } else {
       avisos.push(
-        `Na Vercel (Production), este build só passa com DM_WEBHOOK_V2_OK=1, que o dono põe depois de: ${passo}.`
+        "Na Vercel (Production), com a chave de lançamento ligada (DM_SITE_LANCADO=1), este build só passa com " +
+          `DM_WEBHOOK_V2_OK=1, que o dono põe depois de: ${passo}.`
       );
     }
   }
@@ -543,6 +559,32 @@ function checarPrecos({
   return { ok: true, teste: false, problemas, avisos, estudante, mensagem: avisos.join(" ") };
 }
 
+/**
+ * A chave de lançamento: DM_SITE_LANCADO=1. Qualquer outro valor (ou
+ * nenhum) é standby. Mesma regra do next.config.js, que grava o valor no
+ * build, e do config/lancamento.ts, que o lê.
+ */
+function siteLancado(env = {}) {
+  return String(env.DM_SITE_LANCADO || "").trim() === "1";
+}
+
+/**
+ * Standby: o resultado da trava vira aviso. O build passa; o log diz o
+ * que travaria o build de produção quando a chave for ligada.
+ */
+function emStandby(r) {
+  const base =
+    "Site em STANDBY (DM_SITE_LANCADO desligada): as homes mostram a lista de espera e o site de vendas " +
+    "fica em /vendas, /vendas/es, /vendas/es-es, /vendas/pt-pt e /vendas/mundo (noindex). A trava de preços " +
+    "e a do webhook (DM_WEBHOOK_V2_OK) não param este build; voltam a valer quando a chave for ligada " +
+    "(docs/LANCAMENTO.md).";
+  if (r.ok) return { ...r, standby: true, mensagem: r.mensagem ? `${base} ${r.mensagem}` : base };
+  return {
+    ...r, ok: true, standby: true,
+    mensagem: `${base} Ao ligar a chave, o build de produção TRAVARIA por isto: ${r.mensagem}`,
+  };
+}
+
 function carregarPrecos() {
   return carregarTs(path.join(__dirname, "..", "config", "pricing.ts"));
 }
@@ -555,8 +597,15 @@ function estudanteMostraPrecoNoConfig() {
   return Boolean(bloco && /^\s*mostrarPreco:\s*true\b/m.test(bloco[1]));
 }
 
-/** Atalho usado pelo next.config.js. Erro ao ler o config também trava. */
+/** Atalho usado pelo next.config.js. Erro ao ler o config também trava
+    (com a chave de lançamento ligada; em standby, avisa). */
 function checarPrecosDoProjeto(env = process.env) {
+  const r = checarPrecosDoConfig(env);
+  return siteLancado(env) ? r : emStandby(r);
+}
+
+/** A trava do lançamento sobre o config/pricing.ts real, sem a chave. */
+function checarPrecosDoConfig(env) {
   let cfg;
   try {
     cfg = carregarPrecos();
@@ -594,7 +643,7 @@ function estudanteDoProjeto(env = process.env) {
 }
 
 module.exports = {
-  checarPrecos, checarPrecosDoProjeto, carregarPrecos, problemaDoLink, dataReal, idsDeOfertaValidos,
+  checarPrecos, checarPrecosDoProjeto, carregarPrecos, problemaDoLink, dataReal, idsDeOfertaValidos, siteLancado, emStandby,
   estudanteMostraPrecoNoConfig, estadoDoEstudante, estudanteDoProjeto, alvoDoEstudante, centavosComDesconto,
   descontoGarantido, cenariosDoPrimeiroCupom,
   LINK_ANTIGO, CHECKOUT_DO_7448309, MODELO_ESTUDANTE_ANTIGO, PRODUTO_DO_SITE, SITE_DOMINIO,

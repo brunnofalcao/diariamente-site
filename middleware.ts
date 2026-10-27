@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { decidirRota, COOKIE_MERCADO, COOKIE_MERCADO_SEGUNDOS } from "@/lib/mercado";
+import { SITE_LANCADO } from "@/config/lancamento";
 
 /* =====================================================================
    ROTEAMENTO POR GEOGRAFIA
@@ -9,7 +10,16 @@ import { decidirRota, COOKIE_MERCADO, COOKIE_MERCADO_SEGUNDOS } from "@/lib/merc
    EUR) e espanhol tem duas (USD e EUR).
 
    A decisão inteira mora em lib/mercado.ts (decidirRota), testada em
-   test/mercado.test.js. Aqui só se aplica o resultado:
+   test/mercado.test.js e test/standby.test.js. Aqui só se aplica o
+   resultado, com a chave de lançamento (config/lancamento.ts):
+
+   STANDBY (chave desligada, padrão): as homes mostram a lista de espera
+   e cada país vai para a sua home, como a produção antes do lançamento,
+   SEM a reescrita de "/" para /mundo. As prévias antigas (/embreve,
+   /es/embreve, /pt-pt/embreve, /es-es/embreve) vão para o /vendas do
+   mercado, onde fica o site de vendas.
+
+   LANÇADO (DM_SITE_LANCADO=1 no build):
 
      - só as homes (/, /es, /pt-pt, /es-es) decidem mercado
      - robô e prévia de link nunca são redirecionados
@@ -19,6 +29,7 @@ import { decidirRota, COOKIE_MERCADO, COOKIE_MERCADO_SEGUNDOS } from "@/lib/merc
      - resto do mundo fica em "/", reescrita para a rota interna com o
        bloco em dólar
      - utm, fbclid e gclid seguem junto em todo redirecionamento
+     - /vendas e /vendas/* redirecionam para a home real do mercado
 
    Vary: país, idioma e cookie. Sem isso o CDN pode servir o
    redirecionamento em cache para todo mundo.
@@ -40,6 +51,7 @@ export function middleware(req: NextRequest) {
     cookie: req.cookies.get(COOKIE_MERCADO)?.value,
     pais: req.headers.get("x-vercel-ip-country"),
     idiomas: req.headers.get("accept-language"),
+    lancado: SITE_LANCADO,
   });
 
   let r: NextResponse;

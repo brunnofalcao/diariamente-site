@@ -11,7 +11,9 @@ const P = carregarTs(path.join(raiz, "config", "pricing.ts"));
 
 const NAVEGADOR = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
 const INSTAGRAM = NAVEGADOR + " Instagram 300.0.0.0 (iPhone; iOS 17_0; pt_BR)";
-const pedido = (x) => ({ pathname: "/", busca: "", userAgent: NAVEGADOR, cookie: null, pais: null, idiomas: null, ...x });
+// Estes testes descrevem o site LANÇADO (chave de lançamento ligada,
+// config/lancamento.ts). O standby está em test/standby.test.js.
+const pedido = (x) => ({ pathname: "/", busca: "", userAgent: NAVEGADOR, cookie: null, pais: null, idiomas: null, lancado: true, ...x });
 
 /* ------------------------------- países ------------------------------- */
 
@@ -97,8 +99,20 @@ test("?mercado= grava o cookie, vai para a home do mercado e vence o país", () 
   assert.deepEqual(M.decidirRota(pedido({ busca: "?mercado=br", pais: "MX" })), { tipo: "redirecionar", destino: "/", cookie: "br", vary: true });
   // valor inválido é ignorado
   assert.equal(M.decidirRota(pedido({ busca: "?mercado=xx", pais: "BR" })).tipo, "seguir");
-  // ?lang= antigo do seletor PT | ES continua funcionando
+  // ?lang= antigo do seletor PT | ES continua funcionando nas homes
   assert.equal(M.decidirRota(pedido({ busca: "?lang=es" })).destino, "/es");
+});
+
+test("?lang= fora das homes não é seletor: as páginas de obrigado usam ?lang= para o idioma", () => {
+  // Depois do pagamento, a Hotmart manda a pessoa de volta com ?lang=es;
+  // redirecionar para /es perderia a página de obrigado e o Purchase.
+  for (const lancado of [true, false]) {
+    for (const pathname of ["/obrigado", "/obrigado-aprovado", "/obrigado-aguardando-pagamento", "/obrigado-aguardando-analise"]) {
+      for (const busca of ["?lang=es", "?lang=pt", "?transaction=HP1&lang=es"]) {
+        assert.deepEqual(M.decidirRota(pedido({ pathname, busca, pais: "MX", lancado })), { tipo: "seguir", vary: false }, `${pathname}${busca} lancado=${lancado}`);
+      }
+    }
+  }
 });
 
 test("cookie dm_market vence o país do IP", () => {

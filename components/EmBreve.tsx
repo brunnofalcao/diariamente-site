@@ -4,7 +4,7 @@ import { LockupHorizontal } from "@/components/Brand";
 import { ListaEsperaForm } from "@/components/ListaEsperaForm";
 import { SeletorMercado } from "@/components/SeletorMercado";
 import type { Lang } from "@/lib/i18n";
-import { HOME_DO_MERCADO } from "@/lib/mercado";
+import { HOME_DO_MERCADO, VENDAS_DO_MERCADO } from "@/lib/mercado";
 import type { Mercado } from "@/config/pricing";
 import { EMPRESA } from "@/config";
 
@@ -24,6 +24,9 @@ import { EMPRESA } from "@/config";
 
    Hoje é a home de /es (América Latina) e /es-es (Espanha) enquanto o
    acervo em espanhol não está revisado (config/pricing.ts, semVenda).
+   Em standby (chave de lançamento desligada, config/lancamento.ts), é a
+   home de todos os mercados. Com `vitrine` (/vendas/es e /vendas/es-es),
+   o logo e o seletor de país levam ao /vendas de cada mercado.
    ===================================================================== */
 
 const T = {
@@ -53,16 +56,17 @@ const T = {
   },
 };
 
-export function EmBreve({ lang = "pt", mercado }: { lang?: Lang; mercado?: Mercado }) {
+export function EmBreve({ lang = "pt", mercado, vitrine = false }: { lang?: Lang; mercado?: Mercado; vitrine?: boolean }) {
   const t = T[lang];
   const mkt: Mercado = mercado ?? (lang === "es" ? "la" : "br");
+  const inicio = vitrine ? VENDAS_DO_MERCADO[mkt] : HOME_DO_MERCADO[mkt];
 
   return (
     <main className="eb">
       <div className="eb-glow" aria-hidden="true" />
 
       <header className="eb-top">
-        <a href={HOME_DO_MERCADO[mkt]} aria-label="Diariamente">
+        <a href={inicio} aria-label="Diariamente">
           <LockupHorizontal altura={26} />
         </a>
       </header>
@@ -100,7 +104,7 @@ export function EmBreve({ lang = "pt", mercado }: { lang?: Lang; mercado?: Merca
         {/* Rodapé de todas as páginas: só a assinatura (decisão do dono,
             12/10/2026). Os dados da titular ficam nos Termos e na Política. */}
         <p>{EMPRESA.assinatura}</p>
-        <SeletorMercado atual={mkt} titulo="País" linha />
+        <SeletorMercado atual={mkt} titulo="País" linha vitrine={vitrine} />
       </footer>
     </main>
   );

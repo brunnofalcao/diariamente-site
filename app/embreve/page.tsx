@@ -1,10 +1,14 @@
 import { redirect } from "next/navigation";
 import { comParametros } from "@/lib/rotas";
+import { SITE_LANCADO } from "@/config/lancamento";
 
 /* /embreve foi o endereço de trabalho do site de vendas enquanto a home
-   era a lista de espera. Desde a virada, o site de vendas é a própria
-   home: qualquer link que já tenha saído com /embreve cai em "/", e não
-   sobra uma segunda cópia da página. */
+   era a lista de espera.
+   STANDBY (chave de lançamento desligada, config/lancamento.ts): leva ao
+   site de vendas em standby, /vendas. Quem decide é o middleware
+   (lib/mercado.ts, PREVIAS_ANTIGAS); esta página repete a regra.
+   LANÇADO: o site de vendas é a própria home, e qualquer link que já
+   tenha saído com /embreve cai em "/", sem uma segunda cópia da página. */
 
 // Renderizada a cada pedido, de propósito. Como página estática, o Next
 // guarda o redirect como "307 sem Location" e só redireciona com
@@ -17,5 +21,5 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 // Os parâmetros (utm, fbclid) vão junto: anúncio antigo não perde a origem.
 export default async function Page(props: Props) {
   const searchParams = await props.searchParams;
-  redirect(comParametros("/", searchParams));
+  redirect(comParametros(SITE_LANCADO ? "/" : "/vendas", searchParams));
 }

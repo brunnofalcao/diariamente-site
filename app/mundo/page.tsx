@@ -1,5 +1,7 @@
+import { notFound } from "next/navigation";
 import { PaginaDoMercado } from "@/components/PaginaDoMercado";
 import { metadataDoMercado } from "@/lib/seo";
+import { SITE_LANCADO } from "@/config/lancamento";
 
 /* =====================================================================
    /mundo · ROTA INTERNA do resto do mundo (mercado rw)
@@ -15,6 +17,10 @@ import { metadataDoMercado } from "@/lib/seo";
    Metadata igual à de "/": canonical "/", e o mesmo hreflang. Nada de
    noindex aqui: esta resposta é servida na URL "/", e um noindex
    escaparia para a home brasileira.
+
+   STANDBY (chave de lançamento desligada, config/lancamento.ts): não há
+   reescrita e /mundo responde 404, como antes do lançamento. O que vai
+   ao ar para o resto do mundo pode ser visto em /vendas/mundo.
    ===================================================================== */
 
 export const revalidate = 3600;
@@ -22,5 +28,6 @@ export const revalidate = 3600;
 export const metadata = metadataDoMercado("br");
 
 export default function PaginaMundo() {
+  if (!SITE_LANCADO) notFound();
   return <PaginaDoMercado mercado="rw" />;
 }
