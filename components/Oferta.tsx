@@ -265,8 +265,8 @@ export function Oferta() {
               <h3 className="cart-est-h">Ainda está na graduação?</h3>
               <p className="cart-est-d">
                 {ESTUDANTE.mostrarPreco
-                  ? `O mesmo acesso de um ano por R$ ${ESTUDANTE.preco}, enquanto você ainda estuda. Solicitar não gera compromisso.`
-                  : "Existe uma condição de estudante, com valor reduzido, enquanto você ainda estuda. Solicitar não gera compromisso."}
+                  ? `O mesmo acesso de um ano por R$ ${ESTUDANTE.preco}, com cobrança anual. Solicitar não gera compromisso.`
+                  : "Existe uma condição de estudante, com valor reduzido, para quem ainda estuda. Solicitar não gera compromisso."}
               </p>
 
               <ul className="cart-est-bul">

@@ -1,0 +1,56 @@
+"use client";
+
+import { useConsentimento } from "@/components/Consentimento";
+import { apagarCookiesDeMedicao, apagarEscolha } from "@/lib/cookies";
+import type { Lang } from "@/lib/i18n";
+
+/* Botão da Política de Privacidade (seção 8) para mudar de ideia sobre os
+   cookies. Apaga a escolha e os cookies de medição deste site e recarrega
+   a página: o aviso volta, e nada de medição carrega até uma nova escolha.
+   Recarregar é o que garante que GA4 e Pixel já carregados saiam da página. */
+
+const TEXTO: Record<Lang, { atual: string; aceito: string; recusado: string; nenhuma: string; botao: string }> = {
+  pt: {
+    atual: "Sua escolha neste navegador:",
+    aceito: "você aceitou.",
+    recusado: "você recusou.",
+    nenhuma: "você ainda não escolheu.",
+    botao: "Rever minha escolha de cookies",
+  },
+  es: {
+    atual: "Tu elección en este navegador:",
+    aceito: "aceptaste.",
+    recusado: "rechazaste.",
+    nenhuma: "todavía no elegiste.",
+    botao: "Revisar mi elección de cookies",
+  },
+};
+
+export function RevisarCookies({ lang }: { lang: Lang }) {
+  const t = TEXTO[lang];
+  // Mesmo estado do aviso (components/Consentimento.tsx), e não uma leitura
+  // própria do cookie: se a pessoa clicar em Aceitar ou Recusar no aviso
+  // aqui mesmo, na Política, o texto acompanha na hora. "carregando" é o
+  // servidor e o primeiro desenho, quando ainda não se sabe a escolha.
+  const escolha = useConsentimento();
+
+  const rever = () => {
+    apagarEscolha();
+    apagarCookiesDeMedicao();
+    window.location.reload();
+  };
+
+  return (
+    <p>
+      {escolha !== "carregando" && (
+        <>
+          {t.atual} {escolha === "aceito" ? t.aceito : escolha === "recusado" ? t.recusado : t.nenhuma}
+          <br />
+        </>
+      )}
+      <button type="button" className="btn btn-dark" onClick={rever} style={{ marginTop: "var(--sp3)" }}>
+        {t.botao}
+      </button>
+    </p>
+  );
+}

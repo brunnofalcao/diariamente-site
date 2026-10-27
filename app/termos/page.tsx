@@ -1,33 +1,42 @@
 import { metadataDaPagina } from "@/lib/seo";
 import { EMPRESA, SITE, GARANTIA } from "@/config";
-import { IdentificacaoDoGrupo } from "@/components/CnpjsDoGrupo";
 import { LegalShell } from "@/components/LegalShell";
+import { Titularidade } from "@/components/Titularidade";
+import { SITE_LANCADO } from "@/config/lancamento";
+import { TermosDaProducao } from "@/components/legais-da-producao/Termos";
 
 export const metadata = metadataDaPagina("termos", "pt");
 
 export default function Termos() {
+  // Standby: o texto da produção de hoje (docs/LANCAMENTO.md).
+  if (!SITE_LANCADO) return <TermosDaProducao />;
   return (
     <LegalShell lang="pt" titulo="Termos de Uso" atualizado={EMPRESA.vigenciaLegal}>
       <p>
         Estes Termos de Uso ("Termos") regem o acesso e a utilização do Diariamente, produto
         digital de desenvolvimento profissional composto pelo aplicativo, pelo conteúdo de
         provocações diárias, oferecido pela{" "}
-        {EMPRESA.marca}®, por meio das empresas do grupo identificadas abaixo ("Science Play", "nós"). Ao
+        {EMPRESA.marca}®, por meio das empresas do grupo identificadas na seção 1 ("Science Play", "nós"). Ao
         adquirir e utilizar o Diariamente, você ("usuário") declara ter lido, compreendido e
         aceito integralmente estes Termos.
       </p>
-      <p><IdentificacaoDoGrupo lang="pt" /></p>
 
-      <h2>1. O que é o Diariamente</h2>
+      {/* Identificação do grupo Science Play (decisão de 26/10/2026), dados
+          completos e cláusula de titularidade. Mesmo texto da Política e
+          das versões es. */}
+      <h2>1. Quem é a titular do Diariamente App</h2>
+      <Titularidade lang="pt" doc="termos" />
+
+      <h2>2. O que é o Diariamente</h2>
       <p>
-        O Diariamente disponibiliza 365 provocações — uma para cada dia — por meio de um
+        O Diariamente disponibiliza 365 provocações, uma para cada dia, por meio de um
         aplicativo, com recursos de acompanhamento de voltas acumuladas, conquistas,
         menu de Ações e lembretes. O conteúdo tem finalidade reflexiva e educacional, voltada ao
         desenvolvimento profissional. Os resultados dependem do engajamento individual de cada
         usuário; não prometemos resultados específicos ou garantidos.
       </p>
 
-      <h2>2. Acesso e funcionamento</h2>
+      <h2>3. Acesso e funcionamento</h2>
       <ul>
         <li>O acesso ao aplicativo é enviado por e-mail após a confirmação do pedido.</li>
         <li>O acesso é pessoal e intransferível, vinculado ao e-mail informado na aquisição.</li>
@@ -40,7 +49,7 @@ export default function Termos() {
         <li>É vedado compartilhar, revender, reproduzir ou distribuir o conteúdo sem autorização.</li>
       </ul>
 
-      <h2>3. Cadastro e responsabilidades do usuário</h2>
+      <h2>4. Cadastro e responsabilidades do usuário</h2>
       <p>Ao utilizar o Diariamente, você se compromete a:</p>
       <ul>
         <li>Fornecer informações verdadeiras, exatas e atualizadas;</li>
@@ -49,25 +58,34 @@ export default function Termos() {
         <li>Não tentar acessar áreas restritas, burlar mecanismos de segurança ou interferir no funcionamento do aplicativo.</li>
       </ul>
 
-      <h2>4. Propriedade intelectual</h2>
+      <h2>5. Propriedade intelectual</h2>
       <p>
-        Todo o conteúdo do Diariamente — textos, provocações, identidade visual, marca, software e
-        demais elementos — é protegido por direitos autorais e de propriedade intelectual,
+        Todo o conteúdo do Diariamente (textos, provocações, identidade visual, marca, software e
+        demais elementos) é protegido por direitos autorais e de propriedade intelectual,
         pertencendo à {EMPRESA.marca}. A aquisição concede ao usuário uma licença de uso pessoal e intransferível, não
         exclusiva, e não transfere a titularidade de qualquer direito sobre o conteúdo.
       </p>
 
-      <h2>5. Garantia e direito de arrependimento</h2>
+      {/* Uma seção só para garantia e arrependimento. Antes eram duas (5 e
+          6) dizendo coisas diferentes, e a 6 falava em "condições
+          específicas" para a devolução, contra a garantia incondicional
+          prometida na página de vendas. TEXTO SUJEITO À APROVAÇÃO DO DONO. */}
+      <h2>6. Garantia e direito de arrependimento</h2>
       <p>
-        Oferecemos garantia de {GARANTIA.dias} dias contados da confirmação da compra. Dentro
-        desse prazo você pode solicitar a devolução integral do valor pago, escrevendo para{" "}
-        <a href={`mailto:${EMPRESA.suporteEmail}`}>{EMPRESA.suporteEmail}</a>, sem
-        necessidade de justificativa.
+        Oferecemos <strong>garantia incondicional de {GARANTIA.dias} dias</strong>, contados da
+        confirmação do pagamento. Dentro desse prazo, você pode pedir a devolução integral do valor
+        pago, sem precisar justificar.
       </p>
       <p>
-        <strong>Se você está no Brasil:</strong> aplica-se o art. 49 do Código de Defesa do
-        Consumidor, que garante 7 dias de arrependimento em compras fora do estabelecimento.
-        Nossa garantia de {GARANTIA.dias} dias já contempla esse prazo.
+        <strong>Como pedir:</strong> pela própria plataforma de pagamento ou escrevendo para{" "}
+        <a href={`mailto:${EMPRESA.suporteEmail}`}>{EMPRESA.suporteEmail}</a>. O reembolso é
+        feito pelo mesmo meio de pagamento, em até 14 dias da comunicação.
+      </p>
+      <p>
+        <strong>Se você está no Brasil:</strong> o art. 49 do Código de Defesa do Consumidor (Lei
+        nº 8.078/1990) garante 7 dias para desistir de contratações feitas fora do estabelecimento
+        comercial, contados da confirmação do pagamento ou do recebimento do produto. Nossa garantia
+        de {GARANTIA.dias} dias já contempla esse prazo.
       </p>
       <p>
         <strong>Se você está na União Europeia:</strong> a Diretiva 2011/83/UE garante{" "}
@@ -82,24 +100,8 @@ export default function Termos() {
         direito de retratação. <strong>Nós não fazemos isso.</strong> Você mantém o prazo
         integral mesmo tendo acessado o conteúdo.
       </p>
-      <p>
-        Para exercer, basta escrever para{" "}
-        <a href={`mailto:${EMPRESA.suporteEmail}`}>{EMPRESA.suporteEmail}</a>. O reembolso é
-        feito pelo mesmo meio de pagamento, em até 14 dias da comunicação.
-      </p>
 
-      <h2>6. Direito de arrependimento e garantia</h2>
-      <p>
-        Nos termos do art. 49 do Código de Defesa do Consumidor (Lei nº 8.078/1990), em compras
-        realizadas fora do estabelecimento comercial, você pode desistir da contratação no prazo de
-        7 (sete) dias a contar da confirmação da compra ou do recebimento do produto.
-      </p>
-      <p>{GARANTIA.texto}</p>
-      <p>
-        O pedido de reembolso dentro do prazo pode ser feito pela plataforma de pagamento ou pelo
-        nosso canal de suporte. A devolução pode estar sujeita a
-        condições específicas, informadas no atendimento.
-      </p><h2>8. Disponibilidade e alterações do serviço</h2>
+      <h2>7. Disponibilidade e alterações do serviço</h2>
       <p>
         Empenhamo-nos para manter o aplicativo disponível e funcional, mas o serviço pode passar
         por manutenções, atualizações ou indisponibilidades temporárias. Podemos aprimorar,
@@ -107,7 +109,7 @@ export default function Termos() {
         produto adquirido.
       </p>
 
-      <h2>9. Limitação de responsabilidade</h2>
+      <h2>8. Limitação de responsabilidade</h2>
       <p>
         O Diariamente é uma ferramenta de reflexão e desenvolvimento profissional, e não substitui
         aconselhamento profissional especializado (jurídico, médico, psicológico, financeiro ou de
@@ -116,20 +118,20 @@ export default function Termos() {
         uso do produto.
       </p>
 
-      <h2>10. Proteção de dados</h2>
+      <h2>9. Proteção de dados</h2>
       <p>
         O tratamento de dados pessoais relacionado ao Diariamente é regido pela nossa{" "}
         <a href="/privacidade">Política de Privacidade</a>, parte integrante destes Termos.
       </p>
 
-      <h2>11. Alterações dos Termos</h2>
+      <h2>10. Alterações dos Termos</h2>
       <p>
         Podemos atualizar estes Termos a qualquer momento. A versão vigente estará sempre
         disponível nesta página, com a data de atualização. O uso continuado após alterações
         implica concordância com a versão atualizada.
       </p>
 
-      <h2>12. Foro e contato</h2>
+      <h2>11. Foro e contato</h2>
       <p>
         Estes Termos são regidos pelas leis brasileiras. Fica eleito o foro do domicílio do
         consumidor para dirimir eventuais controvérsias, conforme o Código de Defesa do Consumidor.

@@ -1,22 +1,32 @@
-import { EmBreve } from "@/components/EmBreve";
-import { metadataDaPagina } from "@/lib/seo";
+import { PaginaDoMercado } from "@/components/PaginaDoMercado";
+import { metadataDoMercado } from "@/lib/seo";
 
 /* =====================================================================
-   HOME · PORTUGUÊS · "em breve"
+   "/" · HOME DO BRASIL · site de vendas
    ---------------------------------------------------------------------
-   Enquanto o site de vendas é estruturado em /embreve, a home pública é
-   a lista de espera.
+   STANDBY (chave de lançamento desligada, config/lancamento.ts): "/"
+   mostra a lista de espera ("Em breve"), como antes do lançamento, e o
+   site de vendas fica em /vendas (app/vendas/page.tsx).
 
-   NA VIRADA DE LANÇAMENTO, troque as duas linhas abaixo por:
+   Com a chave ligada, "/" é o site de vendas. Preço, oferta de
+   lançamento e link do checkout saem de config/pricing.ts (mercado br).
 
-     import { Home } from "@/components/Home";
-     export default function Page() { return <Home lang="pt" />; }
+   Visitante de fora do Brasil, de Portugal, da Espanha e da América
+   Latina: o middleware reescreve "/" para /mundo (mesma página, bloco em
+   dólar), sem mudar a URL. Portugal, Espanha e América Latina vão para
+   as suas homes (/pt-pt, /es-es, /es).
 
-   e faça o mesmo em app/es/page.tsx. Nada mais precisa mudar.
+   Para voltar à lista de espera: desligar a chave (tirar DM_SITE_LANCADO
+   da Vercel e fazer um novo deploy) ou, na Vercel, Instant Rollback para o
+   deploy anterior.
    ===================================================================== */
 
-export const metadata = metadataDaPagina("home", "pt");
+// A página se refaz a cada hora: é o que tira o preço de lançamento no
+// dia seguinte ao FIM_DO_LANCAMENTO, sem depender de novo deploy.
+export const revalidate = 3600;
+
+export const metadata = metadataDoMercado("br");
 
 export default function Page() {
-  return <EmBreve lang="pt" />;
+  return <PaginaDoMercado mercado="br" />;
 }

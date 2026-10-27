@@ -1,32 +1,62 @@
 "use client";
 
 import {
-  MERCADOS, precoFinal, porMes, formatar, linkCheckout, precoCheio,
+  MERCADOS, precoFinal, porMes, formatar, linkCheckout, lancamentoVigente,
+  dataDoLancamento, pendente, precoEstudante, porMesEstudante, pagamentoAgora,
+  percentualDoLancamento, regraDoLancamento,
   type Mercado,
 } from "@/config/pricing";
+import { ESTUDANTE, periodoEstudante } from "@/config";
 import { caminho } from "@/lib/rotas";
+import { registrarInicioDeCheckout } from "@/lib/medicao";
+import { ListaEsperaForm } from "@/components/ListaEsperaForm";
 
 /* =====================================================================
    BLOCO DE OFERTA · cinco variantes
    ---------------------------------------------------------------------
    Handoff, seção 2. Nenhum preço escrito aqui: tudo vem de
-   config/pricing.ts. Trocar valor, moeda, cupom ou link é editar
+   config/pricing.ts. Trocar valor, moeda, oferta ou link é editar
    aquele arquivo, e o bloco acompanha nos cinco mercados.
 
-   O que o visitante vê, em qualquer mercado:
+   O que o visitante vê, em qualquer mercado com venda aberta:
      manchete no equivalente mensal
      total anual logo abaixo
      UM botão
 
    Nunca: duas moedas, duas opções de plano, campo de cupom, contador,
-   conversão na tela.
+   conversão na tela, valor de parcela.
+
+   Brasil no lançamento (até FIM_DO_LANCAMENTO): o preço da oferta de
+   lançamento, a regra dela (3 primeiros anos, depois o preço cheio, que
+   é o que o checkout diz) e "Pagamento à vista": a oferta de lançamento
+   não parcela. Depois da data: o preço cheio e "À vista, ou em até 12x
+   no cartão com acréscimo", sem valor de parcela (a Hotmart calcula, e
+   o parcelado custa mais que o equivalente mensal da manchete).
+
+   Mercado com vendaAberta: false (hoje la, es, pt e rw): o bloco vira a
+   lista de espera daquele mercado, sem preço nenhum. Exceção: `previa`
+   (só nas prévias internas /pt-pt/embreve e /es-es/embreve), que mostra
+   o bloco de venda para revisão, com o botão desabilitado.
+
+   `momento` vem do servidor: a data de término do lançamento é conferida
+   contra a mesma hora no HTML e na hidratação. Depois da hidratação, o
+   components/Home.tsx confere de novo com o relógio do navegador e
+   troca o `momento` se o lançamento já acabou.
+
+   `vitrine`: o site de vendas em standby (/vendas/*). Até
+   DM_WEBHOOK_V2_OK=1 (DM_VENDA_LIBERADA, gravada pelo next.config.js), o
+   botão fica com o mesmo texto e o mesmo visual, mas leva ao próprio
+   bloco (#preco) em vez de abrir o checkout: quem pagasse antes do
+   webhook do app ficaria sem conta. A lista de espera embutida segue a
+   vitrine (o texto pt-PT só aparece no que vai ao ar).
    ===================================================================== */
 
 const C = {
   p500: "#27BDBE", p300: "#5DD8D8", s0: "#0A0E0E", s2: "#181D1D",
   n200: "#CDD2D2", n300: "#AAB2B2", n400: "#8A9494", ret: "#F5B731",
+  n900: "#131918",
   line: "rgba(255,255,255,.07)",
-  serif: "var(--f-serif), 'Literata', Georgia, serif",
+  serif: "var(--font-serif)",
 };
 
 function Relogio() {
@@ -37,105 +67,134 @@ function Relogio() {
   );
 }
 
-export function BlocoOferta({ mercado }: { mercado: Mercado }) {
+function Escudo() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.p500} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: "0 0 auto" }}>
+      <path d="M12 2.5l7.5 3.2v5.4c0 4.7-3.2 8.7-7.5 10-4.3-1.3-7.5-5.3-7.5-10V5.7L12 2.5z" />
+      <path d="M9.3 12l2 2 3.6-3.7" />
+    </svg>
+  );
+}
+
+function Cabecalho({ titulo, selo }: { titulo: string; selo?: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px clamp(20px,3vw,28px)", background: "rgba(39,189,190,.08)", borderBottom: "1px solid rgba(39,189,190,.2)" }}>
+      <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: C.p500 }}>
+        {titulo}
+      </span>
+      {selo && (
+        <span style={{ display: "inline-flex", alignItems: "center", height: 24, padding: "0 10px", borderRadius: 999, background: "rgba(245,183,49,.12)", border: "1px solid rgba(245,183,49,.3)", color: C.ret, fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>
+          {selo}
+        </span>
+      )}
+    </div>
+  );
+}
+
+const moldura: React.CSSProperties = { background: C.s2, border: "1px solid rgba(39,189,190,.32)", borderRadius: 16, overflow: "hidden" };
+const miolo: React.CSSProperties = { padding: "clamp(20px,3vw,28px)" };
+
+export function BlocoOferta({ mercado, momento, previa = false, vitrine = false }: { mercado: Mercado; momento: number; previa?: boolean; vitrine?: boolean }) {
   const o = MERCADOS[mercado];
   const t = o.textos;
-  const cheio = precoCheio(mercado);
-  const link = linkCheckout(mercado);
-  const semLink = link.startsWith("[");
 
-  // Manchete: equivalente mensal. É só equivalência, nunca um plano
-  // mensal: o handoff proíbe vender mensalidade.
-  const mensal = formatar(mercado, porMes(mercado));
-  const anual = formatar(mercado, precoFinal(mercado));
+  /* ------------------------- LISTA DE ESPERA ------------------------- */
+  if (!o.vendaAberta && !previa) {
+    return (
+      <div style={moldura}>
+        <Cabecalho titulo={t.titulo} selo={o.espera.selo} />
+        <div style={miolo}>
+          <p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: C.n300 }}>{t.proposta}</p>
+          <p style={{ margin: "14px 0 0", fontSize: 15.5, lineHeight: 1.6, color: C.n200 }}>{o.espera.texto}</p>
+          <ListaEsperaForm mercado={mercado} origem="oferta" embutido botao={o.espera.botao} vitrine={vitrine} />
+        </div>
+      </div>
+    );
+  }
+
+  /* ------------------------------ VENDA ------------------------------ */
+  const vigente = lancamentoVigente(mercado, momento);
+  const regra = regraDoLancamento(mercado, momento);
+  const pct = percentualDoLancamento(mercado, momento);
+  const link = linkCheckout(mercado, momento);
+  // Só chega aqui com a venda fechada na prévia interna.
+  const fechado = !o.vendaAberta;
+  // Link pendente só acontece em build de teste: em produção a trava não
+  // deixa o build sair sem o link (scripts/checar-precos.js).
+  const semLink = pendente(link) || fechado;
+  // /vendas/* em standby, antes de DM_WEBHOOK_V2_OK=1: mesmo botão, sem checkout.
+  const bloqueado = vitrine && process.env.DM_VENDA_LIBERADA !== "1";
+  const valor = precoFinal(mercado, momento);
+  const mensal = formatar(mercado, porMes(mercado, momento));
+  const anual = formatar(mercado, valor);
+  const renovacao = o.renovaMesmoValor && t.renovacaoMesmoValor ? t.renovacaoMesmoValor : t.renovacao;
+  const prazo = vigente ? dataDoLancamento(mercado) : null;
 
   return (
-    <div style={{ background: C.s2, border: "1px solid rgba(39,189,190,.32)", borderRadius: 16, overflow: "hidden" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px clamp(20px,3vw,28px)", background: "rgba(39,189,190,.08)", borderBottom: "1px solid rgba(39,189,190,.2)" }}>
-        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: C.p500 }}>
-          {t.titulo}
-        </span>
-        {/* O selo só aparece com cupom ativo, e mostra o percentual real
-            do config: nunca um número digitado. */}
-        {o.lancamento?.ativo && (
-          <span style={{ display: "inline-flex", alignItems: "center", height: 24, padding: "0 10px", borderRadius: 999, background: "rgba(245,183,49,.12)", border: "1px solid rgba(245,183,49,.3)", color: C.ret, fontSize: 12, fontWeight: 700 }}>
-            {o.lancamento.percentual}% OFF
-          </span>
-        )}
-      </div>
+    <div style={moldura}>
+      {/* O selo só aparece com o lançamento valendo: o desconto da oferta
+          de lançamento sobre o preço cheio, arredondado para baixo. */}
+      <Cabecalho titulo={t.titulo} selo={vigente && pct ? `${pct}% OFF` : undefined} />
 
-      <div style={{ padding: "clamp(20px,3vw,28px)" }}>
+      <div style={miolo}>
         <p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: C.n300 }}>{t.proposta}</p>
 
-        {/* MANCHETE: equivalente mensal */}
-        <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 18, flexWrap: "wrap" }}>
+        {/* MANCHETE: equivalente mensal. Só equivalência, nunca um plano
+            mensal: o handoff proíbe vender mensalidade. */}
+        <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 18, flexWrap: "wrap" }}>
           <span style={{ fontFamily: C.serif, fontSize: "clamp(42px,5vw,54px)", lineHeight: 1, letterSpacing: "-.02em", color: "#fff" }}>
             {mensal}
           </span>
           <span style={{ fontFamily: C.serif, fontSize: 24, lineHeight: 1, color: C.n300 }}>{t.mes}</span>
-        </div>
-
-        {/* TOTAL ANUAL, com o preço cheio riscado só onde há cupom */}
-        <div style={{ marginTop: 10, fontSize: 15, lineHeight: 1.6, color: C.n200 }}>
-          {cheio && (
-            <span style={{ color: C.n400, marginRight: 8 }}>
-              <s>{cheio}</s>
-            </span>
+          {vigente && t.mesLancamento && (
+            <span style={{ fontSize: 14, color: C.n300 }}>{t.mesLancamento}</span>
           )}
-          <strong style={{ color: "#fff", fontWeight: 600 }}>{anual}</strong> {t.totalSufixo}
-          {o.imposto === "dentro" && t.impostoNota ? `, ${t.impostoNota}` : ""}
         </div>
 
-        <div style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 8, height: 30, padding: "0 12px", borderRadius: 999, background: C.s0, border: "1px solid rgba(255,255,255,.1)", fontSize: 13, fontWeight: 600, color: C.n200 }}>
+        {/* TOTAL ANUAL. Com o lançamento valendo, a regra inteira, como o
+            checkout diz: o preço vale nos 3 primeiros anos e depois passa
+            ao preço cheio a cada ano. */}
+        <p style={{ margin: "10px 0 0", fontSize: 15, lineHeight: 1.6, color: C.n200 }}>
+          <strong style={{ color: "#fff", fontWeight: 600 }}>{anual}</strong> {t.totalSufixo}
+          {regra ? ` ${regra}` : ""}
+        </p>
+
+        <div style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 8, minHeight: 30, padding: "4px 12px", borderRadius: 999, background: C.s0, border: "1px solid rgba(255,255,255,.1)", fontSize: 13, fontWeight: 600, color: C.n200 }}>
           <Relogio />
-          {t.pagamento}
+          {pagamentoAgora(mercado, momento)}
         </div>
 
         {/* Prazo do lançamento em TEXTO. Sem contador: urgência artificial
             é vetada, e a data é verdadeira. */}
-        {o.lancamento?.ativo && (
+        {prazo && t.prazo && (
           <p style={{ margin: "12px 0 0", fontSize: 13.5, color: C.ret }}>
-            {t.prazo} {o.lancamento.terminaEm}
+            {t.prazo} {prazo}.
           </p>
         )}
 
-        {o.vendaAberta ? (
-          <a
-            href={semLink ? undefined : link}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-disabled={semLink}
-            onClick={(e) => {
-              if (semLink) { e.preventDefault(); return; }
-              (window as any).fbq?.("track", "InitiateCheckout", { currency: o.moeda, value: precoFinal(mercado), content_name: `plano-${mercado}` });
-              (window as any).gtag?.("event", "begin_checkout", { currency: o.moeda, value: precoFinal(mercado), items: [{ item_name: `Diariamente Anual ${mercado.toUpperCase()}` }] });
-              (window as any).dataLayer?.push({ event: "InitiateCheckout", mercado, moeda: o.moeda });
-            }}
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "center",
-              height: 54, marginTop: 22, width: "100%", borderRadius: 999,
-              background: semLink ? "rgba(39,189,190,.35)" : C.p500,
-              color: "#131918", fontSize: 16, fontWeight: 700, textDecoration: "none",
-              cursor: semLink ? "not-allowed" : "pointer",
-            }}
-          >
-            {t.botao}
-          </a>
-        ) : (
-          // la e es ficam na lista de espera até o acervo em espanhol
-          // estar revisado (handoff, seção 9).
-          <a
-            href={caminho("home", o.idioma)}
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 54, marginTop: 22, width: "100%", borderRadius: 999, border: `1.5px solid ${C.p500}`, color: C.p500, fontSize: 16, fontWeight: 700, textDecoration: "none" }}
-          >
-            {o.idioma === "es" ? "Avísame cuando abra" : "Me avise quando abrir"}
-          </a>
-        )}
+        <a
+          href={semLink ? undefined : bloqueado ? "#preco" : link}
+          target={bloqueado && !semLink ? undefined : "_blank"}
+          rel={bloqueado && !semLink ? undefined : "noopener noreferrer"}
+          aria-disabled={semLink || undefined}
+          onClick={(e) => {
+            if (semLink) { e.preventDefault(); return; }
+            if (bloqueado) return;
+            registrarInicioDeCheckout({ id: `anual-${mercado}`, nome: `Diariamente Anual · ${mercado.toUpperCase()}`, valor, moeda: o.moeda });
+          }}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            height: 54, marginTop: 22, width: "100%", borderRadius: 999,
+            background: semLink ? "rgba(39,189,190,.35)" : C.p500,
+            color: C.n900, fontSize: 16, fontWeight: 700, textDecoration: "none",
+            cursor: semLink ? "not-allowed" : "pointer",
+          }}
+        >
+          {t.botao}
+        </a>
 
         <p style={{ margin: "12px 0 0", textAlign: "center", fontSize: 13, lineHeight: 1.45, color: C.n400 }}>
-          {o.renovaMesmoValor
-            ? t.renovacao
-            : t.renovacao.replace(" pelo mesmo valor", "").replace(" por el mismo valor", "")}
+          {renovacao}
         </p>
 
         {o.imposto === "fora" && t.impostoNota && (
@@ -145,33 +204,39 @@ export function BlocoOferta({ mercado }: { mercado: Mercado }) {
         )}
 
         {/* Estudante só existe no Brasil: a validação usa CPF e o cobro é
-            em real (handoff, seção 12, item P2). */}
-        {mercado === "br" && t.estudante && (
-          <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 13.5 }}>
+            em real (handoff, seção 12, item P2). Só aparece com o fluxo
+            do cupom pessoal ABERTO neste build (ESTUDANTE.aberto, config.ts):
+            fechado, a home não leva a uma página que ainda não entrega o
+            código. O preço segue ESTUDANTE.mostrarPreco, como na
+            /estudante, e o período é o de ESTUDANTE.periodo ("por ano ·
+            cobrança anual"): se o cupom vale nas renovações não se sabe, e
+            o dono decidiu (12/10/2026) dizer só que a cobrança é anual. */}
+        {mercado === "br" && t.estudante && ESTUDANTE.aberto && (
+          <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 13.5, lineHeight: 1.5 }}>
             <a href={caminho("estudante", "pt")} style={{ color: C.p300, textDecoration: "none" }}>
-              {t.estudante}
+              {ESTUDANTE.mostrarPreco
+                ? `${t.estudante}: ${formatar("br", porMesEstudante())}${t.mes} · ${formatar("br", precoEstudante())} ${periodoEstudante()}`
+                : `${t.estudante}: ver a condição`}
             </a>
           </p>
         )}
 
-        {/* Linhas de confiança. Estavam no card antigo e se perderam na
-            troca; voltam aqui, por mercado, porque o meio de pagamento
-            muda: Pix e boleto não existem fora do Brasil. */}
         <ul style={{ listStyle: "none", margin: "18px 0 0", padding: "18px 0 0", borderTop: `1px solid ${C.line}`, display: "grid", gap: 10, fontSize: 14, color: C.n200 }}>
           {o.confianca.map((x) => (
             <li key={x} style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.p500} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: "0 0 auto" }}>
-                <path d="M12 2.5l7.5 3.2v5.4c0 4.7-3.2 8.7-7.5 10-4.3-1.3-7.5-5.3-7.5-10V5.7L12 2.5z" />
-                <path d="M9.3 12l2 2 3.6-3.7" />
-              </svg>
+              <Escudo />
               {x}
             </li>
           ))}
         </ul>
 
-        {semLink && (
+        {fechado ? (
           <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 12, color: C.ret }}>
-            Link de checkout pendente em config/pricing.ts
+            Prévia interna: a venda deste mercado ainda está fechada e o botão não abre o pagamento.
+          </p>
+        ) : semLink && (
+          <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 12, color: C.ret }}>
+            Build de teste: link de checkout pendente em config/pricing.ts
           </p>
         )}
       </div>

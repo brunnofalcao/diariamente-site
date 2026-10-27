@@ -37,7 +37,8 @@ function carregar(arquivo, modulos = {}) {
   return modulo.exports;
 }
 
-const config = carregar("config.ts");
+// O config.ts repassa os planos de config/pricing.ts (preço por mercado).
+const config = carregar("config.ts", { "@/config/pricing": carregar("config/pricing.ts") });
 const { CnpjsDoGrupo, RodapeDoGrupo, IdentificacaoDoGrupo } = carregar("components/CnpjsDoGrupo.tsx", {
   "@/config": config,
 });

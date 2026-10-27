@@ -14,7 +14,17 @@ import { useEffect, useState } from "react";
  * Também liga o reveal on scroll da rota (classe .ed-js no <html>).
  * Sem biblioteca, sem dependência: um IntersectionObserver e um listener passivo.
  */
-export function EstudanteSticky({ alvo = "formulario" }: { alvo?: string }) {
+export function EstudanteSticky({
+  alvo = "formulario",
+  texto = "Leva um minuto. O código chega no WhatsApp.",
+  rotulo = "Solicitar",
+}: {
+  alvo?: string;
+  /** Linha de apoio; muda com o fluxo do cupom fechado (app/estudante/page.tsx). */
+  texto?: string;
+  /** Texto do botão. */
+  rotulo?: string;
+}) {
   const [ativo, setAtivo] = useState(false);
 
   useEffect(() => {
@@ -92,7 +102,7 @@ export function EstudanteSticky({ alvo = "formulario" }: { alvo?: string }) {
       <div className="ed-sticky-row">
         <div className="ed-sticky-txt">
           <div className="ed-sticky-k">Condição de estudante</div>
-          <div className="ed-sticky-v">Leva um minuto. O código chega no WhatsApp.</div>
+          <div className="ed-sticky-v">{texto}</div>
         </div>
         <button
           type="button"
@@ -100,7 +110,7 @@ export function EstudanteSticky({ alvo = "formulario" }: { alvo?: string }) {
           onClick={irParaForm}
           tabIndex={ativo ? 0 : -1}
         >
-          Solicitar
+          {rotulo}
         </button>
       </div>
     </div>

@@ -32,10 +32,15 @@ const SLUGS: Record<Chave, Record<Lang, string>> = {
   // USD e EUR), então cada mercado com preço próprio tem URL própria.
   homePt:      { pt: "/pt-pt",         es: "/pt-pt" },
   homeEs:      { pt: "/es-es",         es: "/es-es" },
-  // Site de vendas em construção. Fora do sitemap e com noindex até o
-  // lançamento: é endereço de trabalho, não de busca. Na virada, basta
-  // trocar o que as rotas "/" e "/es" renderizam.
-  vendas:      { pt: "/embreve",       es: "/es/embreve" },
+  // Site de vendas em STANDBY (chave de lançamento desligada,
+  // config/lancamento.ts): /vendas e /vendas/es, mais /vendas/es-es,
+  // /vendas/pt-pt e /vendas/mundo (lib/mercado.ts, VENDAS_DO_MERCADO).
+  // Privado: noindex e fora do sitemap. Ligada a chave, redirecionam para
+  // a home real do mercado. As prévias antigas (/embreve, /es/embreve,
+  // /pt-pt/embreve, /es-es/embreve) levam para cá em standby; ligada a
+  // chave, /embreve e /es/embreve vão para "/" e "/es", e as duas de
+  // pt-pt e es-es voltam a ser as prévias do dono (PR #3).
+  vendas:      { pt: "/vendas",        es: "/vendas/es" },
   estudante:   { pt: "/estudante",     es: "/es/estudiantes" },
   sobre:       { pt: "/sobre",         es: "/es/acerca-de" },
   termos:      { pt: "/termos",        es: "/es/condicionesdeuso" },
@@ -67,4 +72,22 @@ export function identificar(pathname: string): { chave: Chave; lang: Lang } {
     }
   }
   return { chave: "home", lang: limpo.startsWith("/es") ? "es" : "pt" };
+}
+
+/**
+ * Destino de redirecionamento mantendo os parâmetros da URL original
+ * (utm_*, fbclid, gclid...). Anúncio ou link antigo que apontava para
+ * /embreve continua chegando com a origem do tráfego intacta.
+ */
+export function comParametros(
+  destino: string,
+  parametros: Record<string, string | string[] | undefined> = {}
+): string {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(parametros)) {
+    if (Array.isArray(v)) v.forEach((x) => q.append(k, x));
+    else if (v !== undefined) q.append(k, v);
+  }
+  const s = q.toString();
+  return s ? `${destino}?${s}` : destino;
 }

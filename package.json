@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --test testes/*.test.mjs"
+    "test": "node --test test/*.test.js testes/*.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

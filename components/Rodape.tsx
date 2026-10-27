@@ -103,6 +103,8 @@ export function Rodape() {
         <hr className="rp-linha" />
 
         <div className="rp-base">
+          {/* A linha curta do grupo Science Play (decisão de 26/10/2026);
+              razão social e endereço ficam nos Termos e na Política. */}
           <p>
             © {ano} <RodapeDoGrupo lang="pt" />
             <br />

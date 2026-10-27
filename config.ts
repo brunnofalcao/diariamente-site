@@ -6,6 +6,12 @@
 // definição (links de checkout, pixels). Nada inventado.
 // =====================================================================
 
+// PREÇO, CUPOM, MOEDA E LINK DE CHECKOUT NÃO MORAM AQUI: moram em
+// config/pricing.ts, por mercado (br, la, es, pt, rw). Os campos de plano
+// abaixo só repassam de lá, para os componentes antigos continuarem
+// funcionando sem um segundo número escrito à mão.
+import { MERCADOS, ESTUDANTE_DESCONTO, formatar, precoEstudante, porMesEstudante, percentualDoLancamento } from "@/config/pricing";
+
 export const SITE = {
   nome: "Diariamente",
   // Endereço técnico oficial (decisão do dono, 20/10/2026): com www, que é onde o site
@@ -58,17 +64,11 @@ export const LOGOS = {
 };
 
 // ---------------------------------------------------------------------
-// SCREENSHOTS / MOCKUPS 3D do app (Cloudinary)
-// Cole aqui as URLs dos mockups 3D gerados a partir dos prints reais.
-// Enquanto vazio (""), o site mostra o slot de marcação no lugar.
-// Telas reais do app: Hoje · Dias · Ações · Ritmo · Conta
+// TELAS DO APP: as artes das lojas, em public/telas/pt e public/telas/es
+// (lib/i18n.ts, telasDo; components/TelaDaLoja.tsx). Os mockups antigos
+// do Cloudinary (Tela_HOJE, Tela_DIAS, Tela_ACOES e Tela_RITMO) saíram do
+// site de vendas e da /estudante em 27/10/2026.
 // ---------------------------------------------------------------------
-export const SCREENSHOTS = {
-  hoje: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664582/Tela_HOJE_Diariamente_shzi7c.png",
-  dias: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664583/Tela_DIAS_Diariamente_i4dpih.png",
-  acoes: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664582/Tela_ACOES_Diariamente_nr8gwf.png",
-  ritmo: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664581/Tela_RITMO_Diariamente_mz9efm.png",
-};
 
 // Foto lifestyle (ambiente) — seção "virada". Foto cheia, não transparente.
 export const LIFESTYLE = "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782699619/Lifestyle_Diariamente_yur3mm.png";
@@ -106,19 +106,26 @@ export const CONSELHO: { nome: string; credencial: string; registro?: string }[]
 ];
 
 // ---------------------------------------------------------------------
-// OFERTA (arquitetura confirmada por Brunno em ago/2026)
-// Dois carrinhos:
-//   APP    — Diariamente App:   nominal R$197 → lançamento R$137,90 (30% OFF)
-// Estudante: NÃO divulgado no site (sem mecanismo de validação ainda).
-// Desconto founders válido durante o mês de lançamento — ao encerrar,
-// definir LANCAMENTO.ativa = false e os cards voltam ao preço nominal.
+// OFERTA · desde out/2026 (handoff de precificação v2)
+// Uma oferta anual por mercado na Hotmart (produto 7448309). No Brasil,
+// a oferta oficial (R$ 149,90) e, até o fim do lançamento, uma oferta
+// própria de lançamento (R$ 99,98 por ano nos 3 primeiros anos), sem
+// cupom. Tudo isso, com a data de término, está em config/pricing.ts.
+// A oferta antiga do produto 8280315 (R$ 137,90) saiu daqui.
 // ---------------------------------------------------------------------
+const LANC_BR = MERCADOS.br.lancamento;
+const PCT_LANC_BR = percentualDoLancamento("br");
 export const LANCAMENTO = {
-  ativa: true,
-  selo: "30% OFF de lançamento",
-  // [TROCAR] data de fim da janela founders (usada só no texto, ex: "até 30/09")
-  prazoTexto: "válido apenas no mês de lançamento",
+  ativa: Boolean(LANC_BR?.ativo),
+  selo: PCT_LANC_BR ? `${PCT_LANC_BR}% OFF de lançamento` : "Preço de lançamento",
+  prazoTexto: "preço de lançamento por tempo determinado, com a data na página",
 };
+
+/** "149,90": o número sem o símbolo, no formato do Brasil. */
+const semSimbolo = (v: number) => formatar("br", v).replace(/^R\$\s/, "");
+
+/** "À vista, ou..." vira "à vista, ou...", para entrar depois de um preço. */
+const inicialMinuscula = (s: string) => s.charAt(0).toLocaleLowerCase("pt-BR") + s.slice(1);
 
 export type Plano = {
   id: string;
@@ -142,16 +149,14 @@ export type Plano = {
 
 // ---------------------------------------------------------------------
 // CHECKOUT — HOTMART
-// Cada preço é uma OFERTA na Hotmart (parâmetro ?off=CODIGO).
-// [TROCAR] Criar no Hotmart:
-//   2) Oferta APP lançamento:   R$137,90
-// Enquanto o link começar com "[", o botão avisa "em configuração".
+// O link da oferta oficial do Brasil vem de config/pricing.ts
+// (CHECKOUT_BRL, off=fhrttdh8). O botão do site usa linkCheckout("br"),
+// que abre a oferta de lançamento enquanto ela vale e a oficial depois.
+// ATENCAO: se houver order bump de produto fisico configurado no painel
+// da Hotmart, ele precisa ser REMOVIDO la: o site nao controla o checkout.
 // ---------------------------------------------------------------------
 export const HOTMART = {
-  // Oferta única do APP. ATENCAO: se houver order bump de produto fisico
-  // configurado no painel da Hotmart, ele precisa ser REMOVIDO la — o site
-  // nao controla o conteudo do checkout.
-  app: "https://pay.hotmart.com/L107085210M?checkoutMode=10",
+  app: MERCADOS.br.checkout,
 };
 
 
@@ -173,21 +178,14 @@ export const LOJAS_BADGES = {
 // PLANOS
 // ---------------------------------------------------------------------
 export const PLANO_APP: Plano = {
-  id: "club",
+  id: "anual-br",
   nome: "Diariamente App",
   destaque: true,
-  precoNumero: 137.9,
-  preco: "137,90",
-  precoDe: "197",
-  precoVista: "R$ 137,90 à vista",
-  // Parcelamento confirmado por Brunno (ago/2026).
-  // 12 x 14,26 = 171,12 contra 137,90 à vista: acréscimo de R$ 33,22 (24,1%).
-  // O total precisa aparecer na página junto da parcela (CDC art. 52 e
-  // Decreto 5.903). Oferta.tsx exibe automaticamente quando estes campos existem.
-  parcela: "14,26",
-  parcelas: 12,
-  parcelaTotal: "171,12",
-  perDia: "menos de R$ 0,38 por dia",
+  // Preço CHEIO do plano BRL. O valor de lançamento (oferta própria) é
+  // escolhido na hora por precoFinal("br") em config/pricing.ts. Sem valor
+  // de parcela: a Hotmart calcula, e o site nunca escreve um número fixo.
+  precoNumero: MERCADOS.br.anual,
+  preco: semSimbolo(MERCADOS.br.anual),
   inclui: [
     "Uma provocação por dia, os 365 dias do ano",
     "Calendário de constância (acompanhe sua jornada)",
@@ -196,7 +194,7 @@ export const PLANO_APP: Plano = {
     "Lembrete diário no WhatsApp",
     "Acesso imediato por e-mail",
   ],
-  ctaLabel: "Quero meu acesso",
+  ctaLabel: MERCADOS.br.textos.botao,
   checkoutUrl: HOTMART.app,
   nota: "Acesso liberado por e-mail assim que o pagamento for confirmado.",
   rodape: "Comece hoje. Volte amanhã.",
@@ -269,9 +267,24 @@ export const TRACKING = {
 // razão social ou CNPJ à mão (testes/empresas-do-grupo.test.mjs confere).
 // Razões sociais e CNPJs copiados dos cartões CNPJ. Não inventar número
 // de documento: tem peso jurídico.
+//
+// Esta decisão substitui a de 12/10/2026 (só a Science Play Cursos nos
+// legais e só a assinatura no rodapé): os rodapés mostram o grupo
+// (RodapeDoGrupo) e a seção 1 dos Termos e da Política
+// (components/Titularidade.tsx) abre com a linha de identificação.
 // ---------------------------------------------------------------------
+// Endereço de contato do grupo: sede da Science Play Cursos e da
+// Falcão14, que processa o pagamento. Fonte única: só aqui. Se um dia
+// voltar a ter "[TROCAR" em qualquer parte, o `next build` FALHA de
+// propósito (scripts/checar-endereco.js, chamado pelo next.config.js).
+// Base legal: Decreto 7.962/2013, art. 2º (nome empresarial, CNPJ,
+// endereço físico e eletrônico). Ver o LEIA-ME.
+const ENDERECO_DA_EMPRESA = "SRTVN Quadra 702, Conjunto P, Edifício Radio Center, Asa Norte, Brasília/DF, CEP 70.719-900, Brasil";
+
 export const EMPRESA = {
   marca: "Science Play",
+  // Assinatura curta da página "Em breve" (components/EmBreve.tsx).
+  assinatura: "Diariamente App by Science Play",
   // A ordem é a da linha de identificação aprovada.
   grupo: [
     // Titular da conta de desenvolvedor da Apple (App Store).
@@ -288,14 +301,14 @@ export const EMPRESA = {
   site: "https://www.scienceplay.com",
   instagram: "scienceplay",
   linkedin: "scienceplay",
-  // Endereço de contato do grupo: sede da Science Play Cursos e da
-  // Falcão14, que processa o pagamento.
-  endereco:
-    "SRTVN Quadra 702, Conjunto P, Edifício Radio Center, Asa Norte, Brasília/DF, CEP 70.719-900, Brasil",
+  // DM_ENDERECO_TESTE só existe em build de teste (a trava recusa em
+  // produção na Vercel). Em build normal vem vazia e vale o endereço real.
+  endereco: process.env.DM_ENDERECO_TESTE || ENDERECO_DA_EMPRESA,
   // "Última atualização" dos Termos e da Política (pt e es). Mudou o texto
-  // de um deles, muda aqui: a cláusula 11 dos Termos e a seção final da
-  // Política prometem a data. Outubro de 2026: a identificação passou a
-  // ser o grupo Science Play (decisão de 26/10/2026).
+  // de um deles, muda aqui: a cláusula final dos Termos e a seção final da
+  // Política prometem a data. Outubro de 2026: aviso de cookies (Política,
+  // seção 8), garantia (Termos) e a identificação passou a ser o grupo
+  // Science Play (decisão de 26/10/2026, Termos e Política, seção 1).
   vigenciaLegal: "Outubro de 2026",
   // A mesma data nas páginas em espanhol.
   vigenciaLegalEs: "Octubre de 2026",
@@ -337,37 +350,114 @@ export function responsavelDoGrupo(lang: IdiomaLegal = "pt"): string {
 // ---------------------------------------------------------------------
 // ESTUDANTE — condição exclusiva (/estudante)
 // ---------------------------------------------------------------------
-// mostrarPreco = false  -> a página fala de "condição exclusiva" sem número.
-// mostrarPreco = true   -> a página exibe o preço abaixo. Vire a chave só
-//                          depois de a oferta de estudante existir na Hotmart.
-// A âncora riscada usa o preço PÚBLICO vigente (PLANO_APP), não o nominal,
-// para o desconto exibido ser sempre verdadeiro em relação ao que está à venda.
+// Fluxo (o original, retomado em 12/10/2026): aprovado o estudante, o
+// site cria o cupom PESSOAL dele pela API da Hotmart (lib/hotmart.js),
+// o WhatsApp leva o botão para /estudante/ativar?cupom=CODIGO, que abre
+// a oferta oficial do Brasil (CHECKOUT_BRL, R$ 149,90) com o cupom
+// aplicado, e o webhook do site apaga o cupom quando o pagamento é
+// aprovado (uso único).
+//
+// aberto       -> o fluxo do cupom pessoal está configurado na Vercel.
+//                 NÃO se edita aqui: o next.config.js calcula a cada build
+//                 (estadoDoEstudante, em scripts/checar-precos.js) e grava
+//                 DM_ESTUDANTE_ABERTO. Abre com as três: modelo v2 do
+//                 WhatsApp em WA_TEMPLATE_ESTUDANTE, HOTMART_PRODUCT_ID=7448309
+//                 e um STUDENT_DISCOUNT que dê o preço final anunciado
+//                 (R$ 89,90: STUDENT_DISCOUNT=0.40027). Fechado:
+//                 a home não leva à /estudante, a /estudante mostra a lista
+//                 de espera no lugar do formulário e a API responde 503 sem
+//                 gravar nada. O log de todo build diz o que falta.
+// mostrarPreco = false  -> a /estudante e a home falam de "condição de
+//                          estudante" sem número.
+// mostrarPreco = true   -> as duas exibem o preço abaixo.
+// O preço do estudante é FINAL (ESTUDANTE_PRECO_FINAL, config/pricing.ts):
+// R$ 89,90 por ano, e o desconto do cupom sobre o preço cheio do plano
+// (R$ 149,90, a base do cupom na Hotmart) sai dele. A comparação com o
+// preço público do dia (com ou sem lançamento) é feita na hora em
+// components/BlocoPreco.tsx.
 // ---------------------------------------------------------------------
 export const ESTUDANTE = {
-  // Ligado: a /estudante passa a exibir preço, desconto e comparativo.
-  // Vire para false se a condição ainda não existir na Hotmart: a página
-  // volta à versão sem número sem quebrar nada.
+  aberto: process.env.DM_ESTUDANTE_ABERTO === "1",
+
+  // Ligado: a /estudante e a home passam a exibir preço, desconto e
+  // comparativo. Vire para false se a condição ainda não existir na
+  // Hotmart: as duas voltam à versão sem número sem quebrar nada.
   mostrarPreco: true,
 
-  precoNumero: 77,
-  preco: "77,00",
-  parcela: "", // [CONFIRMAR na Hotmart] ex: "12x de R$ 7,58"
+  // Desconto do cupom pessoal, em fração (o STUDENT_DISCOUNT da Vercel),
+  // derivado do preço final em config/pricing.ts: 0.40027.
+  // Sem valor de parcela: a Hotmart calcula.
+  desconto: ESTUDANTE_DESCONTO,
 
-  precoDeNumero: PLANO_APP.precoNumero,
-  precoDe: PLANO_APP.preco,
+  // Se o cupom vale também nas renovações NÃO se sabe (decisão do dono,
+  // 12/10/2026, terceira rodada): o texto diz SÓ que a cobrança é anual.
+  // Nada de "no primeiro ano", "3 anos" ou "renova pelo mesmo valor".
+  cobranca: "cobrança anual",
+  periodo: "por ano · cobrança anual",
+  renovacao: "Cobrança anual. Cancele quando quiser.",
+  // Como o estudante paga: o cupom vai na oferta OFICIAL (fhrttdh8), que
+  // parcela em até 12x com acréscimo, nunca na de lançamento (só à vista).
+  // É a mesma linha da oferta oficial (MERCADOS.br.textos.pagamento), com
+  // inicial minúscula para seguir o preço: "R$ 89,90 à vista, ou em até 12x
+  // no cartão com acréscimo". Sem valor de parcela: a Hotmart calcula, e o
+  // parcelado custa mais que os R$ 89,90 e que o equivalente mensal.
+  pagamento: inicialMinuscula(MERCADOS.br.textos.pagamento),
+  precoNumero: precoEstudante(),
+  preco: semSimbolo(precoEstudante()),
+  porMes: semSimbolo(porMesEstudante()),
 
-  perDia: "menos de R$ 0,22 por dia",
+  // Preço cheio do plano, sobre o qual o cupom incide.
+  precoDeNumero: MERCADOS.br.anual,
+  precoDe: semSimbolo(MERCADOS.br.anual),
+
   selo: "Condição de estudante",
 
   // validade do código enviado por WhatsApp (espelha VALIDADE_HORAS da API)
   validadeHoras: 48,
 
-  // Tempo de espera comunicado ao estudante. O envio é SÍNCRONO: em
-  // app/api/estudante/solicitar/route.js o `await whatsapp.aprovado(...)` roda
-  // dentro da mesma requisição, antes de a resposta voltar. Estes 2 minutos são
-  // folga para atraso de entrega da Meta Cloud API, não processamento nosso.
-  esperaMinutos: 2,
+  // Tempo de espera comunicado ao estudante ("em até N minutos"). O envio
+  // é AGENDADO: app/api/estudante/solicitar/route.js grava enviar_em =
+  // agora + ESPERA_MINUTOS (5, a janela de conferência), e quem manda o
+  // WhatsApp é o cron /api/cron/manutencao, de minuto em minuto, com até
+  // MAX_TENTATIVAS (5) tentativas, uma por rodada, se a Meta recusar.
+  // 5 + 5 = 10. test/estudante.test.js confere esta conta contra os dois
+  // arquivos: mexeu na API ou no cron, ajuste aqui.
+  esperaMinutos: 10,
 
   // um código por CPF (regra aplicada na API)
   regra: "Um código por pessoa. Enviado só no WhatsApp informado.",
+};
+
+/** Período do preço de estudante no texto: "por ano · cobrança anual",
+    sem prometer duração do desconto (ESTUDANTE.periodo). */
+export function periodoEstudante(): string {
+  return ESTUDANTE.periodo;
+}
+
+// ---------------------------------------------------------------------
+// ESTUDANTE EM STANDBY · a /estudante da produção (main, 0a25ffa)
+// ---------------------------------------------------------------------
+// Com a chave de lançamento desligada (config/lancamento.ts), a
+// /estudante continua a da produção: formulário aberto, R$ 77,00 sobre
+// R$ 137,90 e o mockup Tela_HOJE do Cloudinary no hero
+// (components/estudante-atual/). Estes são os números da main, copiados
+// como estavam; só valem em standby. Ligada a chave, valem ESTUDANTE e
+// config/pricing.ts. No lançamento, este bloco e a pasta
+// components/estudante-atual podem sair.
+// ---------------------------------------------------------------------
+export const ESTUDANTE_ATUAL = {
+  precoNumero: 77,
+  preco: "77,00",
+  // A âncora da main: o preço público de então (PLANO_APP da main).
+  precoDeNumero: 137.9,
+  precoDe: "137,90",
+  perDia: "menos de R$ 0,22 por dia",
+  // PLANO_APP.perDia da main, na coluna "Quem entra hoje pelo site".
+  planoPerDia: "menos de R$ 0,38 por dia",
+  // O mockup do hero da main (SCREENSHOTS.hoje).
+  telaHoje: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664582/Tela_HOJE_Diariamente_shzi7c.png",
+  telaHojeAlt: "Tela Hoje do aplicativo Diariamente, com a provocação do dia e o progresso da sequência",
+  // Subtítulo do formulário na main (components/EstudanteForm.tsx).
+  subtituloDoFormulario:
+    "Leva cerca de um minuto. O código chega no seu WhatsApp e é aplicado no campo de cupom da tela de pagamento.",
 };

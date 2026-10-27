@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { TEASER, ATIVOS, cld, dicionario, type Lang, type Dict } from "@/lib/i18n";
+import { TEASER, ATIVOS, TELA_PROPORCAO, cld, dicionario, type Lang, type Dict } from "@/lib/i18n";
 import { caminho } from "@/lib/rotas";
+import { SITE, ESTUDANTE } from "@/config";
+import { registrarInicioDeCheckout } from "@/lib/medicao";
 import { RodapeDoGrupo } from "@/components/CnpjsDoGrupo";
 import { BlocoOferta } from "@/components/BlocoOferta";
-import { formatar, precoFinal, precoCheio, linkCheckout, precoEstudante, MERCADOS, type Mercado } from "@/config/pricing";
+import { TelaDaLoja, RAIO_DA_TELA } from "@/components/TelaDaLoja";
+import { SeletorMercado } from "@/components/SeletorMercado";
+import { HOME_DO_MERCADO, VENDAS_DO_MERCADO } from "@/lib/mercado";
+import { formatar, precoFinal, precoCheio, linkCheckout, precoEstudante, pendente, lancamentoVigente, fimDoLancamento, MERCADOS, type Mercado } from "@/config/pricing";
 
 /* ─────────────────────────────────────────────────────────────
    Home · Diariamente (redesign v3, padrão internacional PT/ES)
@@ -57,7 +62,11 @@ const CSS = `
 @media (min-width:768px){[data-steps]{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}}
 [data-tour]{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 20px 12px;margin:0 -20px;scrollbar-width:none}
 [data-tour]::-webkit-scrollbar{display:none}
-[data-tour]>*{flex:0 0 min(70vw,260px);scroll-snap-align:center}
+/* As artes das lojas (1320 x 2868) são mais altas que os mockups antigos
+   (500 x 889): 240px no celular e colunas de 260px no computador (a grade
+   na largura da página, como os cartões de cima) deixam cada tela com uns
+   520px e 565px de altura. */
+[data-tour]>*{flex:0 0 min(64vw,240px);scroll-snap-align:center}
 @media (min-width:900px){[data-tour]{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;overflow:visible;padding:0;margin:0}[data-tour]>*{flex:none}}
 [data-cols2]{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
 @media (min-width:768px){[data-cols2]{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}
@@ -114,21 +123,6 @@ const Shield = ({ s = 20 }: { s?: number }) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2l8 3.5v5.8c0 5-3.4 9.3-8 10.7-4.6-1.4-8-5.7-8-10.7V5.5L12 2z" /><path d="M9 12l2 2 4-4" /></svg>
 );
 
-function Img({ src, alt, widths, sizes, priority }: { src: string; alt: string; widths: number[]; sizes: string; priority?: boolean }) {
-  return (
-    <img
-      src={cld(src, `f_auto,q_auto,w_${widths[1] ?? widths[0]}`)}
-      srcSet={widths.map((w) => `${cld(src, `f_auto,q_auto,w_${w}`)} ${w}w`).join(", ")}
-      sizes={sizes}
-      alt={alt}
-      loading={priority ? "eager" : "lazy"}
-      // eslint-disable-next-line @next/next/no-img-element
-      decoding="async"
-      style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
-    />
-  );
-}
-
 /**
  * Home — corpo compartilhado pelas duas rotas.
  *
@@ -141,22 +135,71 @@ function Img({ src, alt, widths, sizes, priority }: { src: string; alt: string; 
  * seletor em useState, o Google via apenas portugues: a versao espanhola
  * so existia depois de um clique, e clique nenhum robo da.
  */
-export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
+/**
+ * `previa`: só nas prévias internas (/pt-pt/embreve e /es-es/embreve,
+ * noindex e fora do sitemap). Mostra o bloco de oferta do mercado mesmo
+ * com a venda fechada, para o dono revisar texto e preço antes de abrir;
+ * com a venda fechada, nenhum botão abre o pagamento.
+ *
+ * `vitrine`: o site de vendas em standby (/vendas, /vendas/es...,
+ * components/PaginaDoMercado.tsx). A página é a mesma do lançamento; só
+ * os links para outro mercado (PT | ES e o seletor de país) levam ao
+ * /vendas daquele mercado, e não à home pública, que ainda é a lista de
+ * espera.
+ */
+export function Home({ lang, mercado, momento, previa = false, vitrine = false }: { lang: Lang; mercado?: Mercado; momento?: number; previa?: boolean; vitrine?: boolean }) {
   // Mercado define moeda e checkout; idioma define o texto. São eixos
   // independentes: /pt-pt é português em euro, /es é espanhol em dólar.
   const mkt: Mercado = mercado ?? (lang === "es" ? "la" : "br");
-  // Grava a escolha explicita. O middleware so decide por Accept-Language
-  // quando este cookie NAO existe: escolha do usuario sempre vence deteccao.
+  const oferta = MERCADOS[mkt];
+  // Hora do servidor no render (components/PaginaDoMercado.tsx). O preço
+  // de lançamento é conferido contra ela no HTML e na hidratação, para os
+  // dois concordarem. Sem ela (uso avulso), vale a hora local.
+  const [agora, setAgora] = useState(() => momento ?? Date.now());
+  // O HTML da home pode ter sido gerado pouco antes do fim do lançamento e
+  // seguir no cache por até uma hora depois (revalidate de 3600 s). Depois
+  // da hidratação o navegador confere de novo: se o lançamento já acabou,
+  // preço, selo, prazo e link voltam ao cheio na hora. Quem está com a
+  // página aberta na virada da meia-noite vê a troca sem recarregar.
+  useEffect(() => {
+    if (!lancamentoVigente(mkt, agora)) return;
+    const fim = fimDoLancamento(mkt);
+    if (fim === null) return;
+    const falta = fim - Date.now();
+    if (falta <= 0) {
+      setAgora(Date.now());
+      return;
+    }
+    // setTimeout não aceita mais que ~24,8 dias; acima disso, a próxima
+    // geração da página já resolve.
+    if (falta > 2147483647) return;
+    const relogio = setTimeout(() => setAgora(Date.now()), falta + 1000);
+    return () => clearTimeout(relogio);
+  }, [mkt, agora]);
+  // Venda aberta e link de verdade. Sem isso, os botões levam ao bloco,
+  // que mostra a lista de espera do mercado. Na prévia com a venda
+  // fechada, o bloco mostra o preço, mas nenhum botão abre o pagamento.
+  const vende = oferta.vendaAberta || previa;
+  const linkFinal = linkCheckout(mkt, agora);
+  // /vendas/* em standby, antes de DM_WEBHOOK_V2_OK=1 (DM_VENDA_LIBERADA,
+  // next.config.js): o botão final fica com o mesmo texto e o mesmo visual,
+  // mas leva ao bloco de preço em vez de abrir o checkout.
+  const checkoutBloqueado = vitrine && process.env.DM_VENDA_LIBERADA !== "1";
+  const semLink = pendente(linkFinal) || !oferta.vendaAberta || checkoutBloqueado;
   // O <html lang> vive no layout raiz, que e servidor e nao conhece a
   // rota. Sincronizamos aqui: leitor de tela e buscador precisam do
   // idioma certo no elemento raiz, nao so num div interno.
   useEffect(() => {
-    document.documentElement.lang = lang === "es" ? "es" : "pt-BR";
-  }, [lang]);
+    document.documentElement.lang = oferta.locale;
+  }, [oferta.locale]);
 
-  const fixarIdioma = (l: Lang) => () => {
-    document.cookie = `dm_lang=${l};path=/;max-age=31536000;samesite=lax`;
-  };
+  // PT | ES troca o MERCADO, não só o idioma: o par de cada home. O
+  // ?mercado= grava o cookie dm_market (middleware), senão o país do IP
+  // mandaria a pessoa de volta.
+  const parPt: Mercado = mkt === "es" ? "pt" : mkt === "rw" ? "rw" : mkt === "pt" ? "pt" : "br";
+  const parEs: Mercado = mkt === "pt" || mkt === "es" ? "es" : "la";
+  // No site de vendas em standby (/vendas/*), PT | ES fica dentro de /vendas.
+  const enderecoDo = (m: Mercado) => (vitrine ? VENDAS_DO_MERCADO[m] : `/?mercado=${m}`);
 
   const [typed, setTyped] = useState("");
   const [done, setDone] = useState(false);
@@ -165,6 +208,7 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const t = dicionario(lang, mkt);
+  const ctaLabel = vende ? t.cta : oferta.espera.botao;
   // Imagens e links do idioma corrente. Trocar a foto ou a loja do site
   // espanhol nao encosta no portugues.
   const IMG = ATIVOS[lang].img;
@@ -256,12 +300,17 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
 
   const share = async () => {
     const txt = `\u201C${texto}\u201D \u00B7 Diariamente`;
-    const url = "https://diariamente.app/?utm_source=share&utm_medium=organic&utm_campaign=provocacao_do_dia";
+    const url = "https://" + SITE.dominioVisivel + "/?utm_source=share&utm_medium=organic&utm_campaign=provocacao_do_dia";
     try {
       if (navigator.share) await navigator.share({ title: "Diariamente", text: txt, url });
       else { await navigator.clipboard.writeText(`${txt} ${url}`); setCopiado(true); setTimeout(() => setCopiado(false), 2200); }
     } catch { /* cancelado */ }
   };
+
+  // InitiateCheckout no clique do botão final que abre a Hotmart (o do
+  // bloco de oferta dispara o mesmo evento). Só sai com "Aceitar".
+  const inicioDeCheckout = () =>
+    registrarInicioDeCheckout({ id: `anual-${mkt}`, nome: `Diariamente Anual · ${mkt.toUpperCase()}`, valor: precoFinal(mkt, agora), moeda: oferta.moeda });
 
   const goToOffer = () => {
     const el = document.getElementById("preco");
@@ -282,8 +331,23 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
     mainEntity: t.faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })),
   };
 
+  // Product com a oferta DESTE mercado: moeda e valor que a página mostra.
+  // Saiu do layout raiz, que é global e mandava R$ para todos os mercados.
+  // Sem venda aberta, não há oferta para declarar.
+  const produtoSchema = vende && !semLink
+    ? {
+        "@context": "https://schema.org", "@type": "Product",
+        name: "Diariamente App", brand: { "@type": "Brand", name: "Diariamente" },
+        description: SITE.descricao, image: SITE.dominio + SITE.ogImage,
+        offers: {
+          "@type": "Offer", price: precoFinal(mkt, agora).toFixed(2), priceCurrency: oferta.moeda,
+          availability: "https://schema.org/InStock", url: SITE.dominio + (HOME_DO_MERCADO[mkt] === "/" ? "" : HOME_DO_MERCADO[mkt]),
+        },
+      }
+    : null;
+
   return (
-    <div id="dm-root" lang={lang} style={{ background: C.s0, color: C.text, fontFamily: "var(--f-sans), Inter, system-ui, -apple-system, sans-serif", fontSize: 16, lineHeight: 1.6, overflowX: "clip" }}>
+    <div id="dm-root" lang={lang} style={{ background: C.s0, color: C.text, fontFamily: "var(--font-sans)", fontSize: 16, lineHeight: 1.6, overflowX: "clip" }}>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
       {/* Pular para o conteúdo. Invisível até receber foco pelo teclado. */}
@@ -291,6 +355,7 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
         {lang === "es" ? "Ir al contenido" : "Saltar para o conteúdo"}
       </a>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      {produtoSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(produtoSchema) }} />}
 
       {/* NAV */}
       <nav aria-label="Principal" style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(10,14,14,.84)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: `1px solid ${C.line}` }}>
@@ -306,10 +371,10 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
                 nova aba, e o navegador registra a escolha num cookie de um ano
                 para o middleware nao redirecionar de novo na proxima visita. */}
             <div role="group" aria-label="Idioma / Idioma" style={{ display: "inline-flex", alignItems: "center", height: 32, padding: 2, borderRadius: 999, border: "1px solid rgba(255,255,255,.12)", background: "rgba(255,255,255,.03)" }}>
-              <a href={caminho("vendas", "pt")} hrefLang="pt-BR" onClick={fixarIdioma("pt")} aria-current={lang === "pt" ? "page" : undefined} style={{ ...langBtn(lang === "pt"), textDecoration: "none" }}>PT</a>
-              <a href={caminho("vendas", "es")} hrefLang="es" onClick={fixarIdioma("es")} aria-current={lang === "es" ? "page" : undefined} style={{ ...langBtn(lang === "es"), textDecoration: "none" }}>ES</a>
+              <a href={enderecoDo(parPt)} hrefLang={MERCADOS[parPt].locale} aria-current={lang === "pt" ? "page" : undefined} style={{ ...langBtn(lang === "pt"), textDecoration: "none" }}>PT</a>
+              <a href={enderecoDo(parEs)} hrefLang={MERCADOS[parEs].locale} aria-current={lang === "es" ? "page" : undefined} style={{ ...langBtn(lang === "es"), textDecoration: "none" }}>ES</a>
             </div>
-            <a href="#preco" data-desk="1" style={{ alignItems: "center", justifyContent: "center", height: 40, padding: "0 18px", borderRadius: 999, background: C.p500, color: C.onAccent, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>{t.cta}</a>
+            <a href="#preco" data-desk="1" style={{ alignItems: "center", justifyContent: "center", height: 40, padding: "0 18px", borderRadius: 999, background: C.p500, color: C.onAccent, fontSize: 14, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>{ctaLabel}</a>
           </div>
         </div>
       </nav>
@@ -330,7 +395,7 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
               <h1 data-h1="1" style={{ fontFamily: C.serif, fontWeight: 400, fontSize: "clamp(36px,5.2vw,62px)", lineHeight: 1.04, letterSpacing: "-.018em", marginTop: 22, maxWidth: "15ch", textWrap: "balance" as never }}>{t.h1}</h1>
               <p data-lead="1" style={{ fontSize: "clamp(17px,1.5vw,19px)", lineHeight: 1.6, color: C.n300, maxWidth: "50ch", marginTop: 20, textWrap: "pretty" as never }}>{t.lead}</p>
               <div data-ctas="1" style={{ marginTop: 32 }}>
-                <a href="#preco" data-herocta="1" style={btnPrimary}>{t.cta}</a>
+                <a href="#preco" data-herocta="1" style={btnPrimary}>{ctaLabel}</a>
                 <a href="#como-funciona" style={btnGhost}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>{t.cta2}
                 </a>
@@ -520,12 +585,13 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
             <h2 style={h2}>{t.aH2}</h2>
           </div>
           <div data-tour="1">
-            {[[IMG.hoje, t.t1t, t.t1d], [IMG.dias, t.t2t, t.t2d], [IMG.acoes, t.t3t, t.t3d], [IMG.ritmo, t.t4t, t.t4d]].map(([src, title, desc]) => (
+            {/* Artes das lojas no idioma da página (lib/i18n.ts, telasDo).
+                Hoje ("a provocação do dia, limpa") é a arte da leitura em
+                modo foco; a arte Hoje, com o painel do dia, fica no fim. */}
+            {[[IMG.leitura, t.t1t, t.t1d, t.finAlt], [IMG.dias, t.t2t, t.t2d, t.t2alt], [IMG.acoes, t.t3t, t.t3d, t.t3alt], [IMG.ritmo, t.t4t, t.t4d, t.t4alt]].map(([src, title, desc, alt]) => (
               <figure key={title} style={{ margin: 0, minWidth: 0 }}>
-                <div style={{ width: "100%", aspectRatio: "1170/2532" }}>
-                  <Img src={src} alt={title} widths={[360, 560, 800]} sizes="(min-width:900px) 250px, 70vw" />
-                </div>
-                <figcaption style={{ marginTop: 12 }}>
+                <TelaDaLoja base={src} alt={alt} sizes="(min-width:900px) 260px, (min-width:375px) 240px, 64vw" />
+                <figcaption style={{ marginTop: 14 }}>
                   <div style={{ fontWeight: 600, fontSize: 17, lineHeight: 1.3, letterSpacing: "-.01em" }}>{title}</div>
                   <p style={{ margin: "4px 0 0", fontSize: 14, lineHeight: 1.55, color: C.n400 }}>{desc}</p>
                 </figcaption>
@@ -609,10 +675,10 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
           </div>
           <div data-price="1">
             <div data-area="card">
-              {/* Preço, moeda, cupom e checkout vêm de config/pricing.ts.
+              {/* Preço, moeda, oferta e checkout vêm de config/pricing.ts.
                   Antes estavam escritos aqui dentro (R$ 197, R$ 137, ,90,
                   30% OFF), o que impedia ter mercado por geografia. */}
-              <BlocoOferta mercado={mkt} />
+              <BlocoOferta mercado={mkt} momento={agora} previa={previa} vitrine={vitrine} />
             </div>
 
             <div data-area="value">
@@ -641,11 +707,15 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
                   em real. Mostrar este bloco em /es, /pt-pt ou /es-es
                   colocava "R$ 77,00" numa página de dólar e de euro, que
                   é o pior tipo de erro: preço de outra moeda na frente de
-                  quem não pode comprar naquela moeda. */}
-              {mkt === "br" && (
+                  quem não pode comprar naquela moeda.
+                  E só com o fluxo do cupom pessoal ABERTO neste build
+                  (ESTUDANTE.aberto, config.ts): fechado, o card some, para
+                  a home não levar a uma página que ainda não entrega o
+                  código. O preço segue ESTUDANTE.mostrarPreco. */}
+              {mkt === "br" && ESTUDANTE.aberto && (
               <div style={{ ...card, marginTop: 16 }}>
                 <span style={{ display: "inline-flex", alignItems: "center", height: 26, padding: "0 12px", borderRadius: 999, background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.25)", color: C.p300, fontSize: 11, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase" }}>{t.stBadge}</span>
-                <p style={{ margin: "12px 0 0", fontFamily: C.serif, fontSize: "clamp(20px,2vw,24px)", lineHeight: 1.3 }}>{t.stH.replace("{preco}", formatar("br", precoEstudante()))}</p>
+                <p style={{ margin: "12px 0 0", fontFamily: C.serif, fontSize: "clamp(20px,2vw,24px)", lineHeight: 1.3 }}>{ESTUDANTE.mostrarPreco ? t.stH.replace("{preco}", formatar("br", precoEstudante())) : t.stHSemPreco}</p>
                 <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: C.n400 }}>{t.stD}</p>
                 <a href={caminho("estudante", lang)} style={{ marginTop: 18, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, height: 48, padding: "0 22px", borderRadius: 999, border: `1.5px solid ${C.p500}`, color: C.p500, fontSize: 15, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
                   {t.stCta}
@@ -723,11 +793,27 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
           <div style={{ background: C.s1, border: `1px solid ${C.line}`, borderRadius: "16px 16px 0 0", padding: "clamp(40px,6vw,72px) clamp(20px,4vw,48px) 0", textAlign: "center", overflow: "hidden" }}>
             <p style={{ fontFamily: C.serif, fontWeight: 400, fontSize: "clamp(30px,4.4vw,50px)", lineHeight: 1.08, letterSpacing: "-.015em", margin: "0 auto", maxWidth: "22ch", textWrap: "balance" as never }}>{t.fin}</p>
             <div style={{ marginTop: 28, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-              <a href={linkCheckout(mkt)} target="_blank" rel="noopener noreferrer" style={btnPrimary}>{MERCADOS[mkt].textos.botao}</a>
-              <span style={{ fontSize: 13, fontWeight: 500, color: C.n400 }}>{t.finNote.replace("{preco}", formatar(mkt, precoFinal(mkt)))}</span>
+              {/* Mesmo link e mesmo valor do bloco de oferta (config/pricing.ts).
+                  Sem venda aberta, o botão leva à lista de espera do bloco. */}
+              {vende && !semLink ? (
+                <a href={linkFinal} target="_blank" rel="noopener noreferrer" onClick={inicioDeCheckout} style={btnPrimary}>{oferta.textos.botao}</a>
+              ) : (
+                <a href="#preco" style={btnPrimary}>{vende ? oferta.textos.botao : oferta.espera.botao}</a>
+              )}
+              <span style={{ fontSize: 13, fontWeight: 500, color: C.n400 }}>
+                {vende ? `${formatar(mkt, precoFinal(mkt, agora))} ${oferta.textos.nota}` : oferta.espera.nota}
+              </span>
             </div>
-            <div style={{ width: "min(72vw,300px)", margin: "clamp(32px,4vw,48px) auto -22%", aspectRatio: "1170/2532" }}>
-              <Img src={IMG.dias} alt="" widths={[400, 600]} sizes="(min-width:900px) 300px, 72vw" />
+            {/* A arte Hoje (Saúde mental todo dia) sobe do pé do cartão:
+                58,4% da altura. O corte cai no vão entre o aviso "Semana
+                passada" e o cartão da semana (y 1662 a 1686 de 2868, em pt
+                e es), sem cortar texto. */}
+            <div style={{ width: "min(64vw,260px)", margin: "clamp(32px,4vw,48px) auto 0" }}>
+              <div style={{ position: "relative", paddingTop: `${(58.4 * TELA_PROPORCAO.altura) / TELA_PROPORCAO.largura}%`, overflow: "hidden", borderRadius: `${RAIO_DA_TELA}px ${RAIO_DA_TELA}px 0 0` }}>
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0 }}>
+                  <TelaDaLoja base={IMG.hoje} alt={t.t1alt} sizes="(min-width:407px) 260px, 64vw" style={{ boxShadow: "0 0 0 1px rgba(255,255,255,.07)" }} />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -745,34 +831,8 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
               <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.n400, maxWidth: "38ch" }}>{t.ftTag}</p>
             </div>
             {/* SELETOR DE MERCADO · ?mercado=xx grava o cookie dm_market
-                (180 dias) e vence a geolocalização. É a saída para quem
-                mora fora do país que o IP indica, e para quem quer ver
-                a oferta de outro mercado. */}
-            <nav aria-label="Mercado" style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
-              <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: C.p500, marginBottom: 4 }}>
-                {lang === "es" ? "País" : "País"}
-              </span>
-              {([
-                ["br", "Brasil"],
-                ["pt", "Portugal"],
-                ["es", "España"],
-                ["la", "América Latina"],
-              ] as const).map(([cod, nome]) => (
-                <a
-                  key={cod}
-                  href={`/?mercado=${cod}`}
-                  aria-current={mkt === cod ? "true" : undefined}
-                  style={{
-                    fontSize: 15, textDecoration: "none", minHeight: 28,
-                    display: "inline-flex", alignItems: "center",
-                    color: mkt === cod ? C.p500 : C.n300,
-                    fontWeight: mkt === cod ? 600 : 400,
-                  }}
-                >
-                  {nome}
-                </a>
-              ))}
-            </nav>
+                (180 dias) e vence a geolocalização (components/SeletorMercado.tsx). */}
+            <SeletorMercado atual={mkt} titulo="País" vitrine={vitrine} />
 
             <nav aria-label={t.ftInst} style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
               <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: C.p500, marginBottom: 4 }}>{t.ftInst}</span>
@@ -784,7 +844,7 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
               <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: C.p500, marginBottom: 4 }}>{t.ftTalk}</span>
               <a href={LINKS.suporte} style={{ fontSize: 15, color: C.n300, textDecoration: "none", minHeight: 28, display: "inline-flex", alignItems: "center" }}>{t.ftSupport}</a>
               <a href={LINKS.contato} style={{ fontSize: 15, color: C.n300, textDecoration: "none", minHeight: 28, display: "inline-flex", alignItems: "center" }}>{t.ftContact}</a>
-              <a href={LINKS.instagram} target="_blank" rel="noopener noreferrer" style={{ fontSize: 15, color: C.n300, textDecoration: "none", minHeight: 28, display: "inline-flex", alignItems: "center" }}>@diariamente.app</a>
+              <a href={LINKS.instagram} target="_blank" rel="noopener noreferrer" style={{ fontSize: 15, color: C.n300, textDecoration: "none", minHeight: 28, display: "inline-flex", alignItems: "center" }}>@{SITE.instagram}</a>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
               <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: C.p500, marginBottom: 4 }}>{t.ftApp}</span>
@@ -794,7 +854,12 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
           </div>
           <hr style={{ height: 1, border: 0, background: C.line, margin: "clamp(32px,5vw,44px) 0 20px" }} />
           <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "12px 24px" }}>
-            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.n400 }}>© 2026 <RodapeDoGrupo lang={lang} /> · diariamente.app</p>
+            {/* Rodapé com a linha curta do grupo Science Play (decisão de
+                26/10/2026). Razão social e endereço (Decreto 7.962/2013,
+                art. 2º) ficam nos Termos e na Política, a um clique daqui. */}
+            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.n400 }}>
+              © {new Date(agora).getFullYear()} <RodapeDoGrupo lang={lang} /> · {SITE.dominioVisivel}
+            </p>
             <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
               {[.3, .4, .5, .6, .75, .9].map((o, i) => <i key={i} style={{ display: "block", width: 10, height: 4, borderRadius: 999, background: C.p500, opacity: o }} />)}
               <i style={{ display: "block", width: 22, height: 4, borderRadius: 999, background: C.p500 }} />
@@ -808,19 +873,27 @@ export function Home({ lang, mercado }: { lang: Lang; mercado?: Mercado }) {
         <div style={{ maxWidth: 1160, margin: "0 auto", padding: "0 20px", display: "flex", alignItems: "center", gap: 14 }}>
           <div style={{ minWidth: 0 }}>
             {/* Barra fixa: mesma fonte de verdade do bloco de oferta.
-                Era o último lugar com preço escrito à mão, e por isso
-                /pt-pt e /es-es ainda mostravam R$ 197 e R$ 137,90. */}
-            <div style={{ fontFamily: C.serif, fontSize: 20, lineHeight: 1 }}>
-              {precoCheio(mkt) && (
-                <s style={{ fontSize: 13, color: C.n400, fontFamily: "var(--f-sans), Inter, system-ui, sans-serif", marginRight: 6 }}>
-                  {precoCheio(mkt)}
-                </s>
-              )}
-              {formatar(mkt, precoFinal(mkt))}
-            </div>
-            <div style={{ marginTop: 4, fontSize: 12, fontWeight: 500, color: C.n400, whiteSpace: "nowrap" }}>{t.stickyNote}</div>
+                Sem venda aberta, nenhum preço: só o aviso da lista. */}
+            {vende ? (
+              <>
+                <div style={{ fontFamily: C.serif, fontSize: 20, lineHeight: 1 }}>
+                  {precoCheio(mkt, agora) && (
+                    <s style={{ fontSize: 13, color: C.n400, fontFamily: "var(--font-sans)", marginRight: 6 }}>
+                      {precoCheio(mkt, agora)}
+                    </s>
+                  )}
+                  {formatar(mkt, precoFinal(mkt, agora))}
+                </div>
+                <div style={{ marginTop: 4, fontSize: 12, fontWeight: 500, color: C.n400, whiteSpace: "nowrap" }}>{t.stickyNote}</div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontFamily: C.serif, fontSize: 18, lineHeight: 1.1 }}>{oferta.espera.selo}</div>
+                <div style={{ marginTop: 4, fontSize: 12, fontWeight: 500, color: C.n400, whiteSpace: "nowrap" }}>{oferta.espera.nota}</div>
+              </>
+            )}
           </div>
-          <button type="button" tabIndex={sticky ? 0 : -1} onClick={goToOffer} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", height: 48, padding: "0 18px", borderRadius: 999, border: "none", background: C.p500, color: C.onAccent, fontFamily: "inherit", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>{t.cta}</button>
+          <button type="button" tabIndex={sticky ? 0 : -1} onClick={goToOffer} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", height: 48, padding: "0 18px", borderRadius: 999, border: "none", background: C.p500, color: C.onAccent, fontFamily: "inherit", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>{ctaLabel}</button>
         </div>
       </div>
     </div>

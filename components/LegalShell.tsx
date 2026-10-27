@@ -6,7 +6,13 @@ import { caminho } from "@/lib/rotas";
 
 /* Shell das páginas legais, agora ciente do idioma.
    O "Voltar" e o logotipo levam para a home DO MESMO IDIOMA: um leitor
-   espanhol que clica em voltar não pode cair no site em português. */
+   espanhol que clica em voltar não pode cair no site em português.
+
+   A identificação completa do grupo Science Play (razão social e CNPJ
+   de cada empresa, endereço e contatos, Decreto 7.962/2013, art. 2º) mora
+   no CORPO dos Termos e da Política, na seção 1 de cada um
+   (components/Titularidade.tsx). Abaixo do texto, a linha curta do grupo
+   (RodapeDoGrupo), como nos outros rodapés (decisão de 26/10/2026). */
 
 const T = {
   pt: { voltar: "← Voltar", atualizado: "Última atualização:" },

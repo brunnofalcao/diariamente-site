@@ -58,6 +58,14 @@ export const I18N = {
     t2t: "Dias", t2d: "Os dias em que você veio. E os que não veio, sem alarme e sem culpa.",
     t3t: "Ações", t3d: "A reflexão vira tarefa concreta. Pensar vira fazer.",
     t4t: "Ritmo", t4d: "Suas voltas acumuladas e o lembrete diário no WhatsApp.",
+    // Texto alternativo das telas da seção "O app" e do fim da página: as
+    // artes da App Store (telasDo, mais abaixo). Primeiro a legenda que está
+    // desenhada na arte, depois o texto alternativo da loja.
+    t1alt: "Saúde mental todo dia. Três minutos para ler, refletir e agir. Tela Hoje do Diariamente com a data, o anel Seu dia e a provocação do dia.",
+    t2alt: "Seu ano em leituras. Dias lidos, favoritos e dias para recuperar. Calendário Dias com os dias lidos, recuperados e os favoritos.",
+    t3alt: "Da reflexão à ação. Escolha um passo possível para fazer ainda hoje. Cartão Sua vez com uma ação escrita, a opção Vou fazer marcada e o dia Hoje escolhido.",
+    t4alt: "Constância sem culpa. Voltas que nunca zeram e uma meta que você escolhe. Tela Ritmo com voltas acumuladas, semanas em ritmo e a meta da semana.",
+    finAlt: "Uma provocação por dia. Uma citação, uma pergunta e um texto curto para refletir. Leitura em modo foco com a citação, a pergunta do dia e o texto de reflexão.",
     oneH: "Um dia por vez. De propósito.",
     oneP1: "Quando dá para consumir tudo de uma vez, o domingo de empolgação come o ano inteiro e a segunda-feira fica sem nada. Aqui você tem o dia de hoje. Inteiro, sem pressa de terminar.",
     oneP2: "São 365 textos por ano, um para cada dia. No ano seguinte, na mesma data, um texto novo.",
@@ -81,10 +89,6 @@ export const I18N = {
     no: ["Procura solução mágica da noite pro dia", "Não está disposto a três minutos por dia", "Quer só mais um PDF pra estante digital"],
     prEyebrow: "Acesso anual", prH2: "Comece hoje. Volte amanhã.",
     prSub: "Menos que um café por semana, por um ano inteiro de prática.",
-    prCond: "Condição de lançamento", prName: "Diariamente App · 1 ano", prSave: "você economiza R$ 59,10",
-    prTerms: "à vista · ou 12x de R$ 14,26 no cartão (total R$ 171,12)", prDay: "menos de R$ 0,38 por dia",
-    prNote: "Acesso liberado por e-mail assim que o pagamento for confirmado. Condição válida no mês de lançamento.",
-    prT1: "Garantia incondicional de 7 dias", prT2: "Pagamento seguro via Hotmart · Pix, cartão ou boleto", prT3: "iPhone e Android, o mesmo acesso nos dois",
     vaEyebrow: "O que entra no seu acesso", vaH3: "Um sistema, não um arquivo que você baixa e esquece.",
     v1t: "Uma provocação por dia, os 365 dias do ano", v1d: "Sem antecipar e sem acumular. Três minutos e o dia está cumprido.",
     v2t: "Calendário de constância", v2d: "Os dias em que você veio ficam visíveis. Você para de achar e passa a saber.",
@@ -95,6 +99,7 @@ export const I18N = {
     gT: "Garantia de 7 dias",
     gD: "Você tem 7 dias para experimentar. Se sentir que o Diariamente não é pra você, devolvemos o seu investimento. Sem letra miúda.",
     stBadge: "Condição de estudante", stH: "Ainda está na graduação? O mesmo acesso de um ano por {preco}.",
+    stHSemPreco: "Ainda está na graduação? O mesmo acesso de um ano, com condição de estudante.",
     stD: "Leva cerca de um minuto. O código chega no WhatsApp. Solicitar não gera compromisso.", stCta: "Ver minha condição",
     afEyebrow: "Sem mistério", afH2: "O que acontece depois",
     after: [
@@ -157,6 +162,11 @@ export const I18N = {
     t2t: "Días", t2d: "Los días en que viniste. Y los que no, sin alarma y sin culpa.",
     t3t: "Acciones", t3d: "La reflexión se vuelve tarea concreta. Pensar se vuelve hacer.",
     t4t: "Ritmo", t4d: "Tus regresos acumulados y el recordatorio diario por WhatsApp.",
+    t1alt: "Salud mental cada día. Tres minutos para leer, reflexionar y actuar. Pantalla Hoy de Diariamente con la fecha, el anillo Tu día y la provocación del día.",
+    t2alt: "Tu año en lecturas. Días leídos, favoritos y días para recuperar. Calendario Días con los días leídos, recuperados y los favoritos.",
+    t3alt: "De la decisión al hecho. Todo lo que salió de la lectura y se volvió decisión. Centro de acciones con las acciones pendientes, las hechas y los recordatorios.",
+    t4alt: "Constancia sin culpa. Vueltas que nunca vuelven a cero y una meta a tu medida. Pantalla Ritmo con vueltas acumuladas, semanas en ritmo y la meta de la semana.",
+    finAlt: "Una provocación al día. Una cita, una pregunta y un texto breve para reflexionar. Lectura en modo enfoque con la cita, la pregunta del día y el texto de reflexión.",
     oneH: "Un día a la vez. A propósito.",
     oneP1: "Cuando se puede consumir todo de una vez, el domingo de entusiasmo se come el año entero y el lunes queda vacío. Aquí tienes el día de hoy. Entero, sin prisa por terminar.",
     oneP2: "Son 365 textos al año, uno para cada día. Al año siguiente, en la misma fecha, un texto nuevo.",
@@ -180,10 +190,6 @@ export const I18N = {
     no: ["Buscas una solución mágica de la noche a la mañana", "No estás dispuesto a tres minutos al día", "Solo quieres otro PDF para la estantería digital"],
     prEyebrow: "Acceso anual", prH2: "Empieza hoy. Vuelve mañana.",
     prSub: "Menos que un café a la semana, por un año entero de práctica.",
-    prCond: "Condición de lanzamiento", prName: "Diariamente App · 1 año", prSave: "ahorras R$ 59,10",
-    prTerms: "pago único · o 12 cuotas de R$ 14,26 con tarjeta (total R$ 171,12)", prDay: "menos de R$ 0,38 al día",
-    prNote: "Acceso liberado por e-mail en cuanto se confirme el pago. Condición válida en el mes de lanzamiento.",
-    prT1: "Garantía incondicional de 7 días", prT2: "Pago seguro vía Hotmart · tarjeta o Pix", prT3: "iPhone y Android, el mismo acceso en ambos",
     vaEyebrow: "Qué incluye tu acceso", vaH3: "Un sistema, no un archivo que descargas y olvidas.",
     v1t: "Una provocación al día, los 365 días del año", v1d: "Sin anticipar y sin acumular. Tres minutos y el día está cumplido.",
     v2t: "Calendario de constancia", v2d: "Los días en que viniste quedan visibles. Dejas de suponer y pasas a saber.",
@@ -194,6 +200,7 @@ export const I18N = {
     gT: "Garantía de 7 días",
     gD: "Tienes 7 días para probar. Si sientes que Diariamente no es para ti, te devolvemos tu inversión. Sin letra pequeña.",
     stBadge: "Condición de estudiante", stH: "¿Sigues en la universidad? El mismo acceso de un año por {preco}.",
+    stHSemPreco: "¿Sigues en la universidad? El mismo acceso de un año, con condición de estudiante.",
     stD: "Toma cerca de un minuto. El código llega por WhatsApp. Solicitar no genera compromiso.", stCta: "Ver mi condición",
     afEyebrow: "Sin misterio", afH2: "Qué pasa después",
     after: [
@@ -235,32 +242,64 @@ export function cld(url: string, tx: string): string {
    Cada idioma tem o SEU conjunto de imagens e links. Trocar a foto, a
    ficha da loja ou o checkout do site espanhol nao encosta no portugues.
 
-   Hoje o espanhol aponta para os mesmos arquivos do portugues: e o
-   estado de partida, nao a intencao final. Conforme forem produzidos os
-   prints com a interface em espanhol, a foto de estilo de vida e a
-   oferta em outra moeda, basta trocar AQUI, no bloco `es`.
+   As telas do app ja tem a versao em espanhol (as mesmas das lojas). A
+   foto de estilo de vida e o badge da Google Play ainda sao os do
+   portugues: quando houver a versao em espanhol, basta trocar AQUI, no
+   bloco `es`.
 
    ATENCAO nos links de loja:
      - `appStore` termina em /br/ no portugues. Para o espanhol, troque
        pelo mercado certo (/es/, /mx/, /ar/...), ou o usuario cai numa
        ficha em portugues.
      - `googlePlay` aceita &hl=es para a ficha sair traduzida.
-     - `checkout` provavelmente precisa de OUTRA oferta na Hotmart, em
-       moeda local. Enquanto for a mesma, o espanhol paga em real.
+     - checkout NAO mora aqui: o link de cada mercado (moeda, oferta e
+       lancamento) esta em config/pricing.ts.
    ===================================================================== */
 
+/* TELAS DO APP · as artes das lojas
+   ---------------------------------------------------------------------
+   As artes da App Store de iPhone 6,9" (1320 x 2868: fundo, legenda e o
+   aparelho com a tela), as mesmas enviadas às lojas em 26/10/2026, uma
+   pasta por idioma: public/telas/pt e public/telas/es. Portugal e o resto
+   do mundo usam as pt; a América Latina e a Espanha, as es.
+
+   Tela do site   arte da loja (pt)     arte da loja (es)
+   hoje           01-hoje               01-hoje      (fim da página)
+   dias           07-dias               07-dias
+   acoes          03-acao (Sua vez)     08-acoes (Centro de ações)
+   ritmo          06-ritmo              06-ritmo
+   leitura        02-leitura            02-leitura   (tour, no "Hoje")
+
+   Na seção "O app" (components/Home.tsx), o item Hoje ("A provocação do
+   dia, limpa") mostra a 02-leitura, a provocação em modo foco; a 01-hoje,
+   com o painel do dia, fica no fim da página. A /estudante usa a 01-hoje.
+
+   Cada tela existe em WebP nas três larguras de TELA_LARGURAS e em JPEG na
+   largura TELA_FALLBACK, para o navegador que não abre WebP (Safari 13 e
+   anteriores): <base>-<largura>.webp e <base>-<TELA_FALLBACK>.jpg. Aqui
+   fica só a base; o <picture> está em components/TelaDaLoja.tsx.
+   Trocar uma tela: gerar os quatro arquivos com o mesmo nome. */
+export const TELA_LARGURAS = [360, 560, 840] as const;
+/** Largura do JPEG de reserva (navegador sem WebP). */
+export const TELA_FALLBACK = 560;
+/** Proporção das artes (largura e altura em pixels). */
+export const TELA_PROPORCAO = { largura: 1320, altura: 2868 } as const;
+const telasDo = (lang: Lang) => ({
+  hoje: `/telas/${lang}/hoje`,
+  dias: `/telas/${lang}/dias`,
+  acoes: `/telas/${lang}/acoes`,
+  ritmo: `/telas/${lang}/ritmo`,
+  leitura: `/telas/${lang}/leitura`,
+});
+
 const IMG_PT = {
-  hoje: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664582/Tela_HOJE_Diariamente_shzi7c.png",
-  dias: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664583/Tela_DIAS_Diariamente_i4dpih.png",
-  acoes: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664582/Tela_ACOES_Diariamente_nr8gwf.png",
-  ritmo: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782664581/Tela_RITMO_Diariamente_mz9efm.png",
+  ...telasDo("pt"),
   lifestyle: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1782699619/Lifestyle_Diariamente_yur3mm.png",
   appStore: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1783609634/Apple_Store_Branca_usar_no_fundo_escuro_tp7rgw.svg",
   googlePlay: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1783609634/GetItOnGooglePlay_Badge_Web_color_Portuguese-Brazil_rl6hba.svg",
 };
 
 const LINKS_PT = {
-  checkout: "https://pay.hotmart.com/L107085210M?checkoutMode=10",
   appStore: "https://apps.apple.com/br/app/diariamente/id6762151251",
   googlePlay: "https://play.google.com/store/apps/details?id=club.diariamente.app",
   instagram: "https://instagram.com/diariamente",
@@ -273,7 +312,8 @@ export const ATIVOS: Record<Lang, { img: typeof IMG_PT; links: typeof LINKS_PT }
   es: {
     img: {
       ...IMG_PT,
-      // [TROCAR] prints com a interface em espanhol
+      // Artes das lojas em espanhol (interface e legenda em espanhol).
+      ...telasDo("es"),
       // [TROCAR] badge da Google Play em espanhol
     },
     links: {
@@ -348,6 +388,10 @@ const PT_PT: Record<string, unknown> = {
   t1d: "A provocação do dia, limpa. Nada compete pela tua atenção.",
   t2d: "Os dias em que vieste. E aqueles em que não vieste, sem alarme e sem culpa.",
   t4d: "As tuas voltas acumuladas e o lembrete diário no WhatsApp.",
+  // Portugal usa as artes em português do Brasil: a legenda vai como está
+  // desenhada na arte; a descrição da tela diz ecrã.
+  t1alt: "Saúde mental todo dia. Três minutos para ler, refletir e agir. Ecrã Hoje do Diariamente com a data, o anel Seu dia e a provocação do dia.",
+  t4alt: "Constância sem culpa. Voltas que nunca zeram e uma meta que você escolhe. Ecrã Ritmo com voltas acumuladas, semanas em ritmo e a meta da semana.",
   oneP1: "Quando dá para consumir tudo de uma vez, o domingo de entusiasmo come o ano inteiro e a segunda-feira fica sem nada. Aqui tens o dia de hoje. Inteiro, sem pressa de terminar.",
   oneStrong: "O Diariamente é diário. Tu não precisas de ser.",
   scP2: "As referências sustentam afirmações sobre o fenómeno, não sobre o produto. Não existe número mágico de dias, e ninguém pode prometer prazos. O Diariamente não trata, não diagnostica e não substitui acompanhamento profissional.",

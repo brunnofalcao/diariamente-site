@@ -1,4 +1,5 @@
-import { EMPRESA, GARANTIA } from "@/config";
+import { EMPRESA, GARANTIA, ESTUDANTE } from "@/config";
+import { SITE_LANCADO } from "@/config/lancamento";
 import { LockupHorizontal } from "@/components/Brand";
 import { metadataDaPagina } from "@/lib/seo";
 import { caminho } from "@/lib/rotas";
@@ -54,7 +55,7 @@ export default function Estudiantes() {
           <p className="lead" style={{ maxWidth: "52ch", marginBottom: "var(--sp8)" }}>
             Nada se recorta de tu versión. Es la aplicación completa, con los 365 textos, el
             contador de vueltas, el menú Acciones y el recordatorio diario. Lo que cambia es
-            cuánto pagas por ella mientras estás cursando.
+            el precio de entrada.
           </p>
 
           <div className="sobre-corpo" style={{ marginBottom: "var(--sp10)" }}>
@@ -71,13 +72,21 @@ export default function Estudiantes() {
 
           <FormularioGlobal lang="es" />
 
+          {/* Só com o fluxo do cupom pessoal aberto neste build
+              (ESTUDANTE.aberto, config.ts), ou em standby (chave de
+              lançamento desligada, config/lancamento.ts), quando a
+              /estudante é a da produção, com o formulário aberto. O código
+              sai pelo cron, minutos depois do pedido: "inmediato" não era
+              verdade. */}
+          {(ESTUDANTE.aberto || !SITE_LANCADO) && (
           <p className="caption" style={{ marginTop: "var(--sp8)", color: "var(--n-500)" }}>
             ¿Estudias en Brasil?{" "}
             <a href={caminho("estudante", "pt")} className="teal" hrefLang="pt-BR">
               Solicita tu código aquí
             </a>
-            , el proceso es inmediato.
+            ; llega por WhatsApp en unos minutos.
           </p>
+          )}
 
           <p className="caption" style={{ marginTop: "var(--sp4)", color: "var(--n-500)" }}>
             Responsable del tratamiento: {EMPRESA.marca}®, a través de las empresas del grupo{" "}

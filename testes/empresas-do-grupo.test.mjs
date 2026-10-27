@@ -44,8 +44,12 @@ for (const [nome, cnpj] of ESPERADO) {
 }
 
 test("EMPRESA.endereco está preenchido (não é nota interna)", () => {
-  const m = config.match(/endereco:\s*"([^"]*)"/);
-  assert.ok(m, "endereco não encontrado no config.ts");
+  // O endereço mora na constante ENDERECO_DA_EMPRESA (a trava de
+  // scripts/checar-endereco.js lê a mesma constante) e o EMPRESA.endereco
+  // aponta para ela.
+  assert.match(config, /endereco:\s*process\.env\.DM_ENDERECO_TESTE\s*\|\|\s*ENDERECO_DA_EMPRESA/);
+  const m = config.match(/const\s+ENDERECO_DA_EMPRESA\s*=\s*"([^"]*)"/);
+  assert.ok(m, "ENDERECO_DA_EMPRESA não encontrado no config.ts");
   assert.ok(!m[1].startsWith("["), m[1]);
 });
 

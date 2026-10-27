@@ -1,24 +1,23 @@
-import { EmBreve } from "@/components/EmBreve";
+import { PaginaDoMercado } from "@/components/PaginaDoMercado";
 import { metadataDoMercado } from "@/lib/seo";
 
 /* =====================================================================
-   /pt-pt · HOME DE PORTUGAL · lista de espera
+   /pt-pt · HOME DE PORTUGAL (mercado pt, plano em euro)
    ---------------------------------------------------------------------
-   Esta é home PÚBLICA. Enquanto o site estiver oculto, ela mostra a
-   lista de espera, igual a "/" e "/es". O middleware manda todo
-   visitante de Portugal para cá: se renderizasse o site de vendas, ele
-   estaria no ar para o país inteiro.
-
-   A prévia do site de vendas com a oferta em euro vive em
-   /pt-pt/embreve, com noindex.
-
-   NA VIRADA, troque as duas linhas por:
-     import { Home } from "@/components/Home";
-     export default function PaginaPt() { return <Home lang="pt" mercado="pt" />; }
+   A mesma página de "/", com o dicionário pt-PT e o mercado pt. Enquanto
+   o plano EUR não existir na Hotmart, o bloco de oferta é a lista de
+   espera de Portugal, sem preço. Para abrir a venda: em
+   config/pricing.ts, mercado pt, vendaAberta: true (a trava do build
+   exige o link do plano EUR). Para revisar o bloco de 29,99 € antes
+   disso: /pt-pt/embreve (prévia noindex, com a chave de lançamento
+   ligada). Em standby (config/lancamento.ts), é a lista de espera de
+   qualquer jeito; o que vai ao ar: /vendas/pt-pt.
    ===================================================================== */
+
+export const revalidate = 3600;
 
 export const metadata = metadataDoMercado("pt");
 
 export default function PaginaPt() {
-  return <EmBreve lang="pt" />;
+  return <PaginaDoMercado mercado="pt" />;
 }

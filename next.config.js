@@ -31,6 +31,12 @@ const CABECALHOS_DE_PROTECAO = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Endereço fictício SÓ para teste (ver scripts/checar-endereco.js). O
+  // `env` do Next grava o valor no servidor e no navegador no momento do
+  // build; vazio, o config.ts usa ENDERECO_DA_EMPRESA.
+  env: {
+    DM_ENDERECO_TESTE: (process.env.DM_ENDERECO_TESTE || "").trim(),
+  },
   images: {
     remotePatterns: [
       // Só a conta do Diariamente: sem isto, qualquer conta do Cloudinary podia usar o
@@ -43,8 +49,89 @@ const nextConfig = {
   // entraria no próximo `git add .` do repositório público.
   agentRules: false,
   async headers() {
-    return [{ source: "/:path*", headers: CABECALHOS_DE_PROTECAO }];
+    return [
+      { source: "/:path*", headers: CABECALHOS_DE_PROTECAO },
+      // Site de vendas em standby: além do <meta robots> da página
+      // (lib/seo.ts, metadataDaVitrine), o cabeçalho, que vale também para
+      // o que não é HTML. Ligada a chave de lançamento, estes endereços só
+      // redirecionam para as homes.
+      { source: "/vendas", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+      { source: "/vendas/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+    ];
   },
 };
 
-module.exports = nextConfig;
+/* =====================================================================
+   TRAVAS DE PUBLICAÇÃO: ENDEREÇO DA EMPRESA E PREÇOS
+   ---------------------------------------------------------------------
+   `next build` para com uma mensagem clara enquanto:
+     - ENDERECO_DA_EMPRESA, em config.ts, ainda tiver o marcador "[TROCAR"
+       (scripts/checar-endereco.js);
+     - config/pricing.ts não tiver o link da oferta oficial do Brasil, o
+       link e a data da oferta de lançamento, ou tiver um mercado com
+       venda aberta sem link; ou, em build de produção da Vercel com venda
+       aberta, faltar DM_WEBHOOK_V2_OK=1 (scripts/checar-precos.js).
+   Em `next dev` e `next start` só avisa no terminal, para não travar o
+   trabalho local. DM_ENDERECO_TESTE libera as duas para teste e é
+   recusada em produção na Vercel.
+
+   CHAVE DE LANÇAMENTO: DM_SITE_LANCADO (config/lancamento.ts). Gravada
+   aqui, a cada build, pelo `env` do Next: "1" só se a variável da Vercel
+   for exatamente "1"; qualquer outra coisa é standby (vazio). Em standby,
+   a trava de preços e a do webhook (DM_WEBHOOK_V2_OK) só avisam
+   (scripts/checar-precos.js, emStandby); ligada, voltam a parar o build
+   de produção. A trava do endereço vale nos dois estados.
+
+   CHAVE DO ESTUDANTE: DM_ESTUDANTE_ABERTO é CALCULADA aqui, a cada
+   build, a partir das variáveis da Vercel (estadoDoEstudante, em
+   scripts/checar-precos.js), e gravada pelo `env` do Next no servidor e
+   no navegador. Não se põe à mão: o valor da Vercel é sobrescrito. "1"
+   abre o fluxo do cupom pessoal; vazio o fecha (home sem link para a
+   /estudante, lista de espera no lugar do formulário, API em 503). Só
+   vale "1" com a chave de lançamento ligada: em standby a /estudante é
+   a da produção (app/estudante/page.tsx) e o fluxo novo não abre.
+
+   VENDA LIBERADA: DM_VENDA_LIBERADA, também calculada aqui. "1" com a
+   chave de lançamento ligada ou com DM_WEBHOOK_V2_OK=1. Vazia, os botões
+   do site de vendas em standby (/vendas/*) ficam com o mesmo texto e o
+   mesmo visual, mas levam ao bloco de preço em vez de abrir o checkout:
+   quem pagasse antes do webhook do app ficaria sem conta.
+   ===================================================================== */
+const { PHASE_PRODUCTION_BUILD } = require("next/constants");
+const { checarEnderecoDoProjeto } = require("./scripts/checar-endereco");
+const { checarPrecosDoProjeto, estudanteDoProjeto, siteLancado } = require("./scripts/checar-precos");
+
+module.exports = (phase) => {
+  const travas = [
+    ["Endereço da empresa pendente em config.ts (ENDERECO_DA_EMPRESA).", checarEnderecoDoProjeto(process.env)],
+    ["Preço ou checkout pendente em config/pricing.ts, ou confirmação do webhook (DM_WEBHOOK_V2_OK) pendente na Vercel.", checarPrecosDoProjeto(process.env)],
+  ];
+  // As duas travas falam antes de parar: quem lê o log vê tudo o que
+  // falta de uma vez, não uma pendência por build.
+  const bloqueios = [];
+  for (const [erro, r] of travas) {
+    if (!r.ok) {
+      if (phase === PHASE_PRODUCTION_BUILD) {
+        console.error("\n[diariamente] BUILD BLOQUEADO: " + r.mensagem + "\n");
+        bloqueios.push(erro);
+      } else {
+        console.warn("\n[diariamente] Aviso: " + r.mensagem + "\n");
+      }
+    } else if (r.teste || r.mensagem) {
+      console.warn("\n[diariamente] Aviso: " + r.mensagem + "\n");
+    }
+  }
+  if (bloqueios.length) throw new Error(bloqueios.join(" "));
+  const estudante = estudanteDoProjeto(process.env);
+  const lancado = siteLancado(process.env);
+  const webhookOk = String(process.env.DM_WEBHOOK_V2_OK || "").trim() === "1";
+  return {
+    ...nextConfig,
+    env: {
+      ...nextConfig.env,
+      DM_ESTUDANTE_ABERTO: lancado && estudante.aberto ? "1" : "",
+      DM_SITE_LANCADO: lancado ? "1" : "",
+      DM_VENDA_LIBERADA: lancado || webhookOk ? "1" : "",
+    },
+  };
+};
