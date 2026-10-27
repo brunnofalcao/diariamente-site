@@ -50,8 +50,13 @@ export default function Privacidade() {
         &ldquo;controladora&rdquo; na LGPD). O Diariamente é um produto operado por ela.
       </p>
       <p>
-        Endereço: {EMPRESA.endereco}
-        <br />
+        {/* Endereço ainda não confirmado (config.ts): a linha some em vez de mostrar a nota interna. */}
+        {!EMPRESA.endereco.startsWith("[") && (
+          <>
+            Endereço: {EMPRESA.endereco}
+            <br />
+          </>
+        )}
         Contato para assuntos de privacidade:{" "}
         <a href={`mailto:${EMPRESA.suporteEmail}`}>{EMPRESA.suporteEmail}</a>
       </p>
