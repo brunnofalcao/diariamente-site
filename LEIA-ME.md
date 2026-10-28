@@ -18,11 +18,13 @@
 > passo (a) abaixo. Tudo em **`docs/LANCAMENTO.md`**. A tabela e o quadro
 > abaixo descrevem o site com a chave LIGADA.
 
-> **Pós-pagamento por idioma (28/10/2026).** As três URLs de obrigado que
-> vão na Hotmart (sem prefixo) levam cada pessoa ao seu idioma (`/es/...`,
-> `/es-es/...`, `/pt-pt/...`), com a loja certa pelo aparelho, o QR code
-> no computador e o `/baixar` que manda o celular direto para a loja.
-> Passo a passo, regras e testes em **`docs/POS-PAGAMENTO.md`**.
+> **Pós-pagamento em português e espanhol (28/10/2026).** As três URLs de
+> obrigado que vão na Hotmart (sem prefixo, em pt-BR) levam quem é de
+> espanhol às rotas em espanhol (`/es/gracias-aprobado`,
+> `/es/gracias-pago-pendiente`, `/es/gracias-en-analisis`), com a loja
+> certa pelo aparelho, o QR code no computador e o `/baixar` (e
+> `/es/descargar`) que manda o celular direto para a loja. Passo a passo,
+> regras e testes em **`docs/POS-PAGAMENTO.md`**.
 
 > **Lançamento do Brasil e mercados (out/2026, branch `claude/site-lancamento`, PR #3).**
 > O que vale é esta caixa; o resto do arquivo é o histórico das entregas
