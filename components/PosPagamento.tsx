@@ -4,7 +4,7 @@ import { ATENDIMENTO, linkDoAtendimento } from "@/config/atendimento";
 import { OfficialLogo } from "@/components/Brand";
 import { AppleGlyph, PlayGlyph, StoreBadges } from "@/components/StoreBadges";
 import { LOJAS_DO_LOCAL } from "@/lib/i18n";
-import { BOTAO_DO_APP, IDIOMA_DO_APP, LANG_HTML, PREFIXO } from "@/lib/obrigado.mjs";
+import { BOTAO_DO_APP, LANG_HTML, caminhoDoBaixar } from "@/lib/obrigado.mjs";
 import { TEXTOS } from "@/lib/obrigado-textos.mjs";
 import type { Aparelho, Local, Rico as TextoRico, TextosDoLocal } from "@/lib/pos-pagamento";
 import "./pos-pagamento.css";
@@ -13,9 +13,10 @@ import "./pos-pagamento.css";
    PÓS-PAGAMENTO · peças comuns
    ---------------------------------------------------------------------
    Usadas pelas três páginas de obrigado (components/ObrigadoShell.tsx) e
-   pelo /baixar (components/BaixarApp.tsx). Nenhum texto do cliente mora
-   aqui: tudo vem de lib/obrigado-textos.mjs, onde o teste confere as
-   regras da marca nos quatro locais. Estilo em pos-pagamento.css.
+   pelo /baixar e /es/descargar (components/BaixarApp.tsx). Nenhum texto
+   do cliente mora aqui: tudo vem de lib/obrigado-textos.mjs, onde o teste
+   confere as regras da marca nos dois idiomas (pt e es). Estilo em
+   pos-pagamento.css.
    ===================================================================== */
 
 /** Os textos de um local, com a forma conferida pelo TypeScript. */
@@ -125,16 +126,12 @@ const ROTULOS_DO_APP = new Set<string>(Object.values(BOTAO_DO_APP));
 
 /**
  * O "chip": o rótulo EXATO do botão da tela de login do app, desenhado
- * como ele aparece lá (texto teal num recorte escuro), com um ponto de
- * toque. Não é botão aqui: mostra onde tocar no app.
+ * IGUAL ao de lá (public/index.html do app: texto teal, 14 px, peso 600,
+ * sem borda nem fundo, logo abaixo do botão Entrar). Não é botão aqui:
+ * mostra o que procurar no app, com a mesma cara.
  */
 export function ChipDoApp({ rotulo }: { rotulo: string }) {
-  return (
-    <span className="pp-chip">
-      <span className="pp-chip-toque" aria-hidden="true" />
-      <span>{rotulo}</span>
-    </span>
-  );
+  return <span className="pp-chip">{rotulo}</span>;
 }
 
 /**
@@ -186,14 +183,17 @@ export function Hero({
   sobre,
   titulo,
   sub,
+  classe = "",
 }: {
   selo: ReactNode;
   sobre: string;
   titulo: readonly string[];
   sub: string;
+  /** Classe extra (a área da grade na aprovada). */
+  classe?: string;
 }) {
   return (
-    <section className="pp-hero">
+    <section className={`pp-hero ${classe}`.trim()}>
       {selo}
       <p className="pp-sobre pp-surge" style={{ "--d": 1 } as CSSProperties}>{sobre}</p>
       <h1 className="pp-titulo pp-surge" style={{ "--d": 2 } as CSSProperties}>
@@ -215,17 +215,22 @@ export function Hero({
  * Os três marcos da jornada. `atual` é o marco de agora (2 na aprovada e
  * nas pendentes): os de antes estão feitos, os depois vêm a seguir.
  * Lista ordenada com aria-current="step" no marco atual; o estado de cada
- * marco também está escrito (Feito, Agora, A seguir), não só na cor.
+ * marco também está escrito (Feito, Agora, A seguir), não só na cor, e os
+ * três estados ficam alinhados na base, quebre o nome em quantas linhas
+ * quebrar.
  */
 export function Trilha({
   t,
   atual,
+  classe = "",
 }: {
   t: { rotulo: string; resumo: string; passos: readonly string[]; feito: string; agora: string; depois: string };
   atual: number;
+  /** Classe extra (a área da grade na aprovada). */
+  classe?: string;
 }) {
   return (
-    <section className="pp-trilha pp-surge" style={{ "--d": 4 } as CSSProperties} aria-labelledby="pp-trilha-rotulo">
+    <section className={`pp-trilha pp-surge ${classe}`.trim()} style={{ "--d": 4 } as CSSProperties} aria-labelledby="pp-trilha-rotulo">
       <div className="pp-trilha-topo">
         <h2 id="pp-trilha-rotulo" className="pp-trilha-rotulo">{t.rotulo}</h2>
         <span className="pp-trilha-resumo">{t.resumo}</span>
@@ -266,9 +271,13 @@ function Seta() {
   );
 }
 
-/** Caminho do QR code do /baixar do local (public/qr, gerado uma vez). */
+/**
+ * Caminho do QR code do /baixar do idioma (public/qr, gerado uma vez):
+ * baixar.svg abre https://www.diariamente.app/baixar e descargar.svg abre
+ * https://www.diariamente.app/es/descargar.
+ */
 export function qrDoLocal(local: Local): string {
-  return `/qr/baixar-${local}.svg`;
+  return local === "es" ? "/qr/descargar.svg" : "/qr/baixar.svg";
 }
 
 /**
@@ -306,7 +315,7 @@ export function InstalarApp({
           </div>
         </div>
         <p className="pp-lojas-antes">{q.lojasAntes}</p>
-        <StoreBadges variant="botoes" local={local} rotulos={rotulos} />
+        <StoreBadges variant="botoes" lang={local} rotulos={rotulos} />
       </div>
     );
   }
@@ -334,15 +343,29 @@ export function InstalarApp({
 
 /* ------------------------------- final ------------------------------- */
 
-/** Versão web do app. O app só tem pt-BR e es: os locais em espanhol abrem com ?lang=es. */
-export function linkDaVersaoWeb(local: Local): string {
-  return IDIOMA_DO_APP[local] === "es" ? `${SITE.appUrl}/?lang=es` : SITE.appUrl;
+/**
+ * Versão web do app, no idioma da página (?lang=es no espanhol; o app lê
+ * o lang em qualquer caminho).
+ *   - páginas de obrigado: a rota de ativação do app (/ativar). Sem
+ *     token, ela abre direto "Ativar sua conta" (e-mail, senha nova e
+ *     confirmação), que é o que quem acabou de pagar precisa; a raiz abre
+ *     o login com senha, que a pessoa ainda não tem. Conferido em
+ *     28/10/2026 (curl: 200; public/index.html do app abre a ativação
+ *     quando o caminho tem "ativar"). Com o app instalado, o mesmo link
+ *     abre o app já na ativação (apple-app-site-association e assetlinks).
+ *   - /baixar: a raiz (o login, com o "Primeiro acesso? Ativar conta"
+ *     que a página explica).
+ */
+export function linkDaVersaoWeb(local: Local, destino: "ativar" | "raiz" = "ativar"): string {
+  const caminho = destino === "ativar" ? "/ativar" : "/";
+  return `${SITE.appUrl}${caminho}${local === "es" ? "?lang=es" : ""}`;
 }
 
 export function Final({
   local,
   webAntes,
   webLink,
+  web = "ativar",
   suporteAntes,
   assunto,
   frase,
@@ -350,6 +373,8 @@ export function Final({
   local: Local;
   webAntes: string;
   webLink: string;
+  /** Para onde a versão web leva (linkDaVersaoWeb). */
+  web?: "ativar" | "raiz";
   suporteAntes?: string;
   assunto?: string;
   frase: string;
@@ -358,7 +383,7 @@ export function Final({
     <div className="pp-final">
       <p>
         {webAntes}{" "}
-        <a className="pp-link" href={linkDaVersaoWeb(local)}>{webLink}</a>
+        <a className="pp-link" href={linkDaVersaoWeb(local, web)}>{webLink}</a>
       </p>
       {suporteAntes && assunto && (
         <p>
@@ -371,7 +396,7 @@ export function Final({
   );
 }
 
-/** Endereço absoluto do /baixar do local (o que o QR code abre). */
+/** Endereço absoluto do /baixar do idioma (o que o QR code abre). */
 export function urlDoBaixar(local: Local): string {
-  return `${SITE.dominio}${PREFIXO[local]}/baixar`;
+  return `${SITE.dominio}${caminhoDoBaixar(local)}`;
 }

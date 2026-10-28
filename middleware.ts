@@ -3,13 +3,14 @@ import {
   decidirRota,
   ehRobo,
   mercadoDaVisita,
+  mercadoDoPais,
   COOKIE_MERCADO,
   COOKIE_MERCADO_SEGUNDOS,
   COOKIE_VISITA,
   COOKIE_VISITA_SEGUNDOS,
   type Pedido,
 } from "@/lib/mercado";
-import { BAIXAR, destinoDoBaixar, destinoDoObrigado } from "@/lib/obrigado.mjs";
+import { CAMINHOS, destinoDoBaixar, destinoDoObrigado } from "@/lib/obrigado.mjs";
 import { LOJAS_DO_LOCAL } from "@/lib/i18n";
 import { SITE_LANCADO } from "@/config/lancamento";
 
@@ -53,15 +54,18 @@ import { SITE_LANCADO } from "@/config/lancamento";
    redirecionamento em cache para todo mundo.
 
    PÓS-PAGAMENTO (docs/POS-PAGAMENTO.md; regras em lib/obrigado.mjs),
-   antes da decisão das homes:
+   antes da decisão das homes. Dois idiomas, pt e es:
      - as três URLs de obrigado sem prefixo (as da Hotmart) e o
-       /obrigado antigo descobrem o idioma (cookie dm_mercado, ?off= da
-       oferta, ?lang=, Accept-Language) e, se não for pt-BR, vão para a
-       versão com prefixo (/es/..., /es-es/..., /pt-pt/...): 307 com a
-       busca INTEIRA (transaction, off, utm...)
-     - /baixar, /es/baixar, /es-es/baixar e /pt-pt/baixar: iPhone e iPad
-       vão direto para a App Store do idioma, Android para o Google Play
-       (302); computador, aparelho desconhecido e robô veem a página
+       /obrigado antigo descobrem o idioma (oferta de um mercado só no
+       ?off=, cookie dm_mercado, ?lang=, Accept-Language, país do IP) e,
+       se for espanhol, vão para a rota em espanhol do mesmo status
+       (/es/gracias-aprobado, /es/gracias-pago-pendiente,
+       /es/gracias-en-analisis): 307 com a busca INTEIRA (transaction,
+       off, utm...)
+     - /baixar e /es/descargar: iPhone e iPad vão direto para a App Store
+       do idioma, Android para o Google Play (302); /baixar?lang=es no
+       computador vai para /es/descargar (307); computador, aparelho
+       desconhecido e robô veem a página
    E, depois da decisão, o cookie dm_mercado (lib/mercado.ts,
    mercadoDaVisita) em toda página de mercado que abre: homes e páginas
    de venda. É ele que diz às páginas de obrigado em que idioma a pessoa
@@ -80,6 +84,7 @@ export function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   const userAgent = req.headers.get("user-agent");
   const idiomas = req.headers.get("accept-language");
+  const pais = req.headers.get("x-vercel-ip-country");
 
   // Pós-pagamento: a URL da Hotmart, sem prefixo, leva ao idioma de quem pagou.
   const obrigado = destinoDoObrigado({
@@ -87,18 +92,23 @@ export function middleware(req: NextRequest) {
     busca: req.nextUrl.search,
     cookie: req.cookies.get(COOKIE_VISITA)?.value,
     idiomas,
+    // Sem cabeçalho de país (ambiente local), o país não decide.
+    mercadoDoIp: pais ? mercadoDoPais(pais) : null,
   });
   if (obrigado) {
     const r = NextResponse.redirect(new URL(obrigado, req.url));
-    r.headers.set("Vary", "Accept-Language, Cookie");
+    r.headers.set("Vary", VARY);
     return r;
   }
 
-  // /baixar: o celular vai direto para a loja do idioma.
+  // /baixar e /es/descargar: o celular vai direto para a loja do idioma.
   if (!ehRobo(userAgent)) {
-    const loja = destinoDoBaixar(pathname, userAgent, LOJAS_DO_LOCAL);
-    if (loja) {
-      const r = NextResponse.redirect(loja, 302);
+    const baixar = destinoDoBaixar({ pathname, busca: req.nextUrl.search, userAgent }, LOJAS_DO_LOCAL);
+    if (baixar) {
+      const r =
+        baixar.status === 302
+          ? NextResponse.redirect(baixar.destino, 302)
+          : NextResponse.redirect(new URL(baixar.destino, req.url), 307);
       r.headers.set("Vary", "User-Agent");
       return r;
     }
@@ -109,7 +119,7 @@ export function middleware(req: NextRequest) {
     busca: req.nextUrl.search,
     userAgent,
     cookie: req.cookies.get(COOKIE_MERCADO)?.value,
-    pais: req.headers.get("x-vercel-ip-country"),
+    pais,
     idiomas,
     lancado: SITE_LANCADO,
   };
@@ -134,7 +144,7 @@ export function middleware(req: NextRequest) {
   }
   if (d.vary) r.headers.set("Vary", VARY);
   // O computador que abre o /baixar vê a página; no celular, o 302 acima.
-  if (BAIXAR[pathname]) r.headers.set("Vary", "User-Agent");
+  if (pathname === CAMINHOS.pt.baixar || pathname === CAMINHOS.es.baixar) r.headers.set("Vary", "User-Agent");
 
   // Página de mercado que abriu: anota o mercado para as páginas de obrigado.
   const visita = mercadoDaVisita(pedido, d);

@@ -1,5 +1,5 @@
 import { LOJAS_BADGES } from "@/config";
-import { LOJAS_DO_LOCAL, type LocalDaLoja } from "@/lib/i18n";
+import { LOJAS_DO_LOCAL } from "@/lib/i18n";
 
 /**
  * StoreBadges — badges das lojas.
@@ -15,8 +15,8 @@ import { LOJAS_DO_LOCAL, type LocalDaLoja } from "@/lib/i18n";
  *                        oficiais do Cloudinary só existem em inglês e
  *                        pt-BR). Usado no pós-pagamento e no /baixar.
  *
- * Os links vêm de LOJAS_DO_LOCAL (lib/i18n.ts), a fonte única: cada local
- * (pt, pt-pt, es, es-es) abre a ficha da loja no seu idioma.
+ * Os links vêm de LOJAS_DO_LOCAL (lib/i18n.ts), a fonte única: pt abre a
+ * ficha da loja em português do Brasil, es em espanhol.
  *
  * Badges oficiais em SVG (Cloudinary). Como o site é dark mode, usamos a
  * versão BRANCA da Apple. A preta está em LOJAS_BADGES.appStoreClaro caso
@@ -76,7 +76,6 @@ export function StoreBadges({
   align = "center",
   tema = "escuro",
   lang = "pt",
-  local,
   rotulos,
 }: {
   variant?: "link" | "prova" | "botoes";
@@ -84,13 +83,11 @@ export function StoreBadges({
   tema?: "escuro" | "claro";
   /** "es": rótulos em espanhol e a ficha em espanhol nas duas lojas. */
   lang?: "pt" | "es";
-  /** Local exato dos links (pt-pt e es-es têm ficha própria). Sem ele, vale o lang. */
-  local?: LocalDaLoja;
   /** Textos do variant="botoes". */
   rotulos?: RotulosDasLojas;
 }) {
   const es = lang === "es";
-  const lojas = LOJAS_DO_LOCAL[local ?? (es ? "es" : "pt")];
+  const lojas = LOJAS_DO_LOCAL[es ? "es" : "pt"];
   const rotulo = ROTULOS[es ? "es" : "pt"];
 
   // badge da Apple muda conforme o fundo

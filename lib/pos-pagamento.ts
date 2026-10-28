@@ -46,7 +46,8 @@ export function moedaDoMercado(m: Mercado): "BRL" | "USD" | "EUR" {
    TIPOS das páginas (as regras moram em lib/obrigado.mjs, e os textos em
    lib/obrigado-textos.mjs; aqui só a forma, para os componentes).
    --------------------------------------------------------------------- */
-export type Local = "pt" | "es" | "es-es" | "pt-pt";
+/** Os dois idiomas do pós-pagamento: pt (pt-BR) e es (espanhol da América Latina). */
+export type Local = "pt" | "es";
 export type Estado = "aprovado" | "aguardando-pagamento" | "aguardando-analise";
 export type Aparelho = "ios" | "android" | "computador";
 export type Forma = "pix" | "boleto" | "outra";
@@ -65,7 +66,6 @@ export type TextosDoLocal = {
     app: { selo: string; titulo: string; jaInstalado: string };
     senha: { selo: string; titulo: string; passos: readonly Rico[] };
     whatsapp: { selo: string; titulo: string; texto: string };
-    espera: { texto: string };
     naoRecebeu: { titulo: string; itens: readonly { p: string; r: Rico }[] };
   };
   "aguardando-pagamento": Topo & Rodape & {
@@ -113,4 +113,4 @@ export type TextosDoLocal = {
 };
 
 /** Locale do Open Graph de cada local (es_LA, como o resto do site em espanhol latino). */
-export const OG_LOCALE: Record<Local, string> = { pt: "pt_BR", es: "es_LA", "es-es": "es_ES", "pt-pt": "pt_PT" };
+export const OG_LOCALE: Record<Local, string> = { pt: "pt_BR", es: "es_LA" };

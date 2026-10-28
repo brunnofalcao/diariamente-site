@@ -114,7 +114,10 @@ export const COOKIE_MERCADO_SEGUNDOS = 60 * 60 * 24 * 180;
  * Só serve às páginas de obrigado: a Hotmart manda todo mundo para a
  * MESMA URL de obrigado (a configuração é por produto, não por oferta),
  * e é este cookie que diz em que idioma a pessoa estava lendo quando
- * pagou (lib/obrigado.mjs, decidirObrigado, passo 1).
+ * pagou (lib/obrigado.mjs, decidirObrigado, passo b: br, pt e rw leem em
+ * pt; la e es, em espanhol). Uma oferta de um mercado só na URL vence o
+ * cookie (ela diz o que foi pago agora; o cookie pode ser de uma visita
+ * antiga).
  *
  * Funcional e sem dado pessoal: guarda só br, la, es, pt ou rw, por 30
  * dias, Path=/, SameSite=Lax, Secure. Gravado pelo middleware sempre que

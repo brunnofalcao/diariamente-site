@@ -5,9 +5,13 @@
    tokens de app/globals.css. Classe raiz .pp; tudo aqui começa com pp-.
 
    Mobile first: uma coluna até 959 px, com 20 px de margem (360 px sem
-   rolagem lateral). Do 960 px para cima, a aprovada ganha uma coluna à
-   direita com a tela do app, presa na rolagem (sticky), e o /baixar põe
-   a tela ao lado do QR code.
+   rolagem lateral). Na aprovada, o botão da loja aparece SEM rolar no
+   iPhone de verdade: o Safari deixa uns 390 x 664 de área visível (não
+   os 844 da tela inteira), e o navegador do Instagram, um pouco menos.
+   Por isso, no celular, o selo e o título são compactos e a trilha vem
+   depois do cartão de instalar. Do 960 px para cima, a aprovada vira
+   duas colunas (título e trilha à esquerda, o QR code à direita, na
+   primeira dobra de 1280 x 800), e o /baixar põe a tela ao lado do QR.
 
    Acessibilidade: contraste AA (texto corrido em --n-300 e --n-400 sobre
    --s-2), foco visível em tudo que recebe Tab, alvos de 44 px ou mais e
@@ -46,7 +50,7 @@
   position: relative; z-index: 1;
   max-width: 600px; margin: 0 auto; padding: 0 var(--pp-margem);
 }
-.pp-topo { position: relative; z-index: 1; padding-top: 22px; display: flex; justify-content: center; }
+.pp-topo { position: relative; z-index: 1; padding-top: 16px; display: flex; justify-content: center; }
 @media (min-width: 768px) { .pp-topo { padding-top: 32px; } }
 
 /* ------------------------------ foco ------------------------------ */
@@ -59,11 +63,12 @@
 }
 
 /* ------------------------------ hero ------------------------------ */
-/* No celular, o botão de instalar aparece já na primeira tela (390 x 844). */
-.pp-hero { text-align: center; padding: 18px 0 22px; }
-@media (min-width: 768px) { .pp-hero { padding: 28px 0 30px; } }
-.pp-selo { width: 100px; height: 100px; margin: 0 auto 10px; color: var(--p-500); }
-@media (min-width: 768px) { .pp-selo { width: 112px; height: 112px; margin-bottom: 14px; } }
+/* Compacto no celular: na aprovada, o botão de instalar tem de caber na
+   área visível do Safari no iPhone (390 x 664). */
+.pp-hero { text-align: center; padding: 10px 0 18px; }
+@media (min-width: 768px) { .pp-hero { padding: 24px 0 28px; } }
+.pp-selo { width: 64px; height: 64px; margin: 0 auto 8px; color: var(--p-500); }
+@media (min-width: 768px) { .pp-selo { width: 88px; height: 88px; margin-bottom: 12px; } }
 .pp-selo svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .pp-selo-disco { fill: rgba(39, 189, 190, .12); stroke: rgba(39, 189, 190, .40); stroke-width: 1.5; }
 .pp-selo-onda {
@@ -80,18 +85,20 @@
 .pp-sobre {
   display: inline-flex; align-items: center; gap: 8px;
   font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
-  color: var(--p-400); margin-bottom: 12px;
+  color: var(--p-400); margin-bottom: 8px;
 }
+@media (min-width: 768px) { .pp-sobre { margin-bottom: 12px; } }
 .pp.is-espera .pp-sobre { color: var(--a-500); }
 .pp-titulo {
   font-family: var(--font-serif); font-weight: 400;
-  font-size: clamp(34px, 9vw, 54px); line-height: 1.04; letter-spacing: -.02em;
-  color: #fff; margin: 0 0 12px; text-wrap: balance;
+  font-size: clamp(30px, 8.4vw, 54px); line-height: 1.05; letter-spacing: -.02em;
+  color: #fff; margin: 0 0 10px; text-wrap: balance;
 }
 .pp-sub {
-  font-size: 16.5px; line-height: 1.6; color: var(--n-300);
+  font-size: 15.5px; line-height: 1.55; color: var(--n-300);
   max-width: 40ch; margin: 0 auto; text-wrap: pretty;
 }
+@media (min-width: 768px) { .pp-titulo { margin-bottom: 12px; } .pp-sub { font-size: 16.5px; line-height: 1.6; } }
 
 /* ----------------------------- trilha ----------------------------- */
 .pp-trilha {
@@ -127,8 +134,11 @@
 .pp.is-espera .pp-marco.is-agora::before { background: linear-gradient(90deg, var(--p-500), var(--a-500)); }
 .pp-marco-nome { margin-top: 10px; font-size: 13px; line-height: 1.3; font-weight: 600; color: var(--n-100); text-wrap: balance; }
 .pp-marco.is-depois .pp-marco-nome { color: var(--n-400); font-weight: 500; }
+/* margin-top: auto: o status desce até a base do marco (o li estica na
+   linha da grade), e Feito, Agora e A seguir ficam na mesma altura mesmo
+   quando um nome quebra em duas linhas e o outro não. */
 .pp-marco-status {
-  margin-top: 6px; font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  margin-top: auto; padding-top: 6px; font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
   color: var(--n-400);
 }
 .pp-marco.is-feito .pp-marco-status { color: var(--p-400); }
@@ -136,7 +146,7 @@
 .pp.is-espera .pp-marco.is-agora .pp-marco-status { color: var(--a-300); }
 
 /* ----------------------------- cartões ----------------------------- */
-.pp-pilha, .pp-grade { display: flex; flex-direction: column; gap: 16px; }
+.pp-pilha { display: flex; flex-direction: column; gap: 16px; }
 .pp-cartao {
   position: relative; border-radius: 24px; padding: 24px 20px;
   background: var(--s-2); border: 1px solid var(--pp-borda);
@@ -255,24 +265,14 @@
 }
 .pp-passo-texto { font-size: 15px; line-height: 1.6; color: var(--n-200); padding-top: 4px; min-width: 0; }
 
-/* O "chip": imita o botão de texto da tela de login do app (teal, 600),
-   num recorte escuro como a tela, com um ponto de toque. Não é clicável
-   aqui: é a indicação de onde tocar no app. */
+/* O "chip": IGUAL ao botão de texto da tela de login do app
+   (public/index.html do app: color var(--p400), 14 px, peso 600, sem
+   borda nem fundo). Não é clicável aqui: mostra o que procurar no app,
+   com a mesma cara. O rótulo não quebra no meio. */
 .pp-chip-grupo { white-space: nowrap; }
-.pp-chip {
-  display: inline-flex; align-items: center; gap: 7px; vertical-align: baseline;
-  margin: 2px 0; padding: 4px 11px 4px 7px;
-  border-radius: 999px; background: var(--s-0); border: 1px solid rgba(61, 203, 204, .38);
-  color: var(--p-400); font-size: 13px; font-weight: 600; line-height: 1.35; white-space: nowrap;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, .35);
-}
-@media (min-width: 400px) { .pp-chip { font-size: 14px; gap: 8px; padding: 4px 12px 4px 8px; } }
-/* tela muito estreita (menos de 360 px): o rótulo pode quebrar dentro do chip */
+.pp-chip { color: var(--p-400); font-size: 14px; font-weight: 600; white-space: nowrap; }
+/* tela muito estreita (menos de 360 px): o rótulo pode quebrar */
 @media (max-width: 359px) { .pp-chip-grupo, .pp-chip { white-space: normal; } }
-.pp-chip-toque {
-  position: relative; flex: 0 0 auto; width: 10px; height: 10px; border-radius: 999px;
-  background: var(--p-400); box-shadow: 0 0 0 4px rgba(61, 203, 204, .18);
-}
 
 /* ---------------------------- WhatsApp ---------------------------- */
 .pp-whats {
@@ -289,21 +289,9 @@
 }
 
 /* ------------------------- o que te espera ------------------------- */
-.pp-espera {
-  margin: 0; padding: 24px 20px 0; border-radius: 24px; overflow: hidden;
-  background: linear-gradient(180deg, rgba(39, 189, 190, .07), rgba(39, 189, 190, 0) 60%), var(--s-1);
-  border: 1px solid var(--pp-borda);
-  display: flex; flex-direction: column; align-items: center; text-align: center;
-}
-.pp-espera-frase {
-  font-family: var(--font-serif); font-size: 21px; line-height: 1.3; color: #fff;
-  max-width: 22ch; text-wrap: balance;
-}
-.pp-espera-tela {
-  width: 212px; margin-top: 20px; height: 330px; overflow: hidden;
-  -webkit-mask-image: linear-gradient(#000 62%, transparent);
-  mask-image: linear-gradient(#000 62%, transparent);
-}
+/* A arte das lojas, inteira e sem legenda: ela já traz o próprio título. */
+.pp-espera { margin: 8px auto 0; width: 220px; }
+.pp-whats-bloco { display: flex; flex-direction: column; gap: 10px; }
 
 /* --------------------------- não recebeu --------------------------- */
 .pp-ajuda { border-radius: 20px; background: rgba(255, 255, 255, .025); border: 1px solid var(--pp-borda); }
@@ -355,22 +343,41 @@
 /* ---------------------------- /baixar ---------------------------- */
 .pp-baixar-tela { display: none; }
 
+/* --------------------- aprovada: a ordem e a grade --------------------- */
+/* Celular: uma coluna na ordem do HTML (título, instalar, trilha, senha,
+   WhatsApp com o "Não recebeu?", a tela do app). */
+.pp-aprovado { display: flex; flex-direction: column; gap: 16px; }
+.pp-aprovado > .pp-hero { padding-bottom: 2px; }
+.pp-aprovado > .pp-trilha { margin: 0; }
+
 /* ----------------------------- desktop ----------------------------- */
 @media (min-width: 960px) {
   .pp-moldura.is-larga { max-width: 1060px; }
-  .pp-moldura.is-larga .pp-hero,
-  .pp-moldura.is-larga .pp-trilha { max-width: 620px; margin-left: auto; margin-right: auto; }
-  .pp-grade {
-    display: grid; gap: 20px; align-items: start;
-    grid-template-columns: minmax(0, 1fr) 340px;
+  /* Aprovada: título e trilha à esquerda, o cartão de instalar (QR code)
+     à direita, os dois na primeira dobra. Embaixo, senha, WhatsApp e
+     "Não recebeu?" à esquerda, a tela do app à direita. */
+  .pp-aprovado {
+    display: grid; column-gap: 40px; row-gap: 20px; align-items: start;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    grid-template-areas:
+      "hero    instalar"
+      "trilha  instalar"
+      "senha   espera"
+      "whats   espera";
+    padding-top: 16px;
   }
-  .pp-grade > .pp-espera {
-    grid-column: 2; grid-row: 1 / span 6;
-    position: sticky; top: 24px;
-  }
-  .pp-grade > :not(.pp-espera) { grid-column: 1; }
-  .pp-espera-tela { width: 240px; height: auto; -webkit-mask-image: none; mask-image: none; margin-bottom: -2px; }
-  .pp-espera { padding-bottom: 0; }
+  .pp-area-hero { grid-area: hero; }
+  .pp-area-instalar { grid-area: instalar; }
+  .pp-area-trilha { grid-area: trilha; }
+  .pp-area-senha { grid-area: senha; }
+  .pp-area-whats { grid-area: whats; }
+  .pp-area-espera { grid-area: espera; position: sticky; top: 24px; width: 300px; margin: 0 auto; }
+  .pp-aprovado > .pp-hero { text-align: left; padding: 8px 0 0; }
+  .pp-aprovado > .pp-hero .pp-selo { margin-left: 0; }
+  .pp-aprovado > .pp-hero .pp-sub { margin: 0; }
+  /* coluna de 420 px: as duas lojas uma embaixo da outra, cada rótulo
+     numa linha só */
+  .pp-area-instalar .pp-lojas { grid-template-columns: 1fr; }
 
   .pp-baixar { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 56px; align-items: center; padding: 24px 0 8px; }
   .pp-baixar .pp-hero { text-align: left; padding-top: 0; }
@@ -387,11 +394,6 @@
   .pp-selo-ponteiro { animation: pp-girar 2.4s .4s cubic-bezier(.45, 0, .2, 1) backwards; }
   .pp-surge { animation: pp-subir .6s var(--ease) backwards; animation-delay: calc(.15s + var(--d, 0) * .08s); }
   .pp-marco.is-agora .pp-no { animation: pp-pulso 1.8s 1s var(--ease) 2; }
-  .pp-chip-toque::after {
-    content: ""; position: absolute; inset: -4px; border-radius: 999px;
-    border: 2px solid var(--p-400); opacity: 0;
-    animation: pp-toque 1.6s 1.2s var(--ease) 3;
-  }
 }
 @keyframes pp-surgir { from { opacity: 0; transform: scale(.7); } }
 @keyframes pp-tracar { from { stroke-dashoffset: 1; } }
@@ -399,7 +401,6 @@
 @keyframes pp-girar { from { transform: rotate(-360deg); } }
 @keyframes pp-subir { from { opacity: 0; transform: translateY(10px); } }
 @keyframes pp-pulso { 0%, 100% { box-shadow: 0 0 0 5px rgba(39, 189, 190, .14); } 50% { box-shadow: 0 0 0 9px rgba(39, 189, 190, .06); } }
-@keyframes pp-toque { 0% { opacity: .8; transform: scale(.6); } 100% { opacity: 0; transform: scale(2.2); } }
 
 /* /baixar: sem selo, o título pede mais ar embaixo do logo */
 @media (max-width: 959px) { .pp-baixar .pp-hero { padding-top: 32px; } }

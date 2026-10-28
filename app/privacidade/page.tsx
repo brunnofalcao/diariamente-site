@@ -267,7 +267,7 @@ export default function Privacidade() {
         </li>
         <li>
           <strong>dm_mercado</strong>: guarda só o mercado da última página do site que você
-          abriu (Brasil, Portugal, España, América Latina ou resto do mundo), por 30 dias, para
+          abriu (Brasil, Portugal, Espanha, América Latina ou resto do mundo), por 30 dias, para
           a página que aparece depois do pagamento abrir no seu idioma. Não guarda dado pessoal.
         </li>
         <li>

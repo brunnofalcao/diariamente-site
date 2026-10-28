@@ -14,26 +14,34 @@ import {
   textosDo,
 } from "@/components/PosPagamento";
 import { ATIVOS, dicionario } from "@/lib/i18n";
-import { IDIOMA_DO_APP, orientacaoDoPagamento } from "@/lib/obrigado.mjs";
+import { orientacaoDoPagamento } from "@/lib/obrigado.mjs";
 import type { Aparelho, Estado, Forma, Local } from "@/lib/pos-pagamento";
+import type { Mercado } from "@/config/pricing";
 
 /* =====================================================================
-   ObrigadoShell · as três páginas de obrigado, nos quatro locais
+   ObrigadoShell · as três páginas de obrigado, em pt e em es
    ---------------------------------------------------------------------
    APROVADO: o app é o motivo principal, então a página leva direto a ele.
-     selo que se desenha, trilha de 3 marcos (pagamento feito, instalar
-     agora, senha a seguir), instalar pelo aparelho detectado (botão da
-     loja certa no celular, QR code no computador), criar a senha com o
-     chip do botão exato do app, o aviso do WhatsApp (sem prometer que
-     chega), a tela real do app, "Não recebeu?" e o atendimento.
+     No celular, em uma coluna, nesta ordem: selo e título curtos, o
+     cartão de instalar (o botão da loja certa aparece SEM rolar no
+     iPhone de verdade, onde o Safari deixa uns 390 x 664 de tela), a
+     trilha de 3 marcos, criar a senha com o chip do botão exato do app,
+     o aviso do WhatsApp (sem prometer que chega) com o "Não recebeu?"
+     logo abaixo, e a tela real do app.
+     No computador (960 px ou mais), duas colunas: à esquerda o selo, o
+     título e a trilha; à direita o cartão de instalar com o QR code, na
+     primeira dobra (1280 x 800). Embaixo, a senha, o WhatsApp e o "Não
+     recebeu?" à esquerda e a tela do app à direita.
    AGUARDANDO PAGAMENTO e EM ANÁLISE: mesma moldura, em dourado, com o
      relógio, a trilha no passo 2 e o que fazer enquanto isso. Pix e
-     boleto só no Brasil (lib/obrigado.mjs, orientacaoDoPagamento).
+     boleto só para o mercado br (lib/obrigado.mjs,
+     orientacaoDoPagamento): quem lê em português e paga em dólar ou euro
+     vê a linha geral.
 
-   Textos: lib/obrigado-textos.mjs. Regras de idioma, aparelho e forma de
-   pagamento: lib/obrigado.mjs. A página (components/PaginaObrigado.tsx)
-   decide local, aparelho e forma no servidor e entrega aqui; o Purchase
-   fica lá, só na aprovada.
+   Textos: lib/obrigado-textos.mjs. Regras de idioma, mercado, aparelho e
+   forma de pagamento: lib/obrigado.mjs. A página
+   (components/PaginaObrigado.tsx) decide local, aparelho, mercado e
+   forma no servidor e entrega aqui; o Purchase fica lá, só na aprovada.
    ===================================================================== */
 
 export function ObrigadoShell({
@@ -41,14 +49,19 @@ export function ObrigadoShell({
   local,
   aparelho,
   forma = null,
+  mercado,
 }: {
   estado: Estado;
   local: Local;
   aparelho: Aparelho;
   forma?: Forma | null;
+  /** Mercado do pedido (lib/obrigado.mjs, mercadoDoObrigado). */
+  mercado: Mercado;
 }) {
   if (estado === "aprovado") return <Aprovado local={local} aparelho={aparelho} />;
-  if (estado === "aguardando-pagamento") return <AguardandoPagamento local={local} aparelho={aparelho} forma={forma} />;
+  if (estado === "aguardando-pagamento") {
+    return <AguardandoPagamento local={local} aparelho={aparelho} forma={forma} mercado={mercado} />;
+  }
   return <AguardandoAnalise local={local} aparelho={aparelho} />;
 }
 
@@ -92,17 +105,16 @@ function Chevron() {
 /* ------------------------------------------------------------------ */
 function Aprovado({ local, aparelho }: { local: Local; aparelho: Aparelho }) {
   const t = textosDo(local).aprovado;
-  const lang = IDIOMA_DO_APP[local] as "pt" | "es";
-  const tela = ATIVOS[lang].img.leitura;
-  const alt = dicionario(lang, local === "pt-pt" ? "pt" : undefined).finAlt;
   return (
     <Moldura local={local} larga>
-      <Hero selo={<SeloAprovado />} sobre={t.selo} titulo={t.titulo} sub={t.sub} />
-      <Trilha t={t.trilha} atual={2} />
+      {/* A ordem do HTML é a do celular (e a do leitor de tela); no
+          computador, a grade de pos-pagamento.css põe cada bloco na sua
+          área (.pp-aprovado). */}
+      <div className="pp-aprovado">
+        <Hero classe="pp-area-hero" selo={<SeloAprovado />} sobre={t.selo} titulo={t.titulo} sub={t.sub} />
 
-      <div className="pp-grade">
         {/* Passo 2: instalar o app, pelo aparelho */}
-        <section className="pp-cartao is-destaque pp-surge" style={atraso(5)} id="passo-2" aria-labelledby="passo-2-titulo">
+        <section className="pp-cartao is-destaque pp-surge pp-area-instalar" style={atraso(4)} id="passo-2" aria-labelledby="passo-2-titulo">
           <span className="pp-etiqueta">{t.app.selo}</span>
           <h2 id="passo-2-titulo" className="pp-cartao-titulo">{t.app.titulo}</h2>
           <InstalarApp local={local} aparelho={aparelho} />
@@ -112,8 +124,10 @@ function Aprovado({ local, aparelho }: { local: Local; aparelho: Aparelho }) {
           </a>
         </section>
 
+        <Trilha classe="pp-area-trilha" t={t.trilha} atual={2} />
+
         {/* Passo 3: criar a senha no app */}
-        <section className="pp-cartao pp-surge" style={atraso(6)} id="passo-3" aria-labelledby="passo-3-titulo">
+        <section className="pp-cartao pp-surge pp-area-senha" style={atraso(6)} id="passo-3" aria-labelledby="passo-3-titulo">
           <span className="pp-etiqueta is-neutra">{t.senha.selo}</span>
           <h2 id="passo-3-titulo" className="pp-cartao-titulo">{t.senha.titulo}</h2>
           <ol className="pp-passos" role="list">
@@ -126,39 +140,40 @@ function Aprovado({ local, aparelho }: { local: Local; aparelho: Aparelho }) {
           </ol>
         </section>
 
-        {/* WhatsApp: o mesmo passo a passo, se o número veio certo no pagamento */}
-        <section className="pp-cartao pp-whats pp-surge" style={atraso(7)} aria-labelledby="pp-whats-titulo">
-          <div className="pp-whats-topo">
-            <span className="pp-whats-icone"><IconeWhatsApp /></span>
-            <span className="pp-etiqueta is-verde">{t.whatsapp.selo}</span>
-          </div>
-          <h2 id="pp-whats-titulo" className="pp-cartao-titulo">{t.whatsapp.titulo}</h2>
-          <p className="pp-texto"><Inteiro texto={t.whatsapp.texto} /></p>
-        </section>
+        {/* WhatsApp: o mesmo passo a passo, se o número veio certo no
+            pagamento. O "Não recebeu?" vem colado, logo abaixo. */}
+        <div className="pp-whats-bloco pp-area-whats">
+          <section className="pp-cartao pp-whats pp-surge" style={atraso(7)} aria-labelledby="pp-whats-titulo">
+            <div className="pp-whats-topo">
+              <span className="pp-whats-icone"><IconeWhatsApp /></span>
+              <span className="pp-etiqueta is-verde">{t.whatsapp.selo}</span>
+            </div>
+            <h2 id="pp-whats-titulo" className="pp-cartao-titulo">{t.whatsapp.titulo}</h2>
+            <p className="pp-texto"><Inteiro texto={t.whatsapp.texto} /></p>
+          </section>
 
-        {/* O que te espera: a tela real do app (arte das lojas) */}
-        <figure className="pp-espera pp-surge" style={atraso(8)}>
-          <figcaption className="pp-espera-frase">{t.espera.texto}</figcaption>
-          <div className="pp-espera-tela">
-            <TelaDaLoja base={tela} alt={alt} sizes="(min-width: 960px) 240px, 212px" />
-          </div>
+          <details className="pp-ajuda pp-surge" style={atraso(8)}>
+            <summary>
+              <span>{t.naoRecebeu.titulo}</span>
+              <Chevron />
+            </summary>
+            <div className="pp-ajuda-corpo">
+              {t.naoRecebeu.itens.map((item, i) => (
+                <div key={i} className="pp-ajuda-item">
+                  <h3 className="pp-ajuda-pergunta">{item.p}</h3>
+                  <p className="pp-ajuda-resposta"><Rico partes={item.r} assunto={ATENDIMENTO.assuntoSuporte} /></p>
+                </div>
+              ))}
+            </div>
+          </details>
+        </div>
+
+        {/* O que te espera: a tela real do app (arte das lojas). Sem
+            legenda: a arte já traz o próprio título, e dois títulos
+            seguidos diziam a mesma coisa. */}
+        <figure className="pp-espera pp-surge pp-area-espera" style={atraso(9)}>
+          <TelaDaLoja base={ATIVOS[local].img.leitura} alt={dicionario(local).finAlt} sizes="(min-width: 960px) 300px, 220px" />
         </figure>
-
-        {/* Não recebeu? */}
-        <details className="pp-ajuda pp-surge" style={atraso(9)}>
-          <summary>
-            <span>{t.naoRecebeu.titulo}</span>
-            <Chevron />
-          </summary>
-          <div className="pp-ajuda-corpo">
-            {t.naoRecebeu.itens.map((item, i) => (
-              <div key={i} className="pp-ajuda-item">
-                <h3 className="pp-ajuda-pergunta">{item.p}</h3>
-                <p className="pp-ajuda-resposta"><Rico partes={item.r} assunto={ATENDIMENTO.assuntoSuporte} /></p>
-              </div>
-            ))}
-          </div>
-        </details>
       </div>
 
       <Final
@@ -176,12 +191,24 @@ function Aprovado({ local, aparelho }: { local: Local; aparelho: Aparelho }) {
 /* ------------------------------------------------------------------ */
 /* 2 · AGUARDANDO PAGAMENTO                                            */
 /* ------------------------------------------------------------------ */
-function AguardandoPagamento({ local, aparelho, forma }: { local: Local; aparelho: Aparelho; forma: Forma | null }) {
+function AguardandoPagamento({
+  local,
+  aparelho,
+  forma,
+  mercado,
+}: {
+  local: Local;
+  aparelho: Aparelho;
+  forma: Forma | null;
+  mercado: Mercado;
+}) {
   const t = textosDo(local)["aguardando-pagamento"];
-  // Pix e boleto só existem no Brasil (lista vazia nos outros locais). Com a
-  // forma na URL, só a orientação dela; com outra forma, só a linha geral.
-  const { formas, linha } = orientacaoDoPagamento(t.concluir.formas, forma);
-  const mostrar = t.concluir.formas.filter((f) => formas.includes(f.id));
+  // Pix e boleto só existem no mercado br: quem lê em português e paga em
+  // dólar (mundo) ou euro (Portugal) vê a linha geral. Com a forma na URL,
+  // só a orientação dela; com outra forma, só a linha geral.
+  const doPedido: typeof t.concluir.formas = mercado === "br" ? t.concluir.formas : [];
+  const { formas, linha } = orientacaoDoPagamento(doPedido, forma);
+  const mostrar = doPedido.filter((f) => formas.includes(f.id));
   return (
     <Moldura local={local} espera>
       <Hero selo={<SeloEspera />} sobre={t.selo} titulo={t.titulo} sub={t.sub} />

@@ -302,7 +302,7 @@ test("vitrine: noindex, nofollow, canonical para si mesma, SEM hreflang, Open Gr
   assert.equal(/próximamente|em breve/i.test(JSON.stringify(Object.keys(venda).map((m) => S.metadataDaVitrine(m)))), false);
 });
 
-test("next.config.js: X-Robots-Tag noindex nos cinco endereços da vitrine (e abaixo deles), e só neles", async () => {
+test("next.config.js: X-Robots-Tag noindex nos cinco endereços da vitrine (e abaixo deles) e nas 8 rotas do pós-pagamento, e só neles", async () => {
   const fabrica = require(arq("next.config.js"));
   const aviso = console.warn;
   console.warn = () => {};
@@ -313,7 +313,13 @@ test("next.config.js: X-Robots-Tag noindex nos cinco endereços da vitrine (e ab
     console.warn = aviso;
   }
   const comNoindex = regras.filter((r) => r.headers.some((h) => h.key === "X-Robots-Tag"));
-  const esperado = Object.values(M.VENDAS_DO_MERCADO).flatMap((base) => [base, `${base}/:path*`]);
+  // Pós-pagamento (lib/obrigado.mjs): obrigado e /baixar, em pt e em es, só a rota exata.
+  const { ROTAS_DO_POS_PAGAMENTO } = await import(arq("lib", "obrigado.mjs"));
+  assert.equal(ROTAS_DO_POS_PAGAMENTO.length, 8);
+  const esperado = [
+    ...Object.values(M.VENDAS_DO_MERCADO).flatMap((base) => [base, `${base}/:path*`]),
+    ...ROTAS_DO_POS_PAGAMENTO,
+  ];
   assert.deepEqual(comNoindex.map((r) => r.source).sort(), esperado.sort());
   for (const r of comNoindex) {
     assert.deepEqual(r.headers, [{ key: "X-Robots-Tag", value: "noindex, nofollow" }], r.source);
@@ -918,20 +924,25 @@ test("standby: as quatro páginas legais mostram o texto da produção; ligada a
   }
 });
 
-test("standby: fora da vitrine, GA4 e Pixel montam direto e sem aviso, como na produção; na vitrine e com a chave ligada, só com o aceite", () => {
+test("standby: fora da vitrine, GA4 e Pixel montam direto e sem aviso, como na produção; na vitrine e com a chave ligada, só com o aceite", async () => {
+  const O = await import(arq("lib", "obrigado.mjs"));
   const consentimento = (lancadoNoBuild, pathname) => carregarTs(arq("components", "Consentimento.tsx"), {
     react: React, "react/jsx-runtime": jsx,
     "next/navigation": { usePathname: () => pathname },
     "@/components/Tracking": { Tracking: () => React.createElement("i", null, "MEDICAO") },
-    "@/lib/rotas": R, "@/lib/mercado": M,
+    "@/lib/rotas": R, "@/lib/mercado": M, "@/lib/obrigado.mjs": O,
     "@/lib/cookies": { lerEscolha: () => null, gravarEscolha: () => {}, apagarCookiesDeMedicao: () => {} },
     "@/config/lancamento": { SITE_LANCADO: lancadoNoBuild },
   }, { jsx: true }).Consentimento;
   const ver = (lancadoNoBuild, pathname) =>
     renderToStaticMarkup(React.createElement(consentimento(lancadoNoBuild, pathname), null, "PAGINA"));
-  for (const p of ["/", "/es", "/es-es", "/pt-pt", "/mundo", "/estudante", "/es/estudiantes", "/privacidade", "/obrigado-aprovado"]) {
+  for (const p of ["/", "/es", "/es-es", "/pt-pt", "/mundo", "/estudante", "/es/estudiantes", "/privacidade"]) {
     assert.equal(ver(false, p), "<i>MEDICAO</i>PAGINA", p);
   }
   for (const p of Object.values(VITRINE_NOVA)) assert.equal(ver(false, p), "PAGINA", p);
   for (const p of ["/", "/estudante", "/privacidade"]) assert.equal(ver(true, p), "PAGINA", p);
+  // Pós-pagamento em standby: nada de medição no HTML do servidor. A
+  // página lê a escolha de cookies no navegador antes de montar (quem
+  // recusou na vitrine não manda nada; testes/obrigado.test.mjs).
+  for (const p of [...O.ROTAS_DO_POS_PAGAMENTO, "/obrigado"]) assert.equal(ver(false, p), "PAGINA", p);
 });
