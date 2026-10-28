@@ -68,7 +68,7 @@ export default function SolicitacaoRecebida() {
             </h1>
             <p className="ed-lead" style={{ margin: "0 auto" }}>
               Sua condição de estudante está registrada. Estamos conferindo seus dados e, em até
-              {" "}{ESTUDANTE.esperaMinutos} minutos, o código chega no número que você informou.
+              {" "}{ESTUDANTE.esperaMinutos} minutos, enviamos o código para o número que você informou.
               Não precisa esperar aqui.
             </p>
           </div>
