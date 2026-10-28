@@ -128,6 +128,15 @@ sem cookie e sem oferta, é "mundo" (dólar).
   clicou em **Recusar** na vitrine não monta GA4 nem Pixel e o Purchase
   não sai. Aceitou ou não escolheu: monta como hoje. Nada de medição vai
   no HTML do servidor dessas páginas.
+- **Aviso no celular** (até 560 px, revisão de 28/10/2026): compacto, com
+  115 px, sem o título, com o texto curto ("Usamos cookies de medição do
+  Google e da Meta só se você aceitar. Saiba mais.") e Recusar e Aceitar
+  de 40 px, do mesmo tamanho. O inteiro tinha ~214 px e, com a chave
+  ligada, cobria o "Instalar no iPhone" de quem chega sem ter respondido.
+  Medido com a chave ligada e sem `dm_cookies`: o aviso começa em 537 px
+  (iPhone 390 x 664) e em 513 px (360 x 640); o botão termina em 484 px e
+  em 479 px (pt) ou 503 px (es). No computador, o aviso de sempre, abaixo
+  do QR. A mesma troca está na branch `claude/lancamento-ajustes`.
 
 ## 7. O que cada página mostra
 
@@ -136,8 +145,9 @@ sem cookie e sem oferta, é "mundo" (dólar).
 - **Celular**, uma coluna, nesta ordem: selo e título compactos, o cartão
   "Passo 2: Instale o app" com o botão da loja do aparelho (**aparece sem
   rolar** no iPhone de verdade: o Safari deixa uns 390 x 664 de área
-  visível; o fundo do botão fica em 484 px em pt e 508 px em es, e em
-  503 px a 360 x 640), a trilha de 3 marcos (status alinhados na base),
+  visível; o fundo do botão fica em 484 px em pt e em es, e em 479 px
+  (pt) e 503 px (es) a 360 x 640), a trilha de 3 marcos (status alinhados
+  na base),
   "Passo 3: Crie sua senha no app", o aviso do WhatsApp com o "Não
   recebeu?" logo abaixo, e a tela real do app (a arte das lojas, sem
   legenda: ela já traz o próprio título).
@@ -156,7 +166,13 @@ sem cookie e sem oferta, é "mundo" (dólar).
 - **"Abrir a versão web"** leva a `https://app.diariamente.club/ativar`
   (`?lang=es` em espanhol). Conferido em 28/10/2026: sem token, responde
   200 e o app abre direto "Ativar sua conta" (e-mail, senha nova e
-  confirmação). No `/baixar`, a versão web é a raiz do app.
+  confirmação). No `/baixar`, a versão web é a raiz do app. No
+  computador, a aprovada mostra "Prefere começar aqui mesmo? Abrir a
+  versão web" no fim do cartão do QR, na primeira dobra (592 px de 800), e
+  o rodapé não repete a linha; no celular ela fica no rodapé.
+- O subtítulo não conta passos ("Agora falta instalar o app e criar sua
+  senha."): "dois passos" logo acima do cartão "Passo 2" se contradizia.
+  A numeração fica com a trilha e os cartões.
 
 **Aguardando pagamento** e **Em análise**: a mesma moldura em dourado,
 relógio, trilha no passo 2 e o que fazer enquanto isso.
@@ -285,6 +301,11 @@ conferir o Purchase sem enviar, veja `window.fbq.queue` e
 ## 13. Na fila (fora desta entrega)
 
 - **Colar as 3 URLs na Hotmart** (seção 2). Ação do dono.
+- **Assunto do e-mail do atendimento em espanhol**: as rotas `/es/...`
+  abrem o e-mail com o assunto em português ("Suporte Diariamente App",
+  "Atendimento Diariamente App"), que o dono decidiu em 20/10/2026 para a
+  triagem da caixa. Ficou como está; trocar por um assunto por idioma ou
+  por um neutro é decisão do dono (`config/atendimento.ts`).
 - **Descobrir o que a Hotmart manda na URL**: depois do primeiro
   pagamento real, filtrar `[obrigado]` nos Logs da Vercel. Se não vier
   `off`, a decisão fica com o cookie, o `?lang=`, o navegador e o país.
