@@ -63,6 +63,8 @@ type Topo = { aba: string; descricao: string; selo: string; titulo: readonly str
 
 export type TextosDoLocal = {
   aprovado: Topo & Rodape & {
+    /** No computador, no fim do cartão de instalar: a versão web logo ali. */
+    webAquiAntes: string;
     app: { selo: string; titulo: string; jaInstalado: string };
     senha: { selo: string; titulo: string; passos: readonly Rico[] };
     whatsapp: { selo: string; titulo: string; texto: string };

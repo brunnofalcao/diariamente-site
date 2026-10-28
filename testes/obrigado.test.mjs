@@ -921,6 +921,34 @@ test("versão web: nas páginas de obrigado, a ativação do app (/ativar); no /
   assert.doesNotMatch(ler("components/ObrigadoShell.tsx"), /web="raiz"/);
 });
 
+test("aprovada no computador: a versão web (/ativar) no fim do cartão de instalar, sem repetir no rodapé (revisão de 28/10/2026)", () => {
+  const PC = pecasComuns();
+  for (const local of LOCAIS) {
+    const t = TEXTOS[local].aprovado;
+    const props = { local, versaoWeb: { antes: t.webAquiAntes, link: t.webLink } };
+    const comp = renderToStaticMarkup(React.createElement(PC.InstalarApp, { ...props, aparelho: "computador" }));
+    assert.ok(comp.includes(`<a href="${PC.linkDaVersaoWeb(local)}">${t.webLink}</a>`), comp);
+    assert.ok(comp.includes(t.webAquiAntes));
+    // no celular, o cartão é o botão da loja; a versão web fica no rodapé, como antes
+    for (const aparelho of ["ios", "android"]) {
+      assert.equal(renderToStaticMarkup(React.createElement(PC.InstalarApp, { ...props, aparelho })).includes(t.webAquiAntes), false, aparelho);
+    }
+    const final = (semWeb) => renderToStaticMarkup(React.createElement(PC.Final, { local, webAntes: t.webAntes, webLink: t.webLink, semWeb, frase: t.frase }));
+    assert.equal(final(true).includes(t.webLink), false);
+    assert.ok(final(false).includes(t.webLink));
+  }
+  assert.match(ler("components/ObrigadoShell.tsx"), /semWeb=\{aparelho === "computador"\}/);
+});
+
+test("aprovada: o subtítulo não conta passos (a trilha e os cartões numeram: Passo 2 e Passo 3)", () => {
+  for (const local of LOCAIS) {
+    const t = TEXTOS[local].aprovado;
+    assert.doesNotMatch(t.sub, /dois passos|dos pasos|\bdois\b|\bdos\b/i, t.sub);
+    assert.equal(t.app.selo, local === "es" ? "Paso 2" : "Passo 2");
+    assert.equal(t.trilha.passos.length, 3);
+  }
+});
+
 test("o chip é igual ao botão do app: só o texto, sem borda, fundo nem ponto de toque", () => {
   const PC = pecasComuns();
   assert.equal(renderToStaticMarkup(React.createElement(PC.ChipDoApp, { rotulo: "Primeiro acesso? Ativar conta" })), '<span class="pp-chip">Primeiro acesso? Ativar conta</span>');

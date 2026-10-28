@@ -232,6 +232,9 @@
 }
 .pp-lojas-antes { margin: 20px 0 10px; font-size: 13px; color: var(--n-400); text-align: center; }
 @media (min-width: 560px) { .pp-lojas-antes { text-align: left; } }
+/* versão web no fim do cartão de instalar (aprovada, computador) */
+.pp-web-aqui { margin-top: 12px; }
+@media (min-width: 560px) { .pp-web-aqui { justify-content: flex-start; } }
 
 /* botões das lojas (StoreBadges variant="botoes") */
 .pp-lojas { display: grid; gap: 10px; grid-template-columns: 1fr; }

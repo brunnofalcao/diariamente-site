@@ -285,17 +285,24 @@ export function qrDoLocal(local: Local): string {
  *   ios         botão grande da App Store e "Usa Android?" discreto
  *   android     o inverso
  *   computador  QR code (abre o /baixar do idioma no celular) e as duas lojas
- * Os links abrem em outra aba: a página com os próximos passos continua aqui.
+ *               e, na aprovada, a versão web logo abaixo (versaoWeb): quem
+ *               acabou de pagar no computador pode começar ali mesmo, sem
+ *               descer até o fim da página (revisão de 28/10/2026)
+ * Os links das lojas abrem em outra aba: a página com os próximos passos
+ * continua aqui.
  */
 export function InstalarApp({
   local,
   aparelho,
   computador,
+  versaoWeb,
 }: {
   local: Local;
   aparelho: Aparelho;
   /** Textos do QR code no computador, quando a página tem os seus (o /baixar). */
   computador?: { titulo: string; texto: string; lojasAntes: string };
+  /** Só no computador: "Prefere começar aqui mesmo? Abrir a versão web" (/ativar). */
+  versaoWeb?: { antes: string; link: string };
 }) {
   const t = textosDo(local).lojas;
   const lojas = LOJAS_DO_LOCAL[local];
@@ -316,6 +323,12 @@ export function InstalarApp({
         </div>
         <p className="pp-lojas-antes">{q.lojasAntes}</p>
         <StoreBadges variant="botoes" lang={local} rotulos={rotulos} />
+        {versaoWeb && (
+          <p className="pp-outro pp-web-aqui">
+            <span>{versaoWeb.antes}</span>
+            <a href={linkDaVersaoWeb(local)}>{versaoWeb.link}</a>
+          </p>
+        )}
       </div>
     );
   }
@@ -366,6 +379,7 @@ export function Final({
   webAntes,
   webLink,
   web = "ativar",
+  semWeb = false,
   suporteAntes,
   assunto,
   frase,
@@ -375,16 +389,20 @@ export function Final({
   webLink: string;
   /** Para onde a versão web leva (linkDaVersaoWeb). */
   web?: "ativar" | "raiz";
+  /** Sem a linha da versão web (a aprovada no computador já a mostra no cartão de instalar). */
+  semWeb?: boolean;
   suporteAntes?: string;
   assunto?: string;
   frase: string;
 }) {
   return (
     <div className="pp-final">
-      <p>
-        {webAntes}{" "}
-        <a className="pp-link" href={linkDaVersaoWeb(local, web)}>{webLink}</a>
-      </p>
+      {!semWeb && (
+        <p>
+          {webAntes}{" "}
+          <a className="pp-link" href={linkDaVersaoWeb(local, web)}>{webLink}</a>
+        </p>
+      )}
       {suporteAntes && assunto && (
         <p>
           {suporteAntes}{" "}

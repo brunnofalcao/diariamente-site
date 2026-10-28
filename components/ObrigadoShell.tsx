@@ -117,7 +117,7 @@ function Aprovado({ local, aparelho }: { local: Local; aparelho: Aparelho }) {
         <section className="pp-cartao is-destaque pp-surge pp-area-instalar" style={atraso(4)} id="passo-2" aria-labelledby="passo-2-titulo">
           <span className="pp-etiqueta">{t.app.selo}</span>
           <h2 id="passo-2-titulo" className="pp-cartao-titulo">{t.app.titulo}</h2>
-          <InstalarApp local={local} aparelho={aparelho} />
+          <InstalarApp local={local} aparelho={aparelho} versaoWeb={{ antes: t.webAquiAntes, link: t.webLink }} />
           <a className="pp-ja" href="#passo-3">
             <span>{t.app.jaInstalado}</span>
             <Seta />
@@ -180,6 +180,7 @@ function Aprovado({ local, aparelho }: { local: Local; aparelho: Aparelho }) {
         local={local}
         webAntes={t.webAntes}
         webLink={t.webLink}
+        semWeb={aparelho === "computador"}
         suporteAntes={t.suporteAntes}
         assunto={ATENDIMENTO.assuntoSuporte}
         frase={t.frase}
