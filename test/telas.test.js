@@ -151,8 +151,14 @@ test("home do Brasil com o estudante aberto: \"Sou estudante\" com R$ 89,90 por 
   const h = html(blocoOferta(config(true)), { mercado: "br", momento: LANCAMENTO });
   assert.match(h, /href="\/estudante"/);
   assert.match(h, /Sou estudante: R\$ 7,49\/mês · R\$ 89,90 por ano · cobrança anual/);
-  semDuracaoDoEstudante(h.replace(/R\$ 99,98<\/strong> por ano nos 3 primeiros anos, 33% a menos que o preço oficial\. Depois, R\$ 149,90 por ano\./, ""), "home");
-  assert.match(h, /R\$ 99,98<\/strong> por ano nos 3 primeiros anos, 33% a menos que o preço oficial\. Depois, R\$ 149,90 por ano\./);
+  // A duração de 3 anos é do LANÇAMENTO (a regra e o quadro do card, antes
+  // do botão); a linha do estudante, depois do botão, não diz duração.
+  const regra = /<strong [^>]*>33% a menos<\/strong>, travado nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\./;
+  assert.match(h, regra);
+  assert.match(h, /<dt [^>]*>3 anos no preço oficial<\/dt>/);
+  const depoisDoBotao = h.slice(h.indexOf(">Começar meu ano</a>"));
+  assert.match(depoisDoBotao, /Sou estudante/);
+  semDuracaoDoEstudante(depoisDoBotao, "home");
 });
 
 test("home do Brasil com o estudante FECHADO: nenhum link nem preço de estudante", () => {
@@ -178,9 +184,9 @@ test("home depois do lançamento: o parcelamento diz que tem acréscimo e fica s
   assert.equal(/12x(?! no cartão com acréscimo)/.test(h), false);
   // nunca valor de parcela
   assert.equal(/\d+\s*x\s*de\s*R\$/i.test(h), false);
-  // no lançamento, só à vista
+  // no lançamento, só à vista, dito no prazo, antes do botão
   const l = html(blocoOferta(config(true)), { mercado: "br", momento: LANCAMENTO });
-  assert.match(l, /Pagamento à vista/);
+  assert.match(l, /<span>Preço de lançamento, à vista, para quem assinar até <span style="white-space:nowrap">16 de novembro<\/span>\.<\/span><\/p><a [^>]*>Começar meu ano<\/a>/);
   assert.equal(/12x/.test(l), false);
 });
 

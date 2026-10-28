@@ -10,7 +10,7 @@ import { BlocoOferta } from "@/components/BlocoOferta";
 import { TelaDaLoja, RAIO_DA_TELA } from "@/components/TelaDaLoja";
 import { SeletorMercado } from "@/components/SeletorMercado";
 import { HOME_DO_MERCADO, VENDAS_DO_MERCADO } from "@/lib/mercado";
-import { formatar, precoFinal, precoCheio, linkCheckout, precoEstudante, pendente, lancamentoVigente, fimDoLancamento, MERCADOS, type Mercado } from "@/config/pricing";
+import { formatar, precoFinal, precoCheio, linkCheckout, precoEstudante, pendente, lancamentoVigente, fimDoLancamento, notaDoLancamento, notaDaBarra, MERCADOS, type Mercado } from "@/config/pricing";
 
 /* ─────────────────────────────────────────────────────────────
    Home · Diariamente (redesign v3, padrão internacional PT/ES)
@@ -200,6 +200,13 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
   // Preço oficial riscado ao lado do preço de lançamento (barra fixa e CTA
   // final), na mesma unidade do preço ao lado. null fora do lançamento.
   const cheio = precoCheio(mkt, agora);
+  // Com o lançamento valendo (só o Brasil tem), a condição dos 3 anos não
+  // pode faltar na barra nem no CTA final: "por ano durante 3 anos" e
+  // "por ano nos 3 primeiros anos, para quem assinar até 16 de novembro ·
+  // Garantia de 7 dias" (config/pricing.ts). null fora dele: as notas de
+  // sempre.
+  const notaCta = notaDoLancamento(mkt, agora);
+  const notaBarra = notaDaBarra(mkt, agora);
   // O <html lang> vive no layout raiz, que e servidor e nao conhece a
   // rota. Sincronizamos aqui: leitor de tela e buscador precisam do
   // idioma certo no elemento raiz, nao so num div interno.
@@ -822,17 +829,19 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
                 <a href="#preco" style={btnPrimary}>{vende ? oferta.textos.botao : oferta.espera.botao}</a>
               )}
               {/* balance: com o preço riscado, a linha passa de 375 px e
-                  quebra em duas do mesmo tamanho, sem "dias" sozinho. */}
+                  quebra em linhas do mesmo tamanho, sem "dias" sozinho. */}
               <span style={{ fontSize: 13, fontWeight: 500, color: C.n400, textWrap: "balance" as never }}>
                 {/* No lançamento, o preço oficial riscado ao lado, por ano
-                    como o de lançamento ("R$ 149,90 R$ 99,98 por um ano"). */}
+                    como o de lançamento ("R$ 149,90 R$ 99,98 por ano nos 3
+                    primeiros anos, para quem assinar até ..."). Nunca "só
+                    até" colado aos 3 anos: o preço não acaba na data. */}
                 {vende && cheio && (
                   <>
                     {oferta.textos.ancora && <span style={somenteLeitor}>{oferta.textos.ancora}: </span>}
                     <s style={{ textDecorationThickness: "1.5px" }}>{cheio}</s>{" "}
                   </>
                 )}
-                {vende ? `${formatar(mkt, precoFinal(mkt, agora))} ${oferta.textos.nota}` : oferta.espera.nota}
+                {vende ? `${formatar(mkt, precoFinal(mkt, agora))} ${notaCta ?? oferta.textos.nota}` : oferta.espera.nota}
               </span>
             </div>
             {/* A arte Hoje (Saúde mental todo dia) sobe do pé do cartão:
@@ -919,7 +928,10 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
                   )}
                   {formatar(mkt, precoFinal(mkt, agora))}
                 </div>
-                <div style={{ marginTop: 4, fontSize: 12, fontWeight: 500, color: C.n400, whiteSpace: "nowrap" }}>{t.stickyNote}</div>
+                {/* "1 ano" dava a entender que o preço vale só no primeiro
+                    ano: no lançamento, "por ano durante 3 anos" (a
+                    garantia fica no card; com ela, o botão quebraria). */}
+                <div style={{ marginTop: 4, fontSize: 12, fontWeight: 500, color: C.n400, whiteSpace: "nowrap" }}>{notaBarra ?? t.stickyNote}</div>
               </>
             ) : (
               <>

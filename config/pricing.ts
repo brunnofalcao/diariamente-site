@@ -142,31 +142,72 @@ export type Oferta = {
    *             (handoff, seção 9)
    */
   semVenda: "bloco" | "pagina";
+  /*
+   * TEXTOS. Os {marcadores} são trocados pela conta, nunca por número
+   * escrito à mão: {anos} (anos do lançamento), {pct}
+   * (percentualDoLancamento), {cheio} (preço oficial formatado), {mes}
+   * (porMes) e {dia} (porDia). O trecho entre asteriscos (*33% a menos*)
+   * é o destaque do card (branco, peso 600); o asterisco nunca chega à
+   * tela (emPartes, textoCorrido).
+   *
+   * CARD NOVO (só o Brasil, pedido do dono de 27/10/2026, copy julgada e
+   * sintetizada): o mercado que tem `linhaValor` usa o card de venda
+   * novo de components/BlocoOferta.tsx (manchete anual, âncora, quadro
+   * de 3 anos no lançamento). Sem `linhaValor`, o card de sempre
+   * (manchete mensal, frase de proposta, pílula de pagamento).
+   */
   textos: {
     titulo: string;
+    /** Cabeçalho do card com o lançamento valendo (sem o "por um ano",
+        que contradizia o desconto de 3 anos e não cabia com o selo). */
+    tituloLancamento?: string;
     proposta: string;
     mes: string;
     /** Rótulo do preço cheio riscado, acima da manchete, enquanto o
         preço de lançamento vale ("Preço oficial: R$ 149,90 por ano"). */
     ancora?: string;
-    /** Junto da manchete quando o preço de lançamento vale. */
+    /** Junto da manchete quando o preço de lançamento vale (card de sempre). */
     mesLancamento?: string;
     totalSufixo: string;
-    /** Depois do total, com o lançamento valendo. {anos}, {pct} e
-        {cheio} saem do config (anos do lançamento, desconto sobre o preço
-        cheio, percentualDoLancamento, e preço cheio formatado). */
+    /** Regra do lançamento no card, com o lançamento valendo:
+        "*{pct}% a menos*, travado nos {anos} primeiros anos. Depois,
+        {cheio} por ano." */
     lancamentoRegra?: string;
+    /** A mesma regra quando o desconto não chega a 1% (sem "0% a menos"). */
+    lancamentoRegraSemPercentual?: string;
+    /** A regra na /estudante (components/BlocoPreco.tsx), depois de "Por
+        ano": "nos {anos} primeiros anos. Depois, {cheio} por ano.". Sem
+        percentual: ali as diferenças mostradas são as do estudante. */
+    lancamentoRegraEstudante?: string;
+    /** Fracionamento do preço cobrado agora, no card novo:
+        "Equivale a *{mes}* por mês. Por dia, cerca de *{dia}* e três
+        minutos." Vale no lançamento e depois dele. */
+    linhaValor?: string;
+    /** Quadro dos {anos} anos do lançamento (card novo): rótulos das três
+        linhas e a legenda, que só aparece com quaseUmAnoInteiro. */
+    quadroOficial?: string;
+    quadroLancamento?: string;
+    quadroEconomia?: string;
+    quadroLegenda?: string;
     pagamento: string;
-    /** No lugar de `pagamento` com o lançamento valendo. */
+    /** No lugar de `pagamento` com o lançamento valendo (card de sempre). */
     pagamentoLancamento?: string;
     botao: string;
     renovacao: string;
     renovacaoMesmoValor?: string;
     impostoNota?: string;
+    /** Antes da data do fim do lançamento ("... até 16 de novembro."). */
     prazo?: string;
     estudante?: string;
     /** Linha curta da barra fixa e do CTA final, depois do preço. */
     nota: string;
+    /** No lugar de `nota` no CTA final, com o lançamento valendo:
+        "por ano nos {anos} primeiros anos, para quem assinar até {data} ·
+        Garantia de 7 dias". */
+    notaLancamento?: string;
+    /** Segunda linha da barra fixa com o lançamento valendo, no lugar do
+        stickyNote de lib/i18n.ts: "por ano durante {anos} anos". */
+    notaBarraLancamento?: string;
   };
   /** Linhas de confiança sob o botão. Meio de pagamento muda por
       mercado: Pix não existe fora do Brasil. */
@@ -211,8 +252,16 @@ export const MERCADOS: Record<Mercado, Oferta> = {
     renovaMesmoValor: false,
     vendaAberta: true,
     semVenda: "bloco",
+    // Card de venda novo (pedido do dono, 27/10/2026: "o card de venda,
+    // de oferta, ele pode ser melhor trabalhado, essa copy"). A copy foi
+    // escrita, julgada (conversão, verdade e lei, design) e sintetizada;
+    // o que ficou de fora e por quê está em docs/LANCAMENTO.md ("Card de
+    // oferta do Brasil"). Nada de "cashback", "de graça", "pague 2 leve
+    // 3": ninguém recebe dinheiro de volta (CDC, art. 37). Todo número
+    // sai da conta.
     textos: {
       titulo: "Seu Diariamente por um ano",
+      tituloLancamento: "Seu Diariamente",
       proposta: "Uma provocação, uma reflexão, uma ação possível. Todos os dias.",
       mes: "/mês",
       // Pedido do dono (27/10/2026): deixar claro que o preço oficial é
@@ -221,22 +270,49 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       ancora: "Preço oficial",
       mesLancamento: "no lançamento",
       totalSufixo: "por ano",
-      lancamentoRegra: "nos {anos} primeiros anos, {pct}% a menos que o preço oficial. Depois, {cheio} por ano.",
+      // "travado": o desconto vale nos 3 primeiros anos (é o que o
+      // checkout da oferta de lançamento garante), e a renovação ao preço
+      // oficial fica dita às claras (CDC, arts. 6º, III, e 31).
+      lancamentoRegra: "*{pct}% a menos*, travado nos {anos} primeiros anos. Depois, {cheio} por ano.",
+      lancamentoRegraSemPercentual: "Travado nos {anos} primeiros anos. Depois, {cheio} por ano.",
+      lancamentoRegraEstudante: "nos {anos} primeiros anos. Depois, {cheio} por ano.",
+      // "Equivale a": a oferta é anual e à vista, nunca mensalidade.
+      // "cerca de": R$ 99,98 / 365 = 0,2739, e o ritual pede cerca de três
+      // minutos.
+      linhaValor: "Equivale a *{mes}* por mês. Por dia, cerca de *{dia}* e três minutos.",
+      // O total de 3 anos no preço oficial NÃO é riscado: não existe plano
+      // de 3 anos, e riscar esse total seria um preço de referência
+      // fictício (CDC, art. 37, § 1º).
+      quadroOficial: "{anos} anos no preço oficial",
+      quadroLancamento: "{anos} anos no lançamento",
+      quadroEconomia: "Você deixa de pagar",
+      quadroLegenda: "Quase o preço oficial de um ano inteiro.",
       // Sem valor de parcela: a Hotmart calcula. E o parcelado tem
       // acréscimo (o checkout da fhrttdh8 mostrou 12x de R$ 16,40 em
-      // 12/10/2026): "com acréscimo" impede ler, ao lado da manchete
-      // "R$ 12,49/mês", 12x de R$ 12,49.
+      // 12/10/2026): "com acréscimo" impede ler, ao lado do equivalente
+      // "R$ 12,49 por mês", 12x de R$ 12,49.
       pagamento: "À vista, ou em até 12x no cartão com acréscimo",
       pagamentoLancamento: "Pagamento à vista",
       botao: "Começar meu ano",
       renovacao: "Renova a cada ano. Cancele quando quiser.",
       renovacaoMesmoValor: "Renova a cada ano pelo mesmo valor. Cancele quando quiser.",
-      prazo: "Preço de lançamento só até",
+      // "para quem assinar até": a data é para entrar na oferta e não
+      // encurta os 3 anos. O "à vista" (a oferta de lançamento não
+      // parcela) fica aqui, antes do botão.
+      prazo: "Preço de lançamento, à vista, para quem assinar até",
       estudante: "Sou estudante",
       nota: "por um ano · Garantia de 7 dias",
+      // Nunca "só até" colado a "nos 3 primeiros anos": daria para ler
+      // que o preço acaba em 16/11. O 7 é o GARANTIA.dias do config.ts
+      // (este arquivo não importa nada; um teste confere que é igual).
+      notaLancamento: "por ano nos {anos} primeiros anos, para quem assinar até {data} · Garantia de 7 dias",
+      // Cabe ao lado do botão da barra a 375 px (~133 px em Inter 500 de
+      // 12 px); com a garantia, o botão quebraria em duas linhas.
+      notaBarraLancamento: "por ano durante {anos} anos",
     },
     confianca: [
-      "Garantia incondicional de 7 dias",
+      // "Decida com o app na mão." só existe colado à garantia.
+      "Garantia incondicional de 7 dias. Decida com o app na mão.",
       // O checkout da oferta oficial mostra cartão, Apple Pay, Pix e Pix
       // Automático (12/10/2026). Boleto não aparece lá, e saiu daqui.
       "Pagamento seguro via Hotmart · Pix ou cartão",
@@ -472,6 +548,40 @@ export function porMes(m: Mercado, agora: number = Date.now()): number {
   return mensal(precoFinal(m, agora));
 }
 
+/** Equivalente por dia do preço cobrado agora, em centavos inteiros:
+    9998 / 365 = 27,39, R$ 0,27 (na tela, sempre com "cerca de"). */
+export function porDia(m: Mercado, agora: number = Date.now()): number {
+  return Math.round(centavos(precoFinal(m, agora)) / 365) / 100;
+}
+
+/** Um preço anual somado por `anos` anos, em centavos inteiros:
+    149,90 x 3 = 449,70; 99,98 x 3 = 299,94. */
+export function totalEmAnos(valor: number, anos: number): number {
+  return (centavos(valor) * anos) / 100;
+}
+
+/** O que a pessoa deixa de pagar nos anos do lançamento, contra o preço
+    oficial: (149,90 - 99,98) x 3 = 149,76. null fora do lançamento (aí o
+    quadro some) ou sem desconto. */
+export function economiaDoLancamento(m: Mercado, agora: number = Date.now()): number | null {
+  const o = MERCADOS[m];
+  if (!o.lancamento || !lancamentoVigente(m, agora)) return null;
+  const e = (centavos(o.anual) - centavos(o.lancamento.anual)) * o.lancamento.anos;
+  return e > 0 ? e / 100 : null;
+}
+
+/** A economia do lançamento é "quase o preço oficial de um ano inteiro"?
+    Só de 95% a menos de 100% do preço oficial, em centavos inteiros
+    (hoje 14976 contra 14990, 99,9%). Fora dessa faixa a legenda não
+    aparece: com 100% ou mais, "quase" seria falso. */
+export function quaseUmAnoInteiro(m: Mercado, agora: number = Date.now()): boolean {
+  const economia = economiaDoLancamento(m, agora);
+  if (economia === null) return false;
+  const e = centavos(economia);
+  const c = centavos(MERCADOS[m].anual);
+  return e * 100 >= c * 95 && e < c;
+}
+
 /** Formata no padrão do mercado: R$ 149,90 · US$ 29.99 (es-419) · US$ 29,99 · 29,99 €. */
 export function formatar(m: Mercado, valor: number): string {
   const f = MERCADOS[m].formato;
@@ -510,7 +620,8 @@ export function parcelaAgora(m: Mercado, agora: number = Date.now()): boolean {
 
 /** Linha de pagamento do bloco: "Pagamento à vista" no lançamento,
     "À vista, ou em até 12x no cartão com acréscimo" no preço cheio.
-    Nunca valor de parcela. */
+    Nunca valor de parcela. No card novo do Brasil, o "à vista" do
+    lançamento está no prazo; esta linha só aparece depois dele. */
 export function pagamentoAgora(m: Mercado, agora: number = Date.now()): string {
   const t = MERCADOS[m].textos;
   return lancamentoVigente(m, agora) && t.pagamentoLancamento ? t.pagamentoLancamento : t.pagamento;
@@ -539,26 +650,140 @@ export function percentualDoLancamento(m: Mercado, agora: number = Date.now()): 
   return pct > 0 ? pct : null;
 }
 
-/** "nos 3 primeiros anos, 33% a menos que o preço oficial. Depois,
-    R$ 149,90 por ano.", com o lançamento valendo. null fora dele.
+/* ------------------------- textos com conta -------------------------
+   Os textos do mercado levam {marcadores} (trocados pela conta) e
+   *destaques* (o trecho que o card mostra em branco, peso 600). As
+   funções abaixo devolvem o texto em PARTES, para o componente
+   destacar sem escrever texto nenhum, e textoCorrido junta as partes
+   em texto simples (testes, /estudante). */
+
+/** Um trecho de texto; `destaque` é o que estava entre asteriscos. */
+export type Parte = { texto: string; destaque: boolean };
+
+/** Troca cada {chave} pelo valor. Chave sem valor fica como está (um
+    teste confere que nenhuma chega à tela). */
+function preencher(modelo: string, valores: Record<string, string>): string {
+  return modelo.replace(/\{(\w+)\}/g, (todo, chave: string) => (chave in valores ? valores[chave] : todo));
+}
+
+/** "Equivale a *R$ 8,33* por mês." vira três partes, a do meio em
+    destaque. O asterisco nunca chega à tela. */
+export function emPartes(texto: string): Parte[] {
+  return texto
+    .split("*")
+    .map((t, i) => ({ texto: t, destaque: i % 2 === 1 }))
+    .filter((p) => p.texto !== "");
+}
+
+/** As partes juntas, sem os destaques: o texto que a pessoa lê. */
+export function textoCorrido(partes: Parte[] | null): string | null {
+  return partes ? partes.map((p) => p.texto).join("") : null;
+}
+
+/** Valores de conta dos textos do lançamento: {anos}, {cheio}, {data}.
+    A data leva espaços que não quebram, como o preço: "16 de novembro"
+    nunca se parte no fim da linha. */
+function valoresDoLancamento(m: Mercado): Record<string, string> {
+  const o = MERCADOS[m];
+  return {
+    anos: String(o.lancamento ? o.lancamento.anos : ""),
+    cheio: formatar(m, o.anual),
+    data: (dataDoLancamento(m) ?? "").replace(/ /g, "\u00a0"),
+  };
+}
+
+/** A regra do lançamento no card, em partes, com o lançamento valendo:
+    "*33% a menos*, travado nos 3 primeiros anos. Depois, R$ 149,90 por
+    ano." null fora dele.
 
     O {pct} é o percentualDoLancamento (arredondado para baixo, o mesmo
-    número do selo "33% OFF"). `semPercentual` tira o trecho do {pct},
-    da vírgula até o ponto: a /estudante (components/BlocoPreco.tsx)
-    compara o lançamento com o preço de estudante e mostra as próprias
-    diferenças; outro percentual ali, sobre outra base, confundiria. O
-    trecho também sai se o desconto não chegar a 1%. */
+    número do selo "33% OFF"). Sem desconto de 1% ou mais, o texto sem
+    percentual ("Travado nos 3 primeiros anos. ..."), nunca "0% a menos".
+    `semPercentual`: a forma da /estudante (components/BlocoPreco.tsx),
+    que vem depois de "Por ano" ("nos 3 primeiros anos. Depois, R$ 149,90
+    por ano."): ali as diferenças mostradas são as do estudante, e outro
+    percentual, sobre outra base, confundiria. São três textos separados
+    em config (lancamentoRegra, lancamentoRegraSemPercentual,
+    lancamentoRegraEstudante): o texto do card começa pelo {pct} e não dá
+    para tirar o percentual dele cortando um trecho. */
+export function regraDoLancamentoEmPartes(
+  m: Mercado,
+  agora: number = Date.now(),
+  opcoes: { semPercentual?: boolean } = {},
+): Parte[] | null {
+  const o = MERCADOS[m];
+  const t = o.textos;
+  if (!o.lancamento || !lancamentoVigente(m, agora)) return null;
+  const pct = opcoes.semPercentual ? null : percentualDoLancamento(m, agora);
+  const modelo = opcoes.semPercentual
+    ? t.lancamentoRegraEstudante
+    : pct !== null
+      ? t.lancamentoRegra
+      : t.lancamentoRegraSemPercentual;
+  if (!modelo) return null;
+  return emPartes(preencher(modelo, { ...valoresDoLancamento(m), pct: String(pct) }));
+}
+
+/** A regra do lançamento em texto simples (ver regraDoLancamentoEmPartes). */
 export function regraDoLancamento(
   m: Mercado,
   agora: number = Date.now(),
   opcoes: { semPercentual?: boolean } = {},
 ): string | null {
+  return textoCorrido(regraDoLancamentoEmPartes(m, agora, opcoes));
+}
+
+/** "Equivale a *R$ 8,33* por mês. Por dia, cerca de *R$ 0,27* e três
+    minutos.", com o preço cobrado agora (R$ 12,49 e R$ 0,41 depois do
+    lançamento). null no mercado sem `linhaValor`. */
+export function linhaDeValor(m: Mercado, agora: number = Date.now()): Parte[] | null {
+  const modelo = MERCADOS[m].textos.linhaValor;
+  if (!modelo) return null;
+  return emPartes(preencher(modelo, { mes: formatar(m, porMes(m, agora)), dia: formatar(m, porDia(m, agora)) }));
+}
+
+/** O quadro dos anos do lançamento, com o lançamento valendo e a
+    economia positiva; null fora dele (o quadro some).
+      oficial    "3 anos no preço oficial", R$ 449,70 (sem riscado)
+      lancamento "3 anos no lançamento", R$ 299,94
+      economia   "Você deixa de pagar", R$ 149,76
+      legenda    "Quase o preço oficial de um ano inteiro.", só com
+                 quaseUmAnoInteiro (senão null) */
+export function quadroDoLancamento(m: Mercado, agora: number = Date.now()): null | {
+  oficial: { rotulo: string; valor: string };
+  lancamento: { rotulo: string; valor: string };
+  economia: { rotulo: string; valor: string };
+  legenda: string | null;
+} {
   const o = MERCADOS[m];
-  const regra = o.textos.lancamentoRegra;
-  if (!o.lancamento || !regra || !lancamentoVigente(m, agora)) return null;
-  const pct = opcoes.semPercentual ? null : percentualDoLancamento(m, agora);
-  const comPct = pct === null ? regra.replace(/,[^,.]*\{pct\}[^.]*(?=\.)/, "") : regra.replace("{pct}", String(pct));
-  return comPct.replace("{anos}", String(o.lancamento.anos)).replace("{cheio}", formatar(m, o.anual));
+  const t = o.textos;
+  const economia = economiaDoLancamento(m, agora);
+  if (!o.lancamento || economia === null || !t.quadroOficial || !t.quadroLancamento || !t.quadroEconomia) return null;
+  const v = valoresDoLancamento(m);
+  const anos = o.lancamento.anos;
+  return {
+    oficial: { rotulo: preencher(t.quadroOficial, v), valor: formatar(m, totalEmAnos(o.anual, anos)) },
+    lancamento: { rotulo: preencher(t.quadroLancamento, v), valor: formatar(m, totalEmAnos(o.lancamento.anual, anos)) },
+    economia: { rotulo: preencher(t.quadroEconomia, v), valor: formatar(m, economia) },
+    legenda: t.quadroLegenda && quaseUmAnoInteiro(m, agora) ? t.quadroLegenda : null,
+  };
+}
+
+/** CTA final com o lançamento valendo, depois do preço: "por ano nos 3
+    primeiros anos, para quem assinar até 16 de novembro · Garantia de 7
+    dias". null fora dele (o CTA usa textos.nota). */
+export function notaDoLancamento(m: Mercado, agora: number = Date.now()): string | null {
+  const modelo = MERCADOS[m].textos.notaLancamento;
+  if (!modelo || !lancamentoVigente(m, agora) || !dataDoLancamento(m)) return null;
+  return preencher(modelo, valoresDoLancamento(m));
+}
+
+/** Segunda linha da barra fixa com o lançamento valendo: "por ano
+    durante 3 anos". null fora dele (a barra usa o stickyNote). */
+export function notaDaBarra(m: Mercado, agora: number = Date.now()): string | null {
+  const modelo = MERCADOS[m].textos.notaBarraLancamento;
+  if (!modelo || !lancamentoVigente(m, agora)) return null;
+  return preencher(modelo, valoresDoLancamento(m));
 }
 
 const MESES_PT = [

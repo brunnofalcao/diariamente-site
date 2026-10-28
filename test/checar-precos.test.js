@@ -236,6 +236,29 @@ test("mercado ligado (vendaAberta) sem o link do plano trava; fechado sem link, 
   assert.equal(checar(comLink).ok, true);
 });
 
+test("link de TODO mercado passa pela conferência: aberto trava; fechado avisa (na vitrine o botão já abre esse link)", () => {
+  const ruins = {
+    pendente: "[PREENCHER: link]",
+    foraDaHotmart: "https://exemplo.com/checkout",
+    comCupom: "https://pay.hotmart.com/K105072021O?off=uevhmhy2&offDiscount=X",
+    antigo: "https://pay.hotmart.com/L107085210M",
+  };
+  for (const [caso, link] of Object.entries(ruins)) {
+    for (const m of ["la", "es", "pt", "rw"]) {
+      const fechado = checar(mercados({ [m]: { vendaAberta: false, checkout: link } }));
+      assert.equal(fechado.ok, true, `${caso} ${m} fechado`);
+      assert.equal(fechado.problemas.some((x) => x.includes(`Mercado ${m}`)), false, `${caso} ${m} fechado`);
+      assert.ok(fechado.avisos.some((x) => x.startsWith(`Mercado ${m} (venda fechada; na vitrine o botão já abre este link)`)), `${caso} ${m} fechado`);
+      const aberto = checar(mercados({ [m]: { vendaAberta: true, checkout: link } }));
+      assert.equal(aberto.ok, false, `${caso} ${m} aberto`);
+      assert.ok(aberto.problemas.some((x) => x.startsWith(`Mercado ${m} com vendaAberta: true`)), `${caso} ${m} aberto`);
+    }
+  }
+  // os links de hoje, todos bons: nenhum aviso de link de mercado fechado
+  const hoje = checarPrecosDoProjeto({});
+  assert.equal(hoje.avisos.some((x) => /venda fechada; na vitrine/.test(x)), false);
+});
+
 test("avisos aparecem também na mensagem do build bloqueado", () => {
   const m = mercados();
   m.br.checkout = "[PREENCHER: link]";

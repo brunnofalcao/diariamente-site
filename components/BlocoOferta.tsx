@@ -4,7 +4,8 @@ import {
   MERCADOS, precoFinal, porMes, formatar, linkCheckout, lancamentoVigente,
   dataDoLancamento, pendente, precoEstudante, porMesEstudante, pagamentoAgora,
   percentualDoLancamento, regraDoLancamento, precoCheio,
-  type Mercado,
+  regraDoLancamentoEmPartes, linhaDeValor, quadroDoLancamento,
+  type Mercado, type Parte,
 } from "@/config/pricing";
 import { ESTUDANTE, periodoEstudante } from "@/config";
 import { caminho } from "@/lib/rotas";
@@ -18,27 +19,40 @@ import { ListaEsperaForm } from "@/components/ListaEsperaForm";
    config/pricing.ts. Trocar valor, moeda, oferta ou link é editar
    aquele arquivo, e o bloco acompanha nos cinco mercados.
 
-   O que o visitante vê, em qualquer mercado com venda aberta:
-     manchete no equivalente mensal
-     total anual logo abaixo
-     UM botão
-
    Nunca: duas moedas, duas opções de plano, campo de cupom, contador,
-   conversão na tela, valor de parcela.
+   conversão na tela, valor de parcela. Sempre UM botão.
 
-   Brasil no lançamento (até FIM_DO_LANCAMENTO): acima da manchete, o
-   preço oficial riscado ("Preço oficial: R$ 149,90 por ano"; pedido do
-   dono, 27/10/2026: não estava claro que o preço oficial é R$ 149,90 e
-   que só agora sai por 33% a menos); o preço da oferta de lançamento; a
-   regra dela (3 primeiros anos, o desconto sobre o preço oficial, depois
-   o preço cheio, que é o que o checkout diz); "Pagamento à vista" (a
-   oferta de lançamento não parcela) e o prazo. O percentual sai da
-   conta (percentualDoLancamento), nunca escrito à mão. Depois da data,
-   ou com o lançamento desligado (ativo: false): nada riscado, o preço
-   cheio e "À vista, ou em até 12x no cartão com acréscimo", sem valor de
-   parcela (a Hotmart calcula, e o parcelado custa mais que o equivalente
-   mensal da manchete). Mercado sem lançamento (lancamento: null): nada
-   riscado.
+   DOIS CARDS DE VENDA
+     novo      o mercado com `textos.linhaValor` em config/pricing.ts
+               (hoje só o Brasil). Pedido do dono, 27/10/2026: "o card de
+               venda, de oferta, ele pode ser melhor trabalhado, essa
+               copy". Copy escrita, julgada (conversão, verdade e lei com
+               veto, design) e sintetizada; detalhes e o que ficou de fora
+               em docs/LANCAMENTO.md ("Card de oferta do Brasil").
+     de sempre os outros (la, es, pt, rw): frase de proposta, manchete no
+               equivalente mensal, total anual, pílula de pagamento. Não
+               mudou.
+
+   CARD NOVO no lançamento (até FIM_DO_LANCAMENTO, ativo: true), de cima
+   para baixo:
+     SEU DIARIAMENTE                                    33% OFF
+     Preço oficial: R$ 149,90 por ano      (só o valor riscado)
+     R$ 99,98 por ano                      (manchete: o que é cobrado)
+     33% a menos, travado nos 3 primeiros anos. Depois, R$ 149,90 por ano.
+     Equivale a R$ 8,33 por mês. Por dia, cerca de R$ 0,27 e três minutos.
+     [3 anos no preço oficial  R$ 449,70]  (sem riscado: não há plano
+     [3 anos no lançamento     R$ 299,94]   de 3 anos)
+     [Você deixa de pagar      R$ 149,76]
+     [Quase o preço oficial de um ano inteiro.]  (só com quaseUmAnoInteiro)
+     Preço de lançamento, à vista, para quem assinar até 16 de novembro.
+     [Começar meu ano]
+   Depois da data, ou com ativo: false, o mesmo esqueleto sem âncora,
+   selo, regra e quadro: "SEU DIARIAMENTE POR UM ANO", "R$ 149,90 por
+   ano", o equivalente por mês e por dia do preço oficial e, no lugar do
+   prazo, "À vista, ou em até 12x no cartão com acréscimo." (nunca valor
+   de parcela: a Hotmart calcula). Todo número e todo texto saem de
+   config/pricing.ts (percentualDoLancamento, porMes, porDia,
+   quadroDoLancamento...), nunca escritos aqui.
 
    Mercado com vendaAberta: false (hoje la, es, pt e rw): o bloco vira a
    lista de espera daquele mercado, sem preço nenhum. Exceções:
@@ -77,6 +91,36 @@ function Relogio() {
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.p500} strokeWidth={2.2} strokeLinecap="round" aria-hidden="true">
       <circle cx="12" cy="12" r="9" /><path d="M12 7v5.2l3.2 1.9" />
     </svg>
+  );
+}
+
+/** Prazo do lançamento (card novo): a data é o que importa, não um relógio. */
+function Calendario() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.ret} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: "0 0 auto", marginTop: 3 }}>
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" /><path d="M3.5 10h17M8 3v4M16 3v4" />
+    </svg>
+  );
+}
+
+/** Forma de pagamento do preço oficial (card novo, depois do lançamento). */
+function Cartao() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.n300} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: "0 0 auto", marginTop: 3 }}>
+      <rect x="2.5" y="5.5" width="19" height="13" rx="2.5" /><path d="M2.5 10h19M6.5 15h4" />
+    </svg>
+  );
+}
+
+/** Texto em partes (config/pricing.ts, emPartes): o destaque em branco,
+    peso 600. Nenhum texto escrito aqui. */
+function Partes({ partes }: { partes: Parte[] }) {
+  return (
+    <>
+      {partes.map((p, i) =>
+        p.destaque ? <strong key={i} style={{ color: "#fff", fontWeight: 600 }}>{p.texto}</strong> : p.texto,
+      )}
+    </>
   );
 }
 
@@ -146,12 +190,193 @@ export function BlocoOferta({ mercado, momento, previa = false, vitrine = false 
   const anual = formatar(mercado, valor);
   const renovacao = o.renovaMesmoValor && t.renovacaoMesmoValor ? t.renovacaoMesmoValor : t.renovacao;
   const prazo = vigente ? dataDoLancamento(mercado) : null;
+  // O selo só aparece com o lançamento valendo: o desconto da oferta de
+  // lançamento sobre o preço cheio, arredondado para baixo.
+  const selo = vigente && pct ? `${pct}% OFF` : undefined;
 
+  /* Peças iguais nos dois cards (o de sempre e o novo do Brasil). */
+  const botao = (marginTop: number) => (
+    <a
+      href={semLink ? undefined : link}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-disabled={semLink || undefined}
+      onClick={(e) => {
+        if (semLink) { e.preventDefault(); return; }
+        registrarInicioDeCheckout({ id: `anual-${mercado}`, nome: `Diariamente Anual · ${mercado.toUpperCase()}`, valor, moeda: o.moeda });
+      }}
+      style={{
+        display: "flex", alignItems: "center", justifyContent: "center",
+        height: 54, marginTop, width: "100%", borderRadius: 999,
+        background: semLink ? "rgba(39,189,190,.35)" : C.p500,
+        color: C.n900, fontSize: 16, fontWeight: 700, textDecoration: "none",
+        cursor: semLink ? "not-allowed" : "pointer",
+      }}
+    >
+      {t.botao}
+    </a>
+  );
+
+  const depoisDoBotao = (
+    <>
+      <p style={{ margin: "12px 0 0", textAlign: "center", fontSize: 13, lineHeight: 1.45, color: C.n400 }}>
+        {renovacao}
+      </p>
+
+      {o.imposto === "fora" && t.impostoNota && (
+        <p style={{ margin: "8px 0 0", textAlign: "center", fontSize: 12.5, lineHeight: 1.45, color: C.n400 }}>
+          {t.impostoNota}
+        </p>
+      )}
+
+      {/* Estudante só existe no Brasil: a validação usa CPF e o cobro é
+          em real (handoff, seção 12, item P2). Só aparece com o fluxo
+          do cupom pessoal ABERTO neste build (ESTUDANTE.aberto, config.ts):
+          fechado, a home não leva a uma página que ainda não entrega o
+          código. O preço segue ESTUDANTE.mostrarPreco, como na
+          /estudante, e o período é o de ESTUDANTE.periodo ("por ano ·
+          cobrança anual"): se o cupom vale nas renovações não se sabe, e
+          o dono decidiu (12/10/2026) dizer só que a cobrança é anual. */}
+      {mercado === "br" && t.estudante && ESTUDANTE.aberto && (
+        <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 13.5, lineHeight: 1.5 }}>
+          <a href={caminho("estudante", "pt")} style={{ color: C.p300, textDecoration: "none" }}>
+            {ESTUDANTE.mostrarPreco
+              ? `${t.estudante}: ${formatar("br", porMesEstudante())}${t.mes} · ${formatar("br", precoEstudante())} ${periodoEstudante()}`
+              : `${t.estudante}: ver a condição`}
+          </a>
+        </p>
+      )}
+    </>
+  );
+
+  // No card novo, a primeira linha (a garantia) vem em branco: é a linha
+  // de destaque. No de sempre, as três iguais.
+  const listaDeConfianca: React.CSSProperties = { listStyle: "none", margin: "18px 0 0", padding: "18px 0 0", borderTop: `1px solid ${C.line}`, display: "grid", gap: 10, fontSize: 14, color: C.n200 };
+  const confianca = (primeiraEmDestaque: boolean) => (
+    <ul style={primeiraEmDestaque ? { ...listaDeConfianca, textWrap: "pretty" as never } : listaDeConfianca}>
+      {o.confianca.map((x, i) => (
+        <li key={x} style={primeiraEmDestaque && i === 0 ? { display: "flex", gap: 10, alignItems: "center", color: "#fff" } : { display: "flex", gap: 10, alignItems: "center" }}>
+          <Escudo />
+          {x}
+        </li>
+      ))}
+    </ul>
+  );
+
+  const notaDeTeste = fechado ? (
+    <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 12, color: C.ret }}>
+      Prévia interna: a venda deste mercado ainda está fechada e o botão não abre o pagamento.
+    </p>
+  ) : semLink && (
+    <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 12, color: C.ret }}>
+      Build de teste: link de checkout pendente em config/pricing.ts
+    </p>
+  );
+
+  /* --------------------- CARD NOVO (hoje, só o Brasil) --------------------- */
+  if (t.linhaValor) {
+    const regraEmPartes = regraDoLancamentoEmPartes(mercado, momento);
+    const valorEmPartes = linhaDeValor(mercado, momento);
+    const quadro = quadroDoLancamento(mercado, momento);
+    const linhaDoQuadro: React.CSSProperties = { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 };
+    // Nenhuma palavra sozinha na última linha ("na mão." a 1440 px).
+    const semViuva = { textWrap: "pretty" } as React.CSSProperties;
+    return (
+      <div style={moldura}>
+        <Cabecalho titulo={vigente && t.tituloLancamento ? t.tituloLancamento : t.titulo} selo={selo} />
+
+        <div style={miolo}>
+          {/* ÂNCORA: o preço oficial, riscado, na mesma unidade da
+              manchete. O rótulo não é riscado e é o que o leitor de tela
+              anuncia antes do valor (<s> não é anunciado). É o único
+              riscado do card. */}
+          {ancora && (
+            <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.4, color: C.n400 }}>
+              {t.ancora}:{" "}
+              <s style={{ textDecorationThickness: "1.5px", textDecorationColor: C.n300 }}>{ancora} {t.totalSufixo}</s>
+            </p>
+          )}
+
+          {/* MANCHETE: o preço cobrado agora, por ano (à vista). A âncora
+              logo acima está na mesma unidade: 149,90 contra 99,98. */}
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: ancora ? 6 : 0, flexWrap: "wrap" }}>
+            <span style={{ fontFamily: C.serif, fontSize: "clamp(42px,5vw,54px)", lineHeight: 1, letterSpacing: "-.02em", color: "#fff" }}>
+              {anual}
+            </span>
+            <span style={{ fontSize: 16, lineHeight: 1, color: C.n300 }}>{t.totalSufixo}</span>
+          </div>
+
+          {/* REGRA: o desconto travado nos 3 primeiros anos e a renovação
+              ao preço oficial, às claras. */}
+          {regraEmPartes && (
+            <p style={{ margin: "10px 0 0", fontSize: 15, lineHeight: 1.55, color: C.n200, ...semViuva }}>
+              <Partes partes={regraEmPartes} />
+            </p>
+          )}
+
+          {/* VALOR: por mês e por dia, sempre "equivale" (nunca mensalidade). */}
+          {valorEmPartes && (
+            <p style={{ margin: `${regraEmPartes ? 8 : 10}px 0 0`, fontSize: 15, lineHeight: 1.55, color: C.n200, ...semViuva }}>
+              <Partes partes={valorEmPartes} />
+            </p>
+          )}
+
+          {/* QUADRO dos 3 anos: dois totais um sobre o outro e o que a
+              pessoa deixa de pagar. O total no preço oficial NÃO é
+              riscado (não existe plano de 3 anos). Lista de definição:
+              o leitor de tela lê rótulo e valor juntos. */}
+          {quadro && (
+            <div style={{ marginTop: 16, padding: 14, borderRadius: 12, background: "rgba(39,189,190,.07)", border: "1px solid rgba(39,189,190,.2)" }}>
+              <dl style={{ margin: 0, display: "grid", gap: 4, fontSize: 14, lineHeight: 1.45, fontVariantNumeric: "tabular-nums" }}>
+                <div style={linhaDoQuadro}>
+                  <dt style={{ color: C.n300 }}>{quadro.oficial.rotulo}</dt>
+                  <dd style={{ margin: 0, color: C.n400, whiteSpace: "nowrap" }}>{quadro.oficial.valor}</dd>
+                </div>
+                <div style={linhaDoQuadro}>
+                  <dt style={{ color: C.n300 }}>{quadro.lancamento.rotulo}</dt>
+                  <dd style={{ margin: 0, color: "#fff", fontWeight: 600, whiteSpace: "nowrap" }}>{quadro.lancamento.valor}</dd>
+                </div>
+                <div style={{ ...linhaDoQuadro, marginTop: 6, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,.1)", fontSize: 15 }}>
+                  <dt style={{ color: "#fff" }}>{quadro.economia.rotulo}</dt>
+                  <dd style={{ margin: 0, color: C.p500, fontWeight: 700, whiteSpace: "nowrap" }}>{quadro.economia.valor}</dd>
+                </div>
+              </dl>
+              {quadro.legenda && (
+                <p style={{ margin: "6px 0 0", fontSize: 13.5, lineHeight: 1.45, color: C.n200 }}>{quadro.legenda}</p>
+              )}
+            </div>
+          )}
+
+          {/* PRAZO em texto, com o "à vista" do lançamento, logo acima do
+              botão. Sem contador: urgência artificial é vetada, e a data
+              é verdadeira. Depois do lançamento, no mesmo lugar, a forma
+              de pagamento do preço oficial (nunca valor de parcela). */}
+          {prazo && t.prazo ? (
+            <p style={{ display: "flex", alignItems: "flex-start", gap: 8, margin: "16px 0 0", fontSize: 13.5, lineHeight: 1.45, color: C.ret, ...semViuva }}>
+              <Calendario />
+              {/* A data não se parte ("16 / de novembro"). */}
+              <span>{t.prazo} <span style={{ whiteSpace: "nowrap" }}>{prazo}</span>.</span>
+            </p>
+          ) : (
+            <p style={{ display: "flex", alignItems: "flex-start", gap: 8, margin: "16px 0 0", fontSize: 13.5, lineHeight: 1.45, color: C.n200, ...semViuva }}>
+              <Cartao />
+              <span>{pagamentoAgora(mercado, momento)}.</span>
+            </p>
+          )}
+
+          {botao(18)}
+          {depoisDoBotao}
+          {confianca(true)}
+          {notaDeTeste}
+        </div>
+      </div>
+    );
+  }
+
+  /* ----------------- CARD DE SEMPRE (la, es, pt, rw) ----------------- */
   return (
     <div style={moldura}>
-      {/* O selo só aparece com o lançamento valendo: o desconto da oferta
-          de lançamento sobre o preço cheio, arredondado para baixo. */}
-      <Cabecalho titulo={t.titulo} selo={vigente && pct ? `${pct}% OFF` : undefined} />
+      <Cabecalho titulo={t.titulo} selo={selo} />
 
       <div style={miolo}>
         <p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: C.n300 }}>{t.proposta}</p>
@@ -178,9 +403,7 @@ export function BlocoOferta({ mercado, momento, previa = false, vitrine = false 
           )}
         </div>
 
-        {/* TOTAL ANUAL. Com o lançamento valendo, a regra inteira, como o
-            checkout diz: o preço vale nos 3 primeiros anos, com o desconto
-            sobre o preço oficial, e depois passa ao preço cheio a cada ano. */}
+        {/* TOTAL ANUAL, e a regra do lançamento quando o mercado tiver um. */}
         <p style={{ margin: "10px 0 0", fontSize: 15, lineHeight: 1.6, color: C.n200 }}>
           <strong style={{ color: "#fff", fontWeight: 600 }}>{anual}</strong> {t.totalSufixo}
           {regra ? ` ${regra}` : ""}
@@ -199,72 +422,10 @@ export function BlocoOferta({ mercado, momento, previa = false, vitrine = false 
           </p>
         )}
 
-        <a
-          href={semLink ? undefined : link}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-disabled={semLink || undefined}
-          onClick={(e) => {
-            if (semLink) { e.preventDefault(); return; }
-            registrarInicioDeCheckout({ id: `anual-${mercado}`, nome: `Diariamente Anual · ${mercado.toUpperCase()}`, valor, moeda: o.moeda });
-          }}
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            height: 54, marginTop: 22, width: "100%", borderRadius: 999,
-            background: semLink ? "rgba(39,189,190,.35)" : C.p500,
-            color: C.n900, fontSize: 16, fontWeight: 700, textDecoration: "none",
-            cursor: semLink ? "not-allowed" : "pointer",
-          }}
-        >
-          {t.botao}
-        </a>
-
-        <p style={{ margin: "12px 0 0", textAlign: "center", fontSize: 13, lineHeight: 1.45, color: C.n400 }}>
-          {renovacao}
-        </p>
-
-        {o.imposto === "fora" && t.impostoNota && (
-          <p style={{ margin: "8px 0 0", textAlign: "center", fontSize: 12.5, lineHeight: 1.45, color: C.n400 }}>
-            {t.impostoNota}
-          </p>
-        )}
-
-        {/* Estudante só existe no Brasil: a validação usa CPF e o cobro é
-            em real (handoff, seção 12, item P2). Só aparece com o fluxo
-            do cupom pessoal ABERTO neste build (ESTUDANTE.aberto, config.ts):
-            fechado, a home não leva a uma página que ainda não entrega o
-            código. O preço segue ESTUDANTE.mostrarPreco, como na
-            /estudante, e o período é o de ESTUDANTE.periodo ("por ano ·
-            cobrança anual"): se o cupom vale nas renovações não se sabe, e
-            o dono decidiu (12/10/2026) dizer só que a cobrança é anual. */}
-        {mercado === "br" && t.estudante && ESTUDANTE.aberto && (
-          <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 13.5, lineHeight: 1.5 }}>
-            <a href={caminho("estudante", "pt")} style={{ color: C.p300, textDecoration: "none" }}>
-              {ESTUDANTE.mostrarPreco
-                ? `${t.estudante}: ${formatar("br", porMesEstudante())}${t.mes} · ${formatar("br", precoEstudante())} ${periodoEstudante()}`
-                : `${t.estudante}: ver a condição`}
-            </a>
-          </p>
-        )}
-
-        <ul style={{ listStyle: "none", margin: "18px 0 0", padding: "18px 0 0", borderTop: `1px solid ${C.line}`, display: "grid", gap: 10, fontSize: 14, color: C.n200 }}>
-          {o.confianca.map((x) => (
-            <li key={x} style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <Escudo />
-              {x}
-            </li>
-          ))}
-        </ul>
-
-        {fechado ? (
-          <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 12, color: C.ret }}>
-            Prévia interna: a venda deste mercado ainda está fechada e o botão não abre o pagamento.
-          </p>
-        ) : semLink && (
-          <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 12, color: C.ret }}>
-            Build de teste: link de checkout pendente em config/pricing.ts
-          </p>
-        )}
+        {botao(22)}
+        {depoisDoBotao}
+        {confianca(false)}
+        {notaDeTeste}
       </div>
     </div>
   );
