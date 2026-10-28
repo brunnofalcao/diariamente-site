@@ -417,7 +417,7 @@ export const ESTUDANTE = {
   esperaMinutos: 10,
 
   // um link por CPF (regra aplicada na API)
-  regra: "Um link por pessoa, pessoal e intransferível.",
+  regra: "Um link por pessoa, intransferível.",
 };
 
 /** O fluxo do estudante está aberto agora? A configuração da Vercel

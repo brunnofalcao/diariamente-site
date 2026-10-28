@@ -746,7 +746,7 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
               {mkt === "br" && estudanteAberto(agora) && (
               <div style={{ ...card, marginTop: 16 }}>
                 <span style={{ display: "inline-flex", alignItems: "center", height: 26, padding: "0 12px", borderRadius: 999, background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.25)", color: C.p300, fontSize: 11, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase" }}>{t.stBadge}</span>
-                <p style={{ margin: "12px 0 0", fontFamily: C.serif, fontSize: "clamp(20px,2vw,24px)", lineHeight: 1.3 }}>{ESTUDANTE.mostrarPreco ? t.stH.replace("{preco}", formatar("br", precoEstudante(agora))) : t.stHSemPreco}</p>
+                <p style={{ margin: "12px 0 0", fontFamily: C.serif, fontSize: "clamp(20px,2vw,24px)", lineHeight: 1.3, textWrap: "balance" as never }}>{ESTUDANTE.mostrarPreco ? t.stH.replace("{preco}", formatar("br", precoEstudante(agora))) : t.stHSemPreco}</p>
                 <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: C.n400 }}>{ESTUDANTE.mostrarPreco ? `${regraDoEstudante(agora, { semPreco: true })} ` : ""}{t.stD}</p>
                 <a href={caminho("estudante", lang)} style={{ marginTop: 18, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, height: 48, padding: "0 22px", borderRadius: 999, border: `1.5px solid ${C.p500}`, color: C.p500, fontSize: 15, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
                   {t.stCta}

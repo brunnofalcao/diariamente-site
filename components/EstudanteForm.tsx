@@ -475,7 +475,7 @@ export function EstudanteForm({
           <Field
             campo="email"
             rotulo="E-mail"
-            dica="Se tiver e-mail da instituição, use ele: agiliza a validação."
+            dica={atual ? "Se tiver e-mail da instituição, use ele: agiliza a validação." : "Pode ser o e-mail da instituição ou o pessoal."}
             erro={erros.email}
           >
             {(a) => (
