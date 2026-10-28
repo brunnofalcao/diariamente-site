@@ -87,8 +87,8 @@ export function BlocoPrecoAtual() {
           </p>
           <div className="ed-price-hint">
             <b>O código chega só no WhatsApp.</b> Ele é pessoal, vale por{" "}
-            {ESTUDANTE.validadeHoras} horas e é aplicado no campo de cupom da tela de
-            pagamento. {ESTUDANTE.regra}
+            {ESTUDANTE_ATUAL.validadeHoras} horas e é aplicado no campo de cupom da tela de
+            pagamento. {ESTUDANTE_ATUAL.regra}
           </div>
         </div>
         <Inclui />
@@ -120,8 +120,8 @@ export function BlocoPrecoAtual() {
 
           <div className="ed-price-hint">
             <b>O código chega só no WhatsApp.</b> Ele é pessoal, vale por{" "}
-            {ESTUDANTE.validadeHoras} horas e é aplicado no campo de cupom da tela de
-            pagamento. {ESTUDANTE.regra}
+            {ESTUDANTE_ATUAL.validadeHoras} horas e é aplicado no campo de cupom da tela de
+            pagamento. {ESTUDANTE_ATUAL.regra}
           </div>
         </div>
 

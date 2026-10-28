@@ -19,10 +19,10 @@ import { SITE_LANCADO } from "@/config/lancamento";
    compartilhamento com parceiros fica numa caixa separada, desmarcada e
    opcional, conforme lib/consentimento.ts.
 
-   Origem "estudante": a /estudante com o fluxo do cupom pessoal FECHADO
-   neste build (ESTUDANTE.aberto, config.ts) usa este mesmo formulário,
+   Origem "estudante": a /estudante com o fluxo do estudante FECHADO
+   neste build (estudanteAberto, config.ts) usa este mesmo formulário,
    com o motivo da coleta trocado em `textos` (avisar quando a
-   solicitação do código abrir). A API separa esses leads dos da
+   inscrição de estudante abrir). A API separa esses leads dos da
    abertura do produto (app/api/lista-espera/route.js).
    ===================================================================== */
 

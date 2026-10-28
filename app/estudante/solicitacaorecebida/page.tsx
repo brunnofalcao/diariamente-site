@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { EMPRESA, ESTUDANTE, GARANTIA } from "@/config";
+import { EMPRESA, ESTUDANTE, ESTUDANTE_ATUAL, GARANTIA, canaisDoLink } from "@/config";
+import { SITE_LANCADO } from "@/config/lancamento";
 import { RodapeDoGrupo } from "@/components/CnpjsDoGrupo";
 import { OfficialLogo } from "@/components/Brand";
 import "../estudante.css";
 
 export const metadata: Metadata = {
   title: "Solicitação recebida · Diariamente",
-  description: "Sua condição de estudante foi registrada. O código vai para o seu WhatsApp.",
+  description: "Sua condição de estudante foi registrada. Enviamos o próximo passo para o seu WhatsApp.",
   robots: { index: false, follow: false },
 };
 
@@ -28,20 +29,39 @@ function IcOk() {
   );
 }
 
-const DEPOIS = [
-  {
-    t: "O código vai para o seu WhatsApp",
-    d: `Estamos conferindo seus dados. Em até ${ESTUDANTE.esperaMinutos} minutos a mensagem chega no número informado. O código é pessoal e vale por ${ESTUDANTE.validadeHoras} horas.`,
-  },
-  {
-    t: "Toque no botão da mensagem",
-    d: "O botão abre o checkout com a condição de estudante já aplicada. Você não precisa digitar nada.",
-  },
-  {
-    t: "Abra o app e comece pelo Dia 1",
-    d: `Você recebe o e-mail de acesso logo depois da confirmação. E tem ${GARANTIA.dias} dias de garantia para sentir se é pra você.`,
-  },
-];
+/* Com a chave ligada, o fluxo novo: o LINK pessoal da inscrição
+   (/estudante/ativar), que abre a oferta de estudante. Em standby, o da
+   produção: o código de 48 horas. Nos dois, o sistema ENVIA (a entrega
+   no WhatsApp não é garantida: regra da marca, CDC art. 37). */
+const DEPOIS = SITE_LANCADO
+  ? [
+      {
+        t: "O link vai para o seu WhatsApp",
+        d: `Estamos conferindo seus dados. Em até ${ESTUDANTE.esperaMinutos} minutos, enviamos o link da sua inscrição ${canaisDoLink()}. Ele é pessoal.`,
+      },
+      {
+        t: "Toque em Concluir inscrição",
+        d: "O botão abre o pagamento com a condição de estudante já aplicada. Você não precisa digitar nada.",
+      },
+      {
+        t: "Abra o app e comece pelo Dia 1",
+        d: `Você recebe o e-mail de acesso logo depois da confirmação. E tem ${GARANTIA.dias} dias de garantia para sentir se é pra você.`,
+      },
+    ]
+  : [
+      {
+        t: "O código vai para o seu WhatsApp",
+        d: `Estamos conferindo seus dados. Em até ${ESTUDANTE.esperaMinutos} minutos, enviamos o código para o número informado. Ele é pessoal e vale por ${ESTUDANTE_ATUAL.validadeHoras} horas.`,
+      },
+      {
+        t: "Toque no botão da mensagem",
+        d: "O botão abre o checkout com a condição de estudante já aplicada. Você não precisa digitar nada.",
+      },
+      {
+        t: "Abra o app e comece pelo Dia 1",
+        d: `Você recebe o e-mail de acesso logo depois da confirmação. E tem ${GARANTIA.dias} dias de garantia para sentir se é pra você.`,
+      },
+    ];
 
 export default function SolicitacaoRecebida() {
   return (
@@ -68,7 +88,7 @@ export default function SolicitacaoRecebida() {
             </h1>
             <p className="ed-lead" style={{ margin: "0 auto" }}>
               Sua condição de estudante está registrada. Estamos conferindo seus dados e, em até
-              {" "}{ESTUDANTE.esperaMinutos} minutos, enviamos o código para o número que você informou.
+              {" "}{ESTUDANTE.esperaMinutos} minutos, enviamos {SITE_LANCADO ? "o link da sua inscrição" : "o código"} para o número que você informou.
               Não precisa esperar aqui.
             </p>
           </div>

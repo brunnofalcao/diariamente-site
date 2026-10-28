@@ -4,22 +4,24 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const path = require("path");
 const {
-  checarPrecos, carregarPrecos, checarPrecosDoProjeto, estudanteMostraPrecoNoConfig, idsDeOfertaValidos,
-  estadoDoEstudante, estudanteDoProjeto, descontoGarantido, cenariosDoPrimeiroCupom, SITE_DOMINIO,
+  checarPrecos, carregarPrecos, checarPrecosDoProjeto, estudanteMostraPrecoNoConfig,
+  estadoDoEstudante, estudanteDoProjeto, alvoDoEstudante, faseDoEstudanteEm, problemasDoAlvo, SITE_DOMINIO,
 } = require("../scripts/checar-precos");
 
 const LINK_OK = "https://pay.hotmart.com/X00000000Y?off=teste000&checkoutMode=10";
 const LINK_LANC = "https://pay.hotmart.com/X00000000Y?off=lanc0000";
-// Estudante pronto: modelo v2 do WhatsApp, produto 7448309, desconto
-// que dá o preço final anunciado e id numérico de oferta.
-const ENV_ESTUDANTE = {
-  HOTMART_OFFER_IDS: "1234567", WA_TEMPLATE_ESTUDANTE: "diariamente_estudante_aprovado_v2",
-  HOTMART_PRODUCT_ID: "7448309", STUDENT_DISCOUNT: "0.40027",
+// Estudante pronto na Vercel: o modelo v2 do WhatsApp (o fluxo novo não
+// usa mais STUDENT_DISCOUNT, HOTMART_OFFER_IDS nem HOTMART_PRODUCT_ID).
+const ENV_ESTUDANTE = { WA_TEMPLATE_ESTUDANTE: "diariamente_estudante_aprovado_v2", RESEND_API_KEY: "re_teste" };
+// O que a página anuncia ao estudante, com códigos de oferta FICTÍCIOS
+// nas duas fases (o config real ainda não tem os códigos do dono).
+const ALVO = {
+  precos: { lancamento: 59.9, depois: 79.9 }, anos: 3,
+  ofertas: { lancamento: "estlanc1", depois: "estdep01" },
 };
-// O que a página anuncia ao estudante (o anual vem do mercado br).
-const ALVO = { precoFinal: 89.9, desconto: 0.40027 };
-const ALVO_BR = { anual: 149.9, ...ALVO };
 const DIA_12_10 = Date.parse("2026-10-12T12:00:00Z");
+/** O alvo com o lançamento de um mercados() (a fase sai dele). */
+const alvoBr = (m = mercados(), troca = {}) => ({ ...ALVO, anual: m.br.anual, lancamento: m.br.lancamento, ...troca });
 
 /** Mercados fictícios a partir do config real, com o que o teste trocar. */
 function mercados(troca = {}) {
@@ -39,7 +41,9 @@ test("o config/pricing.ts real carrega fora do Next e tem os cinco mercados", ()
   const cfg = carregarPrecos();
   assert.deepEqual(Object.keys(cfg.MERCADOS).sort(), ["br", "es", "la", "pt", "rw"]);
   assert.equal(cfg.PRODUTO_HOTMART, "7448309");
-  assert.equal(cfg.PARAMETRO_CUPOM, "offDiscount");
+  // o estudante não usa mais cupom: o token do link vai no sck
+  assert.equal(cfg.PARAMETRO_RASTREIO, "sck");
+  assert.equal("PARAMETRO_CUPOM" in cfg, false);
 });
 
 test("config do dono (12/10/2026): links, lançamento e mercados de fora", () => {
@@ -89,9 +93,10 @@ test("com tudo preenchido e o estudante pronto, libera com o estudante ABERTO e 
   assert.equal(r.teste, false);
   assert.equal(r.estudante.aberto, true);
   const avisos = r.avisos.join(" ");
-  assert.equal(/HOTMART_OFFER_IDS/.test(avisos), false);
+  assert.equal(/HOTMART_OFFER_IDS|STUDENT_DISCOUNT|HOTMART_PRODUCT_ID/.test(avisos), false);
   assert.equal(/WA_TEMPLATE_ESTUDANTE/.test(avisos), false);
   assert.equal(/FECHADO/.test(avisos), false);
+  assert.equal(/falta o código da fase seguinte/.test(avisos), false);
   assert.match(avisos, /Estudante ABERTO/);
   assert.match(avisos, /webhooks\/hotmart/);
 });
@@ -268,110 +273,6 @@ test("avisos aparecem também na mensagem do build bloqueado", () => {
   assert.match(r.mensagem, /Avisos: .*lista de espera/);
 });
 
-test("estudante: HOTMART_OFFER_IDS vazio ou sem id numérico avisa (sem travar)", () => {
-  for (const ids of ["", "  ", "fhrttdh8", "fhrttdh8, abc"]) {
-    const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { ...ENV_ESTUDANTE, HOTMART_OFFER_IDS: ids } });
-    assert.equal(r.ok, true, ids);
-    assert.match(r.avisos.join(" "), /HOTMART_OFFER_IDS/, ids);
-    assert.match(r.avisos.join(" "), /inclusive a de lançamento/, ids);
-  }
-  assert.deepEqual(idsDeOfertaValidos("123, abc,456"), ["123", "456"]);
-});
-
-test("estudante: modelo de WhatsApp antigo (ou sem WA_TEMPLATE_ESTUDANTE) avisa até o v2", () => {
-  for (const nome of [undefined, "", "diariamente_estudante_aprovado"]) {
-    const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { HOTMART_OFFER_IDS: "1", WA_TEMPLATE_ESTUDANTE: nome } });
-    const aviso = r.avisos.join(" ");
-    assert.match(aviso, /diariamente_estudante_aprovado/);
-    assert.match(aviso, /estudante\/ativar\?cupom=\{\{1\}\}/);
-    assert.match(aviso, /WA_TEMPLATE_ESTUDANTE/);
-  }
-  const v2 = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: ENV_ESTUDANTE });
-  assert.equal(/WA_TEMPLATE_ESTUDANTE/.test(v2.avisos.join(" ")), false);
-  const confirmado = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { HOTMART_OFFER_IDS: "1", DM_TEMPLATE_ESTUDANTE_OK: "1" } });
-  assert.equal(/WA_TEMPLATE_ESTUDANTE/.test(confirmado.avisos.join(" ")), false);
-  // o config.ts real hoje mostra o preço de estudante
-  assert.equal(estudanteMostraPrecoNoConfig(), true);
-});
-
-test("HOTMART_PRODUCT_ID diferente de 7448309 gera aviso", () => {
-  const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { ...ENV_ESTUDANTE, HOTMART_PRODUCT_ID: "8280315" } });
-  assert.match(r.avisos.join(" "), /HOTMART_PRODUCT_ID=8280315/);
-  const certo = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { ...ENV_ESTUDANTE, HOTMART_PRODUCT_ID: "7448309" } });
-  assert.equal(/HOTMART_PRODUCT_ID/.test(certo.avisos.join(" ")), false);
-});
-
-test("STUDENT_DISCOUNT que não dá R$ 89,90 gera aviso com o valor exato a pôr na Vercel", () => {
-  for (const d of ["0.44", "0.40", "0.4"]) {
-    const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { ...ENV_ESTUDANTE, STUDENT_DISCOUNT: d } });
-    assert.equal(r.ok, true, d);
-    assert.match(r.avisos.join(" "), /STUDENT_DISCOUNT=0\.40027, que sobre R\$ 149,90 dá os R\$ 89,90 por ano/, d);
-  }
-  // 0.40 era o 40% antigo: o aviso diz quanto ele cobraria
-  const antigo = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { ...ENV_ESTUDANTE, STUDENT_DISCOUNT: "0.40" } });
-  assert.match(antigo.avisos.join(" "), /hoje STUDENT_DISCOUNT=0\.40, que daria R\$ 89,94/);
-  const igual = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { ...ENV_ESTUDANTE, STUDENT_DISCOUNT: "0.40027" } });
-  assert.equal(/STUDENT_DISCOUNT=0\.40027, que/.test(igual.avisos.join(" ")), false);
-  assert.equal(igual.estudante.aberto, true);
-});
-
-test("estudante ABERTO: o aviso pede para conferir o primeiro cupom real no checkout", () => {
-  const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: ENV_ESTUDANTE, agora: DIA_12_10 });
-  const aviso = r.avisos.join(" ");
-  assert.match(aviso, /Estudante ABERTO neste build .*STUDENT_DISCOUNT=0\.40027: R\$ 89,90 por ano sobre R\$ 149,90/);
-  assert.match(aviso, /PRIMEIRO cupom real no checkout: ele precisa mostrar R\$ 89,90/);
-  // os três resultados possíveis, cada um com a sua decisão no LEIA-ME
-  assert.match(aviso, /pode mostrar R\$ 89,90 \(pronto\), R\$ 89,89 se ela cortar o centavo \(1 centavo a menos que a página\), ou R\$ 89,94 se ela guardar só 2 ou 3 casas do desconto/);
-  assert.match(aviso, /Não foi possível gerar seu código/);
-  assert.match(aviso, /LEIA-ME, item 1/);
-  // nunca um cenário acima do anunciado
-  assert.equal(/R\$ 89,91/.test(aviso), false);
-});
-
-test("primeiro cupom: com o desconto do config, o checkout mostra R$ 89,90, R$ 89,89 ou R$ 89,94, nunca mais que a página", () => {
-  assert.deepEqual(cenariosDoPrimeiroCupom(149.9, 0.40027), { esperado: 8990, cortado: 8989, duasCasas: 8994, tresCasas: 8994 });
-  // o pior arredondamento possível de cada desconto aceito fica em R$ 89,90 ou abaixo
-  for (const d of [0.40027, 0.40028, 0.40029, 0.4003]) {
-    const c = cenariosDoPrimeiroCupom(149.9, d);
-    const exato = 14990 * (1 - d);
-    assert.ok(Math.ceil(exato - 1e-6) <= 8990, `${d}: arredondado para cima ainda cabe nos R$ 89,90`);
-    assert.ok(c.cortado >= 8989 && c.esperado === 8990, String(d));
-  }
-});
-
-test("descontoGarantido: só o desconto cujo preço exato fica em R$ 89,90 ou abaixo, e arredonda para ele", () => {
-  for (const d of [0.40027, 0.40028, 0.40029, 0.4003]) assert.equal(descontoGarantido(149.9, d, 89.9), true, String(d));
-  // 0.40024 a 0.40026 arredondam para R$ 89,90, mas o preço exato passa dele:
-  // cortando o desconto (59,997 vira 59,99), a Hotmart cobraria R$ 89,91
-  for (const d of [0.40024, 0.40025, 0.40026, 0.400266, 0.400266844]) assert.equal(descontoGarantido(149.9, d, 89.9), false, String(d));
-  for (const d of [0.40023, 0.40031, 0.4, 0.44]) assert.equal(descontoGarantido(149.9, d, 89.9), false, String(d));
-});
-
-test("STUDENT_DISCOUNT que arredonda para R$ 89,90 mas passa dele (0.40025) fecha o fluxo e o aviso diz o porquê", () => {
-  const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { ...ENV_ESTUDANTE, STUDENT_DISCOUNT: "0.40025" } });
-  assert.equal(r.ok, true);
-  assert.equal(r.estudante.aberto, false);
-  const aviso = r.avisos.join(" ");
-  assert.match(aviso, /STUDENT_DISCOUNT=0\.40027, que sobre R\$ 149,90 dá os R\$ 89,90 por ano/);
-  assert.match(aviso, /hoje STUDENT_DISCOUNT=0\.40025, cujo preço exato passa de R\$ 89,90 e pode sair R\$ 89,91 no checkout/);
-});
-
-test("preço de estudante do config que não fecha a conta TRAVA o build", () => {
-  for (const alvo of [
-    { precoFinal: 89.9, desconto: 0.4 },      // desconto não dá o preço final
-    { precoFinal: 0, desconto: 0.40027 },     // preço final inválido
-    { precoFinal: 149.9, desconto: 0.40027 }, // igual ao cheio
-    { precoFinal: 89.9, desconto: 0.995 },    // fora da faixa da API
-    { precoFinal: 89.9, desconto: 0.40025 },  // arredonda para 89,90, mas o exato passa dele
-    {},
-  ]) {
-    const r = checarPrecos({ mercados: mercados(), alvoEstudante: alvo, env: ENV_ESTUDANTE, agora: DIA_12_10 });
-    assert.equal(r.ok, false, JSON.stringify(alvo));
-    assert.match(r.mensagem, /ESTUDANTE_/, JSON.stringify(alvo));
-    assert.equal(r.estudante.aberto, false, JSON.stringify(alvo));
-  }
-});
-
 test("DM_ENDERECO_TESTE libera o build local com problema de preço, com aviso de teste", () => {
   const m = mercados();
   m.br.checkout = "[PREENCHER: link]";
@@ -390,102 +291,186 @@ test("DM_ENDERECO_TESTE é aceita em preview da Vercel e recusada em produção"
   assert.equal(checarPrecos(env({})).ok, false);
 });
 
-test("estudante: WA_TEMPLATE_ESTUDANTE fora do padrão da Meta avisa e conta como modelo antigo", () => {
-  const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { HOTMART_OFFER_IDS: "1", WA_TEMPLATE_ESTUDANTE: "Diariamente-V2" } });
-  const aviso = r.avisos.join(" ");
-  assert.match(aviso, /não é um nome de modelo da Meta/);
-  assert.match(aviso, /estudante\/ativar\?cupom=\{\{1\}\}/);
-});
+/* ------------------------ estudante (fluxo novo) ------------------------ */
 
-/* --------------------- estudante aberto ou fechado --------------------- */
+const LANC = Date.parse("2026-10-28T12:00:00-03:00");
+const DEPOIS = Date.parse("2026-11-17T00:00:00-03:00");
+const ULTIMO_MS = Date.parse("2026-11-16T23:59:59.999-03:00");
+/** mercados() com o lançamento real (16/11/2026), para a virada de verdade. */
+const mercadosReais = () => {
+  const m = mercados();
+  m.br.lancamento.terminaEm = "2026-11-16";
+  return m;
+};
 
-const PRONTO = { WA_TEMPLATE_ESTUDANTE: "diariamente_estudante_aprovado_v2", HOTMART_PRODUCT_ID: "7448309", STUDENT_DISCOUNT: "0.40027" };
-
-test("estudante: sem nada na Vercel, FECHADO, com as três pendências", () => {
-  const e = estadoDoEstudante({}, ALVO_BR);
-  assert.equal(e.aberto, false);
-  assert.equal(e.faltas.length, 3);
-  const faltas = e.faltas.join(" ");
-  assert.match(faltas, /WA_TEMPLATE_ESTUDANTE/);
-  assert.match(faltas, /HOTMART_PRODUCT_ID=7448309 \(hoje vazio\)/);
-  assert.match(faltas, /STUDENT_DISCOUNT=0\.40027, que sobre R\$ 149,90 dá os R\$ 89,90 por ano que a página anuncia \(hoje vazio\)/);
-});
-
-test("estudante: ABERTO só com modelo v2, produto 7448309 e o desconto anunciado; cada falta, sozinha, fecha", () => {
-  assert.equal(estadoDoEstudante(PRONTO, ALVO_BR).aberto, true);
-  // só o valor cujo preço exato fica em R$ 89,90 ou abaixo e arredonda para ele
-  for (const d of ["0.40027", "0.40028", "0.40029", "0.4003", "0.40030"]) {
-    assert.equal(estadoDoEstudante({ ...PRONTO, STUDENT_DISCOUNT: d }, ALVO_BR).aberto, true, d);
-  }
-  for (const [k, v] of [
-    ["WA_TEMPLATE_ESTUDANTE", undefined],
-    ["WA_TEMPLATE_ESTUDANTE", "diariamente_estudante_aprovado"],
-    ["WA_TEMPLATE_ESTUDANTE", "Diariamente-V2"],
-    ["HOTMART_PRODUCT_ID", undefined],
-    ["HOTMART_PRODUCT_ID", "8280315"],
-    ["STUDENT_DISCOUNT", undefined],
-    ["STUDENT_DISCOUNT", "0.44"],
-    ["STUDENT_DISCOUNT", "0.4"],
-    ["STUDENT_DISCOUNT", "0.40"],
-    ["STUDENT_DISCOUNT", "0.40023"],
-    ["STUDENT_DISCOUNT", "0.40024"],
-    ["STUDENT_DISCOUNT", "0.40026"],
-    ["STUDENT_DISCOUNT", "0.400266"],
-    ["STUDENT_DISCOUNT", "0.400266844"],
-    ["STUDENT_DISCOUNT", "0.40031"],
-    ["STUDENT_DISCOUNT", "0.40027x"],
-    ["STUDENT_DISCOUNT", "quarenta"],
-  ]) {
-    const env = { ...PRONTO, [k]: v };
-    if (v === undefined) delete env[k];
-    const e = estadoDoEstudante(env, ALVO_BR);
-    assert.equal(e.aberto, false, `${k}=${v}`);
-    assert.equal(e.faltas.length, 1, `${k}=${v}`);
-  }
-});
-
-test("estudante: DM_TEMPLATE_ESTUDANTE_OK=1 confirma à mão o modelo; HOTMART_OFFER_IDS não fecha o fluxo", () => {
-  const confirmado = { HOTMART_PRODUCT_ID: "7448309", STUDENT_DISCOUNT: "0.40027", DM_TEMPLATE_ESTUDANTE_OK: "1" };
-  assert.equal(estadoDoEstudante(confirmado, ALVO_BR).aberto, true);
-  const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: PRONTO, agora: DIA_12_10 });
+test("estudante ABERTO com o modelo v2 e o código da fase: o aviso diz a fase, a oferta, o webhook e o primeiro checkout", () => {
+  const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: ENV_ESTUDANTE, agora: DIA_12_10 });
+  assert.equal(r.ok, true, r.mensagem);
   assert.equal(r.estudante.aberto, true);
-  // o risco aceito pelo dono continua à vista no log
-  assert.match(r.avisos.join(" "), /HOTMART_OFFER_IDS está vazio/);
-});
-
-test("estudante fechado: o aviso do build diz o que a página faz e o que falta na Vercel", () => {
-  const r = checar(mercados(), { env: {} });
-  assert.equal(r.ok, true);
-  assert.equal(r.estudante.aberto, false);
+  assert.equal(r.estudante.configurado, true);
+  assert.equal(r.estudante.fase, "lancamento");
+  assert.equal(r.estudante.oferta, "estlanc1");
   const aviso = r.avisos.join(" ");
-  assert.match(aviso, /Estudante FECHADO/);
-  assert.match(aviso, /lista de espera/);
-  assert.match(aviso, /503 sem gravar nada/);
-  assert.match(aviso, /HOTMART_PRODUCT_ID=7448309/);
+  assert.match(aviso, /Estudante ABERTO neste build \(modelo diariamente_estudante_aprovado_v2; fase no lançamento, até 31\/12\/2099: R\$ 59,90 por ano nos 3 primeiros anos; oferta off=estlanc1/);
+  assert.match(aviso, /https:\/\/pay\.hotmart\.com\/K105072021O\?off=estlanc1/);
+  assert.match(aviso, /marca o link\s+como usado/);
+  assert.match(aviso, /3 primeiras recorrências/);
+  // a oferta de estudante do lançamento é aberta: desativar depois da data
+  assert.match(aviso, /mantenha a oferta de estudante do lançamento \(off=estlanc1\) ativa até 02:00 de 01\/01/);
 });
 
-test("estudanteDoProjeto lê o config real: fechado sem a Vercel, aberto com as três", () => {
-  assert.equal(estudanteDoProjeto({}).aberto, false);
-  assert.equal(estudanteDoProjeto(PRONTO).aberto, true);
+test("estudante: STUDENT_DISCOUNT, HOTMART_OFFER_IDS e HOTMART_PRODUCT_ID não contam mais para abrir nem aparecem no aviso", () => {
+  for (const extra of [{}, { STUDENT_DISCOUNT: "0.4" }, { HOTMART_OFFER_IDS: "" }, { HOTMART_PRODUCT_ID: "8280315" }]) {
+    const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { ...ENV_ESTUDANTE, ...extra }, agora: DIA_12_10 });
+    assert.equal(r.estudante.aberto, true, JSON.stringify(extra));
+    assert.equal(/STUDENT_DISCOUNT|HOTMART_OFFER_IDS|HOTMART_PRODUCT_ID|offDiscount/.test(r.avisos.join(" ")), false, JSON.stringify(extra));
+  }
 });
 
-test("next.config.js grava DM_ESTUDANTE_ABERTO no build: vazio por padrão e em standby, \"1\" com a chave ligada e o estudante pronto", () => {
+test("estudante: modelo de WhatsApp antigo (ou sem WA_TEMPLATE_ESTUDANTE) fecha e avisa até o v2; DM_TEMPLATE_ESTUDANTE_OK=1 confirma à mão", () => {
+  for (const nome of [undefined, "", "diariamente_estudante_aprovado", "Diariamente-V2"]) {
+    const r = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { WA_TEMPLATE_ESTUDANTE: nome }, agora: DIA_12_10 });
+    assert.equal(r.estudante.aberto, false, String(nome));
+    assert.equal(r.estudante.configurado, false, String(nome));
+    const aviso = r.avisos.join(" ");
+    assert.match(aviso, /Estudante FECHADO/);
+    assert.match(aviso, /WA_TEMPLATE_ESTUDANTE=diariamente_estudante_aprovado_v2/);
+    assert.match(aviso, /estudante\/ativar\?cupom=\{\{1\}\}/);
+  }
+  const invalido = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { WA_TEMPLATE_ESTUDANTE: "Diariamente-V2" }, agora: DIA_12_10 });
+  assert.match(invalido.avisos.join(" "), /não é um nome de modelo da Meta/);
+  const confirmado = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { DM_TEMPLATE_ESTUDANTE_OK: "1" }, agora: DIA_12_10 });
+  assert.equal(confirmado.estudante.aberto, true);
+  // o config.ts real hoje mostra o preço de estudante
+  assert.equal(estudanteMostraPrecoNoConfig(), true);
+});
+
+test("estudante: sem o código da FASE VIGENTE, fechado (configurado, mas sem oferta); o aviso diz a constante e o preço", () => {
+  const m = mercadosReais();
+  // lançamento sem ESTUDANTE_OFERTA_LANCAMENTO
+  const semL = checarPrecos({ mercados: m, alvoEstudante: { ...ALVO, ofertas: { lancamento: "", depois: "estdep01" } }, env: ENV_ESTUDANTE, agora: LANC });
+  assert.equal(semL.ok, true, semL.mensagem);
+  assert.equal(semL.estudante.configurado, true);
+  assert.equal(semL.estudante.aberto, false);
+  assert.match(semL.avisos.join(" "), /Estudante FECHADO neste build \(fase no lançamento, até 16\/11\/2026: R\$ 59,90 por ano nos 3 primeiros anos\)/);
+  assert.match(semL.avisos.join(" "), /ESTUDANTE_OFERTA_LANCAMENTO com o código \(off\) da oferta de estudante de R\$ 59,90 por ano nos 3 primeiros anos/);
+  // depois do lançamento sem ESTUDANTE_OFERTA, mesmo com o do lançamento
+  const semD = checarPrecos({ mercados: m, alvoEstudante: { ...ALVO, ofertas: { lancamento: "estlanc1", depois: "" } }, env: ENV_ESTUDANTE, agora: DEPOIS });
+  assert.equal(semD.estudante.aberto, false);
+  assert.equal(semD.estudante.fase, "depois");
+  assert.match(semD.avisos.join(" "), /ESTUDANTE_OFERTA com o código \(off\) da oferta de estudante de R\$ 79,90 por ano nos 3 primeiros anos/);
+  assert.match(semD.avisos.join(" "), /desative na Hotmart a oferta de estudante do lançamento \(off=estlanc1\)/);
+  // com o código da fase, abre
+  assert.equal(checarPrecos({ mercados: m, alvoEstudante: ALVO, env: ENV_ESTUDANTE, agora: DEPOIS }).estudante.oferta, "estdep01");
+});
+
+test("estudante: no lançamento sem o ESTUDANTE_OFERTA, abre e AVISA que a /estudante fecha sozinha em 17/11", () => {
+  const r = checarPrecos({ mercados: mercadosReais(), alvoEstudante: { ...ALVO, ofertas: { lancamento: "estlanc1", depois: "" } }, env: ENV_ESTUDANTE, agora: LANC });
+  assert.equal(r.estudante.aberto, true);
+  const aviso = r.avisos.join(" ");
+  assert.match(aviso, /Estudante: falta o código da fase seguinte\. ESTUDANTE_OFERTA, em config\/pricing\.ts: a partir de 17\/11 o estudante paga R\$ 79,90 por ano nos 3 primeiros anos, e sem o código dessa oferta a \/estudante fecha sozinha/);
+  // com as duas, nada de fase seguinte
+  const ok = checarPrecos({ mercados: mercadosReais(), alvoEstudante: ALVO, env: ENV_ESTUDANTE, agora: LANC });
+  assert.equal(/fase seguinte/.test(ok.avisos.join(" ")), false);
+});
+
+test("estudante: a virada da trava é a mesma do card (faseDoEstudante de config/pricing.ts), segundo a segundo", () => {
+  const { carregarTs } = require("../scripts/carregar-ts");
+  const P = carregarTs(path.join(__dirname, "..", "config", "pricing.ts"));
+  const l = P.MERCADOS.br.lancamento;
+  for (const t of [LANC, ULTIMO_MS, ULTIMO_MS + 1, DEPOIS, DIA_12_10, Date.parse("2027-01-01T00:00:00Z")]) {
+    assert.equal(faseDoEstudanteEm(l, t), P.faseDoEstudante(t), new Date(t).toISOString());
+  }
+  assert.equal(faseDoEstudanteEm(l, ULTIMO_MS), "lancamento");
+  assert.equal(faseDoEstudanteEm(l, ULTIMO_MS + 1), "depois");
+  // lançamento desligado antes da data: a fase vira na hora, como o card
+  assert.equal(faseDoEstudanteEm({ ...l, ativo: false }, LANC), "depois");
+});
+
+test("estudante: código de oferta errado TRAVA o build (formato, oferta de venda ou a mesma nas duas fases)", () => {
+  const m = mercados();
+  for (const [ofertas, padrao] of [
+    [{ lancamento: "https://pay.hotmart.com/K105072021O?off=abc12345", depois: "estdep01" }, /não é um código de oferta da Hotmart/],
+    [{ lancamento: "off=abc", depois: "estdep01" }, /não é um código de oferta da Hotmart/],
+    [{ lancamento: "estlanc1", depois: "teste000" }, /ESTUDANTE_OFERTA=teste000 é a oferta de CHECKOUT_BRL/],
+    [{ lancamento: "lanc0000", depois: "estdep01" }, /ESTUDANTE_OFERTA_LANCAMENTO=lanc0000 é a oferta de CHECKOUT_LANCAMENTO/],
+    [{ lancamento: "igual123", depois: "igual123" }, /são a mesma oferta \(igual123\)/],
+  ]) {
+    const r = checarPrecos({ mercados: m, alvoEstudante: { ...ALVO, ofertas }, env: ENV_ESTUDANTE, agora: DIA_12_10 });
+    assert.equal(r.ok, false, JSON.stringify(ofertas));
+    assert.match(r.mensagem, padrao, JSON.stringify(ofertas));
+    assert.equal(r.estudante.aberto, false, JSON.stringify(ofertas));
+    assert.equal(r.estudante.configurado, false, JSON.stringify(ofertas));
+  }
+  // preços inválidos também travam
+  for (const precos of [{ lancamento: 0, depois: 79.9 }, { lancamento: 59.9, depois: 149.9 }, {}]) {
+    const r = checarPrecos({ mercados: m, alvoEstudante: { ...ALVO, precos }, env: ENV_ESTUDANTE, agora: DIA_12_10 });
+    assert.equal(r.ok, false, JSON.stringify(precos));
+    assert.match(r.mensagem, /ESTUDANTE_PRECO_FINAL/, JSON.stringify(precos));
+  }
+  // vazio não trava: só fecha a fase
+  assert.deepEqual(problemasDoAlvo(alvoBr(m, { ofertas: { lancamento: "", depois: "" } }), m), []);
+});
+
+test("estudante: e-mail pelo Resend só com RESEND_API_KEY; sem ela, o aviso diz que o link vai pelo WhatsApp e pelo RD", () => {
+  const sem = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { WA_TEMPLATE_ESTUDANTE: "diariamente_estudante_aprovado_v2" }, agora: DIA_12_10 });
+  assert.match(sem.avisos.join(" "), /sem RESEND_API_KEY na Vercel, o site não manda o e-mail de aprovação; o link pessoal vai pelo WhatsApp e no campo cf_link_estudante/);
+  const com = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: ENV_ESTUDANTE, agora: DIA_12_10 });
+  assert.equal(/RESEND_API_KEY/.test(com.avisos.join(" ")), false);
+  assert.equal(sem.estudante.aberto, true, "o e-mail não fecha o fluxo");
+});
+
+test("estudanteDoProjeto lê o config real: os dois códigos ainda vazios (o dono põe depois), então configurado com o v2 e FECHADO", () => {
+  const cfg = carregarPrecos();
+  for (const c of [cfg.ESTUDANTE_OFERTA_LANCAMENTO, cfg.ESTUDANTE_OFERTA]) {
+    assert.ok(c === "" || /^[A-Za-z0-9]{4,20}$/.test(c), `código no formato da Hotmart ou vazio: "${c}"`);
+  }
+  assert.deepEqual(cfg.ESTUDANTE_PRECO_FINAL, { lancamento: 59.9, depois: 79.9 });
+  assert.equal(cfg.ESTUDANTE_ANOS, 3);
+  const alvo = alvoDoEstudante(cfg);
+  assert.equal(alvo.anual, 149.9);
+  assert.equal(estudanteDoProjeto({}, LANC).configurado, false);
+  const e = estudanteDoProjeto({ WA_TEMPLATE_ESTUDANTE: "diariamente_estudante_aprovado_v2" }, LANC);
+  assert.equal(e.configurado, true);
+  assert.equal(e.fase, "lancamento");
+  assert.equal(e.aberto, cfg.ESTUDANTE_OFERTA_LANCAMENTO !== "");
+  if (!cfg.ESTUDANTE_OFERTA_LANCAMENTO) assert.match(e.faltas.join(" "), /ESTUDANTE_OFERTA_LANCAMENTO/);
+  // estadoDoEstudante com o alvo real e um código fictício abre
+  const comCodigo = estadoDoEstudante(
+    { WA_TEMPLATE_ESTUDANTE: "diariamente_estudante_aprovado_v2" },
+    { ...alvo, ofertas: { lancamento: "estlanc1", depois: "estdep01" } }, LANC, cfg.MERCADOS,
+  );
+  assert.equal(comCodigo.aberto, true);
+});
+
+test("next.config.js grava DM_ESTUDANTE_ABERTO (a Vercel pronta) e DM_ESTUDANTE_EMAIL (o Resend) só com a chave ligada", () => {
   const fabrica = require(path.join(__dirname, "..", "next.config.js"));
   const aviso = console.warn;
   const antes = { ...process.env };
   console.warn = () => {};
   try {
-    for (const k of ["WA_TEMPLATE_ESTUDANTE", "HOTMART_PRODUCT_ID", "STUDENT_DISCOUNT", "DM_TEMPLATE_ESTUDANTE_OK", "DM_ESTUDANTE_ABERTO", "DM_SITE_LANCADO"]) delete process.env[k];
-    assert.equal(fabrica("phase-development-server").env.DM_ESTUDANTE_ABERTO, "");
+    for (const k of ["WA_TEMPLATE_ESTUDANTE", "HOTMART_PRODUCT_ID", "STUDENT_DISCOUNT", "DM_TEMPLATE_ESTUDANTE_OK", "DM_ESTUDANTE_ABERTO", "DM_SITE_LANCADO", "RESEND_API_KEY", "DM_ESTUDANTE_EMAIL"]) delete process.env[k];
+    let env = fabrica("phase-development-server").env;
+    assert.equal(env.DM_ESTUDANTE_ABERTO, "");
+    assert.equal(env.DM_ESTUDANTE_EMAIL, "");
     // valor posto à mão na Vercel não vale: é recalculado
     process.env.DM_ESTUDANTE_ABERTO = "1";
-    assert.equal(fabrica("phase-development-server").env.DM_ESTUDANTE_ABERTO, "");
-    // standby: as três chaves do estudante não abrem o fluxo novo (a
-    // /estudante é a da produção)
-    Object.assign(process.env, PRONTO);
-    assert.equal(fabrica("phase-development-server").env.DM_ESTUDANTE_ABERTO, "");
+    process.env.DM_ESTUDANTE_EMAIL = "1";
+    env = fabrica("phase-development-server").env;
+    assert.equal(env.DM_ESTUDANTE_ABERTO, "");
+    assert.equal(env.DM_ESTUDANTE_EMAIL, "");
+    // standby: o modelo v2 e o Resend não abrem o fluxo novo (a /estudante é a da produção)
+    process.env.WA_TEMPLATE_ESTUDANTE = "diariamente_estudante_aprovado_v2";
+    process.env.RESEND_API_KEY = "re_teste";
+    env = fabrica("phase-development-server").env;
+    assert.equal(env.DM_ESTUDANTE_ABERTO, "");
+    assert.equal(env.DM_ESTUDANTE_EMAIL, "");
     process.env.DM_SITE_LANCADO = "1";
-    assert.equal(fabrica("phase-development-server").env.DM_ESTUDANTE_ABERTO, "1");
+    env = fabrica("phase-development-server").env;
+    assert.equal(env.DM_ESTUDANTE_ABERTO, "1", "a Vercel pronta: a oferta da fase é conferida na hora");
+    assert.equal(env.DM_ESTUDANTE_EMAIL, "1");
+    // a chave do Resend nunca vai para o navegador
+    assert.equal("RESEND_API_KEY" in env, false);
   } finally {
     console.warn = aviso;
     for (const k of Object.keys(process.env)) if (!(k in antes)) delete process.env[k];
@@ -559,7 +544,7 @@ test("webhook e botão do WhatsApp nos avisos usam o SITE.dominio do config.ts, 
   assert.equal(SITE_DOMINIO, "https://www.diariamente.app");
   const aberto = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: ENV_ESTUDANTE, agora: DIA_12_10 }).avisos.join(" ");
   assert.ok(aberto.includes("https://www.diariamente.app/api/webhooks/hotmart"), "webhook com www");
-  const antigo = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: { HOTMART_OFFER_IDS: "1" } }).avisos.join(" ");
+  const antigo = checarPrecos({ mercados: mercados(), alvoEstudante: ALVO, env: {}, agora: DIA_12_10 }).avisos.join(" ");
   assert.ok(antigo.includes("https://www.diariamente.app/estudante/ativar?cupom={{1}}"), "botão com www");
   for (const aviso of [aberto, antigo]) assert.equal(/https:\/\/diariamente\.app/.test(aviso), false, "nenhum endereço sem www");
 });

@@ -25,6 +25,11 @@ const R = carregarTs(arq("lib", "rotas.ts"));
 const I = carregarTs(arq("lib", "i18n.ts"));
 
 const LANCAMENTO = Date.parse("2026-10-20T12:00:00-03:00");
+
+// Códigos FICTÍCIOS das ofertas de estudante (o config real ainda não tem
+// os do dono): com eles, "aberto" é a Vercel pronta (DM_ESTUDANTE_ABERTO)
+// e a fase com oferta, como em produção depois que os códigos chegarem.
+Object.assign(P.OFERTAS_DO_ESTUDANTE, { lancamento: "estlanc1", depois: "estdep01" });
 const ULTIMO_MINUTO = Date.parse("2026-11-16T23:59:00-03:00");
 const DEPOIS = Date.parse("2026-11-17T00:00:00-03:00");
 
@@ -113,7 +118,7 @@ test("card do Brasil no lançamento: cada linha da especificação, na ordem, co
         '<span>Preço de lançamento, à vista, para quem assinar até <span style="white-space:nowrap">16 de novembro</span>.</span></p><a href="https://pay.hotmart.com/K105072021O?off=lf63bgdd"',
         ">Começar meu ano</a>",
         ">Renova a cada ano. Cancele quando quiser.</p>",
-        ...(aberto ? [">Sou estudante: R$ 7,49/mês · R$ 89,90 por ano · cobrança anual</a>"] : []),
+        ...(aberto ? [">Sou estudante: R$ 59,90 por ano nos 3 primeiros anos, para quem assinar até 16 de novembro. Depois, R$ 149,90 por ano.</a>"] : []),
         // confiança: a garantia em branco, a linha de destaque
         '<li style="display:flex;gap:10px;align-items:center;color:#fff">',
         "Garantia incondicional de 7 dias. Decida com o app na mão.</li>",
@@ -304,7 +309,7 @@ function comRelogio(agora, fn) {
   }
 }
 
-test("/estudante: a regra do lançamento com o texto de antes, sem nada do card novo", () => {
+test("/estudante: a regra do lançamento com o texto de antes, sem nada do card novo; a do estudante nas duas fases", () => {
   // o texto que a /estudante mostrava antes do card novo
   assert.equal(P.regraDoLancamento("br", LANCAMENTO, { semPercentual: true }).replace(/\u00a0/g, " "), "nos 3 primeiros anos. Depois, R$ 149,90 por ano.");
   for (const aberto of [true, false]) {
@@ -314,7 +319,9 @@ test("/estudante: a regra do lançamento com o texto de antes, sem nada do card 
     assert.match(h, /<span class="ed-econ-d">Por ano nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\.<\/span>/);
     assert.equal(/travado|Travado|a menos,|Equivale a|deixa de pagar|Quase o preço oficial|app na mão|\*/.test(h), false);
     const d = comRelogio(DEPOIS, () => limpo(renderToStaticMarkup(React.createElement(BlocoPreco))));
-    assert.equal(/primeiros anos/.test(d), false);
+    // depois, a regra do LANÇAMENTO some; a do estudante (R$ 79,90) fica
+    assert.equal(/Por ano nos 3 primeiros anos/.test(d), false);
+    assert.match(d, /R\$ 79,90 por ano nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\./);
   }
 });
 

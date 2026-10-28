@@ -1,4 +1,4 @@
-import { EMPRESA, GARANTIA, ESTUDANTE } from "@/config";
+import { EMPRESA, GARANTIA, estudanteAberto } from "@/config";
 import { SITE_LANCADO } from "@/config/lancamento";
 import { LockupHorizontal } from "@/components/Brand";
 import { metadataDaPagina } from "@/lib/seo";
@@ -26,6 +26,11 @@ import { FormularioGlobal } from "@/components/FormularioGlobal";
    ===================================================================== */
 
 export const metadata = metadataDaPagina("estudante", "es");
+
+// Refaz a cada hora: o "¿Estudias en Brasil?" segue a /estudante, que
+// fecha sozinha se a fase do estudante não tiver oferta (config.ts,
+// estudanteAberto).
+export const revalidate = 3600;
 
 const BENEFICIOS = [
   "Los 365 textos, uno liberado cada día",
@@ -72,19 +77,18 @@ export default function Estudiantes() {
 
           <FormularioGlobal lang="es" />
 
-          {/* Só com o fluxo do cupom pessoal aberto neste build
-              (ESTUDANTE.aberto, config.ts), ou em standby (chave de
-              lançamento desligada, config/lancamento.ts), quando a
-              /estudante é a da produção, com o formulário aberto. O código
-              sai pelo cron, minutos depois do pedido: "inmediato" não era
-              verdade. */}
-          {(ESTUDANTE.aberto || !SITE_LANCADO) && (
+          {/* Só com o fluxo do estudante aberto agora (estudanteAberto,
+              config.ts), ou em standby (chave de lançamento desligada,
+              config/lancamento.ts), quando a /estudante é a da produção,
+              com o formulário aberto. A mensagem sai pelo cron, minutos
+              depois do pedido: "inmediato" não era verdade. */}
+          {(estudanteAberto() || !SITE_LANCADO) && (
           <p className="caption" style={{ marginTop: "var(--sp8)", color: "var(--n-500)" }}>
             ¿Estudias en Brasil?{" "}
             <a href={caminho("estudante", "pt")} className="teal" hrefLang="pt-BR">
-              Solicita tu código aquí
+              Solicita tu condición aquí
             </a>
-            ; se envía por WhatsApp en unos minutos.
+            ; el enlace de inscripción se envía por WhatsApp en unos minutos.
           </p>
           )}
 

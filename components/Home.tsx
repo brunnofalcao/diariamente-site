@@ -3,14 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { TEASER, ATIVOS, TELA_PROPORCAO, FOTO_LARGURAS, FOTO_FALLBACK, FOTO_PROPORCAO, dicionario, type Lang, type Dict } from "@/lib/i18n";
 import { caminho } from "@/lib/rotas";
-import { SITE, ESTUDANTE } from "@/config";
+import { SITE, ESTUDANTE, estudanteAberto } from "@/config";
 import { registrarInicioDeCheckout } from "@/lib/medicao";
 import { RodapeDoGrupo } from "@/components/CnpjsDoGrupo";
 import { BlocoOferta } from "@/components/BlocoOferta";
 import { TelaDaLoja, RAIO_DA_TELA } from "@/components/TelaDaLoja";
 import { SeletorMercado } from "@/components/SeletorMercado";
 import { HOME_DO_MERCADO, VENDAS_DO_MERCADO } from "@/lib/mercado";
-import { formatar, precoFinal, precoCheio, linkCheckout, precoEstudante, pendente, lancamentoVigente, fimDoLancamento, notaDoLancamento, notaDaBarra, MERCADOS, type Mercado } from "@/config/pricing";
+import { formatar, precoFinal, precoCheio, linkCheckout, precoEstudante, regraDoEstudante, pendente, lancamentoVigente, fimDoLancamento, notaDoLancamento, notaDaBarra, MERCADOS, type Mercado } from "@/config/pricing";
 
 /* ─────────────────────────────────────────────────────────────
    Home · Diariamente (redesign v3, padrão internacional PT/ES)
@@ -736,15 +736,18 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
                   colocava "R$ 77,00" numa página de dólar e de euro, que
                   é o pior tipo de erro: preço de outra moeda na frente de
                   quem não pode comprar naquela moeda.
-                  E só com o fluxo do cupom pessoal ABERTO neste build
-                  (ESTUDANTE.aberto, config.ts): fechado, o card some, para
-                  a home não levar a uma página que ainda não entrega o
-                  código. O preço segue ESTUDANTE.mostrarPreco. */}
-              {mkt === "br" && ESTUDANTE.aberto && (
+                  E só com o fluxo do estudante ABERTO agora
+                  (estudanteAberto(agora), config.ts: a Vercel configurada e
+                  a oferta da fase vigente no config): fechado, o card some,
+                  para a home não levar a uma página que ainda não entrega o
+                  link. O preço segue ESTUDANTE.mostrarPreco e a fase de
+                  `agora` (R$ 59,90 até 16/11, R$ 79,90 depois), com a regra
+                  inteira logo abaixo (regraDoEstudante, sem o preço). */}
+              {mkt === "br" && estudanteAberto(agora) && (
               <div style={{ ...card, marginTop: 16 }}>
                 <span style={{ display: "inline-flex", alignItems: "center", height: 26, padding: "0 12px", borderRadius: 999, background: "rgba(39,189,190,.10)", border: "1px solid rgba(39,189,190,.25)", color: C.p300, fontSize: 11, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase" }}>{t.stBadge}</span>
-                <p style={{ margin: "12px 0 0", fontFamily: C.serif, fontSize: "clamp(20px,2vw,24px)", lineHeight: 1.3 }}>{ESTUDANTE.mostrarPreco ? t.stH.replace("{preco}", formatar("br", precoEstudante())) : t.stHSemPreco}</p>
-                <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: C.n400 }}>{t.stD}</p>
+                <p style={{ margin: "12px 0 0", fontFamily: C.serif, fontSize: "clamp(20px,2vw,24px)", lineHeight: 1.3 }}>{ESTUDANTE.mostrarPreco ? t.stH.replace("{preco}", formatar("br", precoEstudante(agora))) : t.stHSemPreco}</p>
+                <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: C.n400 }}>{ESTUDANTE.mostrarPreco ? `${regraDoEstudante(agora, { semPreco: true })} ` : ""}{t.stD}</p>
                 <a href={caminho("estudante", lang)} style={{ marginTop: 18, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, height: 48, padding: "0 22px", borderRadius: 999, border: `1.5px solid ${C.p500}`, color: C.p500, fontSize: 15, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap" }}>
                   {t.stCta}
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" /></svg>

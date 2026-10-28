@@ -53,19 +53,60 @@ test("nenhum link de venda leva cupom, antes ou depois do lançamento", () => {
   }
 });
 
-test("estudante: preço final R$ 89,90 por ano, R$ 7,49/mês, no checkout oficial com o cupom", () => {
-  assert.equal(P.ESTUDANTE_PRECO_FINAL, 89.9);
-  assert.equal(txt(P.formatar("br", P.precoEstudante())), "R$ 89,90");
-  assert.equal(txt(P.formatar("br", P.porMesEstudante())), "R$ 7,49");
-  // o desconto do cupom nasce do preço final: 1 - 89,90/149,90, 5 casas
-  assert.equal(P.ESTUDANTE_DESCONTO, 0.40027);
-  assert.equal(P.precoComDesconto(P.MERCADOS.br.anual, P.ESTUDANTE_DESCONTO), 89.9);
-  // com 2 casas (40%), o checkout daria R$ 89,94
-  assert.equal(P.precoComDesconto(P.MERCADOS.br.anual, 0.4), 89.94);
-  assert.equal(
-    P.linkComCupom(P.MERCADOS.br.checkout, "DIARIAESTABCD2345"),
-    "https://pay.hotmart.com/K105072021O?off=fhrttdh8&offDiscount=DIARIAESTABCD2345"
-  );
+test("estudante: o preço, a oferta e o texto viram com o card (16/11/2026, horário de Brasília)", () => {
+  const ultimo = Date.parse("2026-11-16T23:59:59.999-03:00");
+  const virada = ultimo + 1;
+  const antes = { ...P.OFERTAS_DO_ESTUDANTE };
+  try {
+    Object.assign(P.OFERTAS_DO_ESTUDANTE, { lancamento: "estlanc1", depois: "estdep01" });
+    // no último milissegundo do lançamento
+    assert.equal(P.faseDoEstudante(ultimo), "lancamento");
+    assert.equal(P.lancamentoVigente("br", ultimo), true);
+    assert.equal(txt(P.formatar("br", P.precoEstudante(ultimo))), "R$ 59,90");
+    assert.equal(P.checkoutDoEstudante(ultimo, "DIARIAESTABC"), "https://pay.hotmart.com/K105072021O?off=estlanc1&sck=DIARIAESTABC");
+    assert.equal(txt(P.regraDoEstudante(ultimo)), "R$ 59,90 por ano nos 3 primeiros anos, para quem assinar até 16 de novembro. Depois, R$ 149,90 por ano.");
+    assert.equal(txt(P.regraDoEstudante(ultimo, { semPreco: true })), "Nos 3 primeiros anos, para quem assinar até 16 de novembro. Depois, R$ 149,90 por ano.");
+    // na virada, junto com o card
+    assert.equal(P.faseDoEstudante(virada), "depois");
+    assert.equal(P.lancamentoVigente("br", virada), false);
+    assert.equal(txt(P.formatar("br", P.precoEstudante(virada))), "R$ 79,90");
+    assert.equal(P.checkoutDoEstudante(virada, "DIARIAESTABC"), "https://pay.hotmart.com/K105072021O?off=estdep01&sck=DIARIAESTABC");
+    assert.equal(txt(P.regraDoEstudante(virada)), "R$ 79,90 por ano nos 3 primeiros anos. Depois, R$ 149,90 por ano.");
+    assert.equal(txt(P.regraDoEstudante(virada, { semPreco: true })), "Nos 3 primeiros anos. Depois, R$ 149,90 por ano.");
+    // sem token, sem sck; nunca cupom
+    assert.equal(P.checkoutDoEstudante(virada), "https://pay.hotmart.com/K105072021O?off=estdep01");
+    for (const t of [ultimo, virada]) assert.equal(/offDiscount|fhrttdh8|lf63bgdd/.test(P.checkoutDoEstudante(t, "X")), false);
+    // as duas ofertas, para o webhook
+    assert.deepEqual(P.ofertasDoEstudante(), ["estlanc1", "estdep01"]);
+    // lançamento encerrado antes da data (ativo: false): o estudante vira junto
+    P.MERCADOS.br.lancamento.ativo = false;
+    assert.equal(P.faseDoEstudante(ultimo), "depois");
+  } finally {
+    P.MERCADOS.br.lancamento.ativo = true;
+    Object.assign(P.OFERTAS_DO_ESTUDANTE, antes);
+  }
+});
+
+test("estudante: sem o código da fase (ou com código fora do formato), nenhum checkout: o fluxo fecha", () => {
+  const lanc = Date.parse("2026-10-28T12:00:00-03:00");
+  const antes = { ...P.OFERTAS_DO_ESTUDANTE };
+  try {
+    for (const codigo of ["", "  ", "off=abc", "https://pay.hotmart.com/K105072021O?off=abcd1234", "[PREENCHER]"]) {
+      Object.assign(P.OFERTAS_DO_ESTUDANTE, { lancamento: codigo, depois: "" });
+      assert.equal(P.ofertaDoEstudante(lanc), "", codigo);
+      assert.equal(P.estudanteTemOferta(lanc), false, codigo);
+      assert.equal(P.checkoutDoEstudante(lanc, "T"), null, codigo);
+    }
+  } finally {
+    Object.assign(P.OFERTAS_DO_ESTUDANTE, antes);
+  }
+  // o config real: vazio ou um código no formato da Hotmart
+  for (const c of [P.ESTUDANTE_OFERTA_LANCAMENTO, P.ESTUDANTE_OFERTA]) assert.ok(c === "" || P.codigoDeOfertaValido(c), c);
+});
+
+test("estudante: desconto equivalente só informativo (coluna cupons_estudante.desconto): 0.6004 e 0.46698", () => {
+  assert.equal(P.descontoEquivalenteDoEstudante(Date.parse("2026-10-28T12:00:00-03:00")), 0.6004);
+  assert.equal(P.descontoEquivalenteDoEstudante(Date.parse("2026-11-20T12:00:00-03:00")), 0.46698);
 });
 
 test("mercados de fora: US$ 29,99 por ano (US$ 2,50/mês) em la e rw; 29,99 € em pt e es; sem lançamento", () => {
@@ -92,14 +133,6 @@ test("moeda por mercado (decisão do dono, 12/10/2026): Brasil em real, Portugal
   assert.equal(txt(P.formatar("rw", 29.99)), "US$ 29,99");
   assert.equal(txt(P.formatar("pt", 29.99)), "29,99 €");
   assert.equal(txt(P.formatar("es", 29.99)), "29,99 €");
-});
-
-test("estudante: o desconto do cupom deixa o preço exato em R$ 89,90 ou abaixo, nunca acima", () => {
-  assert.equal(P.ESTUDANTE_DESCONTO, 0.40027);
-  const exato = Math.round(P.MERCADOS.br.anual * 100) * (1 - P.ESTUDANTE_DESCONTO);
-  assert.ok(exato <= 8990 && Math.round(exato) === 8990, String(exato));
-  assert.equal(P.precoEstudante(), 89.9);
-  assert.equal(P.porMesEstudante(), 7.49);
 });
 
 test("regra do lançamento: o {pct} sai da conta; sem desconto de 1% ou mais, o trecho do percentual some", () => {

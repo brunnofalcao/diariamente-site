@@ -1,34 +1,45 @@
 /**
  * POST /api/estudante/solicitar
  *
- * Fluxo automatizado, sem revisao humana:
- *   valida -> checa CPF -> cria cupom na Hotmart -> grava
- *   -> envia ao RD Station -> dispara WhatsApp
+ * Fluxo automatizado, sem revisao humana (decisao do dono, 28/10/2026:
+ * estudante de qualquer curso, aprovado ao declarar o vinculo):
+ *   valida -> checa CPF (1 CPF = 1 lead) -> grava o lead -> grava o LINK
+ *   PESSOAL (token em cupons_estudante.codigo, sem cupom na Hotmart)
+ *   -> RD Station (com o link em cf_link_estudante) -> e-mail pelo Resend
+ *   (so com RESEND_API_KEY) -> WhatsApp AGENDADO (o cron manda)
  *
- * Ordem intencional: o cupom e criado ANTES do RD e do WhatsApp.
- * Se RD ou WhatsApp falharem, o cupom existe e volta na resposta,
- * entao a tela consegue mostrar o codigo mesmo assim.
+ * Por que sem cupom: a API de cupons da Hotmart nao aceita produto de
+ * assinatura, e o 7448309 e assinatura. O preco de estudante e uma OFERTA
+ * da Hotmart por fase (config/pricing.ts: ESTUDANTE_OFERTA_LANCAMENTO,
+ * R$ 59,90 ate 16/11/2026; ESTUDANTE_OFERTA, R$ 79,90 depois), e o link
+ * pessoal (/estudante/ativar?cupom=TOKEN) escolhe a oferta NA HORA do
+ * clique. Detalhes em lib/estudante.js e docs/ESTUDANTE.md.
  *
- * FLUXO FECHADO: DM_ESTUDANTE_ABERTO e calculada no build pelo
- * next.config.js (estadoDoEstudante, em scripts/checar-precos.js) e so
- * vale "1" com o modelo v2 do WhatsApp, HOTMART_PRODUCT_ID=7448309 e um
- * STUDENT_DISCOUNT que de o preco final anunciado (R$ 89,90 sobre
- * R$ 149,90: STUDENT_DISCOUNT=0.40027). Sem isso, a rota responde 503
- * ANTES de ler o corpo ou tocar no banco: nenhum lead gravado, nenhum
- * cupom criado, nenhuma mensagem agendada, e o CPF nao fica preso pela
- * regra "1 CPF = 1 lead" num pedido que o estudante nao conseguiria
- * ativar. A /estudante, fechada, nem mostra o formulario; isto cobre
- * pagina antiga em cache e POST direto.
+ * FLUXO FECHADO (chave de lancamento ligada): a rota responde 503 ANTES
+ * de ler o corpo ou tocar no banco quando
+ *   - DM_ESTUDANTE_ABERTO nao e "1" (calculada no build pelo
+ *     next.config.js, estadoDoEstudante em scripts/checar-precos.js: o
+ *     modelo v2 do WhatsApp na Vercel), ou
+ *   - a fase vigente nao tem o codigo da oferta de estudante
+ *     (ofertaDoEstudante(agora) vazio: a virada de 16/11 e conferida aqui,
+ *     a cada pedido).
+ * Nenhum lead gravado, nenhum link criado, nenhuma mensagem agendada, e
+ * o CPF nao fica preso pela regra "1 CPF = 1 lead" num pedido que o
+ * estudante nao conseguiria pagar. A /estudante, fechada, nem mostra o
+ * formulario; isto cobre pagina antiga em cache e POST direto.
  *
  * STANDBY (DM_SITE_LANCADO vazio, config/lancamento.ts): a /estudante e
- * a da producao, com o formulario aberto, e esta rota faz o que a da
- * main faz (sem o 503). DM_ESTUDANTE_ABERTO so vale "1" com a chave
- * ligada (next.config.js).
+ * a da producao, com o formulario aberto, e esta rota faz o que a da main
+ * faz: o cupom pessoal pela API da Hotmart (lib/hotmart.js, com o
+ * STUDENT_DISCOUNT da Vercel), sem o 503. So vale em standby; com a
+ * chave ligada, nada aqui chama a API de cupom.
  */
 
 import { createClient } from '@supabase/supabase-js';
 import { criarCupom, gerarCodigo, apagarCupom, offerIdsDoAmbiente } from '@/lib/hotmart';
 import { enviarLeadRD } from '@/lib/rdstation';
+import { gerarToken, linkPessoal, emailConfigurado, enviarEmailDeAprovacao } from '@/lib/estudante';
+import { ofertaDoEstudante, faseDoEstudante, precoEstudante, descontoEquivalenteDoEstudante } from '@/config/pricing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -48,8 +59,14 @@ const CURSOS = [
   'Fisioterapia', 'Odontologia', 'Biomedicina', 'Farmacia', 'EducacaoFisica', 'Outro',
 ];
 
+// Standby (o cupom da main): validade do cupom na Hotmart.
 const VALIDADE_HORAS = 48;
-// Janela de conferencia antes do envio do codigo. O cron /api/cron/manutencao
+// Fluxo novo: prazo para o cron mandar o WhatsApp (expira_em). O LINK nao
+// vence: o /estudante/ativar aceita o token conhecido a qualquer tempo e
+// decide a oferta pela data do clique. expira_em so encerra as tentativas
+// de envio (o cron so manda enquanto expira_em nao passou).
+const PRAZO_DE_ENVIO_HORAS = 30 * 24;
+// Janela de conferencia antes do envio. O cron /api/cron/manutencao
 // dispara o WhatsApp quando `enviar_em` vence. Espelha ESTUDANTE.esperaMinutos.
 const ESPERA_MINUTOS = 5;
 const TETO_POR_HORA = 100;   // freio contra emissao em massa
@@ -79,29 +96,40 @@ function cpfValido(cpf) {
   return true;
 }
 
+/** O fluxo novo esta aberto agora? Configuracao do build e oferta da fase. */
+function fechadoAgora() {
+  if (process.env.DM_ESTUDANTE_ABERTO !== '1') return 'configuracao (DM_ESTUDANTE_ABERTO)';
+  if (!ofertaDoEstudante(Date.now())) return `oferta de estudante da fase ${faseDoEstudante(Date.now())}`;
+  return null;
+}
+
 export async function POST(req) {
   let lead = null;
+  const lancado = process.env.DM_SITE_LANCADO === '1';
 
-  if (process.env.DM_SITE_LANCADO === '1' && process.env.DM_ESTUDANTE_ABERTO !== '1') {
-    console.error('[estudante] fluxo fechado neste build (DM_ESTUDANTE_ABERTO); ver o aviso "Estudante FECHADO" no log do build');
-    return Response.json({
-      ok: false,
-      erros: ['Falta configuracao. A solicitacao do codigo de estudante abre em breve.'],
-    }, { status: 503 });
+  if (lancado) {
+    const falta = fechadoAgora();
+    if (falta) {
+      console.error(`[estudante] fluxo fechado agora (falta ${falta}); ver o aviso "Estudante FECHADO" no log do build`);
+      return Response.json({
+        ok: false,
+        erros: ['Falta configuracao. A solicitacao da condicao de estudante abre em breve.'],
+      }, { status: 503 });
+    }
   }
 
   try {
-    // Fracao, com todas as casas (0.40027): e o que vai para a API da
-    // Hotmart. O build ja conferiu que ela da os R$ 89,90 da pagina. A
-    // coluna cupons_estudante.desconto e numeric(4,3) e guarda 0.400; o
-    // valor exato fica no log_estudante (detalhe.desconto).
-    const desconto = parseFloat(process.env.STUDENT_DISCOUNT);
-    if (!(desconto > 0 && desconto < 0.99)) {
-      console.error('[estudante] STUDENT_DISCOUNT ausente ou invalido');
-      return Response.json({
-        ok: false,
-        erros: ['Falta configuracao. Tente novamente em instantes.'],
-      }, { status: 503 });
+    // Standby (o fluxo da main): o desconto do cupom vem da Vercel.
+    let desconto = null;
+    if (!lancado) {
+      desconto = parseFloat(process.env.STUDENT_DISCOUNT);
+      if (!(desconto > 0 && desconto < 0.99)) {
+        console.error('[estudante] STUDENT_DISCOUNT ausente ou invalido');
+        return Response.json({
+          ok: false,
+          erros: ['Falta configuracao. Tente novamente em instantes.'],
+        }, { status: 503 });
+      }
     }
 
     const body = await req.json();
@@ -132,6 +160,24 @@ export async function POST(req) {
       .from('leads_estudante').select('id').eq('cpf', cpf).maybeSingle();
 
     if (existente) {
+      if (lancado) {
+        // O link nao vence: quem ja tem o seu e so abrir de novo a mensagem.
+        const { data: anterior } = await db
+          .from('cupons_estudante')
+          .select('codigo, status')
+          .eq('lead_id', existente.id)
+          .order('criado_em', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        return Response.json({
+          ok: false,
+          erros: [anterior && anterior.status === 'usado'
+            ? 'Este CPF ja usou a condicao de estudante.'
+            : anterior
+              ? 'Voce ja tem seu link de estudante. Confira seu WhatsApp.'
+              : 'Este CPF ja solicitou a condicao de estudante.'],
+        }, { status: 409 });
+      }
       const { data: cupomAtivo } = await db
         .from('cupons_estudante')
         .select('codigo, status, expira_em')
@@ -182,48 +228,98 @@ export async function POST(req) {
     if (erroLead) throw new Error(`Lead nao gravado: ${erroLead.message}`);
     lead = criado;
 
-    // ---------- Cupom na Hotmart ----------
-    const offerIds = offerIdsDoAmbiente();
+    const extrasRD = {};
 
-    let cupom;
-    try {
-      cupom = await criarCupom({
-        codigo: gerarCodigo(), desconto, validadeHoras: VALIDADE_HORAS, offerIds,
+    if (lancado) {
+      // ---------- Link pessoal (sem cupom na Hotmart) ----------
+      const agora = Date.now();
+      const token = gerarToken();
+      const fase = faseDoEstudante(agora);
+      const { error: erroLink } = await db.from('cupons_estudante').insert({
+        lead_id: lead.id,
+        codigo: token,
+        status: 'ativo',
+        // Coluna do tempo do cupom. Aqui, so informativo: o desconto
+        // equivalente da fase sobre o preco oficial (0.6004 no lancamento).
+        // O preco cobrado e o da oferta da Hotmart.
+        desconto: descontoEquivalenteDoEstudante(agora),
+        expira_em: new Date(agora + PRAZO_DE_ENVIO_HORAS * 3600_000).toISOString(),
+        enviar_em: new Date(agora + ESPERA_MINUTOS * 60_000).toISOString(),
       });
-    } catch (e) {
-      // Falha ao criar o cupom: remove o lead recem-gravado pra nao travar o CPF
-      // (senao o "1 CPF = 1 lead" impediria nova tentativa apos erro passageiro).
-      await db.from('leads_estudante').delete().eq('id', lead.id);
-      lead = null;
-      throw e;
-    }
+      if (erroLink) {
+        // Sem o link gravado, o estudante nao teria o que abrir: libera o CPF.
+        await db.from('leads_estudante').delete().eq('id', lead.id);
+        lead = null;
+        throw new Error(`Link pessoal nao registrado: ${erroLink.message}`);
+      }
 
-    const { error: erroCupom } = await db.from('cupons_estudante').insert({
-      lead_id: lead.id,
-      codigo: cupom.codigo,
-      hotmart_coupon_id: cupom.hotmartCouponId,
-      desconto,
-      expira_em: cupom.expiraEm.toISOString(),
-      enviar_em: new Date(Date.now() + ESPERA_MINUTOS * 60_000).toISOString(),
-    });
-    if (erroCupom) {
-      // Cupom existe na Hotmart mas nao foi registrado aqui -> o webhook nunca o
-      // apagaria (cupom orfao, ativo 48h). Apaga na hora e libera o lead.
-      try { await apagarCupom(cupom.hotmartCouponId); } catch (_) {}
-      await db.from('leads_estudante').delete().eq('id', lead.id);
-      lead = null;
-      throw new Error(`Cupom criado na Hotmart mas nao registrado: ${erroCupom.message}`);
-    }
+      await db.from('log_estudante').insert({
+        lead_id: lead.id, acao: 'link_emitido',
+        detalhe: { codigo: token, fase, preco: precoEstudante(agora), oferta: ofertaDoEstudante(agora), curso, institucional },
+        ator: 'sistema',
+      });
+      extrasRD.link = linkPessoal(token);
 
-    await db.from('log_estudante').insert({
-      lead_id: lead.id, acao: 'cupom_emitido',
-      detalhe: { codigo: cupom.codigo, desconto, curso, institucional },
-      ator: 'sistema',
-    });
+      // ---------- E-mail pelo Resend (so com RESEND_API_KEY; nao bloqueia) ----------
+      if (emailConfigurado()) {
+        try {
+          const r = await enviarEmailDeAprovacao({ email, nome, token, agora });
+          await db.from('log_estudante').insert({
+            lead_id: lead.id, acao: 'email_enviado',
+            detalhe: { codigo: token, fase: r.fase, resend_id: r.id }, ator: 'sistema',
+          });
+        } catch (e) {
+          console.error('[estudante] e-mail pelo Resend falhou:', e.message);
+          await db.from('log_estudante').insert({
+            lead_id: lead.id, acao: 'email_falhou',
+            detalhe: { codigo: token, erro: String(e.message).slice(0, 300) }, ator: 'sistema',
+          });
+        }
+      }
+    } else {
+      // ---------- STANDBY: cupom na Hotmart, como a main ----------
+      const offerIds = offerIdsDoAmbiente();
+
+      let cupom;
+      try {
+        cupom = await criarCupom({
+          codigo: gerarCodigo(), desconto, validadeHoras: VALIDADE_HORAS, offerIds,
+        });
+      } catch (e) {
+        // Falha ao criar o cupom: remove o lead recem-gravado pra nao travar o CPF
+        // (senao o "1 CPF = 1 lead" impediria nova tentativa apos erro passageiro).
+        await db.from('leads_estudante').delete().eq('id', lead.id);
+        lead = null;
+        throw e;
+      }
+
+      const { error: erroCupom } = await db.from('cupons_estudante').insert({
+        lead_id: lead.id,
+        codigo: cupom.codigo,
+        hotmart_coupon_id: cupom.hotmartCouponId,
+        desconto,
+        expira_em: cupom.expiraEm.toISOString(),
+        enviar_em: new Date(Date.now() + ESPERA_MINUTOS * 60_000).toISOString(),
+      });
+      if (erroCupom) {
+        // Cupom existe na Hotmart mas nao foi registrado aqui -> o webhook nunca o
+        // apagaria (cupom orfao, ativo 48h). Apaga na hora e libera o lead.
+        try { await apagarCupom(cupom.hotmartCouponId); } catch (_) {}
+        await db.from('leads_estudante').delete().eq('id', lead.id);
+        lead = null;
+        throw new Error(`Cupom criado na Hotmart mas nao registrado: ${erroCupom.message}`);
+      }
+
+      await db.from('log_estudante').insert({
+        lead_id: lead.id, acao: 'cupom_emitido',
+        detalhe: { codigo: cupom.codigo, desconto, curso, institucional },
+        ator: 'sistema',
+      });
+    }
 
     // ---------- RD Station (nao bloqueia) ----------
     try {
-      await enviarLeadRD(lead);
+      await enviarLeadRD(lead, extrasRD);
       await db.from('leads_estudante').update({ enviado_rd: true }).eq('id', lead.id);
     } catch (e) {
       console.error('[estudante] RD falhou:', e.message);
@@ -235,7 +331,7 @@ export async function POST(req) {
     // /api/cron/manutencao, quando `enviar_em` vence. Dois motivos:
     //   1) a janela de conferencia que o estudante ve na tela;
     //   2) se a Meta recusar o envio, o cron tenta de novo em vez de
-    //      queimar o CPF com o codigo preso num log.
+    //      queimar o CPF com o link preso num log.
 
     return Response.json({
       ok: true,
@@ -253,7 +349,7 @@ export async function POST(req) {
     }
     return Response.json({
       ok: false,
-      erros: ['Nao foi possivel gerar seu codigo agora. Tente novamente em instantes.'],
+      erros: ['Nao foi possivel concluir sua inscricao agora. Tente novamente em instantes.'],
     }, { status: 500 });
   }
 }

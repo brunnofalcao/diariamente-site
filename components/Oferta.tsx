@@ -1,6 +1,7 @@
 "use client";
 
-import { PLANOS, GARANTIA, ESCASSEZ, LANCAMENTO, PROVA, type Plano, ESTUDANTE } from "@/config";
+import { PLANOS, GARANTIA, ESCASSEZ, LANCAMENTO, PROVA, type Plano, ESTUDANTE, precoDoEstudante } from "@/config";
+import { regraDoEstudante } from "@/config/pricing";
 import { StoreBadges } from "@/components/StoreBadges";
 
 /* =====================================================================
@@ -265,12 +266,12 @@ export function Oferta() {
               <h3 className="cart-est-h">Ainda está na graduação?</h3>
               <p className="cart-est-d">
                 {ESTUDANTE.mostrarPreco
-                  ? `O mesmo acesso de um ano por R$ ${ESTUDANTE.preco}, com cobrança anual. Solicitar não gera compromisso.`
+                  ? `O mesmo acesso por ${precoDoEstudante()} por ano. ${regraDoEstudante(Date.now(), { semPreco: true })} Solicitar não gera compromisso.`
                   : "Existe uma condição de estudante, com valor reduzido, para quem ainda estuda. Solicitar não gera compromisso."}
               </p>
 
               <ul className="cart-est-bul">
-                {["Leva cerca de um minuto", "Código chega no WhatsApp", "Vale por um ano de acesso"].map((b) => (
+                {["Leva cerca de um minuto", "Link pelo WhatsApp", "Qualquer curso de graduação"].map((b) => (
                   <li key={b}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M20 6L9 17l-5-5" />
