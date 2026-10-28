@@ -31,6 +31,14 @@ import type { Lang } from "@/lib/i18n";
    impede rolar, ler ou clicar. Recusar e Aceitar têm o mesmo tamanho e
    ficam lado a lado.
 
+   No celular (até 560 px) o aviso é COMPACTO, com cerca de 115 px de
+   altura: sem o título, com o texto curto (TEXTO.curto, que ainda diz
+   quem mede e que só liga se a pessoa aceitar, com o link da Política) e
+   botões de 40 px. O aviso inteiro, com ~214 px no iPhone de 390 x 664,
+   cobria o "Quero meu acesso" da home e o "Instalar no iPhone" da página
+   de pagamento aprovado logo na primeira tela (revisão de 28/10/2026).
+   No computador, o aviso de sempre.
+
    STANDBY (config/lancamento.ts): fora da vitrine, o site fica como a
    produção de hoje, sem aviso e com GA4 e Pixel montados direto (o
    contexto vale "aceito", então o Purchase das páginas de obrigado
@@ -98,12 +106,15 @@ export function Consentimento({ children }: { children: React.ReactNode }) {
   );
 }
 
-const TEXTO: Record<Lang, { titulo: string; texto: string; politica: string; recusar: string; aceitar: string }> = {
+const TEXTO: Record<Lang, { titulo: string; texto: string; politica: string; curto: string; politicaCurta: string; recusar: string; aceitar: string }> = {
   pt: {
     titulo: "Cookies",
     texto:
       "Usamos cookies de medição e publicidade (Google Analytics e Pixel da Meta) para entender as visitas ao site e medir os anúncios. Eles só são ligados se você aceitar.",
     politica: "Saiba mais na Política de Privacidade",
+    // Celular: duas linhas, com quem mede e a condição (só se aceitar).
+    curto: "Usamos cookies de medição do Google e da Meta só se você aceitar.",
+    politicaCurta: "Saiba mais",
     recusar: "Recusar",
     aceitar: "Aceitar",
   },
@@ -112,6 +123,8 @@ const TEXTO: Record<Lang, { titulo: string; texto: string; politica: string; rec
     texto:
       "Usamos cookies de medición y publicidad (Google Analytics y Píxel de Meta) para entender las visitas al sitio y medir los anuncios. Solo se activan si aceptas.",
     politica: "Más información en la Política de Privacidad",
+    curto: "Usamos cookies de medición de Google y Meta solo si aceptas.",
+    politicaCurta: "Más información",
     recusar: "Rechazar",
     aceitar: "Aceptar",
   },
@@ -131,9 +144,10 @@ const CSS = `
 .dm-ck-aceitar{background:#27BDBE;color:#131918;border:1.5px solid #27BDBE}
 .dm-ck-aceitar:hover{background:#3DCBCC;border-color:#3DCBCC}
 .dm-ck a:focus-visible,.dm-ck button:focus-visible{outline:2px solid #5DD8D8;outline-offset:2px}
+.dm-ck-curto{display:none}
 .dm-ck-espaco{height:calc(var(--dm-ck-h,220px) + 32px + env(safe-area-inset-bottom))}
 html{scroll-padding-bottom:calc(var(--dm-ck-h,220px) + 32px + env(safe-area-inset-bottom))}
-@media (max-width:560px){.dm-ck{padding:14px 16px}.dm-ck-acoes{width:100%}.dm-ck button{flex:1;min-width:0}}
+@media (max-width:560px){.dm-ck{left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));gap:10px;padding:12px 14px;font-size:13.5px;line-height:1.45}.dm-ck-t,.dm-ck-longo{display:none}.dm-ck-curto{display:inline}.dm-ck-acoes{width:100%}.dm-ck button{flex:1;min-width:0;height:40px}}
 @media (prefers-reduced-motion:reduce){.dm-ck button{transition:none}}
 `;
 
@@ -178,8 +192,15 @@ function AvisoCookies({ onEscolha }: { onEscolha: (e: Escolha) => void }) {
       <div ref={caixa} className="dm-ck" role="region" aria-labelledby="dm-ck-titulo" lang={lang === "es" ? "es" : "pt-BR"}>
         <div className="dm-ck-corpo">
           <p id="dm-ck-titulo" className="dm-ck-t">{t.titulo}</p>
+          {/* Um texto por tamanho de tela (o CSS esconde o outro, e o
+              escondido sai também do leitor de tela). */}
           <p className="dm-ck-x">
-            {t.texto} <a href={caminho("privacidade", lang)}>{t.politica}</a>.
+            <span className="dm-ck-longo">
+              {t.texto} <a href={caminho("privacidade", lang)}>{t.politica}</a>.
+            </span>
+            <span className="dm-ck-curto">
+              {t.curto} <a href={caminho("privacidade", lang)}>{t.politicaCurta}</a>.
+            </span>
           </p>
         </div>
         <div className="dm-ck-acoes">
