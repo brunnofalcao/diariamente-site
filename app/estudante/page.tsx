@@ -182,8 +182,12 @@ const FAQ = [
     a: "Sim. O Diariamente não é sobre conteúdo técnico de uma área, é sobre constância, decisão e responsabilidade pessoal. Vale para qualquer graduação.",
   },
   {
-    q: "O código chega quando?",
-    a: `Em até ${ESTUDANTE.esperaMinutos} minutos, no WhatsApp que você informar, depois da conferência dos seus dados. Ele é pessoal e vale por ${ESTUDANTE.validadeHoras} horas.`,
+    // Quem envia é o sistema; a entrega no WhatsApp não é garantida. Fechado,
+    // sem prazo (revisão de 28/10/2026).
+    q: "Quando recebo o código?",
+    a: ABERTO
+      ? `Enviamos em até ${ESTUDANTE.esperaMinutos} minutos para o WhatsApp que você informar, depois da conferência dos seus dados. Ele é pessoal e vale por ${ESTUDANTE.validadeHoras} horas.`
+      : `Quando a solicitação abrir, enviamos o código para o WhatsApp que você informar, depois da conferência dos seus dados. Ele é pessoal e vale por ${ESTUDANTE.validadeHoras} horas.`,
   },
   {
     q: "Não recebi o código. E agora?",
@@ -480,7 +484,7 @@ export default function Estudante() {
             </div>
             <p className="ed-legal" style={{ marginTop: 12 }}>
               {ABERTO
-                ? "Solicitar não gera compromisso. O código chega no seu WhatsApp e você decide depois, com calma."
+                ? "Solicitar não gera compromisso. O código vai para o seu WhatsApp e você decide depois, com calma."
                 : "A solicitação do código abre em breve. Deixe seu contato e avisamos no dia em que abrir."}
             </p>
           </div>

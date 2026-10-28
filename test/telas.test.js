@@ -254,12 +254,12 @@ test("/estudante FECHADA: sem prazo, sem \"código\" no topo e sem garantir que 
   assert.match(h, /Abre em breve/);
   assert.match(h, /Quando abrir, são três passos\./);
   assert.equal(/Leva cerca de um minuto<\/span>|Código pelo WhatsApp|Código enviado no WhatsApp/.test(h), false, "chips do topo de quem pede o código");
-  assert.equal(/em até \d+ minutos/.test(h), false, "sem prazo com a solicitação fechada");
-  assert.equal(/o código chega|chega no WhatsApp/.test(h), false);
+  assert.equal(/em até \d+ minutos/i.test(h), false, "sem prazo com a solicitação fechada");
+  assert.equal(/código chega|chega no WhatsApp/i.test(h), false);
   // aberta: o prazo do config, com o sistema enviando (não \"chega\")
   const aberta = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(true))));
   assert.match(aberta, /enviamos o código para o número que você informou/);
-  assert.equal(/o código chega|chega no WhatsApp/.test(aberta), false);
+  assert.equal(/código chega|chega no WhatsApp/i.test(aberta), false);
 });
 
 test("home: nada de garantir que o WhatsApp chega nem de acesso imediato por e-mail (pt, es e pt-PT)", () => {

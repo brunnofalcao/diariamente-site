@@ -207,7 +207,7 @@ function Field({
 export function EstudanteForm({
   // Em standby, a /estudante passa o subtítulo da produção
   // (ESTUDANTE_ATUAL.subtituloDoFormulario, config.ts).
-  subtitulo = "Leva cerca de um minuto. O código chega no seu WhatsApp, com um botão que abre o pagamento com o desconto já aplicado.",
+  subtitulo = "Leva cerca de um minuto. O código vai para o seu WhatsApp, com um botão que abre o pagamento com o desconto já aplicado.",
 }: { subtitulo?: string } = {}) {
   const [dados, setDados] = useState<Dados>(VAZIO);
   const [erros, setErros] = useState<Partial<Record<Campo, string>>>({});
