@@ -259,7 +259,8 @@ export function BlocoOferta({ mercado, momento, previa = false, vitrine = false 
       {o.confianca.map((x, i) => (
         <li key={x} style={primeiraEmDestaque && i === 0 ? { display: "flex", gap: 10, alignItems: "center", color: "#fff" } : { display: "flex", gap: 10, alignItems: "center" }}>
           <Escudo />
-          {x}
+          {/* O número não se separa da palavra seguinte ("7 / dias" com o balance). */}
+          {x.replace(/(\d) (?=[A-Za-zÀ-ÿ])/g, "$1\u00a0")}
         </li>
       ))}
     </ul>
