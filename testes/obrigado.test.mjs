@@ -11,9 +11,9 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import * as O from "../lib/obrigado.mjs";
+import { TEXTOS } from "../lib/obrigado-textos.mjs";
 
 const {
-  TEXTOS,
   LOCAIS,
   ESTADOS,
   BOTAO_DO_APP,

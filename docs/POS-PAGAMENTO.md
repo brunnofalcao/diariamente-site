@@ -208,3 +208,13 @@ curl -sI -A "Mozilla/5.0 (Linux; Android 14; Pixel 8)" http://localhost:4641/es/
 ```
 
 O log aparece no terminal do `next start` a cada página de obrigado aberta.
+
+**Cuidado com a medição ao testar.** Em standby, fora da vitrine, o GA4 e o
+Pixel da Meta montam direto (como a produção de hoje), inclusive nas
+páginas de obrigado: abrir `/obrigado-aprovado` num navegador, mesmo em
+`localhost`, manda um Purchase de verdade para o pixel e o GA4. `curl`
+não executa JavaScript e não manda nada. Em teste automatizado
+(Playwright), bloqueie `connect.facebook.net` e `googletagmanager.com`
+(`context.route(...)` com `abort`); no navegador, use um bloqueador ou o
+`Recusar` com a chave ligada. Para conferir o Purchase sem enviar, veja
+`window.fbq.queue` e `window.dataLayer` com esses domínios bloqueados.

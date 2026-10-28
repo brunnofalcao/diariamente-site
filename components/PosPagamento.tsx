@@ -4,7 +4,8 @@ import { ATENDIMENTO, linkDoAtendimento } from "@/config/atendimento";
 import { OfficialLogo } from "@/components/Brand";
 import { AppleGlyph, PlayGlyph, StoreBadges } from "@/components/StoreBadges";
 import { LOJAS_DO_LOCAL } from "@/lib/i18n";
-import { BOTAO_DO_APP, IDIOMA_DO_APP, LANG_HTML, PREFIXO, TEXTOS } from "@/lib/obrigado.mjs";
+import { BOTAO_DO_APP, IDIOMA_DO_APP, LANG_HTML, PREFIXO } from "@/lib/obrigado.mjs";
+import { TEXTOS } from "@/lib/obrigado-textos.mjs";
 import type { Aparelho, Local, Rico as TextoRico, TextosDoLocal } from "@/lib/pos-pagamento";
 import "./pos-pagamento.css";
 

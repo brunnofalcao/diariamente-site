@@ -5,8 +5,8 @@ import { SITE } from "@/config";
 import { TelaDaLoja } from "@/components/TelaDaLoja";
 import { Final, InstalarApp, Inteiro, Moldura, Rico, textosDo } from "@/components/PosPagamento";
 import { ATIVOS, dicionario } from "@/lib/i18n";
-import { IDIOMA_DO_APP, LANG_HTML, aparelhoDoUserAgent, caminhoDoBaixar } from "@/lib/obrigado.mjs";
-import type { Local } from "@/lib/pos-pagamento";
+import { IDIOMA_DO_APP, aparelhoDoUserAgent, caminhoDoBaixar } from "@/lib/obrigado.mjs";
+import { OG_LOCALE, type Local } from "@/lib/pos-pagamento";
 
 /* =====================================================================
    /baixar · o app no celular, com o idioma na frente do endereço
@@ -31,7 +31,7 @@ export function metadataDoBaixar(local: Local): Metadata {
     title: t.aba,
     description: t.descricao,
     alternates: { canonical: proprio },
-    openGraph: { title: t.aba, description: t.descricao, url: proprio, locale: LANG_HTML[local].replace("-", "_") },
+    openGraph: { title: t.aba, description: t.descricao, url: proprio, locale: OG_LOCALE[local] },
     robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
   };
 }
@@ -66,8 +66,10 @@ export async function BaixarApp({ local }: { local: Local }) {
           </section>
         </div>
 
-        <div className="pp-baixar-tela pp-surge" style={{ "--d": 4 } as CSSProperties}>
-          <TelaDaLoja base={ATIVOS[lang].img.hoje} alt={alt} sizes="300px" />
+        {/* Sem animação de entrada: some no celular (display: none) e voltar a
+            aparecer reiniciaria a animação a cada troca de largura. */}
+        <div className="pp-baixar-tela">
+          <TelaDaLoja base={ATIVOS[lang].img.hoje} alt={alt} sizes="300px" prioridade />
         </div>
       </div>
 

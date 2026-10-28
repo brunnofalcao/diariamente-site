@@ -6,7 +6,6 @@ import { PurchaseTracking } from "@/components/PurchaseTracking";
 import { textosDo } from "@/components/PosPagamento";
 import { COOKIE_VISITA } from "@/lib/mercado";
 import {
-  LANG_HTML,
   aparelhoDoUserAgent,
   caminhoDoObrigado,
   formaDoPagamento,
@@ -14,7 +13,7 @@ import {
   mercadoDoObrigado,
   primeiro,
 } from "@/lib/obrigado.mjs";
-import { moedaDoMercado, valorDoPedido, type Estado, type Local } from "@/lib/pos-pagamento";
+import { OG_LOCALE, moedaDoMercado, valorDoPedido, type Estado, type Local } from "@/lib/pos-pagamento";
 
 /* =====================================================================
    PÁGINA DE OBRIGADO · o que roda no servidor
@@ -52,7 +51,7 @@ export function metadataDoObrigado(estado: Estado, local: Local): Metadata {
     description: t.descricao,
     // Sobrescreve o canonical "/" e o hreflang que o layout raiz declara.
     alternates: { canonical: proprio },
-    openGraph: { title: t.aba, description: t.descricao, url: proprio, locale: LANG_HTML[local].replace("-", "_") },
+    openGraph: { title: t.aba, description: t.descricao, url: proprio, locale: OG_LOCALE[local] },
     robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
   };
 }

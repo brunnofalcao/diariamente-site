@@ -215,7 +215,7 @@
   box-shadow: 0 0 0 1px rgba(255, 255, 255, .1), 0 16px 40px rgba(0, 0, 0, .45);
 }
 .pp-qr-codigo img { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
-.pp-qr-titulo { font-size: 16px; font-weight: 700; color: #fff; line-height: 1.35; }
+.pp-qr-titulo { font-size: 16px; font-weight: 700; color: #fff; line-height: 1.35; text-wrap: balance; }
 .pp-qr-texto { font-size: 14px; color: var(--n-300); margin-top: 4px; line-height: 1.5; }
 @media (min-width: 560px) {
   .pp-qr { flex-direction: row; text-align: left; gap: 22px; }
@@ -380,12 +380,12 @@
 
 /* ---------------------------- movimento ---------------------------- */
 @media (prefers-reduced-motion: no-preference) {
-  .pp-selo svg { animation: pp-surgir .6s var(--spring) both; }
-  .pp-selo-onda { animation: pp-onda 1.4s .55s var(--ease) both; }
-  .pp-selo-check { animation: pp-tracar .5s .35s var(--ease) both; }
-  .pp-selo-raios line { animation: pp-tracar .45s var(--ease) both; animation-delay: calc(.55s + var(--i, 0) * .05s); }
-  .pp-selo-ponteiro { animation: pp-girar 2.4s .4s cubic-bezier(.45, 0, .2, 1) both; }
-  .pp-surge { animation: pp-subir .6s var(--ease) both; animation-delay: calc(.15s + var(--d, 0) * .08s); }
+  .pp-selo svg { animation: pp-surgir .6s var(--spring) backwards; }
+  .pp-selo-onda { animation: pp-onda 1.4s .55s var(--ease); }
+  .pp-selo-check { animation: pp-tracar .5s .35s var(--ease) backwards; }
+  .pp-selo-raios line { animation: pp-tracar .45s var(--ease) backwards; animation-delay: calc(.55s + var(--i, 0) * .05s); }
+  .pp-selo-ponteiro { animation: pp-girar 2.4s .4s cubic-bezier(.45, 0, .2, 1) backwards; }
+  .pp-surge { animation: pp-subir .6s var(--ease) backwards; animation-delay: calc(.15s + var(--d, 0) * .08s); }
   .pp-marco.is-agora .pp-no { animation: pp-pulso 1.8s 1s var(--ease) 2; }
   .pp-chip-toque::after {
     content: ""; position: absolute; inset: -4px; border-radius: 999px;
@@ -400,6 +400,9 @@
 @keyframes pp-subir { from { opacity: 0; transform: translateY(10px); } }
 @keyframes pp-pulso { 0%, 100% { box-shadow: 0 0 0 5px rgba(39, 189, 190, .14); } 50% { box-shadow: 0 0 0 9px rgba(39, 189, 190, .06); } }
 @keyframes pp-toque { 0% { opacity: .8; transform: scale(.6); } 100% { opacity: 0; transform: scale(2.2); } }
+
+/* /baixar: sem selo, o título pede mais ar embaixo do logo */
+@media (max-width: 959px) { .pp-baixar .pp-hero { padding-top: 32px; } }
 
 /* /baixar: o primeiro acesso, abaixo das lojas */
 .pp-baixar-acesso { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--pp-borda); text-align: center; }

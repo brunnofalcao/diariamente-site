@@ -111,3 +111,6 @@ export type TextosDoLocal = {
     qrAlt: string;
   };
 };
+
+/** Locale do Open Graph de cada local (es_LA, como o resto do site em espanhol latino). */
+export const OG_LOCALE: Record<Local, string> = { pt: "pt_BR", es: "es_LA", "es-es": "es_ES", "pt-pt": "pt_PT" };
