@@ -41,7 +41,7 @@
 > | `/es` e `/es-es` | lista de espera em espanhol (página inteira; la e es fechados, links `uevhmhy2` e `iuoufnf6` prontos) |
 > | `/pt-pt/embreve`, `/es-es/embreve` | **prévias do dono** (noindex, fora do sitemap, abrem de qualquer país): página de vendas de Portugal e da Espanha com o bloco de 29,99 €, botão desabilitado enquanto a venda do mercado estiver fechada |
 > | `/estudante` | condição de estudante, **qualquer curso**: R$ 59,90 por ano nos 3 primeiros anos para quem assinar até 16/11/2026 e R$ 79,90 depois (nas duas fases, R$ 149,90 por ano depois dos 3 anos), numa OFERTA da Hotmart por fase; o link pessoal vai pelo WhatsApp. **Fechada sozinha** enquanto faltar o modelo v2 na Vercel ou o código da oferta da fase vigente em `config/pricing.ts` (item 1 abaixo e `docs/ESTUDANTE.md`) |
-> | `/estudante/ativar?cupom=TOKEN` | token conhecido: 302 para a oferta de estudante da fase do clique, com o token no `sck`; desconhecido: `/estudante` |
+> | `/estudante/ativar?cupom=TOKEN` | token conhecido: 302 para a oferta de estudante da fase do clique, com o token no `sck`; já usado ou fase sem oferta: `/estudante/inscricao` (inscrição concluída, ou o link continua valendo); desconhecido: `/estudante` |
 > | `/embreve`, `/es/embreve` | redirecionam para `/` e `/es`, com utm |
 >
 > **QUADRO DE GO-LIVE · nesta ordem.** O site no ar vende na hora: o
@@ -79,7 +79,10 @@
 >    fase vigente, a `/estudante` fica fechada (lista de espera, API em
 >    503 sem gravar nada, home sem o card), e o log do build diz qual
 >    falta e avisa quando faltar o da fase seguinte. `STUDENT_DISCOUNT`,
->    `HOTMART_OFFER_IDS` e `HOTMART_PRODUCT_ID` não contam mais. Opcional:
+>    `HOTMART_OFFER_IDS` e `HOTMART_PRODUCT_ID` não contam mais. **Os
+>    mesmos dois códigos vão, no mesmo dia, no app**
+>    (`command-center/mercado.js`, deploy no Railway): sem eles, o app
+>    trata o estudante como assinante comum do Brasil. Opcional:
 >    `RESEND_API_KEY` na Vercel (e-mail de aprovação pelo Resend) e o
 >    campo `cf_link_estudante` no RD (o link na conversão).
 > 2. **Fim do lançamento (16/11/2026).** Nada a fazer no site: a partir de

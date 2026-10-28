@@ -351,7 +351,8 @@ deploy, ou Instant Rollback para o deploy anterior.
   em `config/pricing.ts`); la, es, pt e rw fechados (`vendaAberta: false`).
   Na vitrine todos aparecem abertos, com o checkout de cada um.
 - Estudante: os códigos das duas ofertas (`ESTUDANTE_OFERTA_LANCAMENTO` e
-  `ESTUDANTE_OFERTA` em `config/pricing.ts`), `WA_TEMPLATE_ESTUDANTE`
+  `ESTUDANTE_OFERTA` em `config/pricing.ts` e, no mesmo dia, em
+  `command-center/mercado.js` do app, com deploy no Railway), `WA_TEMPLATE_ESTUDANTE`
   (modelo v2) na Vercel e, opcionais, `RESEND_API_KEY` e o campo
   `cf_link_estudante` no RD (`docs/ESTUDANTE.md`). Desativar a oferta
   `h82bllbx` na Hotmart.
