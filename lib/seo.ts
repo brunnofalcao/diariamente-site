@@ -58,7 +58,7 @@ const TEXTOS: Record<Chave, Record<Lang, Texto>> = {
     pt: {
       title: "Diariamente para estudantes · condição exclusiva de graduação",
       description:
-        "O mesmo acesso da turma toda, pelo preço de quem ainda estuda. Solicite seu código e receba no WhatsApp.",
+        "O mesmo acesso da turma toda, pelo preço de quem ainda estuda. Qualquer curso de graduação. Faça sua inscrição e receba o link no WhatsApp.",
     },
     es: {
       title: "Diariamente para estudiantes · condición de grado",

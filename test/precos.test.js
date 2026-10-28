@@ -53,19 +53,60 @@ test("nenhum link de venda leva cupom, antes ou depois do lançamento", () => {
   }
 });
 
-test("estudante: preço final R$ 89,90 por ano, R$ 7,49/mês, no checkout oficial com o cupom", () => {
-  assert.equal(P.ESTUDANTE_PRECO_FINAL, 89.9);
-  assert.equal(txt(P.formatar("br", P.precoEstudante())), "R$ 89,90");
-  assert.equal(txt(P.formatar("br", P.porMesEstudante())), "R$ 7,49");
-  // o desconto do cupom nasce do preço final: 1 - 89,90/149,90, 5 casas
-  assert.equal(P.ESTUDANTE_DESCONTO, 0.40027);
-  assert.equal(P.precoComDesconto(P.MERCADOS.br.anual, P.ESTUDANTE_DESCONTO), 89.9);
-  // com 2 casas (40%), o checkout daria R$ 89,94
-  assert.equal(P.precoComDesconto(P.MERCADOS.br.anual, 0.4), 89.94);
-  assert.equal(
-    P.linkComCupom(P.MERCADOS.br.checkout, "DIARIAESTABCD2345"),
-    "https://pay.hotmart.com/K105072021O?off=fhrttdh8&offDiscount=DIARIAESTABCD2345"
-  );
+test("estudante: o preço, a oferta e o texto viram com o card (16/11/2026, horário de Brasília)", () => {
+  const ultimo = Date.parse("2026-11-16T23:59:59.999-03:00");
+  const virada = ultimo + 1;
+  const antes = { ...P.OFERTAS_DO_ESTUDANTE };
+  try {
+    Object.assign(P.OFERTAS_DO_ESTUDANTE, { lancamento: "estlanc1", depois: "estdep01" });
+    // no último milissegundo do lançamento
+    assert.equal(P.faseDoEstudante(ultimo), "lancamento");
+    assert.equal(P.lancamentoVigente("br", ultimo), true);
+    assert.equal(txt(P.formatar("br", P.precoEstudante(ultimo))), "R$ 59,90");
+    assert.equal(P.checkoutDoEstudante(ultimo, "DIARIAESTABC"), "https://pay.hotmart.com/K105072021O?off=estlanc1&sck=DIARIAESTABC");
+    assert.equal(txt(P.regraDoEstudante(ultimo)), "R$ 59,90 por ano nos 3 primeiros anos, para quem assinar até 16 de novembro. Depois, R$ 149,90 por ano.");
+    assert.equal(txt(P.regraDoEstudante(ultimo, { semPreco: true })), "Nos 3 primeiros anos, para quem assinar até 16 de novembro. Depois, R$ 149,90 por ano.");
+    // na virada, junto com o card
+    assert.equal(P.faseDoEstudante(virada), "depois");
+    assert.equal(P.lancamentoVigente("br", virada), false);
+    assert.equal(txt(P.formatar("br", P.precoEstudante(virada))), "R$ 79,90");
+    assert.equal(P.checkoutDoEstudante(virada, "DIARIAESTABC"), "https://pay.hotmart.com/K105072021O?off=estdep01&sck=DIARIAESTABC");
+    assert.equal(txt(P.regraDoEstudante(virada)), "R$ 79,90 por ano nos 3 primeiros anos. Depois, R$ 149,90 por ano.");
+    assert.equal(txt(P.regraDoEstudante(virada, { semPreco: true })), "Nos 3 primeiros anos. Depois, R$ 149,90 por ano.");
+    // sem token, sem sck; nunca cupom
+    assert.equal(P.checkoutDoEstudante(virada), "https://pay.hotmart.com/K105072021O?off=estdep01");
+    for (const t of [ultimo, virada]) assert.equal(/offDiscount|fhrttdh8|lf63bgdd/.test(P.checkoutDoEstudante(t, "X")), false);
+    // as duas ofertas, para o webhook
+    assert.deepEqual(P.ofertasDoEstudante(), ["estlanc1", "estdep01"]);
+    // lançamento encerrado antes da data (ativo: false): o estudante vira junto
+    P.MERCADOS.br.lancamento.ativo = false;
+    assert.equal(P.faseDoEstudante(ultimo), "depois");
+  } finally {
+    P.MERCADOS.br.lancamento.ativo = true;
+    Object.assign(P.OFERTAS_DO_ESTUDANTE, antes);
+  }
+});
+
+test("estudante: sem o código da fase (ou com código fora do formato), nenhum checkout: o fluxo fecha", () => {
+  const lanc = Date.parse("2026-10-28T12:00:00-03:00");
+  const antes = { ...P.OFERTAS_DO_ESTUDANTE };
+  try {
+    for (const codigo of ["", "  ", "off=abc", "https://pay.hotmart.com/K105072021O?off=abcd1234", "[PREENCHER]"]) {
+      Object.assign(P.OFERTAS_DO_ESTUDANTE, { lancamento: codigo, depois: "" });
+      assert.equal(P.ofertaDoEstudante(lanc), "", codigo);
+      assert.equal(P.estudanteTemOferta(lanc), false, codigo);
+      assert.equal(P.checkoutDoEstudante(lanc, "T"), null, codigo);
+    }
+  } finally {
+    Object.assign(P.OFERTAS_DO_ESTUDANTE, antes);
+  }
+  // o config real: vazio ou um código no formato da Hotmart
+  for (const c of [P.ESTUDANTE_OFERTA_LANCAMENTO, P.ESTUDANTE_OFERTA]) assert.ok(c === "" || P.codigoDeOfertaValido(c), c);
+});
+
+test("estudante: desconto equivalente só informativo (coluna cupons_estudante.desconto): 0.6004 e 0.46698", () => {
+  assert.equal(P.descontoEquivalenteDoEstudante(Date.parse("2026-10-28T12:00:00-03:00")), 0.6004);
+  assert.equal(P.descontoEquivalenteDoEstudante(Date.parse("2026-11-20T12:00:00-03:00")), 0.46698);
 });
 
 test("mercados de fora: US$ 29,99 por ano (US$ 2,50/mês) em la e rw; 29,99 € em pt e es; sem lançamento", () => {
@@ -92,14 +133,6 @@ test("moeda por mercado (decisão do dono, 12/10/2026): Brasil em real, Portugal
   assert.equal(txt(P.formatar("rw", 29.99)), "US$ 29,99");
   assert.equal(txt(P.formatar("pt", 29.99)), "29,99 €");
   assert.equal(txt(P.formatar("es", 29.99)), "29,99 €");
-});
-
-test("estudante: o desconto do cupom deixa o preço exato em R$ 89,90 ou abaixo, nunca acima", () => {
-  assert.equal(P.ESTUDANTE_DESCONTO, 0.40027);
-  const exato = Math.round(P.MERCADOS.br.anual * 100) * (1 - P.ESTUDANTE_DESCONTO);
-  assert.ok(exato <= 8990 && Math.round(exato) === 8990, String(exato));
-  assert.equal(P.precoEstudante(), 89.9);
-  assert.equal(P.porMesEstudante(), 7.49);
 });
 
 test("regra do lançamento: o {pct} sai da conta; sem desconto de 1% ou mais, o trecho do percentual some", () => {
@@ -254,4 +287,107 @@ test("garantia escrita em config/pricing.ts é a de GARANTIA.dias (config.ts)", 
   }
   // "Decida com o app na mão." só no Brasil, e sempre colada à garantia
   for (const m of ["la", "es", "pt", "rw"]) assert.equal(/app na mão/.test(JSON.stringify(P.MERCADOS[m])), false, m);
+});
+
+/* ------------- o código da oferta de estudante fica no servidor ------------- */
+
+test("estudante: fasesComOferta (o que o build grava em DM_ESTUDANTE_FASES) traz só o NOME das fases com código", () => {
+  const antes = { ...P.OFERTAS_DO_ESTUDANTE };
+  try {
+    Object.assign(P.OFERTAS_DO_ESTUDANTE, { lancamento: "estlanc1", depois: "estdep01" });
+    assert.deepEqual(P.fasesComOferta(), ["lancamento", "depois"]);
+    Object.assign(P.OFERTAS_DO_ESTUDANTE, { lancamento: "estlanc1", depois: "" });
+    assert.deepEqual(P.fasesComOferta(), ["lancamento"]);
+    Object.assign(P.OFERTAS_DO_ESTUDANTE, { lancamento: "off=x", depois: "estdep01" });
+    assert.deepEqual(P.fasesComOferta(), ["depois"]);
+    // o pós-pagamento reconhece a oferta paga (sem diferença de maiúsculas)
+    Object.assign(P.OFERTAS_DO_ESTUDANTE, { lancamento: "estlanc1", depois: "estdep01" });
+    assert.equal(P.faseDaOfertaDoEstudante("estlanc1"), "lancamento");
+    assert.equal(P.faseDaOfertaDoEstudante(" ESTDEP01 "), "depois");
+    for (const off of ["", null, undefined, "fhrttdh8", "lf63bgdd", "estlanc"]) assert.equal(P.faseDaOfertaDoEstudante(off), null, String(off));
+    assert.deepEqual(P.mercadosDasOfertasDoEstudante(), { estlanc1: ["br"], estdep01: ["br"] });
+  } finally {
+    Object.assign(P.OFERTAS_DO_ESTUDANTE, antes);
+  }
+});
+
+const fs = require("fs");
+const path = require("path");
+const raiz = path.join(__dirname, "..");
+
+/** O que lê o código da oferta de estudante (config/pricing.ts). */
+const LE_O_CODIGO = /\b(OFERTAS_DO_ESTUDANTE|ESTUDANTE_OFERTA_LANCAMENTO|ESTUDANTE_OFERTA|ofertaDoEstudante|ofertasDoEstudante|estudanteTemOferta|checkoutDoEstudante|faseDaOfertaDoEstudante|mercadosDasOfertasDoEstudante|fasesComOferta)\b/;
+
+/** Arquivos que vão ao navegador: os "use client" e o que eles importam
+    do projeto (@/...), menos o config/pricing.ts, onde as funções moram
+    (o build tira o que não é chamado; scripts/conferir-bundle.js confere). */
+function arquivosDoNavegador() {
+  const todos = [];
+  const varrer = (pasta) => {
+    for (const nome of fs.readdirSync(path.join(raiz, pasta))) {
+      const rel = path.join(pasta, nome);
+      if (fs.statSync(path.join(raiz, rel)).isDirectory()) varrer(rel);
+      else if (/\.(tsx?|jsx?|mjs)$/.test(nome)) todos.push(rel);
+    }
+  };
+  for (const p of ["app", "components", "lib"]) varrer(p);
+  const doCliente = todos.filter((f) => /^\s*["']use client["']/.test(fs.readFileSync(path.join(raiz, f), "utf8")));
+  const vistos = new Set();
+  const fila = [...doCliente];
+  while (fila.length) {
+    const f = fila.shift();
+    if (vistos.has(f)) continue;
+    vistos.add(f);
+    const fonte = fs.readFileSync(path.join(raiz, f), "utf8");
+    for (const m of fonte.matchAll(/^\s*import\s+(?!type\b)[^;]*?from\s+["']@\/([^"']+)["']/gm)) {
+      const base = m[1];
+      const achado = ["", ".ts", ".tsx", ".js", ".mjs", "/index.ts", "/index.tsx"]
+        .map((ext) => base + ext)
+        .find((c) => fs.existsSync(path.join(raiz, c)) && fs.statSync(path.join(raiz, c)).isFile());
+      if (achado && achado !== path.join("config", "pricing.ts")) fila.push(achado);
+    }
+  }
+  return { doCliente, vistos: [...vistos] };
+}
+
+test("estudante: nenhum arquivo que vai ao navegador lê o código da oferta (só o nome das fases, DM_ESTUDANTE_FASES)", () => {
+  const { doCliente, vistos } = arquivosDoNavegador();
+  assert.ok(doCliente.includes(path.join("components", "Home.tsx")));
+  assert.ok(doCliente.includes(path.join("components", "BlocoOferta.tsx")));
+  assert.ok(vistos.includes("config.ts"), "o config.ts vai ao navegador pela Home");
+  for (const f of vistos) {
+    const fonte = fs.readFileSync(path.join(raiz, f), "utf8").replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
+    assert.equal(LE_O_CODIGO.test(fonte), false, `${f} lê o código da oferta de estudante: ${(fonte.match(LE_O_CODIGO) || [])[0]}`);
+  }
+  // o config.ts decide pelo nome das fases que o build gravou
+  const config = fs.readFileSync(path.join(raiz, "config.ts"), "utf8");
+  assert.match(config, /process\.env\.DM_ESTUDANTE_FASES/);
+});
+
+test("estudante: a conferência depois do build acha o código no JavaScript do navegador e ignora o .js do servidor", () => {
+  const { procurarCodigos, codigosDoConfig } = require("../scripts/conferir-bundle");
+  const os = require("os");
+  const pasta = fs.mkdtempSync(path.join(os.tmpdir(), "conferir-bundle-"));
+  try {
+    const next = path.join(pasta, ".next");
+    fs.mkdirSync(path.join(next, "static", "chunks"), { recursive: true });
+    fs.mkdirSync(path.join(next, "server", "app", "estudante", "ativar"), { recursive: true });
+    fs.writeFileSync(path.join(next, "static", "chunks", "a.js"), 'x={lancamento:"zzestl59",depois:""}');
+    fs.writeFileSync(path.join(next, "static", "chunks", "zzestd79abc.js"), "nada aqui");
+    fs.writeFileSync(path.join(next, "server", "app", "estudante", "ativar", "route.js"), 'o="zzestd79"');
+    fs.writeFileSync(path.join(next, "server", "app", "index.html"), "<p>sem código</p>");
+    const achados = procurarCodigos(next, ["zzestl59", "zzestd79"]);
+    assert.deepEqual(achados.map((a) => a.codigo), ["zzestl59"]);
+    assert.match(achados[0].arquivo, /static[\\/]chunks[\\/]a\.js$/);
+    // no HTML gerado no build também conta
+    fs.writeFileSync(path.join(next, "server", "app", "index.html"), '<a href="?off=zzestd79">');
+    assert.deepEqual(procurarCodigos(next, ["zzestd79"]).map((a) => a.codigo), ["zzestd79"]);
+    assert.deepEqual(procurarCodigos(next, []), []);
+  } finally {
+    fs.rmSync(pasta, { recursive: true, force: true });
+  }
+  assert.deepEqual(codigosDoConfig({ OFERTAS_DO_ESTUDANTE: { lancamento: "estlanc1", depois: " " } }), ["estlanc1"]);
+  // o npm run build roda a conferência logo depois do next build
+  const pacote = JSON.parse(fs.readFileSync(path.join(raiz, "package.json"), "utf8"));
+  assert.equal(pacote.scripts.build, "next build && node scripts/conferir-bundle.js");
 });

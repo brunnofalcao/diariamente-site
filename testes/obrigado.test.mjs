@@ -305,6 +305,7 @@ async function renderizarPagina(estado, local, busca = {}, { cookie, ua = IPHONE
     "@/lib/mercado": M,
     "@/lib/obrigado.mjs": O,
     "@/lib/pos-pagamento": PP,
+    "@/config/pricing": P,
   }, { jsx: true });
   const linhas = [];
   const log = console.log;
@@ -367,6 +368,40 @@ test("Purchase só na aprovada, com a moeda e o valor do mercado do pedido", asy
   for (const [local, busca, opcoes, moeda, valor] of casos) {
     const r = await renderizarPagina("aprovado", local, busca, opcoes);
     assert.deepEqual(r.tracking.props, { moeda, valor }, JSON.stringify([local, busca, opcoes]));
+  }
+});
+
+test("oferta de ESTUDANTE no obrigado: o preço da fase paga (não o do mercado), mercado br e página em pt, sem o código escrito em lib/obrigado.mjs", async () => {
+  const antes = { ...P.OFERTAS_DO_ESTUDANTE };
+  Object.assign(P.OFERTAS_DO_ESTUDANTE, { lancamento: "estlanc1", depois: "estdep01" });
+  try {
+    const noLancamento = Date.parse("2026-10-28T12:00:00-03:00");
+    const depois = Date.parse("2026-11-20T12:00:00-03:00");
+    // o valor é o da oferta paga, em qualquer data (R$ 99,98 e R$ 149,90 inflariam o ROAS)
+    for (const agora of [noLancamento, depois]) {
+      assert.equal(PP.valorDoPedido("br", "estlanc1", agora), 59.9);
+      assert.equal(PP.valorDoPedido("br", "ESTDEP01", agora), 79.9);
+    }
+    // fora do Brasil, o código não vale nada
+    assert.equal(PP.valorDoPedido("la", "estlanc1"), P.precoFinal("la"));
+    const extras = P.mercadosDasOfertasDoEstudante();
+    // a oferta decide: navegador em espanhol, sem cookie, vindo do WhatsApp direto para o checkout
+    assert.deepEqual(O.decidirObrigado({ off: "estlanc1", idiomas: "es-MX", ofertasExtras: extras }), { local: "pt", fonte: "oferta" });
+    assert.equal(O.destinoDoObrigado({ pathname: "/obrigado-aprovado", busca: "?off=estdep01", idiomas: "es-AR", ofertasExtras: extras }), null);
+    assert.equal(O.mercadoDoObrigado("pt", { off: "estdep01", cookie: "rw", ofertasExtras: extras }), "br");
+    // sem o mapa, como antes (o navegador decide)
+    assert.equal(O.decidirObrigado({ off: "estlanc1", idiomas: "es-MX" }).local, "es");
+    // a página de verdade passa o mapa e manda o Purchase com o preço da fase
+    const r = await renderizarPagina("aprovado", "pt", { off: "estlanc1" }, { cookie: "la" });
+    assert.deepEqual(r.tracking.props, { moeda: "BRL", valor: 59.9 });
+    // o código não está escrito nas regras do pós-pagamento nem no middleware
+    for (const f of ["lib/obrigado.mjs", "middleware.ts", "components/PaginaObrigado.tsx"]) {
+      assert.equal(/estlanc1|estdep01/.test(ler(f)), false, f);
+    }
+    assert.match(ler("middleware.ts"), /ofertasExtras: mercadosDasOfertasDoEstudante\(\)/);
+    assert.match(ler("components/PaginaObrigado.tsx"), /ofertasExtras: mercadosDasOfertasDoEstudante\(\)/);
+  } finally {
+    Object.assign(P.OFERTAS_DO_ESTUDANTE, antes);
   }
 });
 

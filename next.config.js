@@ -110,12 +110,30 @@ const nextConfig = {
 
    CHAVE DO ESTUDANTE: DM_ESTUDANTE_ABERTO é CALCULADA aqui, a cada
    build, a partir das variáveis da Vercel (estadoDoEstudante, em
-   scripts/checar-precos.js), e gravada pelo `env` do Next no servidor e
-   no navegador. Não se põe à mão: o valor da Vercel é sobrescrito. "1"
-   abre o fluxo do cupom pessoal; vazio o fecha (home sem link para a
-   /estudante, lista de espera no lugar do formulário, API em 503). Só
-   vale "1" com a chave de lançamento ligada: em standby a /estudante é
-   a da produção (app/estudante/page.tsx) e o fluxo novo não abre.
+   scripts/checar-precos.js: o modelo v2 do WhatsApp e o config do
+   estudante sem erro), e gravada pelo `env` do Next no servidor e no
+   navegador. Não se põe à mão: o valor da Vercel é sobrescrito. "1" diz
+   que a configuração está pronta; o fluxo do link pessoal abre de fato
+   quando, além dela, a fase vigente tem o código da oferta de estudante
+   em config/pricing.ts, conferido NA HORA (config.ts, estudanteAberto:
+   a virada de 16/11 fecha a /estudante sozinha se faltar o da fase
+   nova). Fechado: home sem link para a /estudante, lista de espera no
+   lugar do formulário, API em 503. Só vale "1" com a chave de lançamento
+   ligada: em standby a /estudante é a da produção (app/estudante/page.tsx)
+   e o fluxo novo não abre.
+
+   FASES DO ESTUDANTE COM OFERTA: DM_ESTUDANTE_FASES, também calculada
+   aqui ("lancamento,depois", só as fases com código em
+   config/pricing.ts). É SÓ O NOME da fase: o código da oferta (o off=)
+   nunca vai ao navegador, senão qualquer visitante o acharia no
+   JavaScript da home e pagaria o preço de estudante sem passar pela
+   /estudante. O `npm run build` confere isso depois do next build
+   (scripts/conferir-bundle.js).
+
+   E-MAIL DO ESTUDANTE: DM_ESTUDANTE_EMAIL, também calculada aqui: "1"
+   com RESEND_API_KEY na Vercel (e a chave de lançamento ligada), para a
+   /estudante dizer que o link vai também por e-mail. Só o sinal vai ao
+   navegador; a chave em si fica no servidor (lib/estudante.js).
 
    CHECKOUT DA VITRINE: os botões do site de vendas em standby (/vendas,
    /es/vendas, /es-es/vendas, /pt-pt/vendas, /mundo/vendas) abrem o
@@ -159,7 +177,9 @@ module.exports = (phase) => {
     ...nextConfig,
     env: {
       ...nextConfig.env,
-      DM_ESTUDANTE_ABERTO: lancado && estudante.aberto ? "1" : "",
+      DM_ESTUDANTE_ABERTO: lancado && estudante.configurado ? "1" : "",
+      DM_ESTUDANTE_FASES: lancado && estudante.configurado ? (estudante.fases || []).join(",") : "",
+      DM_ESTUDANTE_EMAIL: lancado && String(process.env.RESEND_API_KEY || "").trim() ? "1" : "",
       DM_SITE_LANCADO: lancado ? "1" : "",
     },
   };

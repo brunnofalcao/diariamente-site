@@ -5,10 +5,15 @@
  * (Vercel Cron, ver vercel.json). Quatro tarefas independentes, cada uma
  * com try/catch proprio: se uma quebra, as outras seguem.
  *
- *   1. ENVIAR   codigos maduros (enviar_em vencido) pelo WhatsApp
- *   2. EXPIRAR  cupons vencidos que ainda constam como ativos
- *   3. RD       reprocessar leads que falharam no RD Station
- *   4. LIMPAR   apagar na Hotmart cupons marcados como delete_pendente
+ *   1. ENVIAR   links (ou, em standby, cupons) maduros (enviar_em
+ *               vencido) pelo WhatsApp: o botao do modelo leva o codigo
+ *   2. EXPIRAR  linhas vencidas que ainda constam como ativas (no fluxo
+ *               novo, expira_em e so o prazo de envio: o link pessoal
+ *               continua abrindo a oferta, ver app/estudante/ativar)
+ *   3. RD       reprocessar leads que falharam no RD Station (com o link
+ *               pessoal em cf_link_estudante, com a chave ligada)
+ *   4. LIMPAR   apagar na Hotmart cupons da main (standby) marcados como
+ *               delete_pendente; o link do fluxo novo nao tem cupom
  *
  * Auth: a Vercel manda `Authorization: Bearer ${CRON_SECRET}` sozinha quando
  * a variavel CRON_SECRET existe. So o cabecalho vale: segredo na URL
@@ -21,6 +26,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { apagarCupom } from '@/lib/hotmart';
 import { enviarLeadRD } from '@/lib/rdstation';
+import { linkPessoal } from '@/lib/estudante';
+import { primeiroNome } from '@/lib/nome';
 import { whatsapp } from '@/lib/whatsapp';
 import { segredoConfere } from '@/lib/seguranca';
 
@@ -94,7 +101,10 @@ async function enviarCodigos() {
     }
 
     try {
-      await whatsapp.aprovado(lead.whatsapp, String(lead.nome).split(' ')[0], c.codigo);
+      // "Olá, {{1}}.": o primeiro nome so se for um nome (lib/nome.ts). Nome
+      // em forma de endereco (pedido antigo, de antes da regra) vira
+      // "estudante", para o WhatsApp nao transformar a saudacao em link.
+      await whatsapp.aprovado(lead.whatsapp, primeiroNome(lead.nome) || 'estudante', c.codigo);
 
       await db.from('cupons_estudante')
         .update({ whatsapp_enviado_em: new Date().toISOString(), whatsapp_erro: null })
@@ -163,9 +173,19 @@ async function reprocessarRD() {
 
   let ok = 0, erro = 0;
 
+  const lancado = process.env.DM_SITE_LANCADO === '1';
+
   for (const lead of leads || []) {
     try {
-      await enviarLeadRD(lead);
+      // Com a chave ligada, o link pessoal vai junto (cf_link_estudante).
+      const extras = {};
+      if (lancado) {
+        const { data: link } = await db.from('cupons_estudante')
+          .select('codigo').eq('lead_id', lead.id).is('hotmart_coupon_id', null)
+          .order('criado_em', { ascending: false }).limit(1).maybeSingle();
+        if (link?.codigo) extras.link = linkPessoal(link.codigo);
+      }
+      await enviarLeadRD(lead, extras);
       await db.from('leads_estudante')
         .update({ enviado_rd: true, rd_erro: null }).eq('id', lead.id);
       ok++;

@@ -166,13 +166,18 @@ test("equivalente mensal é anual ÷ 12, em centavos", () => {
   assert.equal(P.mensal(29.99), 2.5);
 });
 
-test("estudante: preço final R$ 89,90 e R$ 7,49/mês; o desconto (0.40027) sai do preço final", () => {
-  assert.equal(P.ESTUDANTE_PRECO_FINAL, 89.9);
-  assert.equal(P.precoEstudante(), 89.9);
-  assert.equal(P.porMesEstudante(), 7.49);
-  assert.equal(P.ESTUDANTE_DESCONTO, 0.40027);
-  assert.ok(Math.abs(P.ESTUDANTE_DESCONTO - (1 - 89.9 / 149.9)) < 0.000005);
-  assert.ok(P.ESTUDANTE_DESCONTO > 0 && P.ESTUDANTE_DESCONTO < 0.99, "faixa que a API da Hotmart aceita");
+test("estudante: R$ 59,90 no lançamento (R$ 4,99/mês) e R$ 79,90 depois (R$ 6,66/mês), nos 3 primeiros anos", () => {
+  const lanc = Date.parse("2026-10-28T12:00:00-03:00");
+  const depois = Date.parse("2026-11-17T12:00:00-03:00");
+  assert.deepEqual(P.ESTUDANTE_PRECO_FINAL, { lancamento: 59.9, depois: 79.9 });
+  assert.equal(P.ESTUDANTE_ANOS, 3);
+  assert.equal(P.precoEstudante(lanc), 59.9);
+  assert.equal(P.porMesEstudante(lanc), 4.99);
+  assert.equal(P.precoEstudante(depois), 79.9);
+  assert.equal(P.porMesEstudante(depois), 6.66);
+  // nenhum desconto de cupom: o preço é o da oferta da fase
+  assert.equal("ESTUDANTE_DESCONTO" in P, false);
+  assert.equal("linkComCupom" in P, false);
 });
 
 test("hoje (12/10/2026), o Brasil mostra o preço de lançamento e o botão abre a oferta de lançamento", () => {

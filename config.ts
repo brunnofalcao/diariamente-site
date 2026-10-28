@@ -10,7 +10,9 @@
 // config/pricing.ts, por mercado (br, la, es, pt, rw). Os campos de plano
 // abaixo só repassam de lá, para os componentes antigos continuarem
 // funcionando sem um segundo número escrito à mão.
-import { MERCADOS, ESTUDANTE_DESCONTO, formatar, precoEstudante, porMesEstudante, percentualDoLancamento } from "@/config/pricing";
+import {
+  MERCADOS, formatar, precoEstudante, porMesEstudante, percentualDoLancamento, faseDoEstudante, periodoDoEstudante,
+} from "@/config/pricing";
 
 export const SITE = {
   nome: "Diariamente",
@@ -355,70 +357,62 @@ export function responsavelDoGrupo(lang: IdiomaLegal = "pt"): string {
 // ---------------------------------------------------------------------
 // ESTUDANTE — condição exclusiva (/estudante)
 // ---------------------------------------------------------------------
-// Fluxo (o original, retomado em 12/10/2026): aprovado o estudante, o
-// site cria o cupom PESSOAL dele pela API da Hotmart (lib/hotmart.js),
-// o WhatsApp leva o botão para /estudante/ativar?cupom=CODIGO, que abre
-// a oferta oficial do Brasil (CHECKOUT_BRL, R$ 149,90) com o cupom
-// aplicado, e o webhook do site apaga o cupom quando o pagamento é
-// aprovado (uso único).
+// Fluxo (decisão do dono, 28/10/2026): estudante de qualquer curso,
+// aprovado na hora ao declarar o vínculo (um CPF, um pedido). O site grava
+// o pedido e um LINK PESSOAL (token aleatório em cupons_estudante.codigo,
+// sem cupom na Hotmart), e o WhatsApp leva o botão "Concluir inscrição"
+// para /estudante/ativar?cupom=TOKEN, que abre a OFERTA de estudante da
+// fase vigente (config/pricing.ts): R$ 59,90 por ano nos 3 primeiros anos
+// para quem assinar até 16/11/2026, R$ 79,90 depois; nas duas, R$ 149,90
+// por ano depois dos 3 anos. O webhook do site marca o link como usado
+// quando a venda da oferta é aprovada. Passo a passo: docs/ESTUDANTE.md.
 //
-// aberto       -> o fluxo do cupom pessoal está configurado na Vercel.
-//                 NÃO se edita aqui: o next.config.js calcula a cada build
-//                 (estadoDoEstudante, em scripts/checar-precos.js) e grava
-//                 DM_ESTUDANTE_ABERTO. Abre com as três: modelo v2 do
-//                 WhatsApp em WA_TEMPLATE_ESTUDANTE, HOTMART_PRODUCT_ID=7448309
-//                 e um STUDENT_DISCOUNT que dê o preço final anunciado
-//                 (R$ 89,90: STUDENT_DISCOUNT=0.40027). Fechado:
-//                 a home não leva à /estudante, a /estudante mostra a lista
-//                 de espera no lugar do formulário e a API responde 503 sem
-//                 gravar nada. O log de todo build diz o que falta.
+// configurado -> a Vercel tem o que o fluxo precisa (o modelo v2 do
+//                WhatsApp em WA_TEMPLATE_ESTUDANTE). NÃO se edita aqui: o
+//                next.config.js calcula a cada build (estadoDoEstudante,
+//                em scripts/checar-precos.js) e grava DM_ESTUDANTE_ABERTO.
+// ABERTO AGORA = configurado E a fase vigente com o código da oferta
+//                (estudanteAberto(agora), logo abaixo). Fechado: a home
+//                não leva à /estudante, a /estudante mostra a lista de
+//                espera no lugar do formulário e o card sem preço, a API
+//                responde 503 sem gravar nada e o /estudante/ativar leva
+//                quem já tem o link à /estudante/inscricao (o link
+//                continua valendo). A virada de 16/11 é conferida na
+//                hora: sem o ESTUDANTE_OFERTA, a /estudante fecha
+//                sozinha em 17/11.
+// O CÓDIGO DA OFERTA NÃO PASSA POR AQUI: este arquivo vai ao navegador
+// (Home.tsx e BlocoOferta.tsx são "use client"). Aqui chega só o NOME
+// das fases com código (DM_ESTUDANTE_FASES, gravada pelo next.config.js
+// a cada build a partir de config/pricing.ts, fasesComOferta). Quem tem
+// o off= de estudante paga sem passar pela /estudante.
 // mostrarPreco = false  -> a /estudante e a home falam de "condição de
 //                          estudante" sem número.
-// mostrarPreco = true   -> as duas exibem o preço abaixo.
-// O preço do estudante é FINAL (ESTUDANTE_PRECO_FINAL, config/pricing.ts):
-// R$ 89,90 por ano, e o desconto do cupom sobre o preço cheio do plano
-// (R$ 149,90, a base do cupom na Hotmart) sai dele. A comparação com o
-// preço público do dia (com ou sem lançamento) é feita na hora em
-// components/BlocoPreco.tsx.
 // ---------------------------------------------------------------------
 export const ESTUDANTE = {
-  aberto: process.env.DM_ESTUDANTE_ABERTO === "1",
+  configurado: process.env.DM_ESTUDANTE_ABERTO === "1",
+
+  // O link pessoal também vai por e-mail, pelo Resend? Calculado no build
+  // (next.config.js, DM_ESTUDANTE_EMAIL): "1" só com RESEND_API_KEY na
+  // Vercel. Sem ela, a página fala só do WhatsApp (o e-mail do RD depende
+  // da automação de lá, que o site não controla).
+  linkPorEmail: process.env.DM_ESTUDANTE_EMAIL === "1",
 
   // Ligado: a /estudante e a home passam a exibir preço, desconto e
-  // comparativo. Vire para false se a condição ainda não existir na
-  // Hotmart: as duas voltam à versão sem número sem quebrar nada.
+  // comparativo. Vire para false: as duas voltam à versão sem número.
   mostrarPreco: true,
 
-  // Desconto do cupom pessoal, em fração (o STUDENT_DISCOUNT da Vercel),
-  // derivado do preço final em config/pricing.ts: 0.40027.
-  // Sem valor de parcela: a Hotmart calcula.
-  desconto: ESTUDANTE_DESCONTO,
-
-  // Se o cupom vale também nas renovações NÃO se sabe (decisão do dono,
-  // 12/10/2026, terceira rodada): o texto diz SÓ que a cobrança é anual.
-  // Nada de "no primeiro ano", "3 anos" ou "renova pelo mesmo valor".
-  cobranca: "cobrança anual",
-  periodo: "por ano · cobrança anual",
-  renovacao: "Cobrança anual. Cancele quando quiser.",
-  // Como o estudante paga: o cupom vai na oferta OFICIAL (fhrttdh8), que
-  // parcela em até 12x com acréscimo, nunca na de lançamento.
-  // É a mesma linha da oferta oficial (MERCADOS.br.textos.pagamento), com
-  // inicial minúscula para seguir o preço: "R$ 89,90 à vista, ou em até 12x
-  // no cartão com acréscimo". Sem valor de parcela: a Hotmart calcula, e o
-  // parcelado custa mais que os R$ 89,90 e que o equivalente mensal.
+  // Como o estudante paga: a oferta de estudante parcela em até 12x com
+  // acréscimo (o cupom de assinatura da fase permite parcelar, decisão do
+  // dono). É a mesma linha da oferta oficial (MERCADOS.br.textos.pagamento),
+  // com inicial minúscula para seguir o preço: "R$ 59,90 à vista, ou em até
+  // 12x no cartão com acréscimo". Sem valor de parcela: a Hotmart calcula.
   pagamento: inicialMinuscula(MERCADOS.br.textos.pagamento),
-  precoNumero: precoEstudante(),
-  preco: semSimbolo(precoEstudante()),
-  porMes: semSimbolo(porMesEstudante()),
 
-  // Preço cheio do plano, sobre o qual o cupom incide.
+  // Preço cheio do plano, o que vale depois dos 3 anos.
   precoDeNumero: MERCADOS.br.anual,
   precoDe: semSimbolo(MERCADOS.br.anual),
 
   selo: "Condição de estudante",
-
-  // validade do código enviado por WhatsApp (espelha VALIDADE_HORAS da API)
-  validadeHoras: 48,
 
   // Tempo de espera comunicado ao estudante ("em até N minutos"). O envio
   // é AGENDADO: app/api/estudante/solicitar/route.js grava enviar_em =
@@ -429,14 +423,55 @@ export const ESTUDANTE = {
   // arquivos: mexeu na API ou no cron, ajuste aqui.
   esperaMinutos: 10,
 
-  // um código por CPF (regra aplicada na API)
-  regra: "Um código por pessoa. Enviado só no WhatsApp informado.",
+  // um link por CPF (regra aplicada na API)
+  regra: "Um link por pessoa, intransferível.",
 };
 
-/** Período do preço de estudante no texto: "por ano · cobrança anual",
-    sem prometer duração do desconto (ESTUDANTE.periodo). */
+/** As fases do estudante que têm código de oferta, gravadas no build
+    (next.config.js, DM_ESTUDANTE_FASES: "lancamento,depois"). Só o nome
+    da fase, nunca o código. Lida a cada chamada: o Next troca
+    process.env.DM_ESTUDANTE_FASES pelo valor do build. */
+export function fasesDoEstudanteComOferta(): string[] {
+  return String(process.env.DM_ESTUDANTE_FASES || "")
+    .split(",")
+    .map((f) => f.trim())
+    .filter(Boolean);
+}
+
+/** O fluxo do estudante está aberto agora? A configuração da Vercel
+    (gravada no build) e a fase vigente com código de oferta (a fase é
+    conferida na hora, para a virada de 16/11 fechar a página sozinha se
+    faltar o código da fase seguinte). */
+export function estudanteAberto(agora: number = Date.now()): boolean {
+  return ESTUDANTE.configurado && fasesDoEstudanteComOferta().includes(faseDoEstudante(agora));
+}
+
+/** "R$ 59,90", o preço do estudante na fase vigente. */
+export function precoDoEstudante(agora: number = Date.now()): string {
+  return formatar("br", precoEstudante(agora));
+}
+
+/** "59,90", sem o símbolo (o card da /estudante põe o R$ menor). */
+export function precoDoEstudanteSemSimbolo(agora: number = Date.now()): string {
+  return semSimbolo(precoEstudante(agora));
+}
+
+/** "R$ 4,99", o equivalente mensal do preço da fase vigente. */
+export function porMesDoEstudante(agora: number = Date.now()): string {
+  return formatar("br", porMesEstudante(agora));
+}
+
+/** "por ano nos 3 primeiros anos": o período do preço de estudante nas
+    linhas curtas (a regra inteira, com o depois, vem de regraDoEstudante). */
 export function periodoEstudante(): string {
-  return ESTUDANTE.periodo;
+  return `por ano ${periodoDoEstudante()}`;
+}
+
+/** Para onde o link pessoal vai, para os textos: "para o seu WhatsApp"
+    ou "para o seu WhatsApp e para o seu e-mail" (só com o Resend
+    configurado: sem ele, o site não manda e-mail). */
+export function canaisDoLink(): string {
+  return ESTUDANTE.linkPorEmail ? "para o seu WhatsApp e para o seu e-mail" : "para o seu WhatsApp";
 }
 
 // ---------------------------------------------------------------------
@@ -459,6 +494,10 @@ export const ESTUDANTE_ATUAL = {
   perDia: "menos de R$ 0,22 por dia",
   // PLANO_APP.perDia da main, na coluna "Quem entra hoje pelo site".
   planoPerDia: "menos de R$ 0,38 por dia",
+  // O cupom da main valia 48 horas (VALIDADE_HORAS da API, que em
+  // standby continua a da main) e ia só pelo WhatsApp.
+  validadeHoras: 48,
+  regra: "Um código por pessoa. Enviado só no WhatsApp informado.",
   // Subtítulo do formulário na main (components/EstudanteForm.tsx).
   subtituloDoFormulario:
     "Leva cerca de um minuto. O código chega no seu WhatsApp e é aplicado no campo de cupom da tela de pagamento.",

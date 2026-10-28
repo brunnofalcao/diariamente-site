@@ -19,13 +19,13 @@
    ---------------------------------------------------------------------
    Produto 7448309, checkout K105072021O. Cada mercado é uma OFERTA
    (parâmetro off). Nenhum link daqui leva cupom: o lançamento é uma
-   oferta própria, e só o estudante usa cupom (pessoal, criado pela API
-   da Hotmart na aprovação; ver app/api/estudante/solicitar).
+   oferta própria, e o estudante também (duas ofertas, uma por fase,
+   ESTUDANTE_OFERTA_LANCAMENTO e ESTUDANTE_OFERTA, logo abaixo). A API de
+   cupons da Hotmart não serve: ela não aceita produto de assinatura, e
+   o 7448309 é assinatura (decisão do dono, 28/10/2026).
 
    CHECKOUT_BRL         oferta oficial do Brasil, R$ 149,90 por ano à
-                        vista ou em até 12x no cartão com acréscimo. É
-                        também a base do cupom
-                        pessoal do estudante (/estudante/ativar).
+                        vista ou em até 12x no cartão com acréscimo.
    CHECKOUT_LANCAMENTO  oferta "Lançamento App": R$ 99,98 por ano nos 3
                         primeiros anos e, depois, R$ 149,90 por ano (é o
                         que o checkout diz). R$ 99,98 é o preço À VISTA: o
@@ -73,19 +73,58 @@ const CHECKOUT_USD = "https://pay.hotmart.com/K105072021O?off=uevhmhy2";
 const CHECKOUT_EUR_PT = "https://pay.hotmart.com/K105072021O?off=3n484jbe";
 const CHECKOUT_EUR_ES = "https://pay.hotmart.com/K105072021O?off=iuoufnf6";
 
-/** Parâmetro de cupom do checkout da Hotmart. Só o estudante usa: o link
-    de /estudante/ativar leva o cupom pessoal nele, o checkout abre com o
-    desconto aplicado e ninguém digita código. */
-export const PARAMETRO_CUPOM = "offDiscount";
+/* ---------------------------------------------------------------------
+   ESTUDANTE · duas ofertas, uma por fase (decisão do dono, 28/10/2026)
+   ---------------------------------------------------------------------
+   Estudante de qualquer curso, aprovado na hora ao declarar o vínculo
+   (um CPF, um pedido). O preço segue a MESMA virada do card do Brasil
+   (lancamentoVigente: FIM_DO_LANCAMENTO, horário de Brasília, e o
+   `ativo` do lançamento):
 
-/** Preço FINAL do estudante, em reais por ano (decisão do dono,
-    12/10/2026, terceira rodada): R$ 89,90 por ano exatos (R$ 7,49/mês),
-    pagos na oferta oficial do Brasil (R$ 149,90) com o cupom pessoal de
-    uso único. O número que manda é este; o desconto do cupom NASCE dele
-    (ESTUDANTE_DESCONTO, no fim do arquivo: 1 - 89,90/149,90, cerca de
-    0,40027). Trocar aqui muda a home e a /estudante juntas, e a trava do
-    build diz o STUDENT_DISCOUNT novo a pôr na Vercel. */
-export const ESTUDANTE_PRECO_FINAL = 89.9;
+     no lançamento (até 16/11/2026)  R$ 59,90 por ano nos 3 primeiros
+                                     anos; depois, R$ 149,90 por ano
+     depois do lançamento            R$ 79,90 por ano nos 3 primeiros
+                                     anos; depois, R$ 149,90 por ano
+
+   Cada fase é um cupom de ASSINATURA criado pelo dono no painel da
+   Hotmart ("Valor final", "Apenas nas três primeiras recorrências", só
+   no plano Anual, parcelamento permitido com acréscimo), e cada cupom
+   vira uma OFERTA com código próprio, como a lf63bgdd do lançamento.
+   Aqui entra só o CÓDIGO da oferta (o valor do parâmetro off, 8 letras
+   e números), nunca o link inteiro nem o nome do cupom.
+
+   Vazio = a fase não tem oferta: na data dela, a /estudante fecha
+   sozinha (lista de espera no lugar do formulário, API em 503, home sem
+   o card) e o /estudante/ativar leva quem já tem o link a uma página
+   que diz que o link continua valendo. A trava do build
+   (scripts/checar-precos.js) diz qual falta, e avisa quando faltar a da
+   fase seguinte. Passo a passo: docs/ESTUDANTE.md.
+
+   O CÓDIGO NUNCA VAI AO NAVEGADOR. Quem tiver o off= paga o preço de
+   estudante sem passar pela /estudante (CPF único, declaração do
+   vínculo, teto por hora, link pessoal). Por isso só o servidor lê os
+   códigos (ofertaDoEstudante, checkoutDoEstudante, ofertasDoEstudante:
+   /estudante/ativar, /api/estudante/solicitar, o webhook e o
+   pós-pagamento). Componente de navegador ("use client") e config.ts
+   nunca os chamam: para saber se a fase tem oferta, usam só o NOME das
+   fases com código, que o next.config.js grava no build
+   (DM_ESTUDANTE_FASES, a partir de fasesComOferta). O `npm run build`
+   confere depois do next build que nenhum código foi parar em
+   .next/static (scripts/conferir-bundle.js), e test/precos.test.js
+   confere que nenhum arquivo do navegador chama essas funções.
+   --------------------------------------------------------------------- */
+export const ESTUDANTE_OFERTA_LANCAMENTO = "aiwahups"; // R$ 59,90 (até 16/11/2026)
+export const ESTUDANTE_OFERTA = "ubn1w7j1"; // R$ 79,90 (a partir de 17/11/2026)
+
+/** Checkout do produto 7448309 sem oferta: a do estudante entra no off. */
+const CHECKOUT_DO_PRODUTO = "https://pay.hotmart.com/K105072021O";
+
+/** Parâmetro de rastreio do checkout da Hotmart que leva o link pessoal
+    do estudante (o token aleatório de /estudante/ativar, nunca dado da
+    pessoa). A Hotmart devolve o sck no webhook da venda
+    (data.purchase.origin.sck), e o webhook do site usa para marcar o
+    link como usado; sem ele, o webhook acha a pessoa pelo e-mail. */
+export const PARAMETRO_RASTREIO = "sck";
 
 export type Mercado = "br" | "la" | "es" | "pt" | "rw";
 export type Idioma = "pt" | "es";
@@ -520,7 +559,8 @@ export const LISTA_MERCADOS = Object.keys(MERCADOS) as Mercado[];
 /* ------------------------------ cálculo ------------------------------
    Tudo em centavos inteiros: 41,94 / 12 em ponto flutuante dá 3,4949...
    e arredondaria para 3,49; em centavos, 4194 / 12 = 349,5 vira 350.
-   O estudante: 8990 / 12 = 749,17, R$ 7,49/mês. */
+   O estudante: 5990 / 12 = 499,17, R$ 4,99/mês; 7990 / 12 = 665,83,
+   R$ 6,66/mês. */
 
 const centavos = (v: number) => Math.round(v * 100);
 
@@ -617,13 +657,6 @@ export function formatar(m: Mercado, valor: number): string {
   const numero = `${inteiro}${f.decimal}${dec}`;
   // Espaço que não quebra: o símbolo nunca fica sozinho no fim da linha.
   return f.simboloDepois ? `${numero} ${f.simbolo}` : `${f.simbolo} ${numero}`;
-}
-
-/** Junta o cupom ao link do checkout com o parâmetro da Hotmart. Só o
-    estudante usa (cupom pessoal, /estudante/ativar). */
-export function linkComCupom(base: string, codigo: string): string {
-  const sep = base.includes("?") ? "&" : "?";
-  return `${base}${sep}${PARAMETRO_CUPOM}=${encodeURIComponent(codigo)}`;
 }
 
 /**
@@ -828,54 +861,170 @@ export function dataDoLancamento(m: Mercado): string | null {
 }
 
 /* ---------------------------- estudante ----------------------------
-   Cupom PESSOAL de uso único sobre a oferta oficial do Brasil
-   (CHECKOUT_BRL, R$ 149,90), criado pela API da Hotmart quando o
-   estudante é aprovado e apagado pelo webhook do site quando o
-   pagamento é aprovado. Existe só no Brasil: a validação usa CPF e o
-   cobro é em real. Piso interno de R$ 47, nunca público. Nenhuma oferta
-   própria de estudante entra no site: o cupom pessoal é a única via (a
-   oferta de estudante da Hotmart hoje mostra R$ 149,90, igual à oficial).
-   Se o cupom vale também nas renovações não se sabe: o texto diz só que
-   a cobrança é anual (ESTUDANTE, em config.ts), sem prometer duração. */
+   Duas ofertas da Hotmart, uma por fase (ESTUDANTE_OFERTA_LANCAMENTO e
+   ESTUDANTE_OFERTA, no começo do arquivo). Nada de cupom pela API: o
+   preço que a página mostra é o da oferta, e a oferta da fase é decidida
+   NA HORA, pela mesma virada do card (lancamentoVigente do Brasil). Quem
+   foi aprovado no lançamento e abre o link depois de 16/11 cai na oferta
+   de R$ 79,90: por isso o texto do lançamento diz "para quem assinar até
+   16 de novembro". Existe só no Brasil: a validação usa CPF e o cobro é
+   em real. */
 
-/** Casas decimais do desconto do cupom. A API da Hotmart recebe o
-    `discount` como fração (0 < discount < 0,99) e não documenta quantas
-    casas guarda nem como arredonda o preço; com 5, o preço que sai cai
-    no centavo certo para qualquer preço final (o desconto é arredondado
-    PARA CIMA, então o preço exato fica no anunciado ou até 0,15 centavo
-    abaixo, nunca acima). Com 2 casas (0,40) seriam R$ 89,94. */
-const CASAS_DO_DESCONTO = 5;
+export type FaseDoEstudante = "lancamento" | "depois";
 
-/** Preço que um desconto (fração, o formato da API e do
-    STUDENT_DISCOUNT) deixa sobre um preço anual, arredondado ao
-    centavo. Em centavos inteiros: 149,90 x (1 - 0,40027) = 89,8995...,
-    que o checkout mostra como R$ 89,90. */
-export function precoComDesconto(anual: number, desconto: number): number {
-  return Math.round(centavos(anual) * (1 - desconto)) / 100;
+/** Preço FINAL do estudante, em reais por ano, em cada fase (decisão do
+    dono, 28/10/2026): R$ 59,90 no lançamento, R$ 79,90 depois. Vale nos
+    ESTUDANTE_ANOS primeiros anos; depois, o preço oficial do plano
+    (MERCADOS.br.anual, R$ 149,90). O preço da fase vigente é
+    precoEstudante(agora). */
+export const ESTUDANTE_PRECO_FINAL: Record<FaseDoEstudante, number> = {
+  lancamento: 59.9,
+  depois: 79.9,
+};
+
+/** Recorrências com o preço de estudante ("Apenas nas três primeiras
+    recorrências", no cupom da Hotmart; o plano é anual). */
+export const ESTUDANTE_ANOS = 3;
+
+/** O código da oferta de cada fase. Objeto (e não as constantes direto)
+    para os testes simularem um código sem editar o arquivo. */
+export const OFERTAS_DO_ESTUDANTE: Record<FaseDoEstudante, string> = {
+  lancamento: ESTUDANTE_OFERTA_LANCAMENTO,
+  depois: ESTUDANTE_OFERTA,
+};
+
+/** Nome da constante de cada fase, para as mensagens da trava e da doc. */
+export const CONSTANTE_DA_OFERTA: Record<FaseDoEstudante, string> = {
+  lancamento: "ESTUDANTE_OFERTA_LANCAMENTO",
+  depois: "ESTUDANTE_OFERTA",
+};
+
+/** Código de oferta da Hotmart (o off do link): letras e números. A
+    trava recusa outro formato (link inteiro, espaço, "?off="). */
+export function codigoDeOfertaValido(codigo: string | null | undefined): boolean {
+  return typeof codigo === "string" && /^[A-Za-z0-9]{4,20}$/.test(codigo);
 }
 
-/** Desconto do cupom pessoal, em FRAÇÃO, derivado do preço final:
-    1 - 89,90/149,90 = 0,400266..., arredondado PARA CIMA com 5 casas =
-    0.40027. Para cima porque o preço exato que ele deixa (R$ 89,8995)
-    fica no anunciado ou abaixo: seja qual for o arredondamento da
-    Hotmart, o checkout mostra R$ 89,90 ou R$ 89,89, nunca R$ 89,91. É o
-    valor do STUDENT_DISCOUNT na Vercel (a trava do build aceita só os
-    valores com essa mesma garantia, de 0.40027 a 0.40030, e diz este
-    quando faltar). Conta em centavos inteiros, sem o erro de ponto
-    flutuante de 1 - 0,59973... */
-export const ESTUDANTE_DESCONTO =
-  Math.ceil(
-    ((centavos(MERCADOS.br.anual) - centavos(ESTUDANTE_PRECO_FINAL)) * 10 ** CASAS_DO_DESCONTO) /
-      centavos(MERCADOS.br.anual),
-  ) / 10 ** CASAS_DO_DESCONTO;
-
-/** O que o estudante paga por ano: o preço oficial com o desconto do
-    cupom, em centavos. Dá o ESTUDANTE_PRECO_FINAL (R$ 89,90); a trava
-    do build e os testes conferem. */
-export function precoEstudante(): number {
-  return precoComDesconto(MERCADOS.br.anual, ESTUDANTE_DESCONTO);
+/** A fase do estudante agora: a mesma virada do card do Brasil. */
+export function faseDoEstudante(agora: number = Date.now()): FaseDoEstudante {
+  return lancamentoVigente("br", agora) ? "lancamento" : "depois";
 }
 
-export function porMesEstudante(): number {
-  return mensal(precoEstudante());
+/** O que o estudante paga por ano agora, nos primeiros anos. */
+export function precoEstudante(agora: number = Date.now()): number {
+  return ESTUDANTE_PRECO_FINAL[faseDoEstudante(agora)];
+}
+
+export function porMesEstudante(agora: number = Date.now()): number {
+  return mensal(precoEstudante(agora));
+}
+
+/** Código da oferta da fase vigente, ou "" se ela não tem oferta (ou o
+    código não tem o formato da Hotmart): aí o fluxo fecha sozinho. SÓ NO
+    SERVIDOR: o código não pode ir ao navegador (ver o começo do
+    arquivo). */
+export function ofertaDoEstudante(agora: number = Date.now()): string {
+  const codigo = (OFERTAS_DO_ESTUDANTE[faseDoEstudante(agora)] || "").trim();
+  return codigoDeOfertaValido(codigo) ? codigo : "";
+}
+
+/** A fase vigente tem oferta? SÓ NO SERVIDOR (lê o código). O navegador
+    e as páginas usam estudanteAberto (config.ts), que lê o nome das fases
+    com código gravado no build (DM_ESTUDANTE_FASES). */
+export function estudanteTemOferta(agora: number = Date.now()): boolean {
+  return ofertaDoEstudante(agora) !== "";
+}
+
+/** As fases com código de oferta válido, na ordem ("lancamento",
+    "depois"). O next.config.js grava a lista em DM_ESTUDANTE_FASES: é só
+    o nome da fase que vai ao navegador, nunca o código. */
+export function fasesComOferta(): FaseDoEstudante[] {
+  return (Object.keys(OFERTAS_DO_ESTUDANTE) as FaseDoEstudante[])
+    .filter((f) => codigoDeOfertaValido((OFERTAS_DO_ESTUDANTE[f] || "").trim()));
+}
+
+/** As ofertas de estudante preenchidas, das duas fases: o webhook do site
+    reconhece por elas a venda do estudante. SÓ NO SERVIDOR. */
+export function ofertasDoEstudante(): string[] {
+  return (Object.keys(OFERTAS_DO_ESTUDANTE) as FaseDoEstudante[])
+    .map((f) => (OFERTAS_DO_ESTUDANTE[f] || "").trim())
+    .filter(codigoDeOfertaValido);
+}
+
+/** A fase da oferta de estudante com este código (o off da URL de
+    obrigado, sem diferença de maiúsculas), ou null se não for uma delas.
+    SÓ NO SERVIDOR (lib/pos-pagamento.ts, valorDoPedido). */
+export function faseDaOfertaDoEstudante(off: string | null | undefined): FaseDoEstudante | null {
+  const codigo = String(off || "").trim().toLowerCase();
+  if (!codigo) return null;
+  for (const f of Object.keys(OFERTAS_DO_ESTUDANTE) as FaseDoEstudante[]) {
+    const c = (OFERTAS_DO_ESTUDANTE[f] || "").trim();
+    if (codigoDeOfertaValido(c) && c.toLowerCase() === codigo) return f;
+  }
+  return null;
+}
+
+/** As ofertas de estudante no formato de MERCADOS_DA_OFERTA
+    (lib/obrigado.mjs): cada código, em minúsculas, é do Brasil. O
+    middleware e a página de obrigado passam este mapa às regras do
+    pós-pagamento (lib/obrigado.mjs não importa o config: roda no
+    node --test sem build). Assim o código continua escrito só aqui.
+    SÓ NO SERVIDOR. */
+export function mercadosDasOfertasDoEstudante(): Record<string, readonly Mercado[]> {
+  return Object.fromEntries(ofertasDoEstudante().map((c) => [c.toLowerCase(), ["br"] as const]));
+}
+
+/** Link do checkout do estudante agora: a oferta da fase vigente e, com o
+    token do link pessoal, o sck de rastreio. null sem oferta. SÓ NO
+    SERVIDOR (/estudante/ativar). */
+export function checkoutDoEstudante(agora: number = Date.now(), token?: string): string | null {
+  const oferta = ofertaDoEstudante(agora);
+  if (!oferta) return null;
+  const rastreio = token ? `&${PARAMETRO_RASTREIO}=${encodeURIComponent(token)}` : "";
+  return `${CHECKOUT_DO_PRODUTO}?off=${encodeURIComponent(oferta)}${rastreio}`;
+}
+
+/** Desconto equivalente da fase sobre o preço oficial, em fração e com 5
+    casas (59,90 sobre 149,90: 0.6004). Só informativo: vai para a coluna
+    cupons_estudante.desconto, que existia para o cupom. O preço cobrado
+    é o da oferta. */
+export function descontoEquivalenteDoEstudante(agora: number = Date.now()): number {
+  const cheio = centavos(MERCADOS.br.anual);
+  return Math.round(((cheio - centavos(precoEstudante(agora))) * 100000) / cheio) / 100000;
+}
+
+/* Textos do estudante. A regra vale nas duas fases e nunca omite o que
+   vem depois dos 3 anos (CDC, arts. 6º, III, e 37). A data entra só no
+   lançamento ("para quem assinar até": a data é para entrar, não encurta
+   os 3 anos). Sem "compra", sem travessão. */
+export const TEXTOS_DO_ESTUDANTE = {
+  regraLancamento: "{preco} por ano nos {anos} primeiros anos, para quem assinar até {data}. Depois, {cheio} por ano.",
+  regra: "{preco} por ano nos {anos} primeiros anos. Depois, {cheio} por ano.",
+  // Logo depois do preço em destaque (card da /estudante e da home).
+  regraLancamentoSemPreco: "Nos {anos} primeiros anos, para quem assinar até {data}. Depois, {cheio} por ano.",
+  regraSemPreco: "Nos {anos} primeiros anos. Depois, {cheio} por ano.",
+  // Linha curta ("R$ 4,99/mês · nos 3 primeiros anos").
+  periodo: "nos {anos} primeiros anos",
+};
+
+/** "R$ 59,90 por ano nos 3 primeiros anos, para quem assinar até 16 de
+    novembro. Depois, R$ 149,90 por ano." no lançamento; "R$ 79,90 por
+    ano nos 3 primeiros anos. Depois, R$ 149,90 por ano." depois.
+    `semPreco`: a mesma regra começando por "Nos 3 primeiros anos". */
+export function regraDoEstudante(agora: number = Date.now(), opcoes: { semPreco?: boolean } = {}): string {
+  const lancamento = faseDoEstudante(agora) === "lancamento" && dataDoLancamento("br") !== null;
+  const t = TEXTOS_DO_ESTUDANTE;
+  const modelo = opcoes.semPreco
+    ? lancamento ? t.regraLancamentoSemPreco : t.regraSemPreco
+    : lancamento ? t.regraLancamento : t.regra;
+  return preencher(modelo, {
+    ...valoresDoLancamento("br"),
+    anos: String(ESTUDANTE_ANOS),
+    preco: formatar("br", precoEstudante(agora)),
+  });
+}
+
+/** "nos 3 primeiros anos", para as linhas curtas. */
+export function periodoDoEstudante(): string {
+  return preencher(TEXTOS_DO_ESTUDANTE.periodo, { anos: String(ESTUDANTE_ANOS) });
 }

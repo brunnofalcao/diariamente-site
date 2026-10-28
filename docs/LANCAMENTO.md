@@ -49,10 +49,10 @@ não muda nada.
 | `/vendas/es`, `/vendas/es-es`, `/vendas/pt-pt`, `/vendas/mundo` (endereços antigos) | 307 para `/es/vendas`, `/es-es/vendas`, `/pt-pt/vendas`, `/mundo/vendas`, com os parâmetros | redirecionam para a home real do mercado |
 | `/embreve`, `/es/embreve` | levam a `/vendas` e `/es/vendas` | levam a `/` e `/es` |
 | `/pt-pt/embreve`, `/es-es/embreve` | levam a `/pt-pt/vendas` e `/es-es/vendas` | prévias do dono (29,99 €), noindex |
-| `/estudante` | **a da produção**: formulário aberto, R$ 77,00 sobre R$ 137,90 (`components/estudante-atual`); a imagem do hero já é a arte Hoje das lojas, a pedido do dono | R$ 89,90 por ano, a mesma arte das lojas; fechada sozinha até a Vercel ter as três chaves |
+| `/estudante` | **a da produção**: formulário aberto, R$ 77,00 sobre R$ 137,90 (`components/estudante-atual`); a imagem do hero já é a arte Hoje das lojas, a pedido do dono | R$ 59,90 por ano nos 3 primeiros anos até 16/11 e R$ 79,90 depois (`docs/ESTUDANTE.md`), a mesma arte das lojas; fechada sozinha sem o modelo v2 na Vercel ou sem o código da oferta da fase |
 | `/es/estudiantes` | com o "¿Estudias en Brasil?" que leva à `/estudante` | o mesmo link, só com o estudante aberto |
 | `/api/estudante/solicitar` | a da produção (sem o 503) | 503 enquanto o estudante estiver fechado |
-| `/estudante/ativar` | volta sempre para `/estudante` | abre a oferta oficial com o cupom |
+| `/estudante/ativar` | volta sempre para `/estudante` | token conhecido: abre a oferta de estudante da fase do clique |
 | `/sobre` | as linhas de preço da produção (R$ 197, R$ 137,90) | o preço de `config/pricing.ts` |
 | Termos, Política, Condiciones, Privacidad | **o texto da produção** (`components/legais-da-producao`) | o texto novo do PR #3 |
 | aviso de cookies, GA4 e Pixel | fora da vitrine, **como a produção**: sem aviso, medição direta; na vitrine, o aviso | o aviso em todas as páginas |
@@ -92,8 +92,9 @@ A vitrine em standby (`/vendas`, `/es/vendas`, `/es-es/vendas`,
   `#dm-root`);
 - **os botões abrem o checkout de verdade da Hotmart** (seção abaixo);
 - o card "Condição de estudante" e o "Sou estudante" só aparecem com a
-  chave ligada (e as três chaves do estudante na Vercel): em standby a
-  `/estudante` é a da produção, com outro preço;
+  chave ligada (e o estudante aberto: o modelo v2 na Vercel e o código
+  da oferta da fase em `config/pricing.ts`): em standby a `/estudante` é
+  a da produção, com outro preço;
 - a página de cada rota é a rota irmã das homes (`app/es/vendas`,
   `app/es-es/vendas`, `app/pt-pt/vendas`, `app/mundo/vendas`). O 404 de
   `/mundo` em standby (`app/mundo/page.tsx`) vale só para `/mundo`; a
@@ -154,10 +155,11 @@ mesmo dia (seção abaixo).
   oficial:" (visível no card, só para leitor de tela na barra e no CTA).
 - Passado o `FIM_DO_LANCAMENTO` (ou com `ativo: false`), nada riscado: só
   o preço cheio. Mercados sem lançamento (la, es, pt, rw) não mudam.
-- A `/estudante` (fluxo novo, chave ligada) mantém a regra sem o
-  percentual (`regraDoLancamento` com `semPercentual`, texto
-  `lancamentoRegraEstudante`): ali as diferenças mostradas são as do
-  estudante. O texto dela não mudou com o card novo.
+- A `/estudante` (fluxo novo, chave ligada) mantém a regra do lançamento
+  sem o percentual na coluna "Quem entra hoje pelo site"
+  (`regraDoLancamento` com `semPercentual`, texto
+  `lancamentoRegraEstudante`). O preço de estudante tem a regra própria,
+  colada a ele (`regraDoEstudante`, `docs/ESTUDANTE.md`).
 
 ## Card de oferta do Brasil
 
@@ -343,15 +345,17 @@ deploy, ou Instant Rollback para o deploy anterior.
   (`config/pricing.ts:53-54`) abertos e conferidos no checkout (R$ 149,90 e
   R$ 99,98); os dos mercados de fora (`config/pricing.ts:60-62`) só quando
   abrirem.
-- Preços: `config/pricing.ts:181` (R$ 149,90), `:183` (R$ 99,98, 3 anos),
-  `:76` (estudante, R$ 89,90).
+- Preços: `config/pricing.ts` (R$ 149,90; R$ 99,98, 3 anos; estudante,
+  `ESTUDANTE_PRECO_FINAL`: R$ 59,90 até 16/11 e R$ 79,90 depois, 3 anos).
 - Mercados: no lançamento público, só o Brasil vende (`vendaAberta: true`
   em `config/pricing.ts`); la, es, pt e rw fechados (`vendaAberta: false`).
   Na vitrine todos aparecem abertos, com o checkout de cada um.
-- Cupom do estudante: `STUDENT_DISCOUNT=0.40027`, `HOTMART_PRODUCT_ID=7448309`,
-  `WA_TEMPLATE_ESTUDANTE` (modelo v2) e `HOTMART_OFFER_IDS` na Vercel
-  (`config/pricing.ts:586`, LEIA-ME item 1). Desativar a oferta `h82bllbx`
-  na Hotmart.
+- Estudante: os códigos das duas ofertas (`ESTUDANTE_OFERTA_LANCAMENTO` e
+  `ESTUDANTE_OFERTA` em `config/pricing.ts` e, no mesmo dia, em
+  `command-center/mercado.js` do app, com deploy no Railway), `WA_TEMPLATE_ESTUDANTE`
+  (modelo v2) na Vercel e, opcionais, `RESEND_API_KEY` e o campo
+  `cf_link_estudante` no RD (`docs/ESTUDANTE.md`). Desativar a oferta
+  `h82bllbx` na Hotmart.
 - Variáveis na Vercel (Production): `DM_WEBHOOK_V2_OK=1` (passo 1),
   `DM_SITE_LANCADO=1` (passo 3), `HOTMART_HOTTOK` e o webhook do site
   (`https://www.diariamente.app/api/webhooks/hotmart`) cadastrado no 7448309.

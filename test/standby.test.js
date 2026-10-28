@@ -14,7 +14,7 @@ const jsx = require("react/jsx-runtime");
 const React = require("react");
 const { renderToStaticMarkup } = require("react-dom/server");
 const { carregarTs } = require("../scripts/carregar-ts");
-const { checarPrecos, checarPrecosDoProjeto, carregarPrecos, siteLancado, emStandby } = require("../scripts/checar-precos");
+const { checarPrecos, checarPrecosDoProjeto, carregarPrecos, siteLancado, emStandby, alvoDoEstudante } = require("../scripts/checar-precos");
 
 const raiz = path.join(__dirname, "..");
 const arq = (...p) => path.join(raiz, ...p);
@@ -548,7 +548,9 @@ test("next.config.js: a trava DM_VENDA_LIBERADA saiu; o estudante novo só com a
   for (const vars of [{}, { DM_WEBHOOK_V2_OK: "1" }, { DM_SITE_LANCADO: "1" }, { DM_VENDA_LIBERADA: "1" }]) {
     assert.equal("DM_VENDA_LIBERADA" in envDoBuild(vars), false, JSON.stringify(vars));
   }
-  const estudantePronto = { WA_TEMPLATE_ESTUDANTE: "diariamente_estudante_aprovado_v2", HOTMART_PRODUCT_ID: "7448309", STUDENT_DISCOUNT: "0.40027" };
+  // o fluxo novo do estudante só precisa do modelo v2 na Vercel (a oferta
+  // da fase é conferida na hora, config.ts)
+  const estudantePronto = { WA_TEMPLATE_ESTUDANTE: "diariamente_estudante_aprovado_v2" };
   assert.equal(envDoBuild(estudantePronto).DM_ESTUDANTE_ABERTO, "", "standby: a /estudante é a da produção");
   assert.equal(envDoBuild({ ...estudantePronto, DM_SITE_LANCADO: "1" }).DM_ESTUDANTE_ABERTO, "1");
   // nenhum arquivo do site lê mais a variável
@@ -819,7 +821,7 @@ test("trava em standby: o que travaria o lançamento vira aviso, e o build passa
   const { MERCADOS } = carregarPrecos();
   const quebrado = JSON.parse(JSON.stringify(MERCADOS));
   quebrado.br.checkout = "[PREENCHER: link]";
-  const r = checarPrecos({ mercados: quebrado, alvoEstudante: { precoFinal: 89.9, desconto: 0.40027 }, env: { VERCEL: "1", VERCEL_ENV: "production" } });
+  const r = checarPrecos({ mercados: quebrado, alvoEstudante: alvoDoEstudante(carregarPrecos()), env: { VERCEL: "1", VERCEL_ENV: "production" } });
   assert.equal(r.ok, false);
   const s = emStandby(r);
   assert.equal(s.ok, true);

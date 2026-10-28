@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ESTUDANTE } from "@/config";
+import { ESTUDANTE_ATUAL } from "@/config";
+import { problemaDoNome } from "@/lib/nome";
 
 /**
- * EstudanteForm — solicitação do código de estudante, em 3 etapas.
+ * EstudanteForm — inscrição de estudante (o pedido do link pessoal), em 3 etapas.
  *
  * Contrato de API INALTERADO: POST /api/estudante/solicitar recebe
  * exatamente o mesmo payload de antes (nome, cpf, whatsapp com DDI,
@@ -22,7 +23,18 @@ import { ESTUDANTE } from "@/config";
  *  - foco vai para o primeiro campo inválido (teclado e leitor de tela)
  *  - rascunho em sessionStorage, SEM CPF (dado sensível não persiste)
  *  - inputs de 16px: iOS não aplica zoom automático ao focar
- *  - o código nunca aparece na tela: entrega só por WhatsApp
+ *  - o link pessoal nunca aparece na tela: vai pelo WhatsApp (e pelo
+ *    e-mail, com o Resend configurado)
+ *  - `atual` (standby): os textos da produção, com o código de 48 horas
+ *  - o nome só com letras, espaço, hífen e apóstrofo, até 80 caracteres
+ *    (lib/nome.ts, a mesma regra da API): a primeira palavra vai no
+ *    "Olá, ..." do WhatsApp e do e-mail
+ *  - 503 no fluxo novo é a inscrição FECHADA (a página foi aberta antes
+ *    de fechar): a mensagem diz isso, e não "instabilidade", que passaria
+ *    em minutos
+ *  - curso: a lista tem os da saúde e "Outro curso (qualquer área)", que
+ *    vale para qualquer graduação (o valor enviado continua "Outro", o do
+ *    campo cf_curso do RD)
  */
 
 const CURSOS = [
@@ -35,7 +47,7 @@ const CURSOS = [
   { valor: "Biomedicina", rotulo: "Biomedicina" },
   { valor: "Farmacia", rotulo: "Farmácia" },
   { valor: "EducacaoFisica", rotulo: "Educação Física" },
-  { valor: "Outro", rotulo: "Outro" },
+  { valor: "Outro", rotulo: "Outro curso (qualquer área)" },
 ];
 
 // UFs no MESMO formato do campo "Estado e UF" do RD (cf_estado_e_uf).
@@ -125,8 +137,13 @@ const VAZIO: Dados = {
 };
 
 const REGRAS: Record<Campo, (v: string) => string> = {
-  nome: (v) =>
-    v.trim().split(/\s+/).filter(Boolean).length < 2 ? "Escreva seu nome completo." : "",
+  nome: (v) => {
+    const p = problemaDoNome(v);
+    if (p === "curto") return "Escreva seu nome completo.";
+    if (p === "caracteres") return "Use só letras no nome, sem números nem símbolos.";
+    if (p === "longo") return "Nome muito longo. Use até 80 caracteres.";
+    return "";
+  },
   whats: (v) => {
     const d = v.replace(/\D/g, "");
     if (!d) return "Informe seu WhatsApp com DDD.";
@@ -206,13 +223,14 @@ function Field({
 // ------------------------------ componente ------------------------------
 export function EstudanteForm({
   // Em standby, a /estudante passa o subtítulo da produção
-  // (ESTUDANTE_ATUAL.subtituloDoFormulario, config.ts).
-  subtitulo = "Leva cerca de um minuto. O código vai para o seu WhatsApp, com um botão que abre o pagamento com o desconto já aplicado.",
-}: { subtitulo?: string } = {}) {
+  // (ESTUDANTE_ATUAL.subtituloDoFormulario, config.ts) e `atual`.
+  subtitulo = "Leva cerca de um minuto. O link da inscrição vai para o seu WhatsApp, com um botão que abre o pagamento com a condição de estudante já aplicada.",
+  atual = false,
+}: { subtitulo?: string; atual?: boolean } = {}) {
   const [dados, setDados] = useState<Dados>(VAZIO);
   const [erros, setErros] = useState<Partial<Record<Campo, string>>>({});
   const [etapa, setEtapa] = useState(0);
-  const [status, setStatus] = useState<"idle" | "enviando" | "erro" | "instavel">("idle");
+  const [status, setStatus] = useState<"idle" | "enviando" | "erro" | "instavel" | "fechado">("idle");
   const [errosServidor, setErrosServidor] = useState<string[]>([]);
 
   const cardRef = useRef<HTMLDivElement>(null);
@@ -333,7 +351,10 @@ export function EstudanteForm({
       });
 
       if (r.status === 503) {
-        setStatus("instavel");
+        // Fluxo novo: 503 é a inscrição FECHADA (falta a oferta da fase ou
+        // a configuração), e não passa em minutos. Standby: a falta de
+        // configuração do cupom da main, tratada como instabilidade.
+        setStatus(atual ? "instavel" : "fechado");
         return;
       }
 
@@ -390,7 +411,7 @@ export function EstudanteForm({
   return (
     <div className="ed-card-form" ref={cardRef} onKeyDown={onKeyDown}>
       <span className="ed-overline" style={{ marginBottom: 0 }}>
-        Solicite seu código
+        {atual ? "Solicite seu código" : "Faça sua inscrição"}
       </span>
       <h2 className="ed-form-h">Sua condição de estudante</h2>
       <p className="ed-form-sub">{subtitulo}</p>
@@ -416,8 +437,16 @@ export function EstudanteForm({
         {status === "instavel" && (
           <div className="ed-alert is-warn" role="status">
             <p>
-              Estamos com uma instabilidade momentânea na emissão de códigos. Tente de novo
+              Estamos com uma instabilidade momentânea {atual ? "na emissão de códigos" : "nas inscrições"}. Tente de novo
               em alguns minutos: seus dados continuam preenchidos.
+            </p>
+          </div>
+        )}
+        {status === "fechado" && (
+          <div className="ed-alert is-warn" role="status">
+            <p>
+              A inscrição de estudante está fechada no momento e abre em breve. Recarregue a
+              página para deixar seu contato na lista de espera.
             </p>
           </div>
         )}
@@ -451,7 +480,7 @@ export function EstudanteForm({
           <Field
             campo="whats"
             rotulo="WhatsApp"
-            dica="É neste número que o código vai chegar."
+            dica={atual ? "É neste número que o código vai chegar." : "É para este número que enviamos o link da inscrição."}
             erro={erros.whats}
           >
             {(a) => (
@@ -472,7 +501,7 @@ export function EstudanteForm({
           <Field
             campo="email"
             rotulo="E-mail"
-            dica="Se tiver e-mail da instituição, use ele: agiliza a validação."
+            dica={atual ? "Se tiver e-mail da instituição, use ele: agiliza a validação." : "Pode ser o e-mail da instituição ou o pessoal."}
             erro={erros.email}
           >
             {(a) => (
@@ -621,7 +650,7 @@ export function EstudanteForm({
           <Field
             campo="cpf"
             rotulo="CPF"
-            dica="Usado só para garantir um código por pessoa."
+            dica={atual ? "Usado só para garantir um código por pessoa." : "Usado só para garantir uma inscrição por pessoa."}
             erro={erros.cpf}
           >
             {(a) => (
@@ -687,17 +716,18 @@ export function EstudanteForm({
               {enviando ? (
                 <>
                   <span className="ed-spin" aria-hidden="true" />
-                  Emitindo seu código
+                  {atual ? "Emitindo seu código" : "Enviando sua inscrição"}
                 </>
               ) : (
-                "Receber meu código no WhatsApp"
+                atual ? "Receber meu código no WhatsApp" : "Receber meu link no WhatsApp"
               )}
             </button>
           </div>
 
           <p className="ed-legal">
-            O código é pessoal e vale por {ESTUDANTE.validadeHoras} horas. Seus dados são
-            usados apenas para validar sua condição de estudante e emitir o código.{" "}
+            {atual
+              ? `O código é pessoal e vale por ${ESTUDANTE_ATUAL.validadeHoras} horas. Seus dados são usados apenas para validar sua condição de estudante e emitir o código.`
+              : "O link é pessoal. Seus dados são usados apenas para validar sua condição de estudante e enviar o link da inscrição."}{" "}
             <a href="/privacidade">Política de Privacidade</a>
           </p>
         </div>

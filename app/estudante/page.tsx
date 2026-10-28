@@ -1,11 +1,11 @@
 import { metadataDaPagina } from "@/lib/seo";
-import { SITE, EMPRESA, PROVA, GARANTIA, ESTUDANTE, ESTUDANTE_ATUAL, periodoEstudante, responsavelDoGrupo } from "@/config";
+import { SITE, EMPRESA, PROVA, GARANTIA, ESTUDANTE, ESTUDANTE_ATUAL, estudanteAberto, canaisDoLink, responsavelDoGrupo } from "@/config";
 import { SITE_LANCADO } from "@/config/lancamento";
 import { RodapeDoGrupo } from "@/components/CnpjsDoGrupo";
 import { OfficialLogo } from "@/components/Brand";
 import { TelaDaLoja } from "@/components/TelaDaLoja";
 import { ATIVOS, dicionario } from "@/lib/i18n";
-import { MERCADOS, formatar, precoEstudante, porMesEstudante } from "@/config/pricing";
+import { MERCADOS, formatar, precoEstudante, porMesEstudante, regraDoEstudante, periodoDoEstudante } from "@/config/pricing";
 import { BlocoPreco } from "@/components/BlocoPreco";
 import { BlocoPrecoAtual } from "@/components/estudante-atual/BlocoPrecoAtual";
 import { EstudanteForm } from "@/components/EstudanteForm";
@@ -45,29 +45,37 @@ import "./estudante.css";
    para 5 minutos depois e o cron tenta até 5 vezes; os "2 minutos" da
    main não eram verdade).
 
-   LIGADA a chave, dois estados, decididos no build (ESTUDANTE.aberto,
-   config.ts):
-     aberto   o formulário pede o código, e o cupom pessoal nasce na
-              Hotmart
-     fechado  falta configuração na Vercel (o log do build diz qual):
-              o formulário dá lugar à lista de espera (EstudanteEspera)
-              e os botões dizem "Me avise quando abrir". Nada pede CPF,
-              nada emite cupom.
+   LIGADA a chave, dois estados, decididos A CADA VISITA (página
+   dinâmica; estudanteAberto(agora), config.ts: a Vercel configurada no
+   build e a fase vigente com oferta em config/pricing.ts):
+     aberto   o formulário faz a inscrição e o site manda o link pessoal
+              (/estudante/ativar), que abre a oferta de estudante da fase
+     fechado  falta configuração (o log do build diz qual) ou a oferta da
+              fase vigente: o formulário dá lugar à lista de espera
+              (EstudanteEspera) e os botões dizem "Me avise quando
+              abrir". Nada pede CPF, nada é gravado. Sem número de preço
+              (card, FAQ e resumo): oferta com prazo que ninguém consegue
+              aceitar não vai ao ar (CDC, art. 37).
+   O preço é o da fase (R$ 59,90 até 16/11, R$ 79,90 depois), sempre com
+   a regra inteira: nos 3 primeiros anos e, depois, R$ 149,90 por ano.
+   A aprovação é automática ao declarar o vínculo: nenhum texto fala de
+   "conferência dos dados" no fluxo novo (o link nasce no próprio pedido).
    ===================================================================== */
 
 // Standby: a /estudante da produção, com o formulário aberto.
 const ATUAL = !SITE_LANCADO;
-// Fluxo do cupom pessoal aberto neste build?
-const ABERTO = ATUAL || ESTUDANTE.aberto;
-const CTA = ABERTO ? "Solicitar minha condição" : "Me avise quando abrir";
 
-const TITULO = "Diariamente para estudantes · condição exclusiva de graduação";
-const DESCRICAO =
-  "Uma provocação por dia, em qualquer curso de graduação. Condição exclusiva para estudantes: solicite seu código e receba no WhatsApp.";
+/** Os três estados da página: a da produção (standby), aberta e fechada. */
+type Estado = "atual" | "aberto" | "fechado";
 
-// Refaz a cada hora: o comparativo usa o preço público do dia, que muda
-// quando o lançamento termina (config/pricing.ts).
-export const revalidate = 3600;
+// DINÂMICA, de propósito: a fase do estudante (R$ 59,90 até 16/11,
+// R$ 79,90 depois) e o aberto/fechado saem da hora de CADA visita. Com o
+// cache de uma hora de antes (revalidate = 3600), a versão gerada às 23h
+// de 16/11 seguia no ar depois da meia-noite com R$ 59,90 e o formulário
+// aberto, enquanto o e-mail e o /estudante/ativar já levavam à oferta de
+// R$ 79,90 (ou a API já respondia 503). A página tem pouco tráfego e não
+// busca dado nenhum: renderizar a cada visita custa pouco.
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   ...metadataDaPagina("estudante", "pt"),
@@ -153,88 +161,135 @@ const RECEBE = [
 
 // Como funciona. O passo 2 diz o que o sistema FAZ (envia), não que o
 // WhatsApp chega: a entrega não é garantida (regra da marca, CDC art. 37).
-// Fechado (sem o fluxo do cupom), sem prazo: a página só anota o contato,
-// e a seção vira "Quando abrir" (revisão de 28/10/2026).
-const PASSOS = [
-  {
-    t: "Preencha seus dados de estudante",
-    d: "Nome, WhatsApp, curso, instituição e previsão de conclusão. Leva cerca de um minuto.",
-  },
-  {
-    t: "Receba seu código no WhatsApp",
-    d: ABERTO
-      ? `Conferimos seus dados e, em até ${ESTUDANTE.esperaMinutos} minutos, enviamos o código para o número que você informou. Ele é pessoal e vale ${ESTUDANTE.validadeHoras} horas.`
-      : "Conferimos seus dados e enviamos um código pessoal para o número que você informar.",
-  },
-  {
-    t: "Ative seu acesso",
-    d: "Toque no botão da mensagem: a condição de estudante já entra aplicada no checkout. Comece pela provocação do Dia 1 hoje mesmo.",
-  },
-];
+// Fechado, sem prazo: a página só anota o contato, e a seção vira
+// "Quando abrir" (revisão de 28/10/2026). Standby: os textos da produção
+// (código de 48 horas).
+function passos(estado: Estado) {
+  const link = estado !== "atual";
+  return [
+    {
+      t: "Preencha seus dados de estudante",
+      d: "Nome, WhatsApp, curso, instituição e previsão de conclusão. Leva cerca de um minuto.",
+    },
+    {
+      t: link ? "Receba seu link no WhatsApp" : "Receba seu código no WhatsApp",
+      d:
+        estado === "atual"
+          ? `Conferimos seus dados e, em até ${ESTUDANTE.esperaMinutos} minutos, enviamos o código para o número que você informou. Ele é pessoal e vale ${ESTUDANTE_ATUAL.validadeHoras} horas.`
+          : estado === "aberto"
+            ? `A inscrição é aprovada na hora e, em até ${ESTUDANTE.esperaMinutos} minutos, enviamos o link da sua inscrição ${canaisDoLink()}. Ele é pessoal.`
+            : "Quando abrir, a inscrição é aprovada na hora e enviamos um link pessoal para o número que você informar.",
+    },
+    link
+      ? {
+          t: "Conclua sua inscrição",
+          d: "Toque em Concluir inscrição: o pagamento abre com a condição de estudante já aplicada. Comece pela provocação do Dia 1 hoje mesmo.",
+        }
+      : {
+          t: "Ative seu acesso",
+          d: "Toque no botão da mensagem: a condição de estudante já entra aplicada no checkout. Comece pela provocação do Dia 1 hoje mesmo.",
+        },
+  ];
+}
 
-const FAQ = [
-  {
-    q: "Como funciona a validação?",
-    a: "O próprio formulário é a validação. Preencha com os dados corretos: o código é vinculado ao seu CPF, é pessoal e não é transferível. Dado falso invalida a condição.",
-  },
-  {
-    q: "Serve para qualquer curso?",
-    a: "Sim. O Diariamente não é sobre conteúdo técnico de uma área, é sobre constância, decisão e responsabilidade pessoal. Vale para qualquer graduação.",
-  },
-  {
-    // Quem envia é o sistema; a entrega no WhatsApp não é garantida. Fechado,
-    // sem prazo (revisão de 28/10/2026).
-    q: "Quando recebo o código?",
-    a: ABERTO
-      ? `Enviamos em até ${ESTUDANTE.esperaMinutos} minutos para o WhatsApp que você informar, depois da conferência dos seus dados. Ele é pessoal e vale por ${ESTUDANTE.validadeHoras} horas.`
-      : `Quando a solicitação abrir, enviamos o código para o WhatsApp que você informar, depois da conferência dos seus dados. Ele é pessoal e vale por ${ESTUDANTE.validadeHoras} horas.`,
-  },
-  {
-    q: "Não recebi o código. E agora?",
-    a: `Confira se o número foi digitado com DDD e se o WhatsApp está ativo nele. Se ainda assim não chegar, escreva para ${EMPRESA.suporteEmail} com o nome e o número usados na solicitação.`,
-  },
-  {
-    q: "E quando eu me formar?",
-    a: "Seu acesso continua valendo normalmente até o fim do período contratado. A condição de estudante é para a entrada, não uma amarra ao diploma.",
-  },
-  {
-    q: "Posso pedir mais de um código?",
-    a: "Não. É um código por pessoa, e a regra é aplicada automaticamente. O código também não é transferível.",
-  },
-  {
-    q: "E se eu não me adaptar?",
-    a: GARANTIA.texto,
-  },
-  {
-    q: "Isso é terapia ou tratamento?",
-    a: "Não. O Diariamente é uma prática diária de hábitos e bem-estar. Não trata, não diagnostica e não substitui acompanhamento profissional.",
-  },
-];
+function faq(estado: Estado, agora: number) {
+  const link = estado !== "atual";
+  const preco = formatar("br", precoEstudante(agora));
+  return [
+    {
+      q: "Como funciona a validação?",
+      a: `O próprio formulário é a validação. Preencha com os dados corretos: ${link ? "o link é vinculado" : "o código é vinculado"} ao seu CPF, é pessoal e não é transferível. Dado falso invalida a condição.`,
+    },
+    {
+      q: "Serve para qualquer curso?",
+      a: "Sim. O Diariamente não é sobre conteúdo técnico de uma área, é sobre constância, decisão e responsabilidade pessoal. Vale para qualquer graduação.",
+    },
+    // A regra inteira do preço (fase vigente), só no fluxo novo ABERTO: é
+    // a oferta da Hotmart que a cumpre. Fechado, nenhum número de preço.
+    ...(estado === "aberto" && ESTUDANTE.mostrarPreco
+      ? [{
+          q: "Quanto custa, e por quanto tempo?",
+          a: `${regraDoEstudante(agora)} ${preco} ${ESTUDANTE.pagamento}. Cancele quando quiser.`,
+        }]
+      : []),
+    {
+      // Quem envia é o sistema; a entrega no WhatsApp não é garantida. Fechado,
+      // sem prazo (revisão de 28/10/2026).
+      q: link ? "Quando recebo o link?" : "Quando recebo o código?",
+      a:
+        estado === "atual"
+          ? `Enviamos em até ${ESTUDANTE.esperaMinutos} minutos para o WhatsApp que você informar, depois da conferência dos seus dados. Ele é pessoal e vale por ${ESTUDANTE_ATUAL.validadeHoras} horas.`
+          : estado === "aberto"
+            ? `Enviamos o link em até ${ESTUDANTE.esperaMinutos} minutos ${canaisDoLink()}. A inscrição é aprovada na hora, e o link é pessoal.`
+            : "Quando a solicitação abrir, enviamos o link para o WhatsApp que você informar. A inscrição é aprovada na hora, e o link é pessoal.",
+    },
+    {
+      q: link ? "Não recebi o link. E agora?" : "Não recebi o código. E agora?",
+      a: `Confira se o número foi digitado com DDD e se o WhatsApp está ativo nele${link && ESTUDANTE.linkPorEmail ? ", e olhe também a caixa de spam do e-mail" : ""}. Se ainda assim não chegar, escreva para ${EMPRESA.suporteEmail} com o nome e o número usados na solicitação.`,
+    },
+    {
+      q: "E quando eu me formar?",
+      a: link
+        ? `O preço de estudante vale ${periodoDoEstudante()} da sua assinatura, mesmo depois da formatura. Depois, ${formatar("br", MERCADOS.br.anual)} por ano. A condição é para a entrada: quem já se formou entra pelo preço de qualquer pessoa.`
+        : "Seu acesso continua valendo normalmente até o fim do período contratado. A condição de estudante é para a entrada, não uma amarra ao diploma.",
+    },
+    {
+      q: link ? "Posso pedir mais de um link?" : "Posso pedir mais de um código?",
+      a: link
+        ? "Não. É um link por pessoa, e a regra é aplicada automaticamente. O link também não é transferível."
+        : "Não. É um código por pessoa, e a regra é aplicada automaticamente. O código também não é transferível.",
+    },
+    {
+      q: "E se eu não me adaptar?",
+      a: GARANTIA.texto,
+    },
+    {
+      q: "Isso é terapia ou tratamento?",
+      a: "Não. O Diariamente é uma prática diária de hábitos e bem-estar. Não trata, não diagnostica e não substitui acompanhamento profissional.",
+    },
+  ];
+}
 
 /* Bloco de resumo estruturado: ajuda leitor apressado e mecanismo generativo
-   a extrair os fatos da oferta sem depender de interpretação. */
-const RESUMO: [string, string][] = [
-  ["Produto", "Diariamente App, aplicativo de provocações diárias"],
-  ["Condição", "Exclusiva para estudantes de graduação"],
-  ["Formato", "Aplicativo para iPhone e Android, uma provocação por dia"],
-  ["Duração", "365 provocações, uma liberada a cada dia"],
-  ...(ATUAL
-    ? // Standby: a linha de preço da produção (main), sem a de pagamento.
-      ([["Preço estudante", `R$ ${ESTUDANTE_ATUAL.preco} no ano (valor cheio R$ ${ESTUDANTE_ATUAL.precoDe})`]] as [string, string][])
-    : ([
-        ["Preço estudante", `${formatar("br", precoEstudante())} ${periodoEstudante()} (equivale a ${formatar("br", porMesEstudante())}/mês; valor cheio ${formatar("br", MERCADOS.br.anual)})`],
-        // O cupom vai na oferta oficial, que parcela com acréscimo: o equivalente
-        // mensal não é parcela. Sem valor de parcela (a Hotmart calcula).
-        ["Pagamento", `${formatar("br", precoEstudante())} ${ESTUDANTE.pagamento}`],
-      ] as [string, string][])),
-  ["Entrega", "Código pessoal enviado por WhatsApp"],
-  ["Público", "Estudantes de graduação de qualquer curso"],
-  ["Autores", "Science Play"],
-  ["Responsável", responsavelDoGrupo("pt")],
-  ["Garantia", `${GARANTIA.dias} dias`],
-];
+   a extrair os fatos da oferta sem depender de interpretação. Com a chave
+   ligada, o preço da fase vigente com a regra inteira (regraDoEstudante). */
+function resumo(estado: Estado, agora: number): [string, string][] {
+  return [
+    ["Produto", "Diariamente App, aplicativo de provocações diárias"],
+    ["Condição", "Exclusiva para estudantes de graduação"],
+    ["Formato", "Aplicativo para iPhone e Android, uma provocação por dia"],
+    ["Duração", "365 provocações, uma liberada a cada dia"],
+    ...(estado === "atual"
+      ? // Standby: a linha de preço da produção (main), sem a de pagamento.
+        ([["Preço estudante", `R$ ${ESTUDANTE_ATUAL.preco} no ano (valor cheio R$ ${ESTUDANTE_ATUAL.precoDe})`]] as [string, string][])
+      : estado === "fechado"
+        ? // Fechado: nenhum número de preço (o card diz o mesmo).
+          ([["Preço estudante", "Valor reduzido para estudantes, que aparece aqui quando a inscrição abrir"]] as [string, string][])
+      : ([
+          ["Preço estudante", `${regraDoEstudante(agora)} Equivale a ${formatar("br", porMesEstudante(agora))}/mês ${periodoDoEstudante()}.`],
+          // A oferta de estudante parcela com acréscimo: o equivalente
+          // mensal não é parcela. Sem valor de parcela (a Hotmart calcula).
+          ["Pagamento", `${formatar("br", precoEstudante(agora))} ${ESTUDANTE.pagamento}`],
+        ] as [string, string][])),
+    ["Entrega", estado === "atual" ? "Código pessoal enviado por WhatsApp" : ESTUDANTE.linkPorEmail ? "Link pessoal enviado por WhatsApp e e-mail" : "Link pessoal enviado por WhatsApp"],
+    ["Público", "Estudantes de graduação de qualquer curso"],
+    ["Autores", "Science Play"],
+    ["Responsável", responsavelDoGrupo("pt")],
+    ["Garantia", `${GARANTIA.dias} dias`],
+  ];
+}
 
 export default function Estudante() {
+  // Hora da visita (a página é dinâmica): a fase do estudante e o
+  // aberto/fechado saem dela.
+  const agora = Date.now();
+  const estado: Estado = ATUAL ? "atual" : estudanteAberto(agora) ? "aberto" : "fechado";
+  const ABERTO = estado !== "fechado";
+  const LINK = estado !== "atual";
+  const CTA = ABERTO ? "Solicitar minha condição" : "Me avise quando abrir";
+  const PASSOS = passos(estado);
+  const FAQ = faq(estado, agora);
+  const RESUMO = resumo(estado, agora);
   const breadcrumb = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -312,7 +367,7 @@ export default function Estudante() {
                       <IcClock /> Leva cerca de um minuto
                     </span>
                     <span>
-                      <IcPhone /> Código pelo WhatsApp
+                      <IcPhone /> {LINK ? "Link pelo WhatsApp" : "Código pelo WhatsApp"}
                     </span>
                   </>
                 ) : (
@@ -459,9 +514,8 @@ export default function Estudante() {
 
             {/* A condição é para quem é estudante na hora de entrar. Não é
                 escassez fabricada: é a natureza da condição, e dizer isso é
-                honesto. Nada aqui diz quanto tempo o preço dura: se o cupom
-                vale nas renovações não se sabe (decisão do dono, 12/10/2026:
-                dizer só que a cobrança é anual). */}
+                honesto. Quanto tempo o preço dura está no card, logo abaixo
+                (nos 3 primeiros anos e, depois, R$ 149,90 por ano). */}
             <div className="ed-urg">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="9" />
@@ -479,13 +533,15 @@ export default function Estudante() {
 
             <div className="ed-actions" style={{ justifyContent: "center", marginTop: "clamp(28px, 4vw, 40px)" }}>
               <a href="#formulario" className="ed-btn ed-btn-primary">
-                {ABERTO ? "Solicitar meu código" : CTA}
+                {!ABERTO ? CTA : LINK ? "Fazer minha inscrição" : "Solicitar meu código"}
               </a>
             </div>
             <p className="ed-legal" style={{ marginTop: 12 }}>
-              {ABERTO
-                ? "Solicitar não gera compromisso. O código vai para o seu WhatsApp e você decide depois, com calma."
-                : "A solicitação do código abre em breve. Deixe seu contato e avisamos no dia em que abrir."}
+              {!ABERTO
+                ? "A solicitação da condição de estudante abre em breve. Deixe seu contato e avisamos no dia em que abrir."
+                : LINK
+                  ? `Solicitar não gera compromisso. O link vai ${canaisDoLink()}, e você decide depois, com calma.`
+                  : "Solicitar não gera compromisso. O código vai para o seu WhatsApp e você decide depois, com calma."}
             </p>
           </div>
         </section>
@@ -499,22 +555,35 @@ export default function Estudante() {
               <div className="ed-rail-block">
                 <div className="ed-rail-t">Por que pedimos esses dados</div>
                 <p className="ed-rail-d">
-                  Curso, instituição e semestre confirmam que você é estudante. O CPF garante
-                  um código por pessoa. Nada além disso.
+                  {LINK
+                    ? "Curso, instituição e semestre registram o seu vínculo de estudante."
+                    : "Curso, instituição e semestre confirmam que você é estudante."}{" "}
+                  O CPF garante
+                  {LINK ? " uma inscrição" : " um código"} por pessoa. Nada além disso.
                 </p>
               </div>
+              {LINK ? (
+              <div className="ed-rail-block">
+                <div className="ed-rail-t">O link vai {canaisDoLink()}</div>
+                <p className="ed-rail-d">
+                  Ele não aparece nesta tela. É pessoal e abre o pagamento com a condição de
+                  estudante já aplicada.
+                </p>
+              </div>
+              ) : (
               <div className="ed-rail-block">
                 <div className="ed-rail-t">O código vai só para o WhatsApp</div>
                 <p className="ed-rail-d">
                   Ele não aparece nesta tela e não é enviado por e-mail. Vale por{" "}
-                  {ESTUDANTE.validadeHoras} horas e é pessoal.
+                  {ESTUDANTE_ATUAL.validadeHoras} horas e é pessoal.
                 </p>
               </div>
+              )}
               <div className="ed-rail-block">
                 <div className="ed-rail-t">Solicitar não gera compromisso</div>
                 <p className="ed-rail-d">
-                  Você recebe o código e decide depois, com calma. E se ativar o acesso, tem{" "}
-                  {GARANTIA.dias} dias de garantia.
+                  Você recebe {LINK ? "o link" : "o código"} e decide depois, com calma. E se
+                  ativar o acesso, tem {GARANTIA.dias} dias de garantia.
                 </p>
               </div>
               </>
@@ -523,7 +592,7 @@ export default function Estudante() {
                 <div className="ed-rail-t">Quando abrir</div>
                 <p className="ed-rail-d">
                   Avisamos pelo WhatsApp e pelo e-mail que você deixar. Aí é preencher os dados
-                  de estudante e receber o código, pessoal, no WhatsApp.
+                  de estudante e receber o link, pessoal, no WhatsApp.
                 </p>
               </div>
               )}
@@ -537,7 +606,10 @@ export default function Estudante() {
             </aside>
 
             {ABERTO ? (
-              <EstudanteForm subtitulo={ATUAL ? ESTUDANTE_ATUAL.subtituloDoFormulario : undefined} />
+              <EstudanteForm
+                subtitulo={ATUAL ? ESTUDANTE_ATUAL.subtituloDoFormulario : undefined}
+                atual={ATUAL}
+              />
             ) : (
               <EstudanteEspera />
             )}
@@ -569,9 +641,9 @@ export default function Estudante() {
             <div className="ed-final ed-reveal">
               <h2 className="ed-final-h">Constância não espera a formatura.</h2>
               <p className="ed-final-d">
-                {ABERTO
-                  ? "Solicite sua condição de estudante, receba o código no WhatsApp e comece pela provocação de hoje. O primeiro dia é o único que depende só de você."
-                  : "Deixe seu contato e avisamos no dia em que a solicitação abrir. Depois, é receber o código no WhatsApp e começar pela provocação do dia."}
+                {!ABERTO
+                  ? "Deixe seu contato e avisamos no dia em que a solicitação abrir. Depois, é receber o link no WhatsApp e começar pela provocação do dia."
+                  : `Solicite sua condição de estudante, receba ${LINK ? "o link" : "o código"} no WhatsApp e comece pela provocação de hoje. O primeiro dia é o único que depende só de você.`}
               </p>
               <div className="ed-actions">
                 <a href="#formulario" className="ed-btn ed-btn-primary">
@@ -617,7 +689,7 @@ export default function Estudante() {
 
         <EstudanteSticky
           alvo="formulario"
-          texto={ABERTO ? "Leva um minuto. O código vai pelo WhatsApp." : "Abre em breve. Avisamos você."}
+          texto={!ABERTO ? "Abre em breve. Avisamos você." : LINK ? "Leva um minuto. O link vai pelo WhatsApp." : "Leva um minuto. O código vai pelo WhatsApp."}
           rotulo={ABERTO ? "Solicitar" : "Me avise"}
         />
       </main>

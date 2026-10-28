@@ -21,6 +21,27 @@ const i18n = carregarTs(arq("lib", "i18n.ts"));
 const LANCAMENTO = Date.parse("2026-10-20T12:00:00-03:00");
 const DEPOIS = Date.parse("2026-11-20T12:00:00-03:00");
 
+// Códigos FICTÍCIOS das ofertas de estudante (o config real ainda não tem
+// os do dono). "aberto" nos testes = a Vercel pronta (DM_ESTUDANTE_ABERTO)
+// e a fase com oferta; um teste confere que sem o código a página fecha.
+const FICTICIAS = { lancamento: "estlanc1", depois: "estdep01" };
+/** Os códigos (só no servidor) e o que o next.config.js grava no build a
+    partir deles: o NOME das fases com código (DM_ESTUDANTE_FASES), que é
+    tudo o que o config.ts e os componentes de navegador leem. */
+function ofertas(o) {
+  Object.assign(P.OFERTAS_DO_ESTUDANTE, o);
+  process.env.DM_ESTUDANTE_FASES = P.fasesComOferta().join(",");
+}
+ofertas(FICTICIAS);
+function semOfertas(fn) {
+  ofertas({ lancamento: "", depois: "" });
+  try {
+    return fn();
+  } finally {
+    ofertas(FICTICIAS);
+  }
+}
+
 /** Espaço que não quebra vira espaço comum, para comparar texto. */
 const txt = (html) => html.replace(/\u00a0/g, " ");
 
@@ -66,106 +87,130 @@ const html = (Componente, props = {}) => txt(renderToStaticMarkup(React.createEl
 
 /* ------------------------- comparativo da /estudante ------------------------- */
 
-/** Texto do estudante, sem a regra do LANÇAMENTO (que é do checkout da
-    oferta de lançamento e continua na página para o estudante comparar). */
-const semRegraDoLancamento = (h) =>
-  h.replace(/nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\./g, "");
-
-/** Promessa de que o preço dura a graduação inteira: é duração do cupom
-    com outras palavras (o cupom é de uso único e a renovação dele não se
-    sabe). Vale para o português e o espanhol. */
+/** Promessa de que o preço dura a graduação inteira: o preço de estudante
+    vale nos 3 primeiros anos da assinatura, não pela graduação. Vale para
+    o português e o espanhol. */
 const DURACAO_DA_GRADUACAO =
   /enquanto (você )?(ainda )?(está|estiver|estuda|estudar)|durante toda a (sua )?graduação|até (você )?se formar|mientras (estás|estés|sigas|sigues) (cursando|estudiando)|mientras estudias|durante toda tu carrera/i;
 
-/** O que o texto do estudante NÃO pode dizer (decisão do dono, 12/10/2026):
-    duração do desconto ou renovação pelo mesmo valor. */
-function semDuracaoDoEstudante(h, rotulo) {
-  const s = semRegraDoLancamento(h);
-  assert.equal(/primeiro ano/.test(s), false, `${rotulo}: "primeiro ano"`);
-  assert.equal(/3 anos|três anos|3 primeiros anos/.test(s), false, `${rotulo}: "3 anos"`);
-  assert.equal(/mesmo valor/.test(s), false, `${rotulo}: "mesmo valor"`);
-  assert.equal(DURACAO_DA_GRADUACAO.test(s), false, `${rotulo}: duração pela graduação`);
-  assert.equal(/89,94|7,50|40%/.test(s.replace(/40% a menos|40% de diferença/g, "")), false, `${rotulo}: preço antigo`);
+/** A regra inteira do estudante na fase (decisão do dono, 28/10/2026). */
+const REGRA_LANCAMENTO = "R$ 59,90 por ano nos 3 primeiros anos, para quem assinar até 16 de novembro. Depois, R$ 149,90 por ano.";
+const REGRA_DEPOIS = "R$ 79,90 por ano nos 3 primeiros anos. Depois, R$ 149,90 por ano.";
+
+/** O que o texto do estudante NÃO pode dizer: preço antigo, renovação
+    pelo mesmo valor, duração pela graduação, cobrança só anual sem prazo,
+    "compra" e travessão. */
+function textoDoEstudanteOk(h, rotulo) {
+  assert.equal(/mesmo valor/.test(h), false, `${rotulo}: "mesmo valor"`);
+  assert.equal(DURACAO_DA_GRADUACAO.test(h), false, `${rotulo}: duração pela graduação`);
+  assert.equal(/89,90|89,94|7,49|0\.40027|cobrança anual/.test(h), false, `${rotulo}: preço ou texto antigo`);
+  assert.equal(/\bcompr(a|ar|as|ou)\b/i.test(h), false, `${rotulo}: "compra"`);
+  assert.equal(/[\u2014\u2013]/.test(h), false, `${rotulo}: travessão`);
+  assert.equal(/só para (a )?saúde|apenas para (a )?saúde|exclusiv[oa] (para|da) saúde/i.test(h), false, `${rotulo}: só saúde`);
 }
 
-/** A nota do card de estudante: só o estudante, com sujeito, e como ele paga. */
-const NOTA_DO_ESTUDANTE =
-  /Para você, estudante: R\$ 7,49\/mês, por um ano inteiro de provocação diária\. R\$ 89,90 à vista, ou em até 12x no cartão com acréscimo\. Cobrança anual\. Cancele quando quiser\./;
+/** A nota do card de estudante: só o estudante, com a regra inteira, e como ele paga. */
+const NOTA_LANCAMENTO =
+  /Para você, estudante: R\$ 59,90 por ano nos 3 primeiros anos, para quem assinar até 16 de novembro\. Depois, R\$ 149,90 por ano\. R\$ 59,90 à vista, ou em até 12x no cartão com acréscimo\. Cancele quando quiser\./;
 
-test("/estudante no lançamento: R$ 89,90 por ano, cobrança anual, e a regra dos 3 anos só na coluna do lançamento", () => {
+test("/estudante no lançamento: R$ 59,90 por ano nos 3 primeiros anos para quem assinar até 16/11, contra os R$ 99,98 do lançamento", () => {
   const h = comRelogio(LANCAMENTO, () => html(blocoPreco(config(true))));
-  assert.match(h, /R\$ 10,08 OFF<\/span>/);
-  assert.match(h, /<small>R\$<\/small>89,90/);
-  assert.match(h, /10% a menos que o valor que qualquer pessoa paga hoje/);
+  assert.match(h, /R\$ 40,08 OFF<\/span>/);
+  assert.match(h, /<small>R\$<\/small>59,90/);
+  assert.match(h, /40% a menos que o valor que qualquer pessoa paga hoje/);
   assert.match(h, /Quem entra hoje pelo site<\/span><span class="ed-econ-v">R\$ 99,98<\/span><span class="ed-econ-d">R\$ 8,33\/mês<\/span><span class="ed-econ-d">Por ano nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\.<\/span>/);
-  assert.match(h, /Sua condição de estudante<\/span><span class="ed-econ-v">R\$ 89,90<\/span><span class="ed-econ-d">R\$ 7,49\/mês · cobrança anual<\/span>/);
-  assert.match(h, /Você economiza<\/span><span class="ed-econ-v">R\$ 10,08<\/span><span class="ed-econ-d">10% de diferença<\/span>/);
-  assert.match(h, NOTA_DO_ESTUDANTE);
-  // A regra do lançamento aparece UMA vez, na coluna do lançamento, e
-  // nunca dentro do card de estudante (lá ela era lida como duração do cupom).
-  assert.equal((h.match(/3 primeiros anos/g) || []).length, 1);
-  const card = h.slice(h.indexOf('class="ed-price"'), h.indexOf('class="ed-econ"'));
-  assert.equal(/3 primeiros anos|preço de lançamento|Depois, R\$ 149,90/.test(card), false);
+  assert.match(h, /Sua condição de estudante<\/span><span class="ed-econ-v">R\$ 59,90<\/span><span class="ed-econ-d">R\$ 4,99\/mês · nos 3 primeiros anos<\/span><span class="ed-econ-d">Depois, R\$ 149,90 por ano\.<\/span>/);
+  assert.match(h, /Você economiza<\/span><span class="ed-econ-v">R\$ 40,08<\/span><span class="ed-econ-d">por ano, nos 3 primeiros anos<\/span><span class="ed-econ-d">40% de diferença<\/span>/);
+  assert.match(h, NOTA_LANCAMENTO);
   // Parcelado com acréscimo, sem valor de parcela, e longe do equivalente mensal.
   assert.equal(/\d+\s*x\s*de\s*R\$/i.test(h), false);
   assert.equal(/\/mês\)?,? (ou )?em até 12x/.test(h), false);
-  semDuracaoDoEstudante(h, "lançamento");
+  textoDoEstudanteOk(h, "lançamento");
 });
 
-test("/estudante depois do lançamento: base R$ 149,90, R$ 60,00 OFF, sem regra de 3 anos nenhuma", () => {
+test("/estudante depois do lançamento: R$ 79,90 por ano nos 3 primeiros anos contra R$ 149,90, sem a data e sem a regra do lançamento", () => {
   const h = comRelogio(DEPOIS, () => html(blocoPreco(config(true))));
-  assert.match(h, /R\$ 60,00 OFF<\/span>/);
-  assert.match(h, /40% a menos que o valor que qualquer pessoa paga hoje/);
-  assert.match(h, NOTA_DO_ESTUDANTE);
-  assert.equal(/3 primeiros anos/.test(h), false);
+  assert.match(h, /R\$ 70,00 OFF<\/span>/);
+  assert.match(h, /<small>R\$<\/small>79,90/);
+  // 46,7%: para baixo, nunca mais do que é
+  assert.match(h, /46% a menos que o valor que qualquer pessoa paga hoje/);
+  assert.match(h, /Para você, estudante: R\$ 79,90 por ano nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\. R\$ 79,90 à vista, ou em até 12x no cartão com acréscimo\. Cancele quando quiser\./);
+  assert.match(h, /R\$ 6,66\/mês · nos 3 primeiros anos/);
+  assert.equal(/para quem assinar até|16 de novembro/.test(h), false);
+  assert.equal(/Por ano nos 3 primeiros anos/.test(h), false, "a regra do lançamento sai");
   assert.equal(/preço de lançamento/.test(h), false);
-  semDuracaoDoEstudante(h, "depois");
+  textoDoEstudanteOk(h, "depois");
 });
 
-test("config.ts: o estudante não tem mais a chave de renovação; o texto é só de cobrança anual", () => {
+test("config.ts: o estudante sem cupom, sem desconto e sem a renovação pelo mesmo valor; o período é o dos 3 primeiros anos", () => {
   const C = config(true);
-  assert.equal("renovaMesmoValor" in C.ESTUDANTE, false);
-  assert.equal("renovacaoMesmoValor" in C.ESTUDANTE, false);
-  assert.equal(C.ESTUDANTE.periodo, "por ano · cobrança anual");
-  assert.equal(C.ESTUDANTE.renovacao, "Cobrança anual. Cancele quando quiser.");
-  assert.equal(C.periodoEstudante(), "por ano · cobrança anual");
-  assert.equal(C.ESTUDANTE.preco, "89,90");
-  assert.equal(C.ESTUDANTE.porMes, "7,49");
-  assert.equal(C.ESTUDANTE.desconto, 0.40027);
-  // O estudante paga na oferta OFICIAL: a mesma linha de pagamento dela.
+  for (const k of ["renovaMesmoValor", "renovacaoMesmoValor", "desconto", "preco", "porMes", "precoNumero", "aberto", "validadeHoras", "cobranca", "periodo", "renovacao"]) {
+    assert.equal(k in C.ESTUDANTE, false, k);
+  }
+  assert.equal(C.ESTUDANTE.configurado, true);
+  assert.equal(C.periodoEstudante(), "por ano nos 3 primeiros anos");
+  assert.equal(txt(C.precoDoEstudante(LANCAMENTO)), "R$ 59,90");
+  assert.equal(txt(C.precoDoEstudante(DEPOIS)), "R$ 79,90");
+  assert.equal(C.precoDoEstudanteSemSimbolo(LANCAMENTO), "59,90");
+  assert.equal(txt(C.porMesDoEstudante(LANCAMENTO)), "R$ 4,99");
+  // O estudante paga numa oferta que parcela como a oficial: a mesma linha.
   assert.equal(C.ESTUDANTE.pagamento, "à vista, ou em até 12x no cartão com acréscimo");
   assert.equal(C.ESTUDANTE.pagamento.toLowerCase(), P.MERCADOS.br.textos.pagamento.toLowerCase());
+  // aberto = Vercel pronta E oferta da fase
+  assert.equal(C.estudanteAberto(LANCAMENTO), true);
+  assert.equal(semOfertas(() => C.estudanteAberto(LANCAMENTO)), false);
+  assert.equal(config(false).estudanteAberto(LANCAMENTO), false);
+  // o e-mail só com o Resend (DM_ESTUDANTE_EMAIL, calculada no build)
+  assert.equal(C.ESTUDANTE.linkPorEmail, false);
+  assert.equal(C.canaisDoLink(), "para o seu WhatsApp");
 });
 
-test("/estudante com o fluxo fechado: o card avisa que a solicitação abre em breve", () => {
-  const h = comRelogio(LANCAMENTO, () => html(blocoPreco(config(false))));
-  assert.match(h, /A solicitação do código abre em breve/);
-  assert.equal(/o botão da mensagem abre o pagamento/.test(h), false);
+test("/estudante com o fluxo fechado: o card avisa que a solicitação abre em breve (Vercel sem o v2 ou fase sem oferta)", () => {
+  for (const h of [
+    comRelogio(LANCAMENTO, () => html(blocoPreco(config(false)))),
+    semOfertas(() => comRelogio(LANCAMENTO, () => html(blocoPreco(config(true))))),
+  ]) {
+    assert.match(h, /A solicitação da condição de estudante abre em breve/);
+    assert.equal(/O botão abre o pagamento/.test(h), false);
+  }
   const aberto = comRelogio(LANCAMENTO, () => html(blocoPreco(config(true))));
-  assert.match(aberto, /o botão da mensagem abre o pagamento com o\s+desconto já aplicado/);
+  assert.match(aberto, /O link da sua inscrição vai para o seu WhatsApp\.<\/b> O botão abre o pagamento com a\s+condição de estudante já aplicada/);
 });
 
 /* --------------------------- bloco de oferta (home) --------------------------- */
 
-test("home do Brasil com o estudante aberto: \"Sou estudante\" com R$ 89,90 por ano, cobrança anual, e o link para a /estudante", () => {
+test("home do Brasil com o estudante aberto: \"Sou estudante\" com a regra inteira da fase e o link para a /estudante", () => {
   const h = html(blocoOferta(config(true)), { mercado: "br", momento: LANCAMENTO });
   assert.match(h, /href="\/estudante"/);
-  assert.match(h, /Sou estudante: R\$ 7,49\/mês · R\$ 89,90 por ano · cobrança anual/);
-  // A duração de 3 anos é do LANÇAMENTO (a regra e o quadro do card, antes
-  // do botão); a linha do estudante, depois do botão, não diz duração.
-  const regra = /<strong [^>]*>33% a menos<\/strong>, travado nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\./;
-  assert.match(h, regra);
+  assert.ok(h.includes(`Sou estudante: ${REGRA_LANCAMENTO}`), "lançamento");
+  // a regra do LANÇAMENTO continua no card, antes do botão
+  assert.match(h, /<strong [^>]*>33% a menos<\/strong>, travado nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\./);
   assert.match(h, /<dt [^>]*>3 anos no preço oficial<\/dt>/);
   const depoisDoBotao = h.slice(h.indexOf(">Começar meu ano</a>"));
   assert.match(depoisDoBotao, /Sou estudante/);
-  semDuracaoDoEstudante(depoisDoBotao, "home");
+  textoDoEstudanteOk(depoisDoBotao, "home");
+  // depois de 16/11, a fase nova
+  const d = html(blocoOferta(config(true)), { mercado: "br", momento: DEPOIS });
+  assert.ok(d.includes(`Sou estudante: ${REGRA_DEPOIS}`), "depois");
 });
 
-test("home do Brasil com o estudante FECHADO: nenhum link nem preço de estudante", () => {
+test("home do Brasil com o estudante FECHADO (Vercel sem o v2 ou fase sem oferta): nenhum link nem preço de estudante", () => {
   for (const momento of [LANCAMENTO, DEPOIS]) {
-    const h = html(blocoOferta(config(false)), { mercado: "br", momento });
-    assert.equal(/estudante/i.test(h), false);
-    assert.equal(/89,90|7,49|89,94|7,50/.test(h), false);
+    for (const h of [
+      html(blocoOferta(config(false)), { mercado: "br", momento }),
+      semOfertas(() => html(blocoOferta(config(true)), { mercado: "br", momento })),
+    ]) {
+      assert.equal(/estudante/i.test(h), false);
+      assert.equal(/59,90|79,90|4,99|6,66/.test(h), false);
+    }
+  }
+  // a virada fecha sozinha se faltar só a oferta da fase nova
+  ofertas({ depois: "" });
+  try {
+    assert.match(html(blocoOferta(config(true)), { mercado: "br", momento: LANCAMENTO }), /Sou estudante/);
+    assert.equal(/estudante/i.test(html(blocoOferta(config(true)), { mercado: "br", momento: DEPOIS })), false);
+  } finally {
+    ofertas(FICTICIAS);
   }
 });
 
@@ -174,7 +219,7 @@ test("home: ESTUDANTE.mostrarPreco = false também esconde o preço de estudante
   C.ESTUDANTE.mostrarPreco = false;
   const h = html(blocoOferta(C), { mercado: "br", momento: LANCAMENTO });
   assert.match(h, /Sou estudante: ver a condição/);
-  assert.equal(/89,90|7,49|89,94|7,50/.test(h), false);
+  assert.equal(/59,90|79,90|4,99|6,66/.test(h), false);
 });
 
 test("home depois do lançamento: o parcelamento diz que tem acréscimo e fica separado do equivalente mensal", () => {
@@ -242,11 +287,73 @@ function paginaEstudante(C, lancado = true) {
 test("/estudante FECHADA: lista de espera no lugar do formulário, botões \"Me avise quando abrir\"", () => {
   const h = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(false))));
   assert.equal(/formulario-cpf/.test(h), false, "sem o formulário que pede CPF");
-  assert.match(h, /A solicitação do código abre em breve/);
+  assert.match(h, /A inscrição de estudante abre em breve/);
+  assert.match(h, /A solicitação da condição de estudante abre em breve/);
   assert.match(h, /Me avise quando abrir/);
   assert.match(h, /quando a solicitação da condição de estudante abrir/);
-  assert.equal(/Solicitar minha condição|Solicitar meu código/.test(h), false);
+  assert.equal(/Solicitar minha condição|Solicitar meu código|Fazer minha inscrição/.test(h), false);
   assert.equal(/Por que pedimos esses dados/.test(h), false);
+  // configurada, mas sem a oferta da fase: a mesma página fechada
+  const semOferta = semOfertas(() => comRelogio(LANCAMENTO, () => html(paginaEstudante(config(true)))));
+  assert.equal(/formulario-cpf/.test(semOferta), false);
+  assert.match(semOferta, /Me avise quando abrir/);
+  // só a fase seguinte sem oferta: aberta até 16/11, fechada em 17/11
+  ofertas({ depois: "" });
+  try {
+    assert.match(comRelogio(LANCAMENTO, () => html(paginaEstudante(config(true)))), /formulario-cpf/);
+    assert.equal(/formulario-cpf/.test(comRelogio(DEPOIS, () => html(paginaEstudante(config(true))))), false);
+  } finally {
+    ofertas(FICTICIAS);
+  }
+});
+
+test("/estudante FECHADA: nenhum número de preço (card, FAQ e resumo), sem prazo de oferta e sem comparativo (CDC, art. 37)", () => {
+  for (const momento of [LANCAMENTO, DEPOIS]) {
+    for (const h of [
+      comRelogio(momento, () => html(paginaEstudante(config(false)))),
+      semOfertas(() => comRelogio(momento, () => html(paginaEstudante(config(true))))),
+    ]) {
+      assert.equal(/59,90|79,90|40,08|70,00|4,99|6,66|OFF<|para quem assinar|16 de novembro|Cancele quando quiser|Você economiza|Quanto custa/.test(h), false);
+      assert.match(h, /O preço da condição de estudante aparece aqui quando a inscrição abrir\./);
+      assert.match(h, /Preço estudante<\/span><span class="ed-review-v">Valor reduzido para estudantes, que aparece aqui quando a inscrição abrir<\/span>/);
+      assert.equal(/Pagamento<\/span>/.test(h), false);
+    }
+  }
+});
+
+test("/estudante: dinâmica (a fase e o aberto/fechado saem da hora de cada visita), e a /es/estudiantes também", () => {
+  const fs = require("fs");
+  for (const f of [["app", "estudante", "page.tsx"], ["app", "es", "estudiantes", "page.tsx"]]) {
+    const fonte = fs.readFileSync(arq(...f), "utf8");
+    assert.match(fonte, /^export const dynamic = "force-dynamic";$/m, f.join("/"));
+    assert.equal(/^export const revalidate/m.test(fonte), false, f.join("/"));
+  }
+});
+
+test("/estudante: aprovação automática, sem \"conferência dos dados\" no fluxo novo; o rail fala do vínculo", () => {
+  for (const aberto of [true, false]) {
+    const h = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(aberto))));
+    assert.equal(/[Cc]onferimos seus dados|conferência dos seus dados|confirmam que você é estudante/.test(h), false, aberto ? "aberta" : "fechada");
+  }
+  const aberta = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(true))));
+  assert.match(aberta, /A inscrição é aprovada na hora e, em até 10 minutos, enviamos o link da sua inscrição para o seu WhatsApp\./);
+  assert.match(aberta, /Curso, instituição e semestre registram o seu vínculo de estudante\./);
+  // standby segue com o texto da produção
+  const standby = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(false), false)));
+  assert.match(standby, /Conferimos seus dados e, em até 10 minutos, enviamos o código/);
+  // solicitacaorecebida
+  const fonte = require("fs").readFileSync(arq("app", "estudante", "solicitacaorecebida", "page.tsx"), "utf8");
+  const lancado = fonte.slice(fonte.indexOf("const DEPOIS = SITE_LANCADO"), fonte.indexOf(": ["));
+  assert.equal(/Estamos conferindo/.test(lancado), false);
+  assert.match(fonte, /Sua inscrição de estudante foi aprovada\. Em até \{ESTUDANTE\.esperaMinutos\} minutos,/);
+});
+
+test("formulário: 503 no fluxo novo é a inscrição FECHADA (não \"instabilidade\"), e o curso vale para qualquer área", () => {
+  const fonte = require("fs").readFileSync(arq("components", "EstudanteForm.tsx"), "utf8");
+  assert.match(fonte, /setStatus\(atual \? "instavel" : "fechado"\)/);
+  assert.match(fonte, /A inscrição de estudante está fechada no momento e abre em breve\. Recarregue a\s+página para deixar seu contato na lista de espera\./);
+  // o valor enviado ao RD continua "Outro" (cf_curso); só o rótulo diz qualquer área
+  assert.match(fonte, /\{ valor: "Outro", rotulo: "Outro curso \(qualquer área\)" \}/);
 });
 
 test("/estudante FECHADA: sem prazo, sem \"código\" no topo e sem garantir que o WhatsApp chega (revisão de 28/10/2026)", () => {
@@ -258,7 +365,7 @@ test("/estudante FECHADA: sem prazo, sem \"código\" no topo e sem garantir que 
   assert.equal(/código chega|chega no WhatsApp/i.test(h), false);
   // aberta: o prazo do config, com o sistema enviando (não \"chega\")
   const aberta = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(true))));
-  assert.match(aberta, /enviamos o código para o número que você informou/);
+  assert.match(aberta, /enviamos o link da sua inscrição para o seu WhatsApp/);
   assert.equal(/código chega|chega no WhatsApp/i.test(aberta), false);
 });
 
@@ -274,19 +381,30 @@ test("home: nada de garantir que o WhatsApp chega nem de acesso imediato por e-m
   assert.match(i18n.dicionario("pt", "br").faq.find(([q]) => q === "Como recebo o acesso?")[1], /Primeiro acesso\? Ativar conta/);
 });
 
-test("/estudante ABERTA: o formulário de sempre e os botões de solicitar", () => {
+test("/estudante ABERTA: o formulário de sempre, o link pessoal e o preço da fase com a regra inteira", () => {
   const h = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(true))));
   assert.match(h, /formulario-cpf/);
   assert.match(h, /Solicitar minha condição/);
-  assert.match(h, /Solicitar meu código/);
+  assert.match(h, /Fazer minha inscrição/);
   assert.equal(/abre em breve/.test(h), false);
-  // o tempo prometido é o do config, e o resumo diz só que a cobrança é anual
+  assert.match(h, /Link pelo WhatsApp/);
+  assert.equal(/Código pelo WhatsApp|vale 48 horas|vale por 48 horas/.test(h), false, "o link não vence");
+  // o tempo prometido é o do config, e o resumo traz a regra inteira da fase
   assert.match(h, /em até 10 minutos/);
-  assert.match(h, /R\$ 89,90 por ano · cobrança anual \(equivale a R\$ 7,49\/mês; valor cheio R\$ 149,90\)/);
-  assert.match(h, /Pagamento<\/span><span class="ed-review-v">R\$ 89,90 à vista, ou em até 12x no cartão com acréscimo<\/span>/);
+  assert.ok(h.includes(`Preço estudante</span><span class="ed-review-v">${REGRA_LANCAMENTO} Equivale a R$ 4,99/mês nos 3 primeiros anos.</span>`));
+  assert.match(h, /Pagamento<\/span><span class="ed-review-v">R\$ 59,90 à vista, ou em até 12x no cartão com acréscimo<\/span>/);
+  assert.match(h, /Entrega<\/span><span class="ed-review-v">Link pessoal enviado por WhatsApp<\/span>/);
+  assert.match(h, /Quanto custa, e por quanto tempo\?/);
+  assert.match(h, /O preço de estudante vale nos 3 primeiros anos da sua assinatura, mesmo depois da formatura\. Depois, R\$ 149,90 por ano\./);
+  assert.match(h, /Vale para qualquer graduação/);
   assert.match(h, /O que muda é o preço\s+de entrada\./);
   assert.match(h, /Essa condição é <b>para quem ainda está na graduação<\/b>/);
-  semDuracaoDoEstudante(h, "/estudante");
+  textoDoEstudanteOk(h, "/estudante");
+  // depois de 16/11: R$ 79,90, sem a data
+  const d = comRelogio(DEPOIS, () => html(paginaEstudante(config(true))));
+  assert.ok(d.includes(REGRA_DEPOIS));
+  assert.equal(/16 de novembro|59,90/.test(d), false);
+  textoDoEstudanteOk(d, "/estudante depois");
 });
 
 test("standby: a /estudante é a da produção (R$ 77,00 sobre R$ 137,90, formulário aberto), com a arte Hoje das lojas", () => {
@@ -310,14 +428,16 @@ test("standby: a /estudante é a da produção (R$ 77,00 sobre R$ 137,90, formul
     assert.match(h, /src="\/telas\/pt\/hoje-560\.jpg"/);
     assert.equal(/ed-phone-moldura|Tela_HOJE|cloudinary/i.test(h), false, "sem o mockup antigo");
     assert.equal(/abre em breve|Me avise quando abrir|89,90|99,98|149,90/.test(h), false);
-    // as decisões do dono no PR #3 valem também aqui
-    semDuracaoDoEstudante(h, "/estudante em standby");
+    // as decisões do dono no PR #3 valem também aqui; o fluxo novo (3 anos) não entra
+    assert.equal(DURACAO_DA_GRADUACAO.test(h), false);
+    assert.equal(/3 primeiros anos|59,90|79,90|link da sua inscrição/.test(h), false);
+    assert.match(h, /vale por 48 horas/);
     assert.equal(/\bcompra(r|s)?\b/i.test(h), false);
     assert.match(h, /em até 10 minutos/);
   }
   // ligada a chave, volta a ser a do lançamento
   const lancada = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(true), true)));
-  assert.match(lancada, /<small>R\$<\/small>89,90/);
+  assert.match(lancada, /<small>R\$<\/small>59,90/);
   assert.equal(/77,00|137,90|cloudinary/.test(lancada), false);
 });
 
@@ -342,7 +462,7 @@ test("/estudante aberta e fechada, no lançamento e depois: nenhuma promessa de 
   for (const momento of [LANCAMENTO, DEPOIS]) {
     for (const aberto of [true, false]) {
       const h = comRelogio(momento, () => html(paginaEstudante(config(aberto))));
-      semDuracaoDoEstudante(h, `/estudante ${aberto ? "aberta" : "fechada"} ${momento === LANCAMENTO ? "no lançamento" : "depois"}`);
+      textoDoEstudanteOk(h, `/estudante ${aberto ? "aberta" : "fechada"} ${momento === LANCAMENTO ? "no lançamento" : "depois"}`);
     }
   }
 });
@@ -373,10 +493,11 @@ test("fonte: nenhum texto de estudante promete o preço pela graduação inteira
 
 /* ------------------------- home: card do estudante ------------------------- */
 
-test("Home.tsx: o card do estudante depende de ESTUDANTE.aberto e o preço, de ESTUDANTE.mostrarPreco", () => {
+test("Home.tsx: o card do estudante depende de estudanteAberto(agora) e o preço, de ESTUDANTE.mostrarPreco e da fase", () => {
   const fonte = require("fs").readFileSync(arq("components", "Home.tsx"), "utf8");
-  assert.match(fonte, /\{mkt === "br" && ESTUDANTE\.aberto && \(/);
-  assert.match(fonte, /ESTUDANTE\.mostrarPreco \? t\.stH\.replace\("\{preco\}"/);
+  assert.match(fonte, /\{mkt === "br" && estudanteAberto\(agora\) && \(/);
+  assert.match(fonte, /ESTUDANTE\.mostrarPreco \? t\.stH\.replace\("\{preco\}", formatar\("br", precoEstudante\(agora\)\)\)/);
+  assert.match(fonte, /regraDoEstudante\(agora, \{ semPreco: true \}\)/);
   // o único outro link da home para a /estudante é o do bloco de oferta
   const links = fonte.match(/caminho\("estudante"/g) || [];
   assert.equal(links.length, 1);

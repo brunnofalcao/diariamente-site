@@ -2,12 +2,12 @@
 
 import {
   MERCADOS, precoFinal, porMes, formatar, linkCheckout, lancamentoVigente,
-  dataDoLancamento, pendente, precoEstudante, porMesEstudante, pagamentoAgora,
+  dataDoLancamento, pendente, regraDoEstudante, pagamentoAgora,
   percentualDoLancamento, regraDoLancamento, precoCheio,
   regraDoLancamentoEmPartes, linhaDeValor, quadroDoLancamento,
   type Mercado, type Parte,
 } from "@/config/pricing";
-import { ESTUDANTE, periodoEstudante } from "@/config";
+import { ESTUDANTE, estudanteAberto } from "@/config";
 import { caminho } from "@/lib/rotas";
 import { registrarInicioDeCheckout } from "@/lib/medicao";
 import { ListaEsperaForm } from "@/components/ListaEsperaForm";
@@ -230,18 +230,20 @@ export function BlocoOferta({ mercado, momento, previa = false, vitrine = false 
       )}
 
       {/* Estudante só existe no Brasil: a validação usa CPF e o cobro é
-          em real (handoff, seção 12, item P2). Só aparece com o fluxo
-          do cupom pessoal ABERTO neste build (ESTUDANTE.aberto, config.ts):
-          fechado, a home não leva a uma página que ainda não entrega o
-          código. O preço segue ESTUDANTE.mostrarPreco, como na
-          /estudante, e o período é o de ESTUDANTE.periodo ("por ano ·
-          cobrança anual"): se o cupom vale nas renovações não se sabe, e
-          o dono decidiu (12/10/2026) dizer só que a cobrança é anual. */}
-      {mercado === "br" && t.estudante && ESTUDANTE.aberto && (
-        <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 13.5, lineHeight: 1.5 }}>
+          em real (handoff, seção 12, item P2). Só aparece com o fluxo do
+          estudante ABERTO agora (estudanteAberto(momento), config.ts: a
+          Vercel configurada e a oferta da fase vigente no config): fechado,
+          a home não leva a uma página que ainda não entrega o link. O
+          preço segue ESTUDANTE.mostrarPreco, como na /estudante, e o texto
+          é a regra inteira do estudante na fase de `momento`
+          (regraDoEstudante): "R$ 59,90 por ano nos 3 primeiros anos, para
+          quem assinar até 16 de novembro. Depois, R$ 149,90 por ano." no
+          lançamento; "R$ 79,90 ... Depois, R$ 149,90 por ano." depois. */}
+      {mercado === "br" && t.estudante && estudanteAberto(momento) && (
+        <p style={{ margin: "14px 0 0", textAlign: "center", fontSize: 13.5, lineHeight: 1.5, textWrap: "balance" as never }}>
           <a href={caminho("estudante", "pt")} style={{ color: C.p300, textDecoration: "none" }}>
             {ESTUDANTE.mostrarPreco
-              ? `${t.estudante}: ${formatar("br", porMesEstudante())}${t.mes} · ${formatar("br", precoEstudante())} ${periodoEstudante()}`
+              ? `${t.estudante}: ${regraDoEstudante(momento)}`
               : `${t.estudante}: ver a condição`}
           </a>
         </p>
