@@ -358,3 +358,43 @@ deploy, ou Instant Rollback para o deploy anterior.
 - Espanhol: links da App Store e da Google Play ainda em pt
   (`lib/i18n.ts:298-299`) e badge da Google Play em pt (`lib/i18n.ts:294`),
   antes de abrir la ou es.
+
+## Revisão de 28/10/2026 (depois das capturas com a chave ligada)
+
+O que mudou, e por quê:
+
+- **Aviso de cookies no celular** (até 560 px): compacto, com cerca de
+  115 px. O inteiro tinha ~214 px e cobria o "Quero meu acesso" na
+  primeira tela do iPhone de 390 x 664. Agora o aviso começa em 537 px e
+  o botão termina em 511 px. Sem título, texto curto com quem mede
+  (Google e Meta), "só se você aceitar" e o link da Política; Recusar e
+  Aceitar do mesmo tamanho. No computador, o de sempre.
+- **Copy sem promessa que o sistema não cumpre** (CDC, art. 37; pt, es
+  e pt-PT): o lembrete no WhatsApp não "chega no horário" nem "te
+  encontra todo dia" (depende do telefone e do aceite no app), e o
+  "acesso imediato por e-mail" virou o caminho real, ativar a conta no
+  app com o e-mail do pagamento, como dizem as páginas de obrigado.
+- **/estudante fechada** (sem `WA_TEMPLATE_ESTUDANTE`): o topo mostra
+  "Abre em breve" e a garantia, sem "Leva cerca de um minuto" e sem
+  "Código enviado no WhatsApp"; o Como funciona vira "Quando abrir, são
+  três passos.", sem prazo. Aberta, o passo 2 diz que enviamos o código,
+  não que ele chega. O logo do topo perdeu o sublinhado azul e a lista de
+  passos, os números do navegador na margem.
+- **Barra fixa sem venda** (EUA, /pt-pt, /es): rótulo curto numa linha
+  ("Me avise", "Avisem-me", "Avísame"; `espera.botaoCurto`).
+- **Selo do Google Play** em "O que acontece depois": inteiro (o link
+  cortava a borda). **Lista de confiança do card**: `text-wrap: balance`
+  e "7 dias" sem quebra.
+- **Parcelamento**: ver o fim de "Card de oferta do Brasil".
+
+Ficou de fora, com o motivo:
+
+- **"+5.000 pessoas"**: fica, decisão do dono de 28/10/2026.
+- **Selo da App Store em inglês** ("Download on the App Store") ao lado
+  do Google Play em português: o selo oficial em português do Brasil
+  ("Baixar na App Store", branco, das Apple Marketing Tools) não está no
+  repositório nem no Cloudinary. Quando estiver no Cloudinary, trocar
+  `IMG_PT.appStore` (`lib/i18n.ts`) e `LOJAS_BADGES.appStoreEscuro`
+  (`config.ts`).
+- **"à vista" na barra fixa**: não cabe ao lado do botão a 375 px; a
+  barra leva ao card, onde o "à vista" está na linha do prazo.
