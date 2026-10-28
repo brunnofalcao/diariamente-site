@@ -109,6 +109,30 @@ export const COOKIE_MERCADO = "dm_market";
 export const COOKIE_MERCADO_SEGUNDOS = 60 * 60 * 24 * 180;
 
 /**
+ * COOKIE DA ÚLTIMA PÁGINA DE MERCADO VISITADA · dm_mercado
+ * ---------------------------------------------------------------------
+ * Só serve às páginas de obrigado: a Hotmart manda todo mundo para a
+ * MESMA URL de obrigado (a configuração é por produto, não por oferta),
+ * e é este cookie que diz em que idioma a pessoa estava lendo quando
+ * pagou (lib/obrigado.mjs, decidirObrigado, passo 1).
+ *
+ * Funcional e sem dado pessoal: guarda só br, la, es, pt ou rw, por 30
+ * dias, Path=/, SameSite=Lax, Secure. Gravado pelo middleware sempre que
+ * uma página de mercado ABRE (homes e páginas de venda de cada mercado;
+ * redirecionamento não grava, a página de destino grava no pedido
+ * seguinte). É outro cookie de propósito: o dm_market é a ESCOLHA do
+ * seletor e decide para onde as homes levam; este só anota a visita e
+ * não muda rota nenhuma.
+ *
+ * Cache: nas páginas de venda e nas homes com prefixo o valor depende só
+ * do caminho (toda visita a /es/vendas grava "la"), então a resposta não
+ * passa a variar por visitante. Na "/", br ou rw dependem do país e do
+ * dm_market, que já estão no Vary da "/".
+ */
+export const COOKIE_VISITA = "dm_mercado";
+export const COOKIE_VISITA_SEGUNDOS = 60 * 60 * 24 * 30;
+
+/**
  * hreflang de cada home. Recíproco e com x-default no português do Brasil.
  * As quatro homes, o sitemap e o <head> leem daqui (lib/seo.ts, hreflangDe).
  * "/es" é "es", e não "es-419" (o que o handoff pedia): é a decisão da
@@ -277,4 +301,26 @@ export function decidirRota(p: Pedido): Decisao {
     return { tipo: "redirecionar", destino: comBusca("/es", busca), vary: true };
   }
   return { tipo: "seguir", vary: true };
+}
+
+/** Páginas de mercado com um mercado só: as homes com prefixo e as de venda. */
+const MERCADO_DA_PAGINA: Record<string, Mercado> = { "/es": "la", "/es-es": "es", "/pt-pt": "pt" };
+for (const m of MERCADOS_VALIDOS) MERCADO_DA_PAGINA[VENDAS_DO_MERCADO[m]] = m;
+
+/**
+ * O valor do cookie dm_mercado (COOKIE_VISITA) para este pedido, ou null
+ * para não gravar. Grava só quando uma página de mercado ABRE: as quatro
+ * homes e as cinco páginas de venda (/vendas, /es/vendas, /es-es/vendas,
+ * /pt-pt/vendas, /mundo/vendas). Redirecionamento e robô não gravam.
+ * Na "/": rw quando ela é a do resto do mundo (reescrita, com a chave
+ * ligada; ou, em standby, pelo dm_market ou pelo país), senão br.
+ */
+export function mercadoDaVisita(p: Pedido, d: Decisao): Mercado | null {
+  if (d.tipo === "redirecionar" || ehRobo(p.userAgent)) return null;
+  const fixo = MERCADO_DA_PAGINA[p.pathname];
+  if (fixo) return fixo;
+  if (p.pathname !== "/") return null;
+  if (d.tipo === "reescrever") return "rw";
+  const m = mercadoValido(p.cookie) ?? (p.pais ? mercadoDoPais(p.pais) : null);
+  return m === "rw" ? "rw" : "br";
 }

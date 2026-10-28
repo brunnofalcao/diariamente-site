@@ -247,6 +247,12 @@ export default function Privacidad() {
           página sigue el país de tu conexión, informado por el alojamiento, sin grabar nada.
         </li>
         <li>
+          <strong>dm_mercado</strong>: guarda solo el mercado de la última página del sitio que
+          abriste (Brasil, Portugal, España, América Latina o resto del mundo), durante 30 días,
+          para que la página que aparece después del pago se abra en tu idioma. No guarda datos
+          personales.
+        </li>
+        <li>
           En el formulario de estudiantes de Brasil, un borrador de lo que escribiste, sin el CPF, se
           guarda solo en esta pestaña del navegador, para no perderse si la página se recarga.
           Desaparece al cerrar la pestaña.

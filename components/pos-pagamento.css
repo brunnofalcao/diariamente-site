@@ -1,0 +1,418 @@
+/* =====================================================================
+   PÓS-PAGAMENTO · páginas de obrigado e /baixar
+   ---------------------------------------------------------------------
+   Mesma linguagem do site (escuro, teal, Literata nos títulos), com os
+   tokens de app/globals.css. Classe raiz .pp; tudo aqui começa com pp-.
+
+   Mobile first: uma coluna até 959 px, com 20 px de margem (360 px sem
+   rolagem lateral). Do 960 px para cima, a aprovada ganha uma coluna à
+   direita com a tela do app, presa na rolagem (sticky), e o /baixar põe
+   a tela ao lado do QR code.
+
+   Acessibilidade: contraste AA (texto corrido em --n-300 e --n-400 sobre
+   --s-2), foco visível em tudo que recebe Tab, alvos de 44 px ou mais e
+   nenhuma animação com prefers-reduced-motion. As animações são uma vez
+   só (sem laço infinito) e o estado final é o estado sem animação: com
+   o movimento desligado, nada some.
+   ===================================================================== */
+
+.pp {
+  --pp-borda: rgba(255, 255, 255, .07);
+  --pp-borda-forte: rgba(255, 255, 255, .12);
+  --pp-teal-borda: rgba(39, 189, 190, .32);
+  --pp-teal-fundo: rgba(39, 189, 190, .10);
+  --pp-ouro-borda: rgba(245, 183, 49, .32);
+  --pp-ouro-fundo: rgba(245, 183, 49, .10);
+  --pp-verde: #25d366;
+  --pp-verde-texto: #6ee7a0;
+  --pp-margem: 20px;
+  position: relative;
+  min-height: 100vh;
+  overflow-x: clip;
+  color: var(--n-0);
+}
+@media (min-width: 400px) { .pp { --pp-margem: 24px; } }
+
+.pp-brilho {
+  position: absolute; top: -280px; left: 50%; transform: translateX(-50%);
+  width: min(960px, 160vw); height: 640px; pointer-events: none; z-index: 0;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(39, 189, 190, .16), transparent 70%);
+}
+.pp.is-espera .pp-brilho {
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(245, 183, 49, .10), transparent 70%);
+}
+
+.pp-moldura {
+  position: relative; z-index: 1;
+  max-width: 600px; margin: 0 auto; padding: 0 var(--pp-margem);
+}
+.pp-topo { position: relative; z-index: 1; padding-top: 22px; display: flex; justify-content: center; }
+@media (min-width: 768px) { .pp-topo { padding-top: 32px; } }
+
+/* ------------------------------ foco ------------------------------ */
+.pp a:focus-visible,
+.pp summary:focus-visible,
+.pp button:focus-visible {
+  outline: 2px solid var(--p-300);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+/* ------------------------------ hero ------------------------------ */
+/* No celular, o botão de instalar aparece já na primeira tela (390 x 844). */
+.pp-hero { text-align: center; padding: 18px 0 22px; }
+@media (min-width: 768px) { .pp-hero { padding: 28px 0 30px; } }
+.pp-selo { width: 100px; height: 100px; margin: 0 auto 10px; color: var(--p-500); }
+@media (min-width: 768px) { .pp-selo { width: 112px; height: 112px; margin-bottom: 14px; } }
+.pp-selo svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.pp-selo-disco { fill: rgba(39, 189, 190, .12); stroke: rgba(39, 189, 190, .40); stroke-width: 1.5; }
+.pp-selo-onda {
+  fill: none; stroke: rgba(39, 189, 190, .45); stroke-width: 1.5;
+  transform-box: fill-box; transform-origin: center; opacity: 0;
+}
+.pp-selo-check { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.pp-selo-raios line { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.pp-selo.is-espera { color: var(--a-500); }
+.pp-selo.is-espera .pp-selo-disco { fill: rgba(245, 183, 49, .10); stroke: rgba(245, 183, 49, .38); }
+.pp-selo.is-espera .pp-selo-onda { stroke: rgba(245, 183, 49, .40); }
+.pp-selo-ponteiro { transform-box: view-box; transform-origin: 60px 60px; }
+
+.pp-sobre {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--p-400); margin-bottom: 12px;
+}
+.pp.is-espera .pp-sobre { color: var(--a-500); }
+.pp-titulo {
+  font-family: var(--font-serif); font-weight: 400;
+  font-size: clamp(34px, 9vw, 54px); line-height: 1.04; letter-spacing: -.02em;
+  color: #fff; margin: 0 0 12px; text-wrap: balance;
+}
+.pp-sub {
+  font-size: 16.5px; line-height: 1.6; color: var(--n-300);
+  max-width: 40ch; margin: 0 auto; text-wrap: pretty;
+}
+
+/* ----------------------------- trilha ----------------------------- */
+.pp-trilha {
+  margin: 0 0 16px; padding: 16px 12px 14px;
+  border-radius: 22px; background: rgba(255, 255, 255, .03); border: 1px solid var(--pp-borda);
+}
+.pp-trilha-topo {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  padding: 0 6px 12px;
+}
+.pp-trilha-rotulo { font-size: 13px; font-weight: 700; color: var(--n-100); letter-spacing: .01em; }
+.pp-trilha-resumo { font-size: 12.5px; color: var(--n-400); font-variant-numeric: tabular-nums; }
+.pp-marcos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pp-marco { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 4px; }
+/* a linha que liga um marco ao anterior, do centro de um ao centro do outro */
+.pp-marco + .pp-marco::before {
+  content: ""; position: absolute; top: 17px; right: 50%; width: 100%; height: 2px;
+  background: var(--p-500); border-radius: 2px; z-index: 0;
+}
+.pp-marco.is-depois::before {
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .18) 0 6px, transparent 6px 11px) !important;
+}
+.pp-no {
+  position: relative; z-index: 1;
+  width: 36px; height: 36px; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums;
+  background: var(--s-2); border: 2px solid rgba(255, 255, 255, .16); color: var(--n-400);
+}
+.pp-marco.is-feito .pp-no { background: var(--p-500); border-color: var(--p-500); color: var(--s-0); }
+.pp-marco.is-agora .pp-no { background: var(--s-1); border-color: var(--p-400); color: var(--p-300); box-shadow: 0 0 0 5px rgba(39, 189, 190, .14); }
+.pp.is-espera .pp-marco.is-agora .pp-no { border-color: var(--a-500); color: var(--a-300); box-shadow: 0 0 0 5px rgba(245, 183, 49, .14); }
+.pp.is-espera .pp-marco.is-agora::before { background: linear-gradient(90deg, var(--p-500), var(--a-500)); }
+.pp-marco-nome { margin-top: 10px; font-size: 13px; line-height: 1.3; font-weight: 600; color: var(--n-100); text-wrap: balance; }
+.pp-marco.is-depois .pp-marco-nome { color: var(--n-400); font-weight: 500; }
+.pp-marco-status {
+  margin-top: 6px; font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--n-400);
+}
+.pp-marco.is-feito .pp-marco-status { color: var(--p-400); }
+.pp-marco.is-agora .pp-marco-status { color: var(--p-300); }
+.pp.is-espera .pp-marco.is-agora .pp-marco-status { color: var(--a-300); }
+
+/* ----------------------------- cartões ----------------------------- */
+.pp-pilha, .pp-grade { display: flex; flex-direction: column; gap: 16px; }
+.pp-cartao {
+  position: relative; border-radius: 24px; padding: 24px 20px;
+  background: var(--s-2); border: 1px solid var(--pp-borda);
+}
+@media (min-width: 400px) { .pp-cartao { padding: 28px 24px; } }
+.pp-cartao.is-destaque {
+  border-color: var(--pp-teal-borda);
+  background:
+    radial-gradient(120% 70% at 50% -20%, rgba(39, 189, 190, .14), transparent 60%),
+    var(--s-2);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .40);
+}
+.pp-cartao.is-ouro { border-color: var(--pp-ouro-borda); }
+
+.pp-etiqueta {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 700; letter-spacing: .02em;
+  padding: 6px 12px; border-radius: 999px;
+  color: var(--p-300); background: var(--pp-teal-fundo); border: 1px solid rgba(39, 189, 190, .26);
+}
+.pp-etiqueta.is-ouro { color: var(--a-500); background: var(--pp-ouro-fundo); border-color: rgba(245, 183, 49, .28); }
+.pp-etiqueta.is-neutra { color: var(--n-200); background: rgba(255, 255, 255, .05); border-color: var(--pp-borda-forte); }
+.pp-etiqueta.is-verde { color: var(--pp-verde-texto); background: rgba(37, 211, 102, .10); border-color: rgba(37, 211, 102, .28); }
+
+.pp-cartao-titulo {
+  font-family: var(--font-serif); font-weight: 400;
+  font-size: 25px; line-height: 1.18; letter-spacing: -.01em; color: #fff;
+  margin: 14px 0 10px; text-wrap: balance;
+}
+.pp-texto { font-size: 15px; line-height: 1.6; color: var(--n-300); }
+.pp-texto + .pp-texto { margin-top: 10px; }
+.pp-forte { color: #fff; font-weight: 600; }
+.pp-inteiro { white-space: nowrap; }
+
+/* ------------------------- instalar o app ------------------------- */
+.pp-instalar { margin-top: 18px; }
+.pp-btn {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  width: 100%; min-height: 58px; padding: 14px 20px;
+  border-radius: 16px; border: 0;
+  background: var(--p-500); color: var(--s-0);
+  font-family: var(--font-sans); font-size: 17px; font-weight: 700; letter-spacing: -.005em;
+  text-decoration: none; text-align: center;
+  box-shadow: 0 10px 30px rgba(39, 189, 190, .28), inset 0 1px 0 rgba(255, 255, 255, .25);
+  transition: transform .15s var(--spring), background .2s var(--ease), box-shadow .2s var(--ease);
+}
+.pp-btn:hover { background: var(--p-400); box-shadow: 0 14px 40px rgba(39, 189, 190, .36), inset 0 1px 0 rgba(255, 255, 255, .25); }
+.pp-btn:active { transform: scale(.98); }
+.pp-btn-seta { margin-left: auto; opacity: .7; flex: 0 0 auto; }
+.pp-btn-icone { flex: 0 0 auto; display: inline-flex; }
+.pp-btn-rotulo { flex: 0 1 auto; }
+.pp-nota { margin-top: 10px; text-align: center; font-size: 13px; color: var(--n-400); }
+.pp-outro {
+  margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; column-gap: 6px;
+  font-size: 14px; color: var(--n-400); text-align: center;
+}
+.pp-outro a, .pp-link {
+  display: inline-flex; align-items: center; min-height: 44px;
+  color: var(--p-400); font-weight: 600; text-decoration: none;
+}
+.pp-outro a:hover, .pp-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.pp-ja {
+  display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px;
+  margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--pp-borda);
+  font-size: 14px; color: var(--n-300); text-decoration: none;
+}
+.pp-ja:hover { color: #fff; }
+.pp-ja svg { color: var(--p-400); flex: 0 0 auto; }
+
+/* QR code (computador) */
+.pp-qr { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
+.pp-qr-codigo {
+  flex: 0 0 auto; width: 168px; height: 168px; padding: 10px;
+  border-radius: 18px; background: #fff;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .1), 0 16px 40px rgba(0, 0, 0, .45);
+}
+.pp-qr-codigo img { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+.pp-qr-titulo { font-size: 16px; font-weight: 700; color: #fff; line-height: 1.35; }
+.pp-qr-texto { font-size: 14px; color: var(--n-300); margin-top: 4px; line-height: 1.5; }
+@media (min-width: 560px) {
+  .pp-qr { flex-direction: row; text-align: left; gap: 22px; }
+}
+.pp-lojas-antes { margin: 20px 0 10px; font-size: 13px; color: var(--n-400); text-align: center; }
+@media (min-width: 560px) { .pp-lojas-antes { text-align: left; } }
+
+/* botões das lojas (StoreBadges variant="botoes") */
+.pp-lojas { display: grid; gap: 10px; grid-template-columns: 1fr; }
+@media (min-width: 440px) { .pp-lojas { grid-template-columns: 1fr 1fr; } }
+.pp-loja {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 52px; padding: 10px 16px; border-radius: 14px;
+  background: #000; color: #fff; border: 1px solid rgba(255, 255, 255, .22);
+  font-size: 14.5px; font-weight: 600; line-height: 1.25; text-decoration: none; text-align: left;
+  transition: background .2s var(--ease), border-color .2s var(--ease), transform .15s var(--spring);
+}
+.pp-loja:hover { background: #0c1111; border-color: rgba(255, 255, 255, .4); }
+.pp-loja:active { transform: scale(.98); }
+.pp-loja svg { flex: 0 0 auto; }
+
+/* ------------------------- passos da senha ------------------------- */
+.pp-passos { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; }
+.pp-passo { position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr); column-gap: 12px; padding-bottom: 18px; }
+@media (min-width: 400px) { .pp-passo { grid-template-columns: 32px minmax(0, 1fr); column-gap: 14px; } }
+.pp-passo:last-child { padding-bottom: 0; }
+/* fio vertical entre os números */
+.pp-passo:not(:last-child)::before {
+  content: ""; position: absolute; left: 14px; top: 34px; bottom: 2px; width: 2px;
+  background: linear-gradient(rgba(39, 189, 190, .35), rgba(39, 189, 190, .08)); border-radius: 2px;
+}
+.pp-passo-num {
+  width: 30px; height: 30px; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-serif); font-size: 16px; color: var(--p-300);
+  background: var(--pp-teal-fundo); border: 1px solid rgba(39, 189, 190, .3);
+}
+.pp-passo-texto { font-size: 15px; line-height: 1.6; color: var(--n-200); padding-top: 4px; min-width: 0; }
+
+/* O "chip": imita o botão de texto da tela de login do app (teal, 600),
+   num recorte escuro como a tela, com um ponto de toque. Não é clicável
+   aqui: é a indicação de onde tocar no app. */
+.pp-chip-grupo { white-space: nowrap; }
+.pp-chip {
+  display: inline-flex; align-items: center; gap: 7px; vertical-align: baseline;
+  margin: 2px 0; padding: 4px 11px 4px 7px;
+  border-radius: 999px; background: var(--s-0); border: 1px solid rgba(61, 203, 204, .38);
+  color: var(--p-400); font-size: 13px; font-weight: 600; line-height: 1.35; white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .35);
+}
+@media (min-width: 400px) { .pp-chip { font-size: 14px; gap: 8px; padding: 4px 12px 4px 8px; } }
+/* tela muito estreita (menos de 360 px): o rótulo pode quebrar dentro do chip */
+@media (max-width: 359px) { .pp-chip-grupo, .pp-chip { white-space: normal; } }
+.pp-chip-toque {
+  position: relative; flex: 0 0 auto; width: 10px; height: 10px; border-radius: 999px;
+  background: var(--p-400); box-shadow: 0 0 0 4px rgba(61, 203, 204, .18);
+}
+
+/* ---------------------------- WhatsApp ---------------------------- */
+.pp-whats {
+  border-color: rgba(37, 211, 102, .22);
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(37, 211, 102, .09), transparent 60%),
+    var(--s-2);
+}
+.pp-whats-topo { display: flex; align-items: center; gap: 12px; }
+.pp-whats-icone {
+  width: 40px; height: 40px; border-radius: 12px; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--pp-verde); background: rgba(37, 211, 102, .12); border: 1px solid rgba(37, 211, 102, .26);
+}
+
+/* ------------------------- o que te espera ------------------------- */
+.pp-espera {
+  margin: 0; padding: 24px 20px 0; border-radius: 24px; overflow: hidden;
+  background: linear-gradient(180deg, rgba(39, 189, 190, .07), rgba(39, 189, 190, 0) 60%), var(--s-1);
+  border: 1px solid var(--pp-borda);
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+.pp-espera-frase {
+  font-family: var(--font-serif); font-size: 21px; line-height: 1.3; color: #fff;
+  max-width: 22ch; text-wrap: balance;
+}
+.pp-espera-tela {
+  width: 212px; margin-top: 20px; height: 330px; overflow: hidden;
+  -webkit-mask-image: linear-gradient(#000 62%, transparent);
+  mask-image: linear-gradient(#000 62%, transparent);
+}
+
+/* --------------------------- não recebeu --------------------------- */
+.pp-ajuda { border-radius: 20px; background: rgba(255, 255, 255, .025); border: 1px solid var(--pp-borda); }
+.pp-ajuda summary {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 56px; padding: 14px 20px;
+  font-size: 15.5px; font-weight: 600; color: #fff;
+}
+.pp-ajuda summary::-webkit-details-marker { display: none; }
+.pp-ajuda summary::marker { content: ""; }
+.pp-ajuda-seta { flex: 0 0 auto; color: var(--n-300); transition: transform .2s var(--ease); }
+.pp-ajuda[open] .pp-ajuda-seta { transform: rotate(180deg); }
+.pp-ajuda-corpo { padding: 0 20px 18px; display: flex; flex-direction: column; gap: 16px; }
+.pp-ajuda-item { padding-top: 16px; border-top: 1px solid var(--pp-borda); }
+.pp-ajuda-pergunta { font-size: 14.5px; font-weight: 600; color: var(--n-100); margin-bottom: 4px; }
+.pp-ajuda-resposta { font-size: 14.5px; line-height: 1.6; color: var(--n-300); }
+.pp-ajuda-resposta a { color: var(--p-400); font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
+.pp-ajuda-resposta a:hover { text-decoration: underline; }
+
+/* ------------------------- pagamento pendente ------------------------- */
+.pp-formas { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.pp-forma {
+  padding: 14px 16px; border-radius: 16px;
+  background: rgba(255, 255, 255, .03); border: 1px solid var(--pp-borda);
+}
+.pp-forma-titulo { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 2px; }
+.pp-forma-texto { font-size: 14px; line-height: 1.55; color: var(--n-300); }
+.pp-instrucoes { margin-top: 14px; }
+
+/* ------------------------------ final ------------------------------ */
+.pp-final { text-align: center; padding: 28px 0 8px; }
+.pp-final p { font-size: 14.5px; line-height: 1.6; color: var(--n-400); }
+.pp-final p + p { margin-top: 2px; }
+.pp-final a { color: var(--p-400); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.pp-final a:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* link dentro da frase: alvo maior com padding vertical, sem mexer na linha */
+.pp-final .pp-link { display: inline; min-height: 0; padding: 12px 0; }
+.pp-frase {
+  font-family: var(--font-serif); font-style: italic; font-size: 20px; color: var(--n-200) !important;
+  margin-top: 28px !important; padding-top: 28px; border-top: 1px solid var(--pp-borda);
+}
+.pp-rodape {
+  position: relative; z-index: 1; margin-top: 36px; padding: 28px 0 36px;
+  border-top: 1px solid var(--pp-borda); text-align: center;
+  font-size: 12.5px; color: var(--n-400);
+}
+
+/* ---------------------------- /baixar ---------------------------- */
+.pp-baixar-tela { display: none; }
+
+/* ----------------------------- desktop ----------------------------- */
+@media (min-width: 960px) {
+  .pp-moldura.is-larga { max-width: 1060px; }
+  .pp-moldura.is-larga .pp-hero,
+  .pp-moldura.is-larga .pp-trilha { max-width: 620px; margin-left: auto; margin-right: auto; }
+  .pp-grade {
+    display: grid; gap: 20px; align-items: start;
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+  .pp-grade > .pp-espera {
+    grid-column: 2; grid-row: 1 / span 6;
+    position: sticky; top: 24px;
+  }
+  .pp-grade > :not(.pp-espera) { grid-column: 1; }
+  .pp-espera-tela { width: 240px; height: auto; -webkit-mask-image: none; mask-image: none; margin-bottom: -2px; }
+  .pp-espera { padding-bottom: 0; }
+
+  .pp-baixar { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 56px; align-items: center; padding: 24px 0 8px; }
+  .pp-baixar .pp-hero { text-align: left; padding-top: 0; }
+  .pp-baixar .pp-sub { margin: 0; }
+  .pp-baixar-tela { display: block; }
+}
+
+/* ---------------------------- movimento ---------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .pp-selo svg { animation: pp-surgir .6s var(--spring) both; }
+  .pp-selo-onda { animation: pp-onda 1.4s .55s var(--ease) both; }
+  .pp-selo-check { animation: pp-tracar .5s .35s var(--ease) both; }
+  .pp-selo-raios line { animation: pp-tracar .45s var(--ease) both; animation-delay: calc(.55s + var(--i, 0) * .05s); }
+  .pp-selo-ponteiro { animation: pp-girar 2.4s .4s cubic-bezier(.45, 0, .2, 1) both; }
+  .pp-surge { animation: pp-subir .6s var(--ease) both; animation-delay: calc(.15s + var(--d, 0) * .08s); }
+  .pp-marco.is-agora .pp-no { animation: pp-pulso 1.8s 1s var(--ease) 2; }
+  .pp-chip-toque::after {
+    content: ""; position: absolute; inset: -4px; border-radius: 999px;
+    border: 2px solid var(--p-400); opacity: 0;
+    animation: pp-toque 1.6s 1.2s var(--ease) 3;
+  }
+}
+@keyframes pp-surgir { from { opacity: 0; transform: scale(.7); } }
+@keyframes pp-tracar { from { stroke-dashoffset: 1; } }
+@keyframes pp-onda { 0% { opacity: .6; transform: scale(1); } 100% { opacity: 0; transform: scale(1.55); } }
+@keyframes pp-girar { from { transform: rotate(-360deg); } }
+@keyframes pp-subir { from { opacity: 0; transform: translateY(10px); } }
+@keyframes pp-pulso { 0%, 100% { box-shadow: 0 0 0 5px rgba(39, 189, 190, .14); } 50% { box-shadow: 0 0 0 9px rgba(39, 189, 190, .06); } }
+@keyframes pp-toque { 0% { opacity: .8; transform: scale(.6); } 100% { opacity: 0; transform: scale(2.2); } }
+
+/* /baixar: o primeiro acesso, abaixo das lojas */
+.pp-baixar-acesso { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--pp-borda); text-align: center; }
+@media (min-width: 560px) { .pp-baixar-acesso { text-align: left; } }
+.pp-baixar-tela { width: 300px; }
+
+/* pulso do marco atual no tom dourado das páginas de espera */
+@media (prefers-reduced-motion: no-preference) {
+  .pp.is-espera .pp-marco.is-agora .pp-no { animation-name: pp-pulso-ouro; }
+}
+@keyframes pp-pulso-ouro { 0%, 100% { box-shadow: 0 0 0 5px rgba(245, 183, 49, .14); } 50% { box-shadow: 0 0 0 9px rgba(245, 183, 49, .06); } }
+
+/* sem movimento pedido: também nada de transição (botões, seta do "Não recebeu?") */
+@media (prefers-reduced-motion: reduce) {
+  .pp *, .pp *::before, .pp *::after { transition: none !important; }
+}

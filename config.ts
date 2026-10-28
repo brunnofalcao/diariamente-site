@@ -162,10 +162,15 @@ export const HOTMART = {
 
 // ---------------------------------------------------------------------
 // LOJAS DE APP — o app é ENTREGA, não aquisição.
+// Cópia do português de LOJAS_DO_LOCAL.pt (lib/i18n.ts), a fonte única
+// dos links por idioma; o teste (testes/obrigado.test.mjs) confere que
+// são iguais. Fica escrita aqui porque o JSON-LD do layout e o rodapé
+// leem LOJAS, e este arquivo não importa nada além dos preços. Caminho
+// novo da Apple: o antigo (/br/app/diariamente/id...) dava 301.
 // ---------------------------------------------------------------------
 export const LOJAS = {
-  appStore: "https://apps.apple.com/br/app/diariamente/id6762151251",
-  googlePlay: "https://play.google.com/store/apps/details?id=club.diariamente.app",
+  appStore: "https://apps.apple.com/br/app/diariamente-sa%C3%BAde-mental/id6762151251",
+  googlePlay: "https://play.google.com/store/apps/details?id=club.diariamente.app&hl=pt-BR",
 };
 
 export const LOJAS_BADGES = {

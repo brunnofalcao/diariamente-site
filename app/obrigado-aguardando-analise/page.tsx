@@ -1,12 +1,14 @@
-import type { Metadata } from "next";
-import { ObrigadoShell } from "@/components/ObrigadoShell";
+import { PaginaObrigado, metadataDoObrigado, type Busca } from "@/components/PaginaObrigado";
 
-export const metadata: Metadata = {
-  title: "Pagamento em análise",
-  description: "Seu pagamento do Diariamente está sendo analisado.",
-  robots: { index: false, follow: false },
-};
+// pt-BR, sem prefixo: é a URL que vai na Hotmart. Quem não lê em pt-BR já
+// foi levado pelo middleware para /es, /es-es ou /pt-pt (lib/obrigado.mjs,
+// destinoDoObrigado), com todos os parâmetros. Regras: docs/POS-PAGAMENTO.md.
 
-export default function ObrigadoAguardandoAnalise() {
-  return <ObrigadoShell estado="aguardando-analise" />;
+// Lê user-agent, cookie e parâmetros a cada visita (e a página é noindex).
+export const dynamic = "force-dynamic";
+
+export const metadata = metadataDoObrigado("aguardando-analise", "pt");
+
+export default function ObrigadoAguardandoAnalise(props: { searchParams: Busca }) {
+  return <PaginaObrigado estado="aguardando-analise" local="pt" searchParams={props.searchParams} />;
 }

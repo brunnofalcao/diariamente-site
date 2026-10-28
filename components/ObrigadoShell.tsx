@@ -1,419 +1,271 @@
-import { Fragment, type ReactNode } from "react";
-import { SITE, EMPRESA } from "@/config";
-import { ATENDIMENTO, linkDoAtendimento } from "@/config/atendimento";
-import { OfficialLogo } from "@/components/Brand";
-import { StoreBadges } from "@/components/StoreBadges";
-import { TEXTOS } from "@/lib/obrigado.mjs";
+import type { CSSProperties } from "react";
+import { ATENDIMENTO } from "@/config/atendimento";
+import { TelaDaLoja } from "@/components/TelaDaLoja";
+import {
+  Final,
+  Hero,
+  InstalarApp,
+  Inteiro,
+  Moldura,
+  Rico,
+  SeloAprovado,
+  SeloEspera,
+  Trilha,
+  textosDo,
+} from "@/components/PosPagamento";
+import { ATIVOS, dicionario } from "@/lib/i18n";
+import { IDIOMA_DO_APP, orientacaoDoPagamento } from "@/lib/obrigado.mjs";
+import type { Aparelho, Estado, Forma, Local } from "@/lib/pos-pagamento";
 
-type Estado = "aprovado" | "aguardando-pagamento" | "aguardando-analise";
-type Idioma = "pt" | "es";
-type Forma = "pix" | "boleto" | "outra" | null;
-type Trecho = string | { b: string };
+/* =====================================================================
+   ObrigadoShell · as três páginas de obrigado, nos quatro locais
+   ---------------------------------------------------------------------
+   APROVADO: o app é o motivo principal, então a página leva direto a ele.
+     selo que se desenha, trilha de 3 marcos (pagamento feito, instalar
+     agora, senha a seguir), instalar pelo aparelho detectado (botão da
+     loja certa no celular, QR code no computador), criar a senha com o
+     chip do botão exato do app, o aviso do WhatsApp (sem prometer que
+     chega), a tela real do app, "Não recebeu?" e o atendimento.
+   AGUARDANDO PAGAMENTO e EM ANÁLISE: mesma moldura, em dourado, com o
+     relógio, a trilha no passo 2 e o que fazer enquanto isso. Pix e
+     boleto só no Brasil (lib/obrigado.mjs, orientacaoDoPagamento).
 
-/**
- * ObrigadoShell — layout compartilhado das 3 páginas de obrigado.
- * Cada estado tem sua própria mensagem, cor de selo e próximo passo.
- * O design é o mesmo da página de vendas (dark, teal, serifado).
- *
- * Aprovado e aguardando pagamento seguem o roteiro do dono (20/10/2026)
- * e existem em pt e es: os textos ficam em lib/obrigado.mjs, onde o teste
- * confere as regras da marca. O idioma e a forma de pagamento vêm da
- * página (?lang=, Accept-Language e, se um dia vier, a forma na URL).
- *
- * Em análise fica como era, só em português. Nas três, o endereço de
- * atendimento sai de config/atendimento.ts.
- */
+   Textos: lib/obrigado-textos.mjs. Regras de idioma, aparelho e forma de
+   pagamento: lib/obrigado.mjs. A página (components/PaginaObrigado.tsx)
+   decide local, aparelho e forma no servidor e entrega aqui; o Purchase
+   fica lá, só na aprovada.
+   ===================================================================== */
+
 export function ObrigadoShell({
   estado,
-  lang = "pt",
+  local,
+  aparelho,
   forma = null,
 }: {
   estado: Estado;
-  lang?: Idioma;
-  forma?: Forma;
+  local: Local;
+  aparelho: Aparelho;
+  forma?: Forma | null;
 }) {
-  if (estado === "aprovado") return <Aprovado lang={lang} />;
-  if (estado === "aguardando-pagamento") return <AguardandoPagamento lang={lang} forma={forma} />;
-  return <AguardandoAnalise />;
+  if (estado === "aprovado") return <Aprovado local={local} aparelho={aparelho} />;
+  if (estado === "aguardando-pagamento") return <AguardandoPagamento local={local} aparelho={aparelho} forma={forma} />;
+  return <AguardandoAnalise local={local} aparelho={aparelho} />;
 }
 
-/* ------------------------------------------------------------------ */
-/* moldura comum: brilho, logo e rodapé                                */
-/* ------------------------------------------------------------------ */
-function Moldura({ lang, children }: { lang?: Idioma; children: ReactNode }) {
+const atraso = (d: number) => ({ "--d": d }) as CSSProperties;
+
+function Seta() {
   return (
-    <main className="obg" lang={lang === "es" ? "es" : undefined}>
-      <div className="obg-glow" aria-hidden="true" />
-
-      <header className="obg-header">
-        <div className="wrap" style={{ display: "flex", justifyContent: "center" }}>
-          <OfficialLogo height={30} />
-        </div>
-      </header>
-
-      {children}
-
-      <footer className="obg-footer">
-        <div className="wrap center">
-          <p className="caption" style={{ color: "var(--n-600)" }}>
-            © {new Date().getFullYear()} {EMPRESA.marca}® · {SITE.dominioVisivel}
-          </p>
-        </div>
-      </footer>
-    </main>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M12 5v14" />
+      <path d="m6 13 6 6 6-6" />
+    </svg>
   );
 }
 
-function SeloCheck() {
+function IconeWhatsApp() {
+  // Balão de conversa com o fone, desenhado aqui (sem logo de terceiros baixado).
   return (
-    <div className="obg-check">
-      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <polyline points="20 6 9 17 4 12" />
-      </svg>
-    </div>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+      <path
+        d="M20.4 11.6a8.4 8.4 0 0 1-12.5 7.3L3.6 20.4l1.5-4.2a8.4 8.4 0 1 1 15.3-4.6z"
+        stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"
+      />
+      <path
+        d="M9.3 8.3c.2-.4.5-.4.8-.4h.5c.2 0 .4.1.5.4l.6 1.5c.1.2 0 .5-.1.6l-.5.6c-.1.1-.2.3-.1.5.5.9 1.2 1.6 2.1 2.1.2.1.4.1.5-.1l.6-.6c.2-.2.4-.2.6-.1l1.5.7c.3.1.4.3.4.5v.5c0 .3-.1.7-.6.9-.6.3-1.5.4-2.6-.1-1.6-.7-2.9-2-3.7-3.6-.5-1.1-.4-2-.4-2.9z"
+        fill="currentColor"
+      />
+    </svg>
   );
 }
 
-function SeloRelogio() {
+function Chevron() {
   return (
-    <div className="obg-check is-wait">
-      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3 2" />
-      </svg>
-    </div>
-  );
-}
-
-/** Palavra com hífen (e-mail, Boas-vindas) não quebra no hífen. */
-function Inteiro({ texto }: { texto: string }) {
-  return (
-    <>
-      {texto.split(/(\S+-\S+)/).map((parte, i) =>
-        i % 2 ? (
-          <span key={i} className="obg-inteiro">{parte}</span>
-        ) : (
-          <Fragment key={i}>{parte}</Fragment>
-        )
-      )}
-    </>
-  );
-}
-
-/** Texto com trechos em negrito ({ b: "..." }). "e-mail" não quebra no hífen. */
-function Rico({ partes }: { partes: readonly Trecho[] }) {
-  return (
-    <>
-      {partes.map((p, i) =>
-        typeof p === "string" ? (
-          <Inteiro key={i} texto={p} />
-        ) : (
-          <strong key={i} className="obg-forte"><Inteiro texto={p.b} /></strong>
-        )
-      )}
-    </>
-  );
-}
-
-function Hero({
-  selo,
-  tom,
-  eyebrow,
-  titulo,
-  sub,
-}: {
-  selo: ReactNode;
-  tom: "teal" | "gold";
-  eyebrow: string;
-  titulo: readonly string[];
-  sub: string;
-}) {
-  return (
-    <section className="obg-hero">
-      <div className="wrap-narrow center">
-        {selo}
-        <span className={`overline ${tom}`} style={{ display: "block", marginBottom: "var(--sp3)" }}>
-          {eyebrow}
-        </span>
-        <h1 className="obg-titulo">
-          {titulo.map((linha, i) => (
-            <Fragment key={i}>
-              {i > 0 && <br />}
-              <Inteiro texto={linha} />
-            </Fragment>
-          ))}
-        </h1>
-        <p className="lead muted obg-sub">{sub}</p>
-      </div>
-    </section>
-  );
-}
-
-/** Versão web do app. No espanhol, o app já abre em espanhol. */
-function LinkWeb({ lang, antes, rotulo }: { lang: Idioma; antes: string; rotulo: string }) {
-  const href = lang === "es" ? `${SITE.appUrl}/?lang=es` : SITE.appUrl;
-  return (
-    <p className="body-sm muted obg-web">
-      {antes}{" "}
-      <a href={href} className="teal">
-        {rotulo}
-      </a>
-    </p>
-  );
-}
-
-function Atendimento({ antes, assunto }: { antes: string; assunto: string }) {
-  return (
-    <p className="body-sm muted center obg-atendimento">
-      {antes}{" "}
-      <a href={linkDoAtendimento(assunto)} className="teal">
-        {ATENDIMENTO.email}
-      </a>
-      .
-    </p>
+    <svg className="pp-ajuda-seta" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="m6 9 6 6 6-6" />
+    </svg>
   );
 }
 
 /* ------------------------------------------------------------------ */
 /* 1 · PAGAMENTO APROVADO                                              */
 /* ------------------------------------------------------------------ */
-function Aprovado({ lang }: { lang: Idioma }) {
-  const t = TEXTOS.aprovado[lang];
+function Aprovado({ local, aparelho }: { local: Local; aparelho: Aparelho }) {
+  const t = textosDo(local).aprovado;
+  const lang = IDIOMA_DO_APP[local] as "pt" | "es";
+  const tela = ATIVOS[lang].img.leitura;
+  const alt = dicionario(lang, local === "pt-pt" ? "pt" : undefined).finAlt;
   return (
-    <Moldura lang={lang}>
-      <Hero selo={<SeloCheck />} tom="teal" eyebrow={t.selo} titulo={t.titulo} sub={t.sub} />
+    <Moldura local={local} larga>
+      <Hero selo={<SeloAprovado />} sobre={t.selo} titulo={t.titulo} sub={t.sub} />
+      <Trilha t={t.trilha} atual={2} />
 
-      {/* Passo 1: o e-mail com os dados de acesso */}
-      <section className="obg-sec">
-        <div className="wrap-narrow">
-          <div className="obg-card obg-card-destaque">
-            <div className="obg-card-glow" aria-hidden="true" />
-            <div className="obg-card-inner">
-              <span className="badge badge-primary">{t.passo1Selo}</span>
-              <h2 className="obg-card-titulo"><Inteiro texto={t.passo1Titulo} /></h2>
-              <p className="body-sm muted">
-                <Rico partes={t.passo1Texto} />
-              </p>
-            </div>
+      <div className="pp-grade">
+        {/* Passo 2: instalar o app, pelo aparelho */}
+        <section className="pp-cartao is-destaque pp-surge" style={atraso(5)} id="passo-2" aria-labelledby="passo-2-titulo">
+          <span className="pp-etiqueta">{t.app.selo}</span>
+          <h2 id="passo-2-titulo" className="pp-cartao-titulo">{t.app.titulo}</h2>
+          <InstalarApp local={local} aparelho={aparelho} />
+          <a className="pp-ja" href="#passo-3">
+            <span>{t.app.jaInstalado}</span>
+            <Seta />
+          </a>
+        </section>
+
+        {/* Passo 3: criar a senha no app */}
+        <section className="pp-cartao pp-surge" style={atraso(6)} id="passo-3" aria-labelledby="passo-3-titulo">
+          <span className="pp-etiqueta is-neutra">{t.senha.selo}</span>
+          <h2 id="passo-3-titulo" className="pp-cartao-titulo">{t.senha.titulo}</h2>
+          <ol className="pp-passos" role="list">
+            {t.senha.passos.map((partes, i) => (
+              <li key={i} className="pp-passo">
+                <span className="pp-passo-num" aria-hidden="true">{i + 1}</span>
+                <p className="pp-passo-texto"><Rico partes={partes} /></p>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        {/* WhatsApp: o mesmo passo a passo, se o número veio certo no pagamento */}
+        <section className="pp-cartao pp-whats pp-surge" style={atraso(7)} aria-labelledby="pp-whats-titulo">
+          <div className="pp-whats-topo">
+            <span className="pp-whats-icone"><IconeWhatsApp /></span>
+            <span className="pp-etiqueta is-verde">{t.whatsapp.selo}</span>
           </div>
-        </div>
-      </section>
+          <h2 id="pp-whats-titulo" className="pp-cartao-titulo">{t.whatsapp.titulo}</h2>
+          <p className="pp-texto"><Inteiro texto={t.whatsapp.texto} /></p>
+        </section>
 
-      {/* Passo 2: baixar o app (lojas e versão web) */}
-      <section className="obg-sec">
-        <div className="wrap-narrow">
-          <div className="obg-card">
-            <div className="obg-card-inner">
-              <span className="overline">{t.passo2Selo}</span>
-              <h2 className="obg-card-titulo"><Inteiro texto={t.passo2Titulo} /></h2>
-              <p className="body-sm muted" style={{ marginBottom: "var(--sp6)" }}>
-                <Inteiro texto={t.passo2Texto} />
-              </p>
-              <StoreBadges variant="link" lang={lang} />
-              <LinkWeb lang={lang} antes={t.webAntes} rotulo={t.webLink} />
-            </div>
+        {/* O que te espera: a tela real do app (arte das lojas) */}
+        <figure className="pp-espera pp-surge" style={atraso(8)}>
+          <figcaption className="pp-espera-frase">{t.espera.texto}</figcaption>
+          <div className="pp-espera-tela">
+            <TelaDaLoja base={tela} alt={alt} sizes="(min-width: 960px) 240px, 212px" />
           </div>
-        </div>
-      </section>
+        </figure>
 
-      {/* O caminho que já funciona hoje, discreto: código no WhatsApp */}
-      <section className="obg-sec">
-        <div className="wrap-narrow">
-          <div className="obg-atalho">
-            <span className="overline obg-atalho-selo">{t.agoraSelo}</span>
-            <p className="body-sm muted">
-              <Rico partes={t.agoraTexto} />
-            </p>
-          </div>
-
-          <p className="obg-frase center">{t.frase}</p>
-
-          <Atendimento antes={t.suporteAntes} assunto={ATENDIMENTO.assuntoSuporte} />
-        </div>
-      </section>
-    </Moldura>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* 2 · AGUARDANDO PAGAMENTO (Pix ou boleto)                            */
-/* ------------------------------------------------------------------ */
-function AguardandoPagamento({ lang, forma }: { lang: Idioma; forma: Forma }) {
-  const t = TEXTOS["aguardando-pagamento"][lang];
-  // Sem a forma na URL, as duas orientações. Com uma forma que não é Pix nem
-  // boleto ("outra"), nenhuma das duas: só a linha das instruções no e-mail.
-  const outra = forma === "outra";
-  const mostraPix = !outra && forma !== "boleto";
-  const mostraBoleto = !outra && forma !== "pix";
-  return (
-    <Moldura lang={lang}>
-      <Hero selo={<SeloRelogio />} tom="gold" eyebrow={t.selo} titulo={t.titulo} sub={t.sub} />
-
-      {/* Como concluir o pagamento */}
-      <section className="obg-sec">
-        <div className="wrap-narrow">
-          <div className="obg-card">
-            <div className="obg-card-inner">
-              <span className="badge badge-gold">{t.concluirSelo}</span>
-              <h2 className="obg-card-titulo"><Inteiro texto={t.concluirTitulo} /></h2>
-              {(mostraPix || mostraBoleto) && (
-                <div className="obg-formas">
-                  {mostraPix && (
-                    <div className="obg-item" data-forma="pix">
-                      <div>
-                        <div className="h3" style={{ marginBottom: 3 }}>{t.pixTitulo}</div>
-                        <p className="body-sm muted">{t.pixTexto}</p>
-                      </div>
-                    </div>
-                  )}
-                  {mostraBoleto && (
-                    <div className="obg-item" data-forma="boleto">
-                      <div>
-                        <div className="h3" style={{ marginBottom: 3 }}>{t.boletoTitulo}</div>
-                        <p className="body-sm muted">{t.boletoTexto}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-              {outra ? (
-                <p className="body-sm muted" data-forma="outra">
-                  <Inteiro texto={`${t.instrucoesSoEmail} ${t.jaPagou}`} />
-                </p>
-              ) : (
-                <p className="body-sm muted" style={{ marginTop: "var(--sp5)" }}>
-                  <Inteiro texto={`${t.instrucoes} ${t.jaPagou}`} />
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Acesso liberado depois da confirmação; acompanhar o e-mail */}
-      <section className="obg-sec">
-        <div className="wrap-narrow">
-          <div className="obg-card">
-            <div className="obg-card-inner">
-              <span className="overline">{t.emailSelo}</span>
-              <h2 className="obg-card-titulo"><Inteiro texto={t.emailTitulo} /></h2>
-              <p className="body-sm muted">
-                <Rico partes={t.emailTexto} />
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Baixar o app enquanto espera */}
-      <section className="obg-sec">
-        <div className="wrap-narrow">
-          <div className="obg-card">
-            <div className="obg-card-inner">
-              <span className="overline">{t.appSelo}</span>
-              <h2 className="obg-card-titulo"><Inteiro texto={t.appTitulo} /></h2>
-              <p className="body-sm muted" style={{ marginBottom: "var(--sp6)" }}>
-                <Inteiro texto={t.appTexto} />
-              </p>
-              <StoreBadges variant="link" lang={lang} />
-              <LinkWeb lang={lang} antes={t.webAntes} rotulo={t.webLink} />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="obg-sec">
-        <div className="wrap-narrow">
-          <p className="obg-frase center">{t.frase}</p>
-          <Atendimento antes={t.suporteAntes} assunto={ATENDIMENTO.assuntoAtendimento} />
-        </div>
-      </section>
-    </Moldura>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* 3 · EM ANÁLISE (como era; só o atendimento e "e-mail da compra")    */
-/* ------------------------------------------------------------------ */
-function AguardandoAnalise() {
-  return (
-    <Moldura>
-      <section className="obg-hero">
-        <div className="wrap-narrow center">
-          <SeloRelogio />
-
-          <span className="overline gold" style={{ display: "block", marginBottom: "var(--sp3)" }}>
-            Em análise
-          </span>
-
-          <h1 className="obg-titulo">
-            Seu pagamento está
-            <br />
-            sendo analisado.
-          </h1>
-
-          <p className="lead muted obg-sub">
-            A operadora do cartão está confirmando a transação. Assim que for aprovada, você
-            recebe o <span className="teal">e-mail de acesso</span>. Isso costuma levar poucos
-            minutos, mas pode demorar algumas horas.
-          </p>
-        </div>
-      </section>
-
-      {/* ---------- AGUARDANDO: o que acontece agora ---------- */}
-      <section className="obg-sec">
-        <div className="wrap-narrow">
-          <div className="obg-card">
-            <div className="obg-card-inner">
-              <span className="badge badge-gold">Enquanto isso</span>
-              <h2 className="obg-card-titulo">Você não precisa fazer nada</h2>
-              <p className="body-sm muted" style={{ marginBottom: "var(--sp5)" }}>
-                Assim que a confirmação chegar, disparamos seu e-mail de acesso
-                automaticamente. Pode fechar esta página.
-              </p>
-              <p className="body-sm muted">
-                Se preferir, já deixe o app instalado. Quando o acesso liberar, é só
-                entrar com o e-mail usado no pagamento.
-              </p>
-              <div style={{ marginTop: "var(--sp6)" }}>
-                <StoreBadges variant="link" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- O QUE ESPERAR ---------- */}
-      <section className="obg-sec">
-        <div className="wrap-narrow">
-          <div className="obg-lista">
-            {[
-              { t: "A confirmação do pagamento", d: "Você recebe um aviso assim que for compensado. Não precisa ficar conferindo." },
-              { t: "O e-mail de acesso", d: "Chega automaticamente na sequência, com o passo a passo pra entrar no app." },
-              { t: "Sua jornada começa", d: "Você faz a provocação do Dia 1 e a constância começa a se construir." },
-            ].map((item, i) => (
-              <div key={i} className="obg-item">
-                <div className="obg-num">{i + 1}</div>
-                <div>
-                  <div className="h3" style={{ marginBottom: 3 }}>{item.t}</div>
-                  <p className="body-sm muted">{item.d}</p>
-                </div>
+        {/* Não recebeu? */}
+        <details className="pp-ajuda pp-surge" style={atraso(9)}>
+          <summary>
+            <span>{t.naoRecebeu.titulo}</span>
+            <Chevron />
+          </summary>
+          <div className="pp-ajuda-corpo">
+            {t.naoRecebeu.itens.map((item, i) => (
+              <div key={i} className="pp-ajuda-item">
+                <h3 className="pp-ajuda-pergunta">{item.p}</h3>
+                <p className="pp-ajuda-resposta"><Rico partes={item.r} assunto={ATENDIMENTO.assuntoSuporte} /></p>
               </div>
             ))}
           </div>
+        </details>
+      </div>
 
-          <p className="obg-frase center">
-            Volte amanhã.
-          </p>
+      <Final
+        local={local}
+        webAntes={t.webAntes}
+        webLink={t.webLink}
+        suporteAntes={t.suporteAntes}
+        assunto={ATENDIMENTO.assuntoSuporte}
+        frase={t.frase}
+      />
+    </Moldura>
+  );
+}
 
-          <p className="caption center" style={{ marginTop: "var(--sp8)" }}>
-            Precisa de ajuda?{" "}
-            <a href={linkDoAtendimento(ATENDIMENTO.assuntoAtendimento)} className="teal">
-              {ATENDIMENTO.email}
-            </a>
+/* ------------------------------------------------------------------ */
+/* 2 · AGUARDANDO PAGAMENTO                                            */
+/* ------------------------------------------------------------------ */
+function AguardandoPagamento({ local, aparelho, forma }: { local: Local; aparelho: Aparelho; forma: Forma | null }) {
+  const t = textosDo(local)["aguardando-pagamento"];
+  // Pix e boleto só existem no Brasil (lista vazia nos outros locais). Com a
+  // forma na URL, só a orientação dela; com outra forma, só a linha geral.
+  const { formas, linha } = orientacaoDoPagamento(t.concluir.formas, forma);
+  const mostrar = t.concluir.formas.filter((f) => formas.includes(f.id));
+  return (
+    <Moldura local={local} espera>
+      <Hero selo={<SeloEspera />} sobre={t.selo} titulo={t.titulo} sub={t.sub} />
+      <Trilha t={t.trilha} atual={2} />
+
+      <div className="pp-pilha">
+        <section className="pp-cartao is-ouro pp-surge" style={atraso(5)} aria-labelledby="pp-concluir-titulo">
+          <span className="pp-etiqueta is-ouro">{t.concluir.selo}</span>
+          <h2 id="pp-concluir-titulo" className="pp-cartao-titulo">{t.concluir.titulo}</h2>
+          {mostrar.length > 0 && (
+            <div className="pp-formas">
+              {mostrar.map((f) => (
+                <div key={f.id} className="pp-forma" data-forma={f.id}>
+                  <p className="pp-forma-titulo">{f.titulo}</p>
+                  <p className="pp-forma-texto"><Inteiro texto={f.texto} /></p>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className={`pp-texto${mostrar.length ? " pp-instrucoes" : ""}`} data-linha={linha}>
+            <Inteiro texto={t.concluir[linha]} />
           </p>
-        </div>
-      </section>
+          <p className="pp-texto pp-forte">{t.concluir.jaPagou}</p>
+        </section>
+
+        <section className="pp-cartao pp-surge" style={atraso(6)} aria-labelledby="pp-acesso-titulo">
+          <span className="pp-etiqueta is-neutra">{t.acesso.selo}</span>
+          <h2 id="pp-acesso-titulo" className="pp-cartao-titulo">{t.acesso.titulo}</h2>
+          <p className="pp-texto"><Rico partes={t.acesso.texto} /></p>
+        </section>
+
+        <section className="pp-cartao pp-surge" style={atraso(7)} aria-labelledby="pp-app-titulo">
+          <span className="pp-etiqueta">{t.app.selo}</span>
+          <h2 id="pp-app-titulo" className="pp-cartao-titulo">{t.app.titulo}</h2>
+          <p className="pp-texto"><Rico partes={t.app.texto} /></p>
+          <InstalarApp local={local} aparelho={aparelho} />
+        </section>
+      </div>
+
+      <Final
+        local={local}
+        webAntes={t.webAntes}
+        webLink={t.webLink}
+        suporteAntes={t.suporteAntes}
+        assunto={ATENDIMENTO.assuntoAtendimento}
+        frase={t.frase}
+      />
+    </Moldura>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* 3 · EM ANÁLISE                                                      */
+/* ------------------------------------------------------------------ */
+function AguardandoAnalise({ local, aparelho }: { local: Local; aparelho: Aparelho }) {
+  const t = textosDo(local)["aguardando-analise"];
+  return (
+    <Moldura local={local} espera>
+      <Hero selo={<SeloEspera />} sobre={t.selo} titulo={t.titulo} sub={t.sub} />
+      <Trilha t={t.trilha} atual={2} />
+
+      <div className="pp-pilha">
+        <section className="pp-cartao is-ouro pp-surge" style={atraso(5)} aria-labelledby="pp-calma-titulo">
+          <span className="pp-etiqueta is-ouro">{t.calma.selo}</span>
+          <h2 id="pp-calma-titulo" className="pp-cartao-titulo">{t.calma.titulo}</h2>
+          <p className="pp-texto"><Rico partes={t.calma.texto} /></p>
+        </section>
+
+        <section className="pp-cartao pp-surge" style={atraso(6)} aria-labelledby="pp-app-titulo">
+          <span className="pp-etiqueta">{t.app.selo}</span>
+          <h2 id="pp-app-titulo" className="pp-cartao-titulo">{t.app.titulo}</h2>
+          <p className="pp-texto"><Rico partes={t.app.texto} /></p>
+          <InstalarApp local={local} aparelho={aparelho} />
+        </section>
+      </div>
+
+      <Final
+        local={local}
+        webAntes={t.webAntes}
+        webLink={t.webLink}
+        suporteAntes={t.suporteAntes}
+        assunto={ATENDIMENTO.assuntoAtendimento}
+        frase={t.frase}
+      />
     </Moldura>
   );
 }

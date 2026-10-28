@@ -1,5 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { decidirRota, COOKIE_MERCADO, COOKIE_MERCADO_SEGUNDOS } from "@/lib/mercado";
+import {
+  decidirRota,
+  ehRobo,
+  mercadoDaVisita,
+  COOKIE_MERCADO,
+  COOKIE_MERCADO_SEGUNDOS,
+  COOKIE_VISITA,
+  COOKIE_VISITA_SEGUNDOS,
+  type Pedido,
+} from "@/lib/mercado";
+import { BAIXAR, destinoDoBaixar, destinoDoObrigado } from "@/lib/obrigado.mjs";
+import { LOJAS_DO_LOCAL } from "@/lib/i18n";
 import { SITE_LANCADO } from "@/config/lancamento";
 
 /* =====================================================================
@@ -41,6 +52,21 @@ import { SITE_LANCADO } from "@/config/lancamento";
    Vary: país, idioma e cookie. Sem isso o CDN pode servir o
    redirecionamento em cache para todo mundo.
 
+   PÓS-PAGAMENTO (docs/POS-PAGAMENTO.md; regras em lib/obrigado.mjs),
+   antes da decisão das homes:
+     - as três URLs de obrigado sem prefixo (as da Hotmart) e o
+       /obrigado antigo descobrem o idioma (cookie dm_mercado, ?off= da
+       oferta, ?lang=, Accept-Language) e, se não for pt-BR, vão para a
+       versão com prefixo (/es/..., /es-es/..., /pt-pt/...): 307 com a
+       busca INTEIRA (transaction, off, utm...)
+     - /baixar, /es/baixar, /es-es/baixar e /pt-pt/baixar: iPhone e iPad
+       vão direto para a App Store do idioma, Android para o Google Play
+       (302); computador, aparelho desconhecido e robô veem a página
+   E, depois da decisão, o cookie dm_mercado (lib/mercado.ts,
+   mercadoDaVisita) em toda página de mercado que abre: homes e páginas
+   de venda. É ele que diz às páginas de obrigado em que idioma a pessoa
+   estava quando pagou.
+
    No Next.js 16 este arquivo passa a se chamar proxy.ts.
    Mantido como middleware.ts DE PROPÓSITO: proxy.ts roda só em Node.js,
    e este arquivo roda no Edge da Vercel. Renomear muda onde e como cada
@@ -51,15 +77,43 @@ import { SITE_LANCADO } from "@/config/lancamento";
 const VARY = "x-vercel-ip-country, Accept-Language, Cookie";
 
 export function middleware(req: NextRequest) {
-  const d = decidirRota({
-    pathname: req.nextUrl.pathname,
+  const pathname = req.nextUrl.pathname;
+  const userAgent = req.headers.get("user-agent");
+  const idiomas = req.headers.get("accept-language");
+
+  // Pós-pagamento: a URL da Hotmart, sem prefixo, leva ao idioma de quem pagou.
+  const obrigado = destinoDoObrigado({
+    pathname,
     busca: req.nextUrl.search,
-    userAgent: req.headers.get("user-agent"),
+    cookie: req.cookies.get(COOKIE_VISITA)?.value,
+    idiomas,
+  });
+  if (obrigado) {
+    const r = NextResponse.redirect(new URL(obrigado, req.url));
+    r.headers.set("Vary", "Accept-Language, Cookie");
+    return r;
+  }
+
+  // /baixar: o celular vai direto para a loja do idioma.
+  if (!ehRobo(userAgent)) {
+    const loja = destinoDoBaixar(pathname, userAgent, LOJAS_DO_LOCAL);
+    if (loja) {
+      const r = NextResponse.redirect(loja, 302);
+      r.headers.set("Vary", "User-Agent");
+      return r;
+    }
+  }
+
+  const pedido: Pedido = {
+    pathname,
+    busca: req.nextUrl.search,
+    userAgent,
     cookie: req.cookies.get(COOKIE_MERCADO)?.value,
     pais: req.headers.get("x-vercel-ip-country"),
-    idiomas: req.headers.get("accept-language"),
+    idiomas,
     lancado: SITE_LANCADO,
-  });
+  };
+  const d = decidirRota(pedido);
 
   let r: NextResponse;
   if (d.tipo === "redirecionar") {
@@ -79,6 +133,19 @@ export function middleware(req: NextRequest) {
     r = NextResponse.next();
   }
   if (d.vary) r.headers.set("Vary", VARY);
+  // O computador que abre o /baixar vê a página; no celular, o 302 acima.
+  if (BAIXAR[pathname]) r.headers.set("Vary", "User-Agent");
+
+  // Página de mercado que abriu: anota o mercado para as páginas de obrigado.
+  const visita = mercadoDaVisita(pedido, d);
+  if (visita) {
+    r.cookies.set(COOKIE_VISITA, visita, {
+      path: "/",
+      maxAge: COOKIE_VISITA_SEGUNDOS,
+      sameSite: "lax",
+      secure: true,
+    });
+  }
   return r;
 }
 

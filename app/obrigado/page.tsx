@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 import { comParametros } from "@/lib/rotas";
 
 // Rota antiga mantida por compatibilidade: redireciona para a nova.
+// Quem não lê em pt-BR nem chega aqui: o middleware já leva /obrigado
+// direto para /es, /es-es ou /pt-pt/obrigado-aprovado (lib/obrigado.mjs,
+// destinoDoObrigado), com os parâmetros.
 
 // Renderizada a cada pedido, de propósito. Como página estática, o Next
 // guarda o redirect como "307 sem Location" e só redireciona com
