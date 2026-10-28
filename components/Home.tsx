@@ -780,7 +780,10 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={IMG.appStore} alt="App Store" width={144} height={48} style={{ display: "block", height: 48, width: "auto" }} />
               </a>
-              <a href={LINKS.googlePlay} target="_blank" rel="noopener noreferrer" aria-label="Google Play" style={{ display: "inline-flex", borderRadius: 8, overflow: "hidden" }}>
+              {/* Sem overflow:hidden: a margem negativa só tira a sobra
+                  transparente do SVG do Google Play, e o corte arredondado
+                  comia a borda do próprio selo (como no hero, que não corta). */}
+              <a href={LINKS.googlePlay} target="_blank" rel="noopener noreferrer" aria-label="Google Play" style={{ display: "inline-flex", borderRadius: 8 }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={IMG.googlePlay} alt="Google Play" width={180} height={57} style={{ display: "block", height: 57, width: "auto", margin: "-4.5px 0 -4.5px -8px" }} />
               </a>
@@ -940,7 +943,10 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
               </>
             )}
           </div>
-          <button type="button" tabIndex={sticky ? 0 : -1} onClick={goToOffer} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", height: 48, padding: "0 18px", borderRadius: 999, border: "none", background: C.p500, color: C.onAccent, fontFamily: "inherit", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>{ctaLabel}</button>
+          {/* Sem venda, o rótulo curto ("Me avise"): o inteiro quebrava em
+              duas linhas dentro dos 48 px. O CTA completo fica no hero e
+              no bloco. */}
+          <button type="button" tabIndex={sticky ? 0 : -1} onClick={goToOffer} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", height: 48, padding: "0 18px", borderRadius: 999, border: "none", background: C.p500, color: C.onAccent, fontFamily: "inherit", fontSize: 15, fontWeight: 600, whiteSpace: "nowrap", cursor: "pointer" }}>{vende ? ctaLabel : oferta.espera.botaoCurto}</button>
         </div>
       </div>
     </div>

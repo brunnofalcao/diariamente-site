@@ -222,6 +222,9 @@ export type Oferta = {
     selo: string;
     texto: string;
     botao: string;
+    /** Rótulo do botão da barra fixa do celular: o botao inteiro quebrava
+        em duas linhas dentro dos 48 px (revisão de 28/10/2026). */
+    botaoCurto: string;
     /** Linha curta da barra fixa. */
     nota: string;
   };
@@ -340,6 +343,7 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       selo: "Em breve",
       texto: "A assinatura abre em breve. Deixe seu contato e avisamos no dia em que abrir.",
       botao: "Me avise quando abrir",
+      botaoCurto: "Me avise",
       nota: "Avisamos no dia em que abrir",
     },
   },
@@ -381,6 +385,7 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       selo: "Próximamente",
       texto: "La suscripción para América Latina abre pronto. Déjanos tu contacto y te avisamos el día que abra.",
       botao: "Avísame cuando abra",
+      botaoCurto: "Avísame",
       nota: "Te avisamos el día que abra",
     },
   },
@@ -420,6 +425,7 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       selo: "Próximamente",
       texto: "La suscripción para España abre pronto. Déjanos tu contacto y te avisamos el día que abra.",
       botao: "Avísame cuando abra",
+      botaoCurto: "Avísame",
       nota: "Te avisamos el día que abra",
     },
   },
@@ -459,6 +465,7 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       selo: "Em breve",
       texto: "A assinatura para Portugal abre em breve. Deixa o teu contacto e avisamos-te no dia em que abrir.",
       botao: "Avisem-me quando abrir",
+      botaoCurto: "Avisem-me",
       nota: "Avisamos-te no dia em que abrir",
     },
   },
@@ -502,6 +509,7 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       selo: "Em breve",
       texto: "A assinatura para quem está fora do Brasil abre em breve. Deixe seu contato e avisamos no dia em que abrir.",
       botao: "Me avise quando abrir",
+      botaoCurto: "Me avise",
       nota: "Avisamos no dia em que abrir",
     },
   },

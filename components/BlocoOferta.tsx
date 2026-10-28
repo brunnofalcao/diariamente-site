@@ -253,7 +253,9 @@ export function BlocoOferta({ mercado, momento, previa = false, vitrine = false 
   // de destaque. No de sempre, as três iguais.
   const listaDeConfianca: React.CSSProperties = { listStyle: "none", margin: "18px 0 0", padding: "18px 0 0", borderTop: `1px solid ${C.line}`, display: "grid", gap: 10, fontSize: 14, color: C.n200 };
   const confianca = (primeiraEmDestaque: boolean) => (
-    <ul style={primeiraEmDestaque ? { ...listaDeConfianca, textWrap: "pretty" as never } : listaDeConfianca}>
+    // balance, e não pretty: com pretty sobravam duas palavras na segunda
+    // linha ("Pix / ou cartão", "o mesmo acesso / nos dois") a 390 px.
+    <ul style={primeiraEmDestaque ? { ...listaDeConfianca, textWrap: "balance" as never } : listaDeConfianca}>
       {o.confianca.map((x, i) => (
         <li key={x} style={primeiraEmDestaque && i === 0 ? { display: "flex", gap: 10, alignItems: "center", color: "#fff" } : { display: "flex", gap: 10, alignItems: "center" }}>
           <Escudo />
