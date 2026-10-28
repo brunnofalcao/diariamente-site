@@ -40,8 +40,8 @@
 > | `/pt-pt` | página de vendas em pt-PT, lista de espera no bloco (pt fechado; link `3n484jbe` pronto) |
 > | `/es` e `/es-es` | lista de espera em espanhol (página inteira; la e es fechados, links `uevhmhy2` e `iuoufnf6` prontos) |
 > | `/pt-pt/embreve`, `/es-es/embreve` | **prévias do dono** (noindex, fora do sitemap, abrem de qualquer país): página de vendas de Portugal e da Espanha com o bloco de 29,99 €, botão desabilitado enquanto a venda do mercado estiver fechada |
-> | `/estudante` | condição de estudante: R$ 89,90 por ano, cobrança anual (R$ 7,49/mês), com o cupom pessoal de uso único sobre a oferta oficial de R$ 149,90; o cupom chega pelo WhatsApp. **Fechada sozinha** enquanto faltar configuração na Vercel (item 1 abaixo): lista de espera no lugar do formulário, e a home não leva até ela |
-> | `/estudante/ativar?cupom=CODIGO` | confere o código e abre a oferta oficial `fhrttdh8` com `offDiscount=CODIGO` |
+> | `/estudante` | condição de estudante, **qualquer curso**: R$ 59,90 por ano nos 3 primeiros anos para quem assinar até 16/11/2026 e R$ 79,90 depois (nas duas fases, R$ 149,90 por ano depois dos 3 anos), numa OFERTA da Hotmart por fase; o link pessoal vai pelo WhatsApp. **Fechada sozinha** enquanto faltar o modelo v2 na Vercel ou o código da oferta da fase vigente em `config/pricing.ts` (item 1 abaixo e `docs/ESTUDANTE.md`) |
+> | `/estudante/ativar?cupom=TOKEN` | token conhecido: 302 para a oferta de estudante da fase do clique, com o token no `sck`; desconhecido: `/estudante` |
 > | `/embreve`, `/es/embreve` | redirecionam para `/` e `/es`, com utm |
 >
 > **QUADRO DE GO-LIVE · nesta ordem.** O site no ar vende na hora: o
@@ -65,126 +65,23 @@
 >
 > Depois do merge (não travam o build; saem como aviso em todo build):
 >
-> 1. **Estudante: fechado sozinho até a Vercel ter as três chaves.** O
->    fluxo é o original: aprovado o estudante, o site cria o cupom PESSOAL
->    dele pela API da Hotmart; o WhatsApp leva o botão para
->    `/estudante/ativar`, que abre a oferta oficial `fhrttdh8` com o cupom;
->    o webhook do site apaga o cupom quando o pagamento é aprovado (uso
->    único). **Enquanto faltar uma das três chaves abaixo, o build fecha o
->    fluxo** (`DM_ESTUDANTE_ABERTO`, calculada no `next.config.js`): a home
->    não mostra "Sou estudante" nem o card de estudante, a `/estudante`
->    mostra a lista de espera no lugar do formulário (os contatos entram na
->    lista com origem `estudante`, conversão `diariamente-estudante-em-breve`
->    no RD) e `/api/estudante/solicitar` responde 503 **sem gravar nada**:
->    nenhum cupom nasce, nenhum CPF fica preso pela regra "um CPF, um
->    pedido", nenhuma mensagem sai. O log diz "Estudante FECHADO" e o que
->    falta. As três chaves (Vercel, Production):
->    - `WA_TEMPLATE_ESTUDANTE`: o nome do **v2** do modelo de aprovação,
->      com o botão `https://www.diariamente.app/estudante/ativar?cupom={{1}}`
->      (com www: sem www a Vercel responde 308 e o clique dá um salto a mais),
->      criado e aprovado pelo app na Meta (o modelo aprovado hoje fica
->      preservado). O `diariamente_estudante_aprovado` abre o checkout
->      antigo, do produto 8280315, onde o cupom não vale.
->    - `HOTMART_PRODUCT_ID=7448309`. Com outro produto, o cupom nasce lá e
->      o checkout da oferta oficial não o reconhece. As credenciais da API
->      que o site já usa (`HOTMART_CLIENT_ID`, `HOTMART_CLIENT_SECRET`,
->      `HOTMART_BASIC`) servem se o 7448309 estiver na mesma conta Hotmart.
->    - `STUDENT_DISCOUNT=0.40027` (exatamente este valor). O preço do
->      estudante é FINAL (`ESTUDANTE_PRECO_FINAL = 89.9` em
->      `config/pricing.ts`), e o desconto do cupom sai dele:
->      1 - 89,90/149,90 = 0,400266..., arredondado PARA CIMA com 5 casas
->      = 0.40027 (`ESTUDANTE_DESCONTO`). Para cima porque o preço exato
->      (R$ 89,8995) fica no anunciado ou abaixo: seja qual for o
->      arredondamento da Hotmart, o checkout mostra R$ 89,90 ou R$ 89,89,
->      nunca R$ 89,91. A trava aceita só valores com essa garantia (de
->      0.40027 a 0.40030) e diz o exato no aviso. **O `0.40` antigo fecha
->      o fluxo** (daria R$ 89,94), e **0.40024 a 0.40026 também** (o
->      0.400266 do passo a passo antigo do app incluído): arredondam para
->      R$ 89,90, mas o preço exato passa dele, e, se a Hotmart cortar o
->      desconto, o checkout cobraria R$ 89,91.
->
->    Antes do novo deploy que abre o fluxo (o build não consegue conferir):
->    - Hotmart: o webhook do site (`https://www.diariamente.app/api/webhooks/hotmart`,
->      COM www, hottok em `HOTMART_HOTTOK`) cadastrado também no 7448309, com
->      compra aprovada. É ele que apaga o cupom; sem ele, o cupom só morre
->      ao vencer (48 h). Sem www, a Vercel responde 308 e a Hotmart pode
->      não repetir o POST no endereço novo: se um cadastro já existente
->      usa `https://diariamente.app/...`, troque pelo com www.
->    - Vercel, `HOTMART_OFFER_IDS`: o id NUMÉRICO da oferta `fhrttdh8`
->      (Hotmart, produto 7448309, Ofertas; o código `off` não serve).
->      **Vazio, o cupom pessoal vale em qualquer oferta do produto,
->      inclusive a de lançamento** (o mesmo desconto sobre R$ 99,98 daria
->      R$ 59,96). Não fecha o fluxo
->      (risco aceito pelo dono); sai como aviso em todo build.
->    - Aberto, faça um pedido de teste de estudante com um CPF seu e
->      **confira o primeiro cupom real no checkout: ele precisa mostrar
->      R$ 89,90.** A API da Hotmart recebe o desconto como fração e nada
->      no código nem na documentação que ele seguiu diz quantas casas ela
->      guarda nem como arredonda. O que o checkout pode mostrar, e o que
->      decidir em cada caso:
->      - **R$ 89,90:** pronto, nada a fazer.
->      - **R$ 89,89:** a Hotmart corta o centavo. O estudante paga 1
->        centavo a menos que a página (nunca a mais). Decisão do dono:
->        aceitar assim, ou pedir ao DEV um desconto um pouco menor (com o
->        corte confirmado, 0.40024 dá R$ 89,90; a trava hoje recusa esse
->        valor de propósito e precisa ser ajustada junto).
->      - **R$ 89,94:** a Hotmart guarda só 2 ou 3 casas do desconto
->        (0.40). Nenhum desconto percentual dá R$ 89,90 sobre R$ 149,90
->        (0.40 dá R$ 89,94; 0.41 dá R$ 88,44). Decisão do dono: anunciar
->        R$ 89,94 (`ESTUDANTE_PRECO_FINAL = 89.94` em `config/pricing.ts`
->        e `STUDENT_DISCOUNT=0.4`) ou R$ 88,44 (0.41). Até a decisão, o
->        estudante fica fechado (tirar o `STUDENT_DISCOUNT` da Vercel e
->        fazer um novo deploy).
->      - **"Não foi possível gerar seu código":** a Hotmart recusou o
->        desconto com 5 casas. Mesma decisão do caso de R$ 89,94.
->      - Confira também que o checkout com o cupom mostra o seletor de
->        parcelas: a `/estudante` diz "R$ 89,90 à vista, ou em até 12x no
->        cartão com acréscimo" (`ESTUDANTE.pagamento`, a mesma linha da
->        oferta oficial). Sem seletor, troque essa linha por "à vista".
->    - Banco: a coluna `cupons_estudante.desconto` é `numeric(4,3)` e
->      guarda 0.400 (o valor exato, 0.40027, fica em
->      `log_estudante.detalhe`). Não quebra nada; para guardar o valor
->      exato, `sql/2026-10-12-cupons-estudante-desconto_APROVACAO.sql`
->      (mudança em tabela existente, precisa de aprovação).
->    - Tempo de espera: a tela promete o código "em até 10 minutos"
->      (`ESTUDANTE.esperaMinutos`): 5 de janela de conferência na API e até
->      5 tentativas do cron, uma por minuto. Um teste confere a conta.
->    - Renovação: o cupom vale também nas renovações? Não se sabe. Por
->      decisão do dono (12/10/2026, terceira rodada), o texto diz SÓ que a
->      cobrança é anual: "R$ 89,90 por ano · cobrança anual" e "Cobrança
->      anual. Cancele quando quiser." (`ESTUDANTE.periodo` e
->      `ESTUDANTE.renovacao` em `config.ts`), sem "no primeiro ano", sem
->      "3 anos" e sem "renova pelo mesmo valor" (a chave
->      `renovaMesmoValor` saiu do estudante). Também sem "enquanto está
->      na graduação" nem "durante toda a sua graduação" (o mesmo prazo
->      com outras palavras): a `/estudante` diz que a condição é "para
->      quem ainda está na graduação" e que muda "o preço de entrada". Um
->      teste varre o texto em português e espanhol atrás dessas frases.
->      Durante o lançamento, a regra do LANÇAMENTO ("nos 3 primeiros
->      anos. Depois, R$ 149,90 por ano."), que é da oferta `lf63bgdd`,
->      aparece só na coluna "Quem entra hoje pelo site" do comparativo,
->      para o estudante comparar as duas opções. Ela saiu da nota do card
->      de estudante, onde era lida como a duração do cupom; a nota agora
->      começa por "Para você, estudante:".
->    - **Risco a decidir (dono): a economia durante o lançamento.** Até
->      16/11, o comparativo mostra "Você economiza R$ 10,08" e o selo
->      "R$ 10,08 OFF" (R$ 99,98 contra R$ 89,90, a cobrança de hoje), sem
->      período, como o dono pediu. Só que o preço de lançamento é garantido
->      por 3 anos e o do estudante não se sabe: se o cupom não valer nas
->      renovações, o estudante paga 89,90 + 149,90 + 149,90 = R$ 389,70 em
->      3 anos, contra R$ 299,94 pelo lançamento (R$ 89,76 a mais). A coluna
->      do lançamento mostra a regra dos 3 anos, mas o "economiza" pode ser
->      lido como vantagem garantida (CDC, art. 37). Opções, sem falar em
->      duração do estudante: (a) manter; (b) esconder a coluna "Você
->      economiza" e o selo OFF enquanto o lançamento vale; (c) dizer "na
->      cobrança de hoje". Hoje está (a).
->    - O link "Sou estudante" da home diz "R$ 7,49/mês · R$ 89,90 por ano
->      · cobrança anual", sem a linha de pagamento (não cabe no link). Ela
->      está no card e no resumo da `/estudante`, e o checkout mostra cada
->      parcela com o total.
->    - A oferta de estudante `h82bllbx` hoje mostra R$ 149,90 no checkout,
->      igual à oficial, e o site não a usa. Recomendação mantida:
->      desativá-la na Hotmart (o link dela é aberto).
+> 1. **Estudante: link pessoal e oferta por fase (decisão do dono,
+>    28/10/2026). Passo a passo em `docs/ESTUDANTE.md`.** A API de cupons
+>    da Hotmart não aceita produto de assinatura, e o 7448309 é
+>    assinatura: o cupom pessoal pela API saiu (só o standby o usa). O
+>    pedido grava um token pessoal em `cupons_estudante.codigo`, o
+>    WhatsApp (modelo `diariamente_estudante_aprovado_v2`, inalterado)
+>    leva a `/estudante/ativar?cupom=TOKEN`, que abre a oferta de
+>    estudante da fase do clique (`ESTUDANTE_OFERTA_LANCAMENTO`, R$ 59,90,
+>    até 16/11; `ESTUDANTE_OFERTA`, R$ 79,90, depois), e o webhook do site
+>    marca o link como usado na venda aprovada (pelo `sck` ou pelo
+>    e-mail). **Os dois códigos ainda estão vazios**: enquanto faltar o da
+>    fase vigente, a `/estudante` fica fechada (lista de espera, API em
+>    503 sem gravar nada, home sem o card), e o log do build diz qual
+>    falta e avisa quando faltar o da fase seguinte. `STUDENT_DISCOUNT`,
+>    `HOTMART_OFFER_IDS` e `HOTMART_PRODUCT_ID` não contam mais. Opcional:
+>    `RESEND_API_KEY` na Vercel (e-mail de aprovação pelo Resend) e o
+>    campo `cf_link_estudante` no RD (o link na conversão).
 > 2. **Fim do lançamento (16/11/2026).** Nada a fazer no site: a partir de
 >    17/11 00:00 (Brasília) a página mostra R$ 149,90 e o botão abre
 >    `fhrttdh8` (as homes se refazem a cada hora e o navegador confere de
