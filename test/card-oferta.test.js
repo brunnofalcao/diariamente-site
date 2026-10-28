@@ -104,9 +104,9 @@ test("card do Brasil no lançamento: cada linha da especificação, na ordem, co
         'Equivale a <strong style="color:#fff;font-weight:600">R$ 8,33</strong> por mês. Por dia, cerca de <strong style="color:#fff;font-weight:600">R$ 0,27</strong> e três minutos.',
         // quadro (lista de definição)
         "<dl",
-        '<dt style="color:#AAB2B2">3 anos no preço oficial</dt><dd style="margin:0;color:#8A9494;white-space:nowrap">R$ 449,70</dd>',
-        '<dt style="color:#AAB2B2">3 anos no lançamento</dt><dd style="margin:0;color:#fff;font-weight:600;white-space:nowrap">R$ 299,94</dd>',
-        '<dt style="color:#fff">Você deixa de pagar</dt><dd style="margin:0;color:#27BDBE;font-weight:700;white-space:nowrap">R$ 149,76</dd>',
+        '<dt style="color:#AAB2B2;text-wrap:balance">3 anos no preço oficial</dt><dd style="margin:0;color:#8A9494;white-space:nowrap">R$ 449,70</dd>',
+        '<dt style="color:#AAB2B2;text-wrap:balance">3 anos no lançamento</dt><dd style="margin:0;color:#fff;font-weight:600;white-space:nowrap">R$ 299,94</dd>',
+        '<dt style="color:#fff;text-wrap:balance">Em 3 anos, você deixa de pagar</dt><dd style="margin:0;color:#27BDBE;font-weight:700;white-space:nowrap">R$ 149,76</dd>',
         "</dl>",
         ">Quase o preço oficial de um ano inteiro.</p>",
         // prazo, com o à vista, logo acima do botão
@@ -150,7 +150,7 @@ test("card do Brasil: acessibilidade (rótulo do riscado lido, quadro em lista d
   assert.equal((dl.match(/<dt /g) || []).length, 3);
   assert.equal((dl.match(/<dd /g) || []).length, 3);
   assert.equal(/<p|<span/.test(dl), false, "só dt e dd dentro do dl");
-  assert.equal(texto(dl + "</dl>"), "3 anos no preço oficial R$ 449,70 3 anos no lançamento R$ 299,94 Você deixa de pagar R$ 149,76");
+  assert.equal(texto(dl + "</dl>"), "3 anos no preço oficial R$ 449,70 3 anos no lançamento R$ 299,94 Em 3 anos, você deixa de pagar R$ 149,76");
   // ícones decorativos fora do leitor de tela
   for (const svg of h.match(/<svg [^>]*>/g)) assert.match(svg, /aria-hidden="true"/);
   // contraste (WCAG 2.x) de toda cor de texto do card sobre o fundo do
@@ -184,7 +184,7 @@ test("card do Brasil: a legenda some quando a economia sai da faixa de 95% a men
       const h = bloco("br");
       assert.equal(/ano inteiro/.test(h), false, String(preco));
       // o quadro continua, com a conta do preço fictício
-      assert.match(h, new RegExp(`Você deixa de pagar</dt><dd [^>]*>${P.formatar("br", P.economiaDoLancamento("br", LANCAMENTO)).replace(/\u00a0/g, " ").replace("$", "\\$")}</dd>`), String(preco));
+      assert.match(h, new RegExp(`Em 3 anos, você deixa de pagar</dt><dd [^>]*>${P.formatar("br", P.economiaDoLancamento("br", LANCAMENTO)).replace(/\u00a0/g, " ").replace("$", "\\$")}</dd>`), String(preco));
     }
   } finally {
     br.lancamento.anual = original;
@@ -281,7 +281,7 @@ test("Brasil: barra fixa \"por ano durante 3 anos\" e CTA final com a condição
   assert.match(h, /<div data-sticky="1"[\s\S]*?<span style="position:absolute;[^"]*">Preço oficial: <\/span><s [^>]*>R\$ 149,90<\/s>R\$ 99,98<\/div><div [^>]*>por ano durante 3 anos<\/div>[\s\S]*?>Quero meu acesso<\/button>/);
   assert.equal(/1 ano · 7 dias de garantia/.test(h), false);
   // CTA final: nunca "só até" colado aos 3 anos
-  assert.match(h, /<s style="text-decoration-thickness:1.5px">R\$ 149,90<\/s> R\$ 99,98 por ano nos 3 primeiros anos, para quem assinar até 16 de novembro · Garantia de 7 dias<\/span>/);
+  assert.match(h, /<s style="text-decoration-thickness:1.5px">R\$ 149,90<\/s> R\$ 99,98 por ano à vista nos 3 primeiros anos, para quem assinar até 16 de novembro · Garantia de 7 dias<\/span>/);
   assert.equal(/só até|por um ano · Garantia/.test(h), false);
   // a data não se parte no fim da linha (espaços que não quebram)
   assert.equal(P.notaDoLancamento("br", LANCAMENTO).includes("16\u00a0de\u00a0novembro"), true);

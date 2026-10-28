@@ -202,8 +202,8 @@ export type Oferta = {
     /** Linha curta da barra fixa e do CTA final, depois do preço. */
     nota: string;
     /** No lugar de `nota` no CTA final, com o lançamento valendo:
-        "por ano nos {anos} primeiros anos, para quem assinar até {data} ·
-        Garantia de 7 dias". */
+        "por ano à vista nos {anos} primeiros anos, para quem assinar até
+        {data} · Garantia de 7 dias". */
     notaLancamento?: string;
     /** Segunda linha da barra fixa com o lançamento valendo, no lugar do
         stickyNote de lib/i18n.ts: "por ano durante {anos} anos". */
@@ -285,7 +285,10 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       // fictício (CDC, art. 37, § 1º).
       quadroOficial: "{anos} anos no preço oficial",
       quadroLancamento: "{anos} anos no lançamento",
-      quadroEconomia: "Você deixa de pagar",
+      // "Em 3 anos": o número do quadro é a economia dos 3 anos, não de um
+      // (revisão do card, 28/10/2026). O {anos} sai da conta, como nas
+      // outras linhas do quadro.
+      quadroEconomia: "Em {anos} anos, você deixa de pagar",
       quadroLegenda: "Quase o preço oficial de um ano inteiro.",
       // Sem valor de parcela: a Hotmart calcula. E o parcelado tem
       // acréscimo (o checkout da fhrttdh8 mostrou 12x de R$ 16,40 em
@@ -303,9 +306,11 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       estudante: "Sou estudante",
       nota: "por um ano · Garantia de 7 dias",
       // Nunca "só até" colado a "nos 3 primeiros anos": daria para ler
-      // que o preço acaba em 16/11. O 7 é o GARANTIA.dias do config.ts
+      // que o preço acaba em 16/11. "à vista" (revisão do card,
+      // 28/10/2026): a oferta de lançamento não parcela, e o CTA final é
+      // lido sem o card ao lado. O 7 é o GARANTIA.dias do config.ts
       // (este arquivo não importa nada; um teste confere que é igual).
-      notaLancamento: "por ano nos {anos} primeiros anos, para quem assinar até {data} · Garantia de 7 dias",
+      notaLancamento: "por ano à vista nos {anos} primeiros anos, para quem assinar até {data} · Garantia de 7 dias",
       // Cabe ao lado do botão da barra a 375 px (~133 px em Inter 500 de
       // 12 px); com a garantia, o botão quebraria em duas linhas.
       notaBarraLancamento: "por ano durante {anos} anos",
@@ -746,7 +751,7 @@ export function linhaDeValor(m: Mercado, agora: number = Date.now()): Parte[] | 
     economia positiva; null fora dele (o quadro some).
       oficial    "3 anos no preço oficial", R$ 449,70 (sem riscado)
       lancamento "3 anos no lançamento", R$ 299,94
-      economia   "Você deixa de pagar", R$ 149,76
+      economia   "Em 3 anos, você deixa de pagar", R$ 149,76
       legenda    "Quase o preço oficial de um ano inteiro.", só com
                  quaseUmAnoInteiro (senão null) */
 export function quadroDoLancamento(m: Mercado, agora: number = Date.now()): null | {
@@ -769,9 +774,9 @@ export function quadroDoLancamento(m: Mercado, agora: number = Date.now()): null
   };
 }
 
-/** CTA final com o lançamento valendo, depois do preço: "por ano nos 3
-    primeiros anos, para quem assinar até 16 de novembro · Garantia de 7
-    dias". null fora dele (o CTA usa textos.nota). */
+/** CTA final com o lançamento valendo, depois do preço: "por ano à vista
+    nos 3 primeiros anos, para quem assinar até 16 de novembro · Garantia
+    de 7 dias". null fora dele (o CTA usa textos.nota). */
 export function notaDoLancamento(m: Mercado, agora: number = Date.now()): string | null {
   const modelo = MERCADOS[m].textos.notaLancamento;
   if (!modelo || !lancamentoVigente(m, agora) || !dataDoLancamento(m)) return null;

@@ -42,7 +42,7 @@ import { ListaEsperaForm } from "@/components/ListaEsperaForm";
      Equivale a R$ 8,33 por mês. Por dia, cerca de R$ 0,27 e três minutos.
      [3 anos no preço oficial  R$ 449,70]  (sem riscado: não há plano
      [3 anos no lançamento     R$ 299,94]   de 3 anos)
-     [Você deixa de pagar      R$ 149,76]
+     [Em 3 anos, você deixa de pagar  R$ 149,76]
      [Quase o preço oficial de um ano inteiro.]  (só com quaseUmAnoInteiro)
      Preço de lançamento, à vista, para quem assinar até 16 de novembro.
      [Começar meu ano]
@@ -279,6 +279,13 @@ export function BlocoOferta({ mercado, momento, previa = false, vitrine = false 
     const valorEmPartes = linhaDeValor(mercado, momento);
     const quadro = quadroDoLancamento(mercado, momento);
     const linhaDoQuadro: React.CSSProperties = { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 };
+    // Rótulo do quadro em duas linhas do mesmo tamanho quando não cabe em
+    // uma. "Em 3 anos, você deixa de pagar" (revisão de 28/10/2026) pede
+    // 314 px com o valor ao lado e só cabe numa linha de 430 px de tela
+    // para cima: no celular quebra em "Em 3 anos, você / deixa de pagar",
+    // nunca com "de pagar" sozinho embaixo. A 320 px os outros dois
+    // rótulos também quebram, e do mesmo jeito.
+    const rotuloDoQuadro = { textWrap: "balance" } as React.CSSProperties;
     // Nenhuma palavra sozinha na última linha ("na mão." a 1440 px).
     const semViuva = { textWrap: "pretty" } as React.CSSProperties;
     return (
@@ -329,15 +336,15 @@ export function BlocoOferta({ mercado, momento, previa = false, vitrine = false 
             <div style={{ marginTop: 16, padding: 14, borderRadius: 12, background: "rgba(39,189,190,.07)", border: "1px solid rgba(39,189,190,.2)" }}>
               <dl style={{ margin: 0, display: "grid", gap: 4, fontSize: 14, lineHeight: 1.45, fontVariantNumeric: "tabular-nums" }}>
                 <div style={linhaDoQuadro}>
-                  <dt style={{ color: C.n300 }}>{quadro.oficial.rotulo}</dt>
+                  <dt style={{ color: C.n300, ...rotuloDoQuadro }}>{quadro.oficial.rotulo}</dt>
                   <dd style={{ margin: 0, color: C.n400, whiteSpace: "nowrap" }}>{quadro.oficial.valor}</dd>
                 </div>
                 <div style={linhaDoQuadro}>
-                  <dt style={{ color: C.n300 }}>{quadro.lancamento.rotulo}</dt>
+                  <dt style={{ color: C.n300, ...rotuloDoQuadro }}>{quadro.lancamento.rotulo}</dt>
                   <dd style={{ margin: 0, color: "#fff", fontWeight: 600, whiteSpace: "nowrap" }}>{quadro.lancamento.valor}</dd>
                 </div>
                 <div style={{ ...linhaDoQuadro, marginTop: 6, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,.1)", fontSize: 15 }}>
-                  <dt style={{ color: "#fff" }}>{quadro.economia.rotulo}</dt>
+                  <dt style={{ color: "#fff", ...rotuloDoQuadro }}>{quadro.economia.rotulo}</dt>
                   <dd style={{ margin: 0, color: C.p500, fontWeight: 700, whiteSpace: "nowrap" }}>{quadro.economia.valor}</dd>
                 </div>
               </dl>

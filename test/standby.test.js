@@ -775,8 +775,8 @@ test("barra fixa e CTA final do Brasil: o preço oficial riscado ao lado do de l
   const h = home("br", { vitrine: true });
   // card, CTA final e barra fixa
   assert.equal((h.match(/<s[ >]/g) || []).length, 3);
-  // CTA final: R$ 149,90 riscado ao lado de R$ 99,98 por ano nos 3 primeiros anos
-  assert.match(h, /<span style="position:absolute;[^"]*">Preço oficial: <\/span><s style="text-decoration-thickness:1.5px">R\$ 149,90<\/s> R\$ 99,98 por ano nos 3 primeiros anos, para quem assinar até 16 de novembro · Garantia de 7 dias<\/span>/);
+  // CTA final: R$ 149,90 riscado ao lado de R$ 99,98 por ano à vista nos 3 primeiros anos
+  assert.match(h, /<span style="position:absolute;[^"]*">Preço oficial: <\/span><s style="text-decoration-thickness:1.5px">R\$ 149,90<\/s> R\$ 99,98 por ano à vista nos 3 primeiros anos, para quem assinar até 16 de novembro · Garantia de 7 dias<\/span>/);
   // barra fixa: R$ 149,90 riscado antes de R$ 99,98 e "por ano durante 3 anos"
   assert.match(h, /<span style="position:absolute;[^"]*">Preço oficial: <\/span><s style="font-size:13px;color:#8A9494;font-family:var\(--font-sans\);margin-right:6px">R\$ 149,90<\/s>R\$ 99,98<\/div><div style="margin-top:4px;font-size:12px;font-weight:500;color:#8A9494;white-space:nowrap">por ano durante 3 anos<\/div>/);
   // depois do lançamento, nada riscado em lugar nenhum, e as notas de sempre

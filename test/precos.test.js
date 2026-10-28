@@ -203,9 +203,9 @@ test("textos do card com conta: regra, valor por mês e por dia, quadro, CTA fin
   const q = P.quadroDoLancamento("br", ANTES);
   assert.deepEqual(
     [q.oficial, q.lancamento, q.economia].map((l) => [l.rotulo, txt(l.valor)]),
-    [["3 anos no preço oficial", "R$ 449,70"], ["3 anos no lançamento", "R$ 299,94"], ["Você deixa de pagar", "R$ 149,76"]],
+    [["3 anos no preço oficial", "R$ 449,70"], ["3 anos no lançamento", "R$ 299,94"], ["Em 3 anos, você deixa de pagar", "R$ 149,76"]],
   );
-  assert.equal(txt(P.notaDoLancamento("br", ANTES)), "por ano nos 3 primeiros anos, para quem assinar até 16 de novembro · Garantia de 7 dias");
+  assert.equal(txt(P.notaDoLancamento("br", ANTES)), "por ano à vista nos 3 primeiros anos, para quem assinar até 16 de novembro · Garantia de 7 dias");
   assert.equal(P.notaDaBarra("br", ANTES), "por ano durante 3 anos");
   assert.equal(P.notaDoLancamento("br", DEPOIS), null);
   assert.equal(P.notaDaBarra("br", DEPOIS), null);
@@ -213,10 +213,27 @@ test("textos do card com conta: regra, valor por mês e por dia, quadro, CTA fin
   for (const s of [
     P.regraDoLancamento("br", ANTES), P.regraDoLancamento("br", ANTES, { semPercentual: true }),
     P.textoCorrido(P.linhaDeValor("br", ANTES)), P.textoCorrido(P.linhaDeValor("br", DEPOIS)),
-    P.notaDoLancamento("br", ANTES), P.notaDaBarra("br", ANTES), q.oficial.rotulo, q.lancamento.rotulo,
+    P.notaDoLancamento("br", ANTES), P.notaDaBarra("br", ANTES), q.oficial.rotulo, q.lancamento.rotulo, q.economia.rotulo,
   ]) {
     assert.equal(/[{}*]/.test(s), false, s);
   }
+});
+
+test("revisão do card (28/10/2026): os anos do quadro e do CTA final saem da conta, com o à vista no CTA", () => {
+  // "Em 3 anos, você deixa de pagar": o 3 é o lancamento.anos, não texto
+  // escrito; com outro número de anos, o rótulo e o valor acompanham.
+  const l = P.MERCADOS.br.lancamento;
+  const anos = l.anos;
+  try {
+    l.anos = 2;
+    const q = P.quadroDoLancamento("br", ANTES);
+    assert.deepEqual([q.economia.rotulo, txt(q.economia.valor)], ["Em 2 anos, você deixa de pagar", "R$ 99,84"]);
+    assert.equal(txt(P.notaDoLancamento("br", ANTES)), "por ano à vista nos 2 primeiros anos, para quem assinar até 16 de novembro · Garantia de 7 dias");
+  } finally {
+    l.anos = anos;
+  }
+  // o "à vista" vem logo depois de "por ano", nunca colado à data
+  assert.match(txt(P.notaDoLancamento("br", ANTES)), /^por ano à vista nos 3 primeiros anos, para quem assinar até /);
 });
 
 test("garantia escrita em config/pricing.ts é a de GARANTIA.dias (config.ts)", () => {

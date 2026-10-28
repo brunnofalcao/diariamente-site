@@ -180,7 +180,7 @@ R$ 99,98 por ano
 Equivale a R$ 8,33 por mês. Por dia, cerca de R$ 0,27 e três minutos.
   3 anos no preço oficial        R$ 449,70      (sem riscado)
   3 anos no lançamento           R$ 299,94
-  Você deixa de pagar            R$ 149,76
+  Em 3 anos, você deixa de pagar R$ 149,76
   Quase o preço oficial de um ano inteiro.
 Preço de lançamento, à vista, para quem assinar até 16 de novembro.
 [Começar meu ano]
@@ -213,9 +213,20 @@ Garantia incondicional de 7 dias. Decida com o app na mão.
 - Barra fixa no lançamento: o preço e "por ano durante 3 anos"
   (`notaBarraLancamento`), no lugar de "1 ano · 7 dias de garantia", que
   dava a entender que o preço vale só no primeiro ano. CTA final: "R$ 99,98
-  por ano nos 3 primeiros anos, para quem assinar até 16 de novembro ·
-  Garantia de 7 dias" (`notaLancamento`), nunca "só até" colado aos 3
-  anos.
+  por ano à vista nos 3 primeiros anos, para quem assinar até 16 de
+  novembro · Garantia de 7 dias" (`notaLancamento`), nunca "só até" colado
+  aos 3 anos.
+- Revisão do card (28/10/2026), dois ajustes e nada mais na copy: o quadro
+  diz "Em 3 anos, você deixa de pagar" (o número é a economia dos 3 anos,
+  não de um; o 3 sai de `{anos}`), e a nota do CTA final diz "à vista",
+  porque ali ela é lida sem o card ao lado. Medido no navegador: o rótulo
+  novo, com o valor ao lado, pede 314 px e a linha do quadro tem 208 px a
+  320 px e 278 px a 390 px; no celular ele quebra em duas linhas do mesmo
+  tamanho, "Em 3 anos, você / deixa de pagar" (`text-wrap: balance` nos
+  rótulos do quadro), sem "de pagar" sozinho, e só fica numa linha de
+  430 px para cima. A 375 px a nota do CTA final fica em três linhas
+  equilibradas ("R$ 149,90 R$ 99,98 por ano à vista nos / 3 primeiros
+  anos, para quem assinar / até 16 de novembro · Garantia de 7 dias").
 
 Depois do lançamento (ou com `ativo: false`), o mesmo esqueleto, sem
 selo, âncora, regra e quadro: "SEU DIARIAMENTE POR UM ANO", "R$ 149,90 por

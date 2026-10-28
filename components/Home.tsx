@@ -202,8 +202,8 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
   const cheio = precoCheio(mkt, agora);
   // Com o lançamento valendo (só o Brasil tem), a condição dos 3 anos não
   // pode faltar na barra nem no CTA final: "por ano durante 3 anos" e
-  // "por ano nos 3 primeiros anos, para quem assinar até 16 de novembro ·
-  // Garantia de 7 dias" (config/pricing.ts). null fora dele: as notas de
+  // "por ano à vista nos 3 primeiros anos, para quem assinar até 16 de
+  // novembro · Garantia de 7 dias" (config/pricing.ts). null fora dele: as notas de
   // sempre.
   const notaCta = notaDoLancamento(mkt, agora);
   const notaBarra = notaDaBarra(mkt, agora);
@@ -832,9 +832,9 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
                   quebra em linhas do mesmo tamanho, sem "dias" sozinho. */}
               <span style={{ fontSize: 13, fontWeight: 500, color: C.n400, textWrap: "balance" as never }}>
                 {/* No lançamento, o preço oficial riscado ao lado, por ano
-                    como o de lançamento ("R$ 149,90 R$ 99,98 por ano nos 3
-                    primeiros anos, para quem assinar até ..."). Nunca "só
-                    até" colado aos 3 anos: o preço não acaba na data. */}
+                    como o de lançamento ("R$ 149,90 R$ 99,98 por ano à vista
+                    nos 3 primeiros anos, para quem assinar até ..."). Nunca
+                    "só até" colado aos 3 anos: o preço não acaba na data. */}
                 {vende && cheio && (
                   <>
                     {oferta.textos.ancora && <span style={somenteLeitor}>{oferta.textos.ancora}: </span>}
