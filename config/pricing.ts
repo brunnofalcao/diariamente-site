@@ -113,8 +113,8 @@ const CHECKOUT_EUR_ES = "https://pay.hotmart.com/K105072021O?off=iuoufnf6";
    .next/static (scripts/conferir-bundle.js), e test/precos.test.js
    confere que nenhum arquivo do navegador chama essas funções.
    --------------------------------------------------------------------- */
-export const ESTUDANTE_OFERTA_LANCAMENTO = ""; // R$ 59,90 (até 16/11/2026)
-export const ESTUDANTE_OFERTA = ""; // R$ 79,90 (a partir de 17/11/2026)
+export const ESTUDANTE_OFERTA_LANCAMENTO = "aiwahups"; // R$ 59,90 (até 16/11/2026)
+export const ESTUDANTE_OFERTA = "ubn1w7j1"; // R$ 79,90 (a partir de 17/11/2026)
 
 /** Checkout do produto 7448309 sem oferta: a do estudante entra no off. */
 const CHECKOUT_DO_PRODUTO = "https://pay.hotmart.com/K105072021O";
