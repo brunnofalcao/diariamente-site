@@ -266,6 +266,11 @@ export default function Privacidade() {
           da sua conexão, informado pela hospedagem, sem gravar nada.
         </li>
         <li>
+          <strong>dm_mercado</strong>: guarda só o mercado da última página do site que você
+          abriu (Brasil, Portugal, Espanha, América Latina ou resto do mundo), por 30 dias, para
+          a página que aparece depois do pagamento abrir no seu idioma. Não guarda dado pessoal.
+        </li>
+        <li>
           No formulário de estudante, um rascunho do que você digitou, sem o CPF, fica guardado
           só nesta aba do navegador, para não se perder se a página recarregar. Ele some quando
           a aba é fechada.

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Tracking } from "@/components/Tracking";
 import { caminho } from "@/lib/rotas";
 import { ehVitrine } from "@/lib/mercado";
+import { ehPosPagamento } from "@/lib/obrigado.mjs";
 import { SITE_LANCADO } from "@/config/lancamento";
 import { apagarCookiesDeMedicao, gravarEscolha, lerEscolha, type Escolha } from "@/lib/cookies";
 import type { Lang } from "@/lib/i18n";
@@ -41,12 +42,19 @@ import type { Lang } from "@/lib/i18n";
 
    STANDBY (config/lancamento.ts): fora da vitrine, o site fica como a
    produção de hoje, sem aviso e com GA4 e Pixel montados direto (o
-   contexto vale "aceito", então o Purchase das páginas de obrigado
-   também sai). O aviso só aparece na vitrine (/vendas, /es/vendas,
-   /es-es/vendas, /pt-pt/vendas, /mundo/vendas; lib/mercado.ts,
-   ehVitrine), como vai ao ar. Ligada
-   a chave, vale o aviso em todas as páginas. Decisão de Meta e Analytics
-   fica para depois do lançamento (dono, 27/10/2026).
+   contexto vale "aceito"). O aviso só aparece na vitrine (/vendas,
+   /es/vendas, /es-es/vendas, /pt-pt/vendas, /mundo/vendas;
+   lib/mercado.ts, ehVitrine), como vai ao ar. Ligada a chave, vale o
+   aviso em todas as páginas. Decisão de Meta e Analytics fica para
+   depois do lançamento (dono, 27/10/2026).
+
+   PÓS-PAGAMENTO EM STANDBY (as 8 rotas de obrigado e do /baixar e o
+   /obrigado antigo; lib/obrigado.mjs, ehPosPagamento): quem paga vem da
+   vitrine, onde pode ter clicado em Recusar. Por isso, aqui, nada de
+   medição no HTML do servidor: a página lê a escolha gravada (dm_cookies)
+   primeiro. Recusou: nem GA4, nem Pixel, nem Purchase. Aceitou ou não
+   escolheu: monta como a produção de hoje, sem aviso, e o Purchase sai.
+   Pedido do dono, 28/10/2026.
 
    Acessibilidade de um aviso fixo no rodapé da tela:
    - Ele vem ANTES da página no documento (mesmo aparecendo embaixo): quem
@@ -70,7 +78,8 @@ export function useConsentimento(): Estado {
 }
 
 export function Consentimento({ children }: { children: React.ReactNode }) {
-  const comoAProducao = !SITE_LANCADO && !ehVitrine(usePathname() ?? "/");
+  const pathname = usePathname() ?? "/";
+  const comoAProducao = !SITE_LANCADO && !ehVitrine(pathname);
   const [estado, setEstado] = useState<Estado>("carregando");
 
   useEffect(() => {
@@ -85,6 +94,18 @@ export function Consentimento({ children }: { children: React.ReactNode }) {
     if (escolha === "recusado") apagarCookiesDeMedicao();
     setEstado(escolha);
   }, []);
+
+  // Standby, pós-pagamento: espera ler a escolha. Só a recusa gravada
+  // segura a medição; sem escolha, vale a produção de hoje ("aceito").
+  if (comoAProducao && ehPosPagamento(pathname)) {
+    const liberado: Estado = estado === "carregando" || estado === "recusado" ? estado : "aceito";
+    return (
+      <ContextoConsentimento.Provider value={liberado}>
+        {liberado === "aceito" && <Tracking />}
+        {children}
+      </ContextoConsentimento.Provider>
+    );
+  }
 
   if (comoAProducao) {
     return (

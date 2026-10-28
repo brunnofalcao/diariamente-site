@@ -423,121 +423,15 @@ body::before{ animation:breathe 9s var(--ease) infinite; }
 .store-prova.is-left{ justify-content:flex-start; }
 .store-prova svg{ opacity:.7; flex:0 0 auto; }
 
-/* ============ PÁGINA DE OBRIGADO ============ */
-.obg{ position:relative; overflow-x:hidden; }
-/* brilho teal difuso no topo (mesmo mood da página de vendas) */
-.obg-glow{
-  position:absolute; top:-260px; left:50%; transform:translateX(-50%);
-  width:900px; height:600px; pointer-events:none; z-index:0;
-  background:radial-gradient(ellipse 50% 50% at 50% 50%, rgba(39,189,190,.14), transparent 70%);
-}
-.obg-header{ position:relative; z-index:1; padding-top:var(--sp8,32px); }
-
-.obg-hero{ position:relative; z-index:1; padding-top:var(--sp10,40px); padding-bottom:var(--sp8,32px); }
-
-/* selo de confirmação */
-.obg-check{
-  width:64px; height:64px; margin:0 auto var(--sp6,24px);
-  border-radius:999px; color:var(--p-500,#27BDBE);
-  background:rgba(39,189,190,.10);
-  border:1px solid rgba(39,189,190,.30);
-  display:flex; align-items:center; justify-content:center;
-  box-shadow:0 0 40px rgba(39,189,190,.18);
-}
-
-.obg-titulo{
-  font-family:var(--font-serif, Georgia, serif);
-  font-size:clamp(30px, 5.4vw, 46px); line-height:1.06; color:#fff;
-  letter-spacing:-.015em; margin-bottom:var(--sp5,20px);
-}
-.obg-sub{ max-width:44ch; margin:0 auto; }
-
-.obg-sec{ position:relative; z-index:1; padding:var(--sp6,24px) 0; }
-
-/* cards */
-.obg-card{
-  position:relative; border-radius:var(--r-3xl,28px); overflow:hidden;
-  background:var(--s-2,#181D1D); border:1px solid var(--border);
-}
-.obg-card-destaque{
-  border-color:rgba(39,189,190,.28);
-  box-shadow:0 0 0 1px rgba(39,189,190,.08), 0 24px 60px rgba(0,0,0,.45);
-}
-.obg-card-glow{
-  position:absolute; top:-60%; left:50%; transform:translateX(-50%);
-  width:120%; height:80%; pointer-events:none; z-index:0;
-  background:radial-gradient(ellipse 50% 60% at 50% 50%, rgba(39,189,190,.16), transparent 70%);
-}
-.obg-card-inner{ position:relative; z-index:1; padding:var(--sp8,32px); }
-.obg-card-titulo{
-  font-family:var(--font-serif, Georgia, serif);
-  font-size:24px; line-height:1.2; color:#fff; letter-spacing:-.01em;
-  margin:var(--sp4,16px) 0 var(--sp3,12px);
-}
-.obg-cta{ display:inline-flex; align-items:center; justify-content:center; font-size:16px; padding:16px; }
-
-/* lista numerada */
-.obg-lista{ display:flex; flex-direction:column; gap:var(--sp3,12px); }
-.obg-item{
-  display:flex; gap:var(--sp4,16px); align-items:flex-start;
-  padding:var(--sp5,20px);
-  border-radius:var(--r-2xl,24px);
-  background:rgba(255,255,255,.03); border:1px solid var(--border);
-}
-.obg-num{
-  flex:0 0 32px; height:32px; border-radius:999px;
-  background:rgba(39,189,190,.10); border:1px solid rgba(39,189,190,.25);
-  display:flex; align-items:center; justify-content:center;
-  font-family:var(--font-serif, Georgia, serif); font-size:16px; color:var(--p-500,#27BDBE);
-}
-
-.obg-frase{
-  font-family:var(--font-serif, Georgia, serif);
-  font-style:italic; font-size:18px; color:var(--n-300,#AAB2B2);
-  margin-top:var(--sp10,40px);
-  padding-top:var(--sp8,32px); border-top:1px solid var(--border);
-}
-
-.obg-footer{
-  position:relative; z-index:1;
-  border-top:1px solid var(--border);
-  margin-top:var(--sp12,48px); padding:var(--sp10,40px) 0;
-}
-
-@media (max-width:560px){
-  .obg-card-inner{ padding:var(--sp6,24px); }
-}
-
-/* estado "aguardando" nas páginas de obrigado (selo dourado) */
-.obg-check.is-wait{
-  color:var(--a-500,#F5B731);
-  background:rgba(245,183,49,.10);
-  border-color:rgba(245,183,49,.30);
-  box-shadow:0 0 40px rgba(245,183,49,.16);
-}
+/* ============ PÁGINA DE OBRIGADO ============
+   As páginas de obrigado e o /baixar têm estilo próprio, em
+   components/pos-pagamento.css (classes pp-). Daqui saiu o antigo .obg-*.
+   O .badge-gold abaixo fica: a oferta (components/Oferta.tsx) usa. */
 .badge-gold{
   background:rgba(245,183,49,.10);
   border:1px solid rgba(245,183,49,.28);
   color:var(--a-500,#F5B731);
 }
-
-/* pós-pagamento (aprovado e aguardando pagamento): só peças que faltavam,
-   com os mesmos tokens das de cima */
-.obg-forte{ color:var(--n-0,#fff); font-weight:600; }
-.obg-web{ margin-top:var(--sp5,20px); text-align:center; }
-.obg-web a{ font-weight:600; text-decoration:none; white-space:nowrap; }
-.obg-inteiro{ white-space:nowrap; }
-.obg-web a:hover{ text-decoration:underline; }
-/* "Se quiser entrar agora": secundário, sem fundo de cartão */
-.obg-atalho{
-  padding:var(--sp5,20px);
-  border-radius:var(--r-2xl,24px);
-  border:1px dashed var(--border-strong);
-}
-.obg-atalho-selo{ display:block; margin-bottom:var(--sp2,8px); color:var(--n-300,#AAB2B2); }
-.obg-formas{ display:flex; flex-direction:column; gap:var(--sp3,12px); }
-.obg-atendimento{ margin-top:var(--sp8,32px); }
-.obg-atendimento a{ font-weight:600; text-decoration:none; word-break:break-word; }
 
 /* ============ PÁGINA /ESTUDANTE ============ */
 .est{ position:relative; overflow-x:hidden; }

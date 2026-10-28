@@ -26,6 +26,22 @@
    (test/standby.test.js confere que as duas listas batem). */
 const VITRINE = ["/vendas", "/es/vendas", "/es-es/vendas", "/pt-pt/vendas", "/mundo/vendas"];
 
+/* Pós-pagamento: as 8 rotas de obrigado e do /baixar, em pt e em es
+   (lib/obrigado.mjs, ROTAS_DO_POS_PAGAMENTO; testes/obrigado.test.mjs
+   confere que as duas listas batem). Página de quem acabou de pagar não
+   vai para o índice: além do <meta robots> (components/PaginaObrigado.tsx
+   e BaixarApp.tsx), o cabeçalho. */
+const POS_PAGAMENTO = [
+  "/obrigado-aprovado",
+  "/obrigado-aguardando-pagamento",
+  "/obrigado-aguardando-analise",
+  "/baixar",
+  "/es/gracias-aprobado",
+  "/es/gracias-pago-pendiente",
+  "/es/gracias-en-analisis",
+  "/es/descargar",
+];
+
 const CABECALHOS_DE_PROTECAO = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -65,6 +81,8 @@ const nextConfig = {
         { source: base, headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
         { source: `${base}/:path*`, headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
       ]),
+      // Pós-pagamento: noindex também no cabeçalho, nas 8 rotas exatas.
+      ...POS_PAGAMENTO.map((source) => ({ source, headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] })),
     ];
   },
 };

@@ -250,13 +250,11 @@ export function cld(url: string, tx: string): string {
    da Google Play ainda e o do portugues: quando houver a versao em
    espanhol, basta trocar AQUI, no bloco `es`.
 
-   ATENCAO nos links de loja:
-     - `appStore` termina em /br/ no portugues. Para o espanhol, troque
-       pelo mercado certo (/es/, /mx/, /ar/...), ou o usuario cai numa
-       ficha em portugues.
-     - `googlePlay` aceita &hl=es para a ficha sair traduzida.
-     - checkout NAO mora aqui: o link de cada mercado (moeda, oferta e
-       lancamento) esta em config/pricing.ts.
+   LINKS DE LOJA: moram em LOJAS_DO_LOCAL, logo abaixo, a fonte única
+   (páginas de obrigado, /baixar e o redirecionamento do celular no
+   middleware leem de lá; ATIVOS repassa). O checkout NAO mora aqui: o
+   link de cada mercado (moeda, oferta e lancamento) esta em
+   config/pricing.ts.
    ===================================================================== */
 
 /* TELAS DO APP · as artes das lojas
@@ -322,9 +320,34 @@ const IMG_PT = {
   googlePlay: "https://res.cloudinary.com/dlzrfhwin/image/upload/v1783609634/GetItOnGooglePlay_Badge_Web_color_Portuguese-Brazil_rl6hba.svg",
 };
 
+/* LOJAS POR IDIOMA · fonte única dos links do app
+   ---------------------------------------------------------------------
+   UM app para o mundo todo (App Store id6762151251, Google Play
+   club.diariamente.app), em dois idiomas, como o projeto (decisão do
+   dono, 28/10/2026: só português e espanhol). No celular, o link abre a
+   loja do país da pessoa de qualquer jeito; o caminho só muda a vitrine
+   e o idioma da ficha no computador:
+     pt  App Store /br/ (ficha em pt-BR), Google Play &hl=pt-BR
+     es  App Store /mx/ (espanhol latino), Google Play &hl=es
+   Caminho NOVO da Apple, com o nome da ficha (diariamente-sa%C3%BAde-mental
+   em pt, diariamente-salud-mental em es): os dois respondem 200 direto. O
+   antigo (/br/app/diariamente/id6762151251) dava 301 e não pode voltar
+   (o teste confere em todo o site).
+   Quem lê: as páginas de obrigado e o /baixar (pt e es), o
+   redirecionamento do celular no middleware, StoreBadges e ATIVOS (homes,
+   inclusive /pt-pt e /es-es, que usam o pt e o es). config.ts (LOJAS)
+   repete o pt: o JSON-LD do layout e o rodapé leem de lá, e o teste
+   confere que é igual a este. */
+const APP_STORE = (pais: string, ficha: string) => `https://apps.apple.com/${pais}/app/${ficha}/id6762151251`;
+const GOOGLE_PLAY = (hl: string) => `https://play.google.com/store/apps/details?id=club.diariamente.app&hl=${hl}`;
+export const LOJAS_DO_LOCAL: Record<Lang, { appStore: string; googlePlay: string }> = {
+  pt: { appStore: APP_STORE("br", "diariamente-sa%C3%BAde-mental"), googlePlay: GOOGLE_PLAY("pt-BR") },
+  es: { appStore: APP_STORE("mx", "diariamente-salud-mental"), googlePlay: GOOGLE_PLAY("es") },
+};
+
 const LINKS_PT = {
-  appStore: "https://apps.apple.com/br/app/diariamente/id6762151251",
-  googlePlay: "https://play.google.com/store/apps/details?id=club.diariamente.app",
+  appStore: LOJAS_DO_LOCAL.pt.appStore,
+  googlePlay: LOJAS_DO_LOCAL.pt.googlePlay,
   instagram: "https://instagram.com/diariamente",
   suporte: "mailto:suporte@scienceplay.com",
   contato: "mailto:contato@scienceplay.com",
@@ -343,9 +366,10 @@ export const ATIVOS: Record<Lang, { img: typeof IMG_PT; links: typeof LINKS_PT }
     },
     links: {
       ...LINKS_PT,
-      // [TROCAR] mercado da App Store: /es/, /mx/, /ar/...
-      // [TROCAR] &hl=es na Google Play
-      // [TROCAR] oferta da Hotmart em moeda local
+      // Ficha em espanhol nas duas lojas (LOJAS_DO_LOCAL.es). A oferta da
+      // Hotmart em moeda local mora em config/pricing.ts.
+      appStore: LOJAS_DO_LOCAL.es.appStore,
+      googlePlay: LOJAS_DO_LOCAL.es.googlePlay,
     },
   },
 };
