@@ -139,7 +139,7 @@ export const I18N = {
     share: "Compartir", copied: "¡Enlace copiado!", dayOf: "Día {n} de 365",
     s1: "personas ya empezaron", s2: "provocaciones, una por día", s3: "es lo que pide el ritual",
     s4n: "7 días", s4: "de garantía, sin letra pequeña",
-    tr1: "Realización Science Play®", tr2: "Pago seguro vía Hotmart", tr4: "Datos protegidos · LGPD",
+    tr1: "Realización Science Play®", tr2: "Pago seguro vía Hotmart", tr4: "Datos protegidos",
     pEyebrow: "El ciclo que ya conoces", pH2: "Ya empezaste. Más de una vez.",
     p1: "Descargaste la app. Prometiste que esta vez llegarías hasta el final. Paraste en la segunda semana. Y la vida se tragó el resto.",
     p2: "El problema nunca fue la disciplina. Es que nadie te dio un sistema para continuar: solo contenido. Y el contenido parado no cambia a nadie.",
@@ -339,8 +339,10 @@ export const ATIVOS: Record<Lang, { img: typeof IMG_PT; links: typeof LINKS_PT }
     },
     links: {
       ...LINKS_PT,
-      // [TROCAR] mercado da App Store: /es/, /mx/, /ar/...
-      // [TROCAR] &hl=es na Google Play
+      // App Store sem o /br/ (a Apple abre a loja do país da pessoa) e Google Play
+      // em espanhol: os mesmos links do StoreBadges com lang="es" e do app.
+      appStore: "https://apps.apple.com/app/diariamente/id6762151251",
+      googlePlay: "https://play.google.com/store/apps/details?id=club.diariamente.app&hl=es",
       // [TROCAR] oferta da Hotmart em moeda local
     },
   },
