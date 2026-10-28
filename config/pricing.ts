@@ -95,9 +95,23 @@ const CHECKOUT_EUR_ES = "https://pay.hotmart.com/K105072021O?off=iuoufnf6";
 
    Vazio = a fase não tem oferta: na data dela, a /estudante fecha
    sozinha (lista de espera no lugar do formulário, API em 503, home sem
-   o card) e o /estudante/ativar volta para a /estudante. A trava do
-   build (scripts/checar-precos.js) diz qual falta, e avisa quando faltar
-   a da fase seguinte. Passo a passo: docs/ESTUDANTE.md.
+   o card) e o /estudante/ativar leva quem já tem o link a uma página
+   que diz que o link continua valendo. A trava do build
+   (scripts/checar-precos.js) diz qual falta, e avisa quando faltar a da
+   fase seguinte. Passo a passo: docs/ESTUDANTE.md.
+
+   O CÓDIGO NUNCA VAI AO NAVEGADOR. Quem tiver o off= paga o preço de
+   estudante sem passar pela /estudante (CPF único, declaração do
+   vínculo, teto por hora, link pessoal). Por isso só o servidor lê os
+   códigos (ofertaDoEstudante, checkoutDoEstudante, ofertasDoEstudante:
+   /estudante/ativar, /api/estudante/solicitar, o webhook e o
+   pós-pagamento). Componente de navegador ("use client") e config.ts
+   nunca os chamam: para saber se a fase tem oferta, usam só o NOME das
+   fases com código, que o next.config.js grava no build
+   (DM_ESTUDANTE_FASES, a partir de fasesComOferta). O `npm run build`
+   confere depois do next build que nenhum código foi parar em
+   .next/static (scripts/conferir-bundle.js), e test/precos.test.js
+   confere que nenhum arquivo do navegador chama essas funções.
    --------------------------------------------------------------------- */
 export const ESTUDANTE_OFERTA_LANCAMENTO = ""; // R$ 59,90 (até 16/11/2026)
 export const ESTUDANTE_OFERTA = ""; // R$ 79,90 (a partir de 17/11/2026)
@@ -906,28 +920,63 @@ export function porMesEstudante(agora: number = Date.now()): number {
 }
 
 /** Código da oferta da fase vigente, ou "" se ela não tem oferta (ou o
-    código não tem o formato da Hotmart): aí o fluxo fecha sozinho. */
+    código não tem o formato da Hotmart): aí o fluxo fecha sozinho. SÓ NO
+    SERVIDOR: o código não pode ir ao navegador (ver o começo do
+    arquivo). */
 export function ofertaDoEstudante(agora: number = Date.now()): string {
   const codigo = (OFERTAS_DO_ESTUDANTE[faseDoEstudante(agora)] || "").trim();
   return codigoDeOfertaValido(codigo) ? codigo : "";
 }
 
-/** A fase vigente tem oferta? Sem ela a /estudante fecha (config.ts,
-    estudanteAberto, junta a configuração da Vercel). */
+/** A fase vigente tem oferta? SÓ NO SERVIDOR (lê o código). O navegador
+    e as páginas usam estudanteAberto (config.ts), que lê o nome das fases
+    com código gravado no build (DM_ESTUDANTE_FASES). */
 export function estudanteTemOferta(agora: number = Date.now()): boolean {
   return ofertaDoEstudante(agora) !== "";
 }
 
+/** As fases com código de oferta válido, na ordem ("lancamento",
+    "depois"). O next.config.js grava a lista em DM_ESTUDANTE_FASES: é só
+    o nome da fase que vai ao navegador, nunca o código. */
+export function fasesComOferta(): FaseDoEstudante[] {
+  return (Object.keys(OFERTAS_DO_ESTUDANTE) as FaseDoEstudante[])
+    .filter((f) => codigoDeOfertaValido((OFERTAS_DO_ESTUDANTE[f] || "").trim()));
+}
+
 /** As ofertas de estudante preenchidas, das duas fases: o webhook do site
-    reconhece por elas a venda do estudante. */
+    reconhece por elas a venda do estudante. SÓ NO SERVIDOR. */
 export function ofertasDoEstudante(): string[] {
   return (Object.keys(OFERTAS_DO_ESTUDANTE) as FaseDoEstudante[])
     .map((f) => (OFERTAS_DO_ESTUDANTE[f] || "").trim())
     .filter(codigoDeOfertaValido);
 }
 
+/** A fase da oferta de estudante com este código (o off da URL de
+    obrigado, sem diferença de maiúsculas), ou null se não for uma delas.
+    SÓ NO SERVIDOR (lib/pos-pagamento.ts, valorDoPedido). */
+export function faseDaOfertaDoEstudante(off: string | null | undefined): FaseDoEstudante | null {
+  const codigo = String(off || "").trim().toLowerCase();
+  if (!codigo) return null;
+  for (const f of Object.keys(OFERTAS_DO_ESTUDANTE) as FaseDoEstudante[]) {
+    const c = (OFERTAS_DO_ESTUDANTE[f] || "").trim();
+    if (codigoDeOfertaValido(c) && c.toLowerCase() === codigo) return f;
+  }
+  return null;
+}
+
+/** As ofertas de estudante no formato de MERCADOS_DA_OFERTA
+    (lib/obrigado.mjs): cada código, em minúsculas, é do Brasil. O
+    middleware e a página de obrigado passam este mapa às regras do
+    pós-pagamento (lib/obrigado.mjs não importa o config: roda no
+    node --test sem build). Assim o código continua escrito só aqui.
+    SÓ NO SERVIDOR. */
+export function mercadosDasOfertasDoEstudante(): Record<string, readonly Mercado[]> {
+  return Object.fromEntries(ofertasDoEstudante().map((c) => [c.toLowerCase(), ["br"] as const]));
+}
+
 /** Link do checkout do estudante agora: a oferta da fase vigente e, com o
-    token do link pessoal, o sck de rastreio. null sem oferta. */
+    token do link pessoal, o sck de rastreio. null sem oferta. SÓ NO
+    SERVIDOR (/estudante/ativar). */
 export function checkoutDoEstudante(agora: number = Date.now(), token?: string): string | null {
   const oferta = ofertaDoEstudante(agora);
   if (!oferta) return null;

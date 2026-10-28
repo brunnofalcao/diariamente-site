@@ -33,10 +33,17 @@ import { SITE_LANCADO } from "@/config/lancamento";
      - a chave de lançamento está desligada (STANDBY: a /estudante é a da
        produção e nenhum endereço público abre o checkout do 7448309);
      - o token falta ou está fora do formato;
-     - a fase vigente não tem o código da oferta (a /estudante, fechada,
-       explica);
      - o token não existe no banco, foi revogado à mão (status
        "revogado" ou "cancelado") ou o banco não respondeu.
+
+   Token conhecido que NÃO vai ao checkout (307 para /estudante/inscricao,
+   nunca para a lista de espera, que contradiria a mensagem aprovada):
+     - status "usado" (o webhook marcou na venda aprovada): a inscrição já
+       foi concluída; um segundo checkout faria a pessoa assinar duas
+       vezes. Vai para ?situacao=concluida.
+     - a fase vigente sem o código da oferta (o ESTUDANTE_OFERTA atrasou
+       depois de 16/11, por exemplo): a pessoa foi aprovada e o link
+       continua valendo. Vai para ?situacao=aguarde, que diz isso.
    ===================================================================== */
 
 export const dynamic = "force-dynamic";
@@ -45,6 +52,9 @@ export const fetchCache = "force-no-store";
 
 /** Status que o dono pode pôr à mão para desligar um link (fraude). */
 const REVOGADOS = new Set(["revogado", "cancelado"]);
+
+/** Página do link pessoal que não abre o checkout agora. */
+const INSCRICAO = "/estudante/inscricao";
 
 function banco() {
   const url = process.env.SUPABASE_URL;
@@ -59,8 +69,6 @@ export async function GET(req: NextRequest) {
   if (!SITE_LANCADO || !/^[A-Z0-9_-]{1,25}$/.test(token)) return voltar();
 
   const agora = Date.now();
-  const destino = checkoutDoEstudante(agora, token);
-  if (!destino) return voltar();
 
   let linha: { id: string; lead_id: string | null; status: string | null } | null = null;
   const db = banco();
@@ -82,16 +90,22 @@ export async function GET(req: NextRequest) {
   }
   if (!linha || REVOGADOS.has(String(linha.status || ""))) return voltar();
 
+  const usado = linha.status === "usado";
+  const destino = usado ? null : checkoutDoEstudante(agora, token);
+  const acao = usado ? "link_reaberto_usado" : destino ? "link_aberto" : "link_aberto_sem_oferta";
+
   // Registro do clique (fase e oferta da hora): não bloqueia o redirecionamento.
   try {
     await db.from("log_estudante").insert({
-      lead_id: linha.lead_id, acao: "link_aberto",
-      detalhe: { codigo: token, fase: faseDoEstudante(agora), oferta: ofertaDoEstudante(agora), status: linha.status },
+      lead_id: linha.lead_id, acao,
+      detalhe: { codigo: token, fase: faseDoEstudante(agora), oferta: ofertaDoEstudante(agora) || null, status: linha.status },
       ator: "sistema",
     });
   } catch {
     /* o log é conveniência */
   }
 
+  if (usado) return NextResponse.redirect(new URL(`${INSCRICAO}?situacao=concluida`, req.url), 307);
+  if (!destino) return NextResponse.redirect(new URL(`${INSCRICAO}?situacao=aguarde`, req.url), 307);
   return NextResponse.redirect(destino, 302);
 }

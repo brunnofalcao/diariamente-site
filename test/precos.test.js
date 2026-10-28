@@ -288,3 +288,106 @@ test("garantia escrita em config/pricing.ts é a de GARANTIA.dias (config.ts)", 
   // "Decida com o app na mão." só no Brasil, e sempre colada à garantia
   for (const m of ["la", "es", "pt", "rw"]) assert.equal(/app na mão/.test(JSON.stringify(P.MERCADOS[m])), false, m);
 });
+
+/* ------------- o código da oferta de estudante fica no servidor ------------- */
+
+test("estudante: fasesComOferta (o que o build grava em DM_ESTUDANTE_FASES) traz só o NOME das fases com código", () => {
+  const antes = { ...P.OFERTAS_DO_ESTUDANTE };
+  try {
+    Object.assign(P.OFERTAS_DO_ESTUDANTE, { lancamento: "estlanc1", depois: "estdep01" });
+    assert.deepEqual(P.fasesComOferta(), ["lancamento", "depois"]);
+    Object.assign(P.OFERTAS_DO_ESTUDANTE, { lancamento: "estlanc1", depois: "" });
+    assert.deepEqual(P.fasesComOferta(), ["lancamento"]);
+    Object.assign(P.OFERTAS_DO_ESTUDANTE, { lancamento: "off=x", depois: "estdep01" });
+    assert.deepEqual(P.fasesComOferta(), ["depois"]);
+    // o pós-pagamento reconhece a oferta paga (sem diferença de maiúsculas)
+    Object.assign(P.OFERTAS_DO_ESTUDANTE, { lancamento: "estlanc1", depois: "estdep01" });
+    assert.equal(P.faseDaOfertaDoEstudante("estlanc1"), "lancamento");
+    assert.equal(P.faseDaOfertaDoEstudante(" ESTDEP01 "), "depois");
+    for (const off of ["", null, undefined, "fhrttdh8", "lf63bgdd", "estlanc"]) assert.equal(P.faseDaOfertaDoEstudante(off), null, String(off));
+    assert.deepEqual(P.mercadosDasOfertasDoEstudante(), { estlanc1: ["br"], estdep01: ["br"] });
+  } finally {
+    Object.assign(P.OFERTAS_DO_ESTUDANTE, antes);
+  }
+});
+
+const fs = require("fs");
+const path = require("path");
+const raiz = path.join(__dirname, "..");
+
+/** O que lê o código da oferta de estudante (config/pricing.ts). */
+const LE_O_CODIGO = /\b(OFERTAS_DO_ESTUDANTE|ESTUDANTE_OFERTA_LANCAMENTO|ESTUDANTE_OFERTA|ofertaDoEstudante|ofertasDoEstudante|estudanteTemOferta|checkoutDoEstudante|faseDaOfertaDoEstudante|mercadosDasOfertasDoEstudante|fasesComOferta)\b/;
+
+/** Arquivos que vão ao navegador: os "use client" e o que eles importam
+    do projeto (@/...), menos o config/pricing.ts, onde as funções moram
+    (o build tira o que não é chamado; scripts/conferir-bundle.js confere). */
+function arquivosDoNavegador() {
+  const todos = [];
+  const varrer = (pasta) => {
+    for (const nome of fs.readdirSync(path.join(raiz, pasta))) {
+      const rel = path.join(pasta, nome);
+      if (fs.statSync(path.join(raiz, rel)).isDirectory()) varrer(rel);
+      else if (/\.(tsx?|jsx?|mjs)$/.test(nome)) todos.push(rel);
+    }
+  };
+  for (const p of ["app", "components", "lib"]) varrer(p);
+  const doCliente = todos.filter((f) => /^\s*["']use client["']/.test(fs.readFileSync(path.join(raiz, f), "utf8")));
+  const vistos = new Set();
+  const fila = [...doCliente];
+  while (fila.length) {
+    const f = fila.shift();
+    if (vistos.has(f)) continue;
+    vistos.add(f);
+    const fonte = fs.readFileSync(path.join(raiz, f), "utf8");
+    for (const m of fonte.matchAll(/^\s*import\s+(?!type\b)[^;]*?from\s+["']@\/([^"']+)["']/gm)) {
+      const base = m[1];
+      const achado = ["", ".ts", ".tsx", ".js", ".mjs", "/index.ts", "/index.tsx"]
+        .map((ext) => base + ext)
+        .find((c) => fs.existsSync(path.join(raiz, c)) && fs.statSync(path.join(raiz, c)).isFile());
+      if (achado && achado !== path.join("config", "pricing.ts")) fila.push(achado);
+    }
+  }
+  return { doCliente, vistos: [...vistos] };
+}
+
+test("estudante: nenhum arquivo que vai ao navegador lê o código da oferta (só o nome das fases, DM_ESTUDANTE_FASES)", () => {
+  const { doCliente, vistos } = arquivosDoNavegador();
+  assert.ok(doCliente.includes(path.join("components", "Home.tsx")));
+  assert.ok(doCliente.includes(path.join("components", "BlocoOferta.tsx")));
+  assert.ok(vistos.includes("config.ts"), "o config.ts vai ao navegador pela Home");
+  for (const f of vistos) {
+    const fonte = fs.readFileSync(path.join(raiz, f), "utf8").replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
+    assert.equal(LE_O_CODIGO.test(fonte), false, `${f} lê o código da oferta de estudante: ${(fonte.match(LE_O_CODIGO) || [])[0]}`);
+  }
+  // o config.ts decide pelo nome das fases que o build gravou
+  const config = fs.readFileSync(path.join(raiz, "config.ts"), "utf8");
+  assert.match(config, /process\.env\.DM_ESTUDANTE_FASES/);
+});
+
+test("estudante: a conferência depois do build acha o código no JavaScript do navegador e ignora o .js do servidor", () => {
+  const { procurarCodigos, codigosDoConfig } = require("../scripts/conferir-bundle");
+  const os = require("os");
+  const pasta = fs.mkdtempSync(path.join(os.tmpdir(), "conferir-bundle-"));
+  try {
+    const next = path.join(pasta, ".next");
+    fs.mkdirSync(path.join(next, "static", "chunks"), { recursive: true });
+    fs.mkdirSync(path.join(next, "server", "app", "estudante", "ativar"), { recursive: true });
+    fs.writeFileSync(path.join(next, "static", "chunks", "a.js"), 'x={lancamento:"zzestl59",depois:""}');
+    fs.writeFileSync(path.join(next, "static", "chunks", "zzestd79abc.js"), "nada aqui");
+    fs.writeFileSync(path.join(next, "server", "app", "estudante", "ativar", "route.js"), 'o="zzestd79"');
+    fs.writeFileSync(path.join(next, "server", "app", "index.html"), "<p>sem código</p>");
+    const achados = procurarCodigos(next, ["zzestl59", "zzestd79"]);
+    assert.deepEqual(achados.map((a) => a.codigo), ["zzestl59"]);
+    assert.match(achados[0].arquivo, /static[\\/]chunks[\\/]a\.js$/);
+    // no HTML gerado no build também conta
+    fs.writeFileSync(path.join(next, "server", "app", "index.html"), '<a href="?off=zzestd79">');
+    assert.deepEqual(procurarCodigos(next, ["zzestd79"]).map((a) => a.codigo), ["zzestd79"]);
+    assert.deepEqual(procurarCodigos(next, []), []);
+  } finally {
+    fs.rmSync(pasta, { recursive: true, force: true });
+  }
+  assert.deepEqual(codigosDoConfig({ OFERTAS_DO_ESTUDANTE: { lancamento: "estlanc1", depois: " " } }), ["estlanc1"]);
+  // o npm run build roda a conferência logo depois do next build
+  const pacote = JSON.parse(fs.readFileSync(path.join(raiz, "package.json"), "utf8"));
+  assert.equal(pacote.scripts.build, "next build && node scripts/conferir-bundle.js");
+});

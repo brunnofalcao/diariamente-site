@@ -28,6 +28,19 @@
  * estudante nao conseguiria pagar. A /estudante, fechada, nem mostra o
  * formulario; isto cobre pagina antiga em cache e POST direto.
  *
+ * CPF QUE JA PEDIU (chave ligada). Uma mensagem so, neutra, para qualquer
+ * CPF que ja tem inscricao no fluxo novo ou ja pagou (409): a resposta
+ * nao diz se a pessoa pagou, e o teto por hora vem ANTES da consulta do
+ * CPF. Excecao: o CPF que so tem cupom do fluxo antigo (o da main, com
+ * hotmart_coupon_id, do produto antigo) nao usado ganha o link novo, no
+ * MESMO lead (1 CPF = 1 lead continua), com os dados que acabou de
+ * informar: o WhatsApp antigo levava um cupom que nao vale mais.
+ *
+ * NOME: so letras, espaco, hifen e apostrofo, ate 80 caracteres
+ * (lib/nome.ts). A primeira palavra vai no "Ola, ..." do e-mail e do
+ * WhatsApp; sem a regra, um nome em forma de endereco virava link com a
+ * marca do Diariamente.
+ *
  * STANDBY (DM_SITE_LANCADO vazio, config/lancamento.ts): a /estudante e
  * a da producao, com o formulario aberto, e esta rota faz o que a da main
  * faz: o cupom pessoal pela API da Hotmart (lib/hotmart.js, com o
@@ -39,6 +52,7 @@ import { createClient } from '@supabase/supabase-js';
 import { criarCupom, gerarCodigo, apagarCupom, offerIdsDoAmbiente } from '@/lib/hotmart';
 import { enviarLeadRD } from '@/lib/rdstation';
 import { gerarToken, linkPessoal, emailConfigurado, enviarEmailDeAprovacao } from '@/lib/estudante';
+import { nomeLimpo, problemaDoNome } from '@/lib/nome';
 import { ofertaDoEstudante, faseDoEstudante, precoEstudante, descontoEquivalenteDoEstudante } from '@/config/pricing';
 
 export const runtime = 'nodejs';
@@ -96,6 +110,31 @@ function cpfValido(cpf) {
   return true;
 }
 
+/** Resposta unica para CPF que ja tem inscricao no fluxo novo (ou ja
+    pagou): nao diz se a pessoa pagou (dado ligado ao CPF, LGPD). */
+const JA_INSCRITO = 'Este CPF ja fez a inscricao de estudante. Se nao recebeu o link, fale com suporte@scienceplay.com.';
+
+/**
+ * Fluxo novo: o que fazer com um CPF que ja tem lead.
+ *   'inscrito'  ja tem link do fluxo novo, ou um cupom (de qualquer
+ *               fluxo) ja usado: 409 com a mensagem neutra
+ *   'novo_link' so tem cupom do fluxo antigo nao usado (ou nada): o mesmo
+ *               lead ganha o link novo
+ */
+async function situacaoDoCpf(leadId) {
+  const { data: link } = await db
+    .from('cupons_estudante').select('id')
+    .eq('lead_id', leadId).is('hotmart_coupon_id', null)
+    .limit(1).maybeSingle();
+  if (link) return 'inscrito';
+  const { data: usado } = await db
+    .from('cupons_estudante').select('id')
+    .eq('lead_id', leadId).eq('status', 'usado')
+    .limit(1).maybeSingle();
+  if (usado) return 'inscrito';
+  return 'novo_link';
+}
+
 /** O fluxo novo esta aberto agora? Configuracao do build e oferta da fase. */
 function fechadoAgora() {
   if (process.env.DM_ESTUDANTE_ABERTO !== '1') return 'configuracao (DM_ESTUDANTE_ABERTO)';
@@ -134,7 +173,7 @@ export async function POST(req) {
 
     const body = await req.json();
 
-    const nome = String(body.nome || '').trim();
+    const nome = nomeLimpo(body.nome);
     const cpf = soDigitos(body.cpf);
     const whats = soDigitos(body.whatsapp);
     const email = String(body.email || '').trim().toLowerCase();
@@ -147,7 +186,10 @@ export async function POST(req) {
 
     // ---------- Validacao ----------
     const erros = [];
-    if (nome.split(' ').filter(Boolean).length < 2) erros.push('Informe seu nome completo.');
+    const problemaNome = problemaDoNome(nome);
+    if (problemaNome === 'curto') erros.push('Informe seu nome completo.');
+    else if (problemaNome === 'caracteres') erros.push('Use so letras no nome, sem numeros nem simbolos.');
+    else if (problemaNome === 'longo') erros.push('Nome muito longo: use ate 80 caracteres.');
     if (!cpfValido(cpf)) erros.push('CPF invalido.');
     if (whats.length < 12 || whats.length > 13) erros.push('WhatsApp com DDI e DDD. Ex: 5511999999999.');
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) erros.push('E-mail invalido.');
@@ -155,45 +197,7 @@ export async function POST(req) {
     if (!CURSOS.includes(curso)) erros.push('Selecione seu curso.');
     if (erros.length) return Response.json({ ok: false, erros }, { status: 400 });
 
-    // ---------- 1 CPF = 1 lead ----------
-    const { data: existente } = await db
-      .from('leads_estudante').select('id').eq('cpf', cpf).maybeSingle();
-
-    if (existente) {
-      if (lancado) {
-        // O link nao vence: quem ja tem o seu e so abrir de novo a mensagem.
-        const { data: anterior } = await db
-          .from('cupons_estudante')
-          .select('codigo, status')
-          .eq('lead_id', existente.id)
-          .order('criado_em', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        return Response.json({
-          ok: false,
-          erros: [anterior && anterior.status === 'usado'
-            ? 'Este CPF ja usou a condicao de estudante.'
-            : anterior
-              ? 'Voce ja tem seu link de estudante. Confira seu WhatsApp.'
-              : 'Este CPF ja solicitou a condicao de estudante.'],
-        }, { status: 409 });
-      }
-      const { data: cupomAtivo } = await db
-        .from('cupons_estudante')
-        .select('codigo, status, expira_em')
-        .eq('lead_id', existente.id).eq('status', 'ativo')
-        .gt('expira_em', new Date().toISOString())
-        .maybeSingle();
-
-      return Response.json({
-        ok: false,
-        erros: [cupomAtivo
-          ? 'Voce ja tem um codigo ativo. Confira seu WhatsApp.'
-          : 'Este CPF ja solicitou o acesso estudante.'],
-      }, { status: 409 });
-    }
-
-    // ---------- Freio de emissao ----------
+    // ---------- Freio de emissao (antes da consulta do CPF) ----------
     const umaHora = new Date(Date.now() - 3600_000).toISOString();
     const { count } = await db.from('cupons_estudante')
       .select('id', { count: 'exact', head: true }).gte('criado_em', umaHora);
@@ -209,24 +213,69 @@ export async function POST(req) {
       }, { status: 429 });
     }
 
-    // ---------- Grava o lead ----------
+    // ---------- 1 CPF = 1 lead ----------
+    const { data: existente } = await db
+      .from('leads_estudante').select('id').eq('cpf', cpf).maybeSingle();
+
+    // Fluxo novo, CPF que so tem o cupom antigo: o mesmo lead ganha o link.
+    let reaproveitado = false;
+
+    if (existente) {
+      if (lancado) {
+        // O link nao vence: quem ja tem o seu e so abrir de novo a mensagem.
+        // Uma resposta so (nao diz se pagou).
+        if (await situacaoDoCpf(existente.id) === 'inscrito') {
+          return Response.json({ ok: false, erros: [JA_INSCRITO] }, { status: 409 });
+        }
+        reaproveitado = true;
+      } else {
+        const { data: cupomAtivo } = await db
+          .from('cupons_estudante')
+          .select('codigo, status, expira_em')
+          .eq('lead_id', existente.id).eq('status', 'ativo')
+          .gt('expira_em', new Date().toISOString())
+          .maybeSingle();
+
+        return Response.json({
+          ok: false,
+          erros: [cupomAtivo
+            ? 'Voce ja tem um codigo ativo. Confira seu WhatsApp.'
+            : 'Este CPF ja solicitou o acesso estudante.'],
+        }, { status: 409 });
+      }
+    }
+
+    // ---------- Grava o lead (ou atualiza o do cupom antigo) ----------
     const institucional = await ehInstitucional(email);
     const url = new URL(req.url);
+    const dadosDoLead = {
+      nome, whatsapp: whats, email, instituicao, estado, curso,
+      semestre, previsao_conclusao: conclusao,
+      email_institucional: institucional,
+      ip_origem: req.headers.get('x-forwarded-for')?.split(',')[0] || null,
+      user_agent: req.headers.get('user-agent'),
+      utm: body.utm || Object.fromEntries(url.searchParams),
+    };
 
-    const { data: criado, error: erroLead } = await db
-      .from('leads_estudante')
-      .insert({
-        nome, cpf, whatsapp: whats, email, instituicao, estado, curso,
-        semestre, previsao_conclusao: conclusao,
-        email_institucional: institucional,
-        ip_origem: req.headers.get('x-forwarded-for')?.split(',')[0] || null,
-        user_agent: req.headers.get('user-agent'),
-        utm: body.utm || Object.fromEntries(url.searchParams),
-      })
-      .select('*').single();
+    if (reaproveitado) {
+      // Os dados de agora: o link vai para o WhatsApp e o e-mail que a
+      // pessoa acabou de informar (a pagina diz isso). O lead e o mesmo.
+      const { data: atualizado, error: erroAtualiza } = await db
+        .from('leads_estudante')
+        .update({ ...dadosDoLead, enviado_rd: false, rd_erro: null })
+        .eq('id', existente.id)
+        .select('*').single();
+      if (erroAtualiza) throw new Error(`Lead nao atualizado: ${erroAtualiza.message}`);
+      lead = atualizado;
+    } else {
+      const { data: criado, error: erroLead } = await db
+        .from('leads_estudante')
+        .insert({ cpf, ...dadosDoLead })
+        .select('*').single();
 
-    if (erroLead) throw new Error(`Lead nao gravado: ${erroLead.message}`);
-    lead = criado;
+      if (erroLead) throw new Error(`Lead nao gravado: ${erroLead.message}`);
+      lead = criado;
+    }
 
     const extrasRD = {};
 
@@ -247,15 +296,21 @@ export async function POST(req) {
         enviar_em: new Date(agora + ESPERA_MINUTOS * 60_000).toISOString(),
       });
       if (erroLink) {
-        // Sem o link gravado, o estudante nao teria o que abrir: libera o CPF.
-        await db.from('leads_estudante').delete().eq('id', lead.id);
-        lead = null;
+        // Sem o link gravado, o estudante nao teria o que abrir: libera o
+        // CPF. O lead do cupom antigo (reaproveitado) ja existia: fica.
+        if (!reaproveitado) {
+          await db.from('leads_estudante').delete().eq('id', lead.id);
+          lead = null;
+        }
         throw new Error(`Link pessoal nao registrado: ${erroLink.message}`);
       }
 
       await db.from('log_estudante').insert({
         lead_id: lead.id, acao: 'link_emitido',
-        detalhe: { codigo: token, fase, preco: precoEstudante(agora), oferta: ofertaDoEstudante(agora), curso, institucional },
+        detalhe: {
+          codigo: token, fase, preco: precoEstudante(agora), oferta: ofertaDoEstudante(agora), curso, institucional,
+          ...(reaproveitado ? { lead_do_cupom_antigo: true } : {}),
+        },
         ator: 'sistema',
       });
       extrasRD.link = linkPessoal(token);

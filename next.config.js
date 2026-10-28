@@ -122,6 +122,14 @@ const nextConfig = {
    ligada: em standby a /estudante é a da produção (app/estudante/page.tsx)
    e o fluxo novo não abre.
 
+   FASES DO ESTUDANTE COM OFERTA: DM_ESTUDANTE_FASES, também calculada
+   aqui ("lancamento,depois", só as fases com código em
+   config/pricing.ts). É SÓ O NOME da fase: o código da oferta (o off=)
+   nunca vai ao navegador, senão qualquer visitante o acharia no
+   JavaScript da home e pagaria o preço de estudante sem passar pela
+   /estudante. O `npm run build` confere isso depois do next build
+   (scripts/conferir-bundle.js).
+
    E-MAIL DO ESTUDANTE: DM_ESTUDANTE_EMAIL, também calculada aqui: "1"
    com RESEND_API_KEY na Vercel (e a chave de lançamento ligada), para a
    /estudante dizer que o link vai também por e-mail. Só o sinal vai ao
@@ -170,6 +178,7 @@ module.exports = (phase) => {
     env: {
       ...nextConfig.env,
       DM_ESTUDANTE_ABERTO: lancado && estudante.configurado ? "1" : "",
+      DM_ESTUDANTE_FASES: lancado && estudante.configurado ? (estudante.fases || []).join(",") : "",
       DM_ESTUDANTE_EMAIL: lancado && String(process.env.RESEND_API_KEY || "").trim() ? "1" : "",
       DM_SITE_LANCADO: lancado ? "1" : "",
     },

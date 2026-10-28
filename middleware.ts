@@ -13,6 +13,7 @@ import {
 import { CAMINHOS, destinoDoBaixar, destinoDoObrigado } from "@/lib/obrigado.mjs";
 import { LOJAS_DO_LOCAL } from "@/lib/i18n";
 import { SITE_LANCADO } from "@/config/lancamento";
+import { mercadosDasOfertasDoEstudante } from "@/config/pricing";
 
 /* =====================================================================
    ROTEAMENTO POR GEOGRAFIA
@@ -94,6 +95,8 @@ export function middleware(req: NextRequest) {
     idiomas,
     // Sem cabeçalho de país (ambiente local), o país não decide.
     mercadoDoIp: pais ? mercadoDoPais(pais) : null,
+    // As ofertas de estudante (do Brasil): o código fica só no servidor.
+    ofertasExtras: mercadosDasOfertasDoEstudante(),
   });
   if (obrigado) {
     const r = NextResponse.redirect(new URL(obrigado, req.url));

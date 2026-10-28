@@ -23,7 +23,8 @@ import {
  * estiver valendo), para o desconto exibido ser sempre verdadeiro. O
  * percentual é arredondado PARA BAIXO (46,7% vira 46%), como o selo do
  * card: nunca mais do que é.
- * A página /estudante se refaz a cada hora, como as homes.
+ * A página /estudante é dinâmica: o preço e a fase saem da hora de cada
+ * visita (app/estudante/page.tsx).
  *
  * PREÇO EM DUAS FASES (decisão do dono, 28/10/2026), com a mesma virada
  * do card (config/pricing.ts, faseDoEstudante): R$ 59,90 por ano nos 3
@@ -36,9 +37,12 @@ import {
  * colunas comparam o mesmo período, e "Você economiza" é por ano, nos 3
  * primeiros anos.
  *
- * Fechado (estudanteAberto(agora) falso): o card avisa que a solicitação
- * abre em breve, em vez de dizer que o link chega e o botão abre o
- * pagamento.
+ * Fechado (estudanteAberto(agora) falso): o card fica SEM número (a
+ * versão de ESTUDANTE.mostrarPreco = false), avisa que a solicitação
+ * abre em breve e diz que o preço aparece quando abrir. Nada de selo OFF,
+ * preço riscado, data ("para quem assinar até 16 de novembro"), "Cancele
+ * quando quiser" nem comparativo: seria uma oferta com prazo que ninguém
+ * consegue aceitar enquanto está fechada (CDC, art. 37).
  *
  * ESTUDANTE.mostrarPreco = false devolve a versão sem número.
  */
@@ -130,7 +134,7 @@ export function BlocoPreco() {
   const regra = regraDoEstudante(agora);
   const depois = `Depois, ${brl(MERCADOS.br.anual)} por ano.`;
 
-  if (!ESTUDANTE.mostrarPreco) {
+  if (!ESTUDANTE.mostrarPreco || !aberto) {
     return (
       <div className="ed-offer">
         <div className="ed-price">
@@ -142,8 +146,14 @@ export function BlocoPreco() {
             </span>
           </div>
           <p className="ed-price-nota">
-            O valor da condição de estudante aparece no pagamento, pelo link que enviamos{" "}
-            {canaisDoLink()}. Solicitar não gera nenhum compromisso.
+            {aberto ? (
+              <>
+                O valor da condição de estudante aparece no pagamento, pelo link que enviamos{" "}
+                {canaisDoLink()}. Solicitar não gera nenhum compromisso.
+              </>
+            ) : (
+              "O preço da condição de estudante aparece aqui quando a inscrição abrir."
+            )}
           </p>
           <Entrega aberto={aberto} />
         </div>

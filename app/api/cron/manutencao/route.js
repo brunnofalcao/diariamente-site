@@ -27,6 +27,7 @@ import { createClient } from '@supabase/supabase-js';
 import { apagarCupom } from '@/lib/hotmart';
 import { enviarLeadRD } from '@/lib/rdstation';
 import { linkPessoal } from '@/lib/estudante';
+import { primeiroNome } from '@/lib/nome';
 import { whatsapp } from '@/lib/whatsapp';
 import { segredoConfere } from '@/lib/seguranca';
 
@@ -100,7 +101,10 @@ async function enviarCodigos() {
     }
 
     try {
-      await whatsapp.aprovado(lead.whatsapp, String(lead.nome).split(' ')[0], c.codigo);
+      // "Olá, {{1}}.": o primeiro nome so se for um nome (lib/nome.ts). Nome
+      // em forma de endereco (pedido antigo, de antes da regra) vira
+      // "estudante", para o WhatsApp nao transformar a saudacao em link.
+      await whatsapp.aprovado(lead.whatsapp, primeiroNome(lead.nome) || 'estudante', c.codigo);
 
       await db.from('cupons_estudante')
         .update({ whatsapp_enviado_em: new Date().toISOString(), whatsapp_erro: null })

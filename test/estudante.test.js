@@ -11,6 +11,7 @@ const { carregarTs } = require("../scripts/carregar-ts");
 
 const raiz = path.join(__dirname, "..");
 const P = carregarTs(path.join(raiz, "config", "pricing.ts"));
+const N = carregarTs(path.join(raiz, "lib", "nome.ts"));
 
 const LANCAMENTO = Date.parse("2026-10-28T12:00:00-03:00");
 const ULTIMO_SEGUNDO = Date.parse("2026-11-16T23:59:59-03:00");
@@ -137,11 +138,36 @@ test("/estudante/ativar decide NO CLIQUE: aprovado no lançamento e aberto depoi
   const depois = await ativar("?cupom=DIARIAESTABCD2345", { agora: DEPOIS });
   assert.equal(depois.r.status, 302);
   assert.equal(depois.r.location, "https://pay.hotmart.com/K105072021O?off=estdep01&sck=DIARIAESTABCD2345");
-  // o link não vence: expirado (prazo de envio do WhatsApp) e usado continuam abrindo
-  for (const status of ["expirado", "usado"]) {
-    const { r } = await ativar("?cupom=DIARIAESTABCD2345", { conhecidos: { DIARIAESTABCD2345: status } });
-    assert.equal(r.status, 302, status);
+  // o link não vence: expirado (prazo de envio do WhatsApp) continua abrindo
+  const expirado = await ativar("?cupom=DIARIAESTABCD2345", { conhecidos: { DIARIAESTABCD2345: "expirado" } });
+  assert.equal(expirado.r.status, 302);
+});
+
+test("/estudante/ativar: link já USADO não abre outro checkout (assinaria duas vezes): vai para a inscrição concluída", async () => {
+  for (const agora of [LANCAMENTO, DEPOIS]) {
+    const { r, banco } = await ativar("?cupom=DIARIAESTABCD2345", { conhecidos: { DIARIAESTABCD2345: "usado" }, agora });
+    assert.equal(r.status, 307);
+    assert.equal(r.location, "https://diariamente.app/estudante/inscricao?situacao=concluida");
+    assert.equal(/pay\.hotmart|off=/.test(r.location), false);
+    const log = banco.chamadas.find((c) => c.tabela === "log_estudante");
+    assert.equal(passo(log, "insert")[0].acao, "link_reaberto_usado");
   }
+});
+
+test("/estudante/ativar: aprovado e a fase SEM oferta não cai na lista de espera: o link continua valendo", async () => {
+  // o ESTUDANTE_OFERTA atrasou: aprovado no lançamento, clique em 17/11
+  const semDepois = await ativar("?cupom=DIARIAESTABCD2345", { ofertas: { lancamento: "estlanc1", depois: "" }, agora: DEPOIS });
+  assert.equal(semDepois.r.status, 307);
+  assert.equal(semDepois.r.location, "https://diariamente.app/estudante/inscricao?situacao=aguarde");
+  const log = semDepois.banco.chamadas.find((c) => c.tabela === "log_estudante");
+  assert.equal(passo(log, "insert")[0].acao, "link_aberto_sem_oferta");
+  assert.equal(passo(log, "insert")[0].detalhe.oferta, null);
+  // o config real de hoje (códigos vazios), com token conhecido: o mesmo
+  const real = await ativar("?cupom=DIARIAESTABCD2345", { ofertas: { ...P.OFERTAS_DO_ESTUDANTE } });
+  if (!P.ESTUDANTE_OFERTA_LANCAMENTO) assert.equal(real.r.location, "https://diariamente.app/estudante/inscricao?situacao=aguarde");
+  // usado vale mais que a falta da oferta
+  const usado = await ativar("?cupom=DIARIAESTABCD2345", { ofertas: { lancamento: "", depois: "" }, conhecidos: { DIARIAESTABCD2345: "usado" } });
+  assert.equal(usado.r.location, "https://diariamente.app/estudante/inscricao?situacao=concluida");
 });
 
 test("/estudante/ativar nunca abre a oferta oficial, a de lançamento, o checkout antigo nem leva cupom", async () => {
@@ -151,7 +177,7 @@ test("/estudante/ativar nunca abre a oferta oficial, a de lançamento, o checkou
   }
 });
 
-test("/estudante/ativar volta (307) para /estudante: token desconhecido, revogado, fora do formato, sem oferta da fase, standby ou sem banco", async () => {
+test("/estudante/ativar volta (307) para /estudante: token desconhecido, revogado, fora do formato, standby ou sem banco", async () => {
   const volta = "https://diariamente.app/estudante";
   for (const busca of ["", "?cupom=", "?cupom=ABC%20DEF", "?cupom=" + "A".repeat(26), "?cupom=<script>", "?cupom=DIARIAESTDESCONHECID"]) {
     const { r } = await ativar(busca);
@@ -162,15 +188,9 @@ test("/estudante/ativar volta (307) para /estudante: token desconhecido, revogad
     const { r } = await ativar("?cupom=DIARIAESTABCD2345", { conhecidos: { DIARIAESTABCD2345: status } });
     assert.equal(r.location, volta, status);
   }
-  // a fase vigente sem o código: fechado, sem nem consultar o banco
-  const semLanc = await ativar("?cupom=DIARIAESTABCD2345", { ofertas: { lancamento: "", depois: "estdep01" } });
+  // a fase vigente sem o código e o token desconhecido: /estudante (fechada, explica)
+  const semLanc = await ativar("?cupom=DIARIAESTDESCONHECID", { ofertas: { lancamento: "", depois: "estdep01" } });
   assert.equal(semLanc.r.location, volta);
-  assert.equal(semLanc.banco.chamadas.length, 0);
-  const semDepois = await ativar("?cupom=DIARIAESTABCD2345", { ofertas: { lancamento: "estlanc1", depois: "" }, agora: DEPOIS });
-  assert.equal(semDepois.r.location, volta);
-  // o config real, com os dois códigos vazios: fechado
-  const real = await ativar("?cupom=DIARIAESTABCD2345", { ofertas: { ...P.OFERTAS_DO_ESTUDANTE } });
-  if (!P.ESTUDANTE_OFERTA_LANCAMENTO) assert.equal(real.r.location, volta);
   // standby: nenhum checkout do 7448309, nem com token conhecido
   const standby = await ativar("?cupom=DIARIAESTABCD2345", { lancado: false });
   assert.equal(standby.r.location, volta);
@@ -272,7 +292,7 @@ function carregarSolicitar(regras = {}) {
   const cupons = [];
   const rd = [];
   const emails = [];
-  const E = carregarTs(path.join(raiz, "lib", "estudante.js"), { "@/config/pricing": P });
+  const E = carregarTs(path.join(raiz, "lib", "estudante.js"), { "@/config/pricing": P, "@/lib/nome": N });
   const rota = carregarTs(path.join(raiz, "app", "api", "estudante", "solicitar", "route.js"), {
     "@supabase/supabase-js": { createClient: () => banco.db },
     "@/lib/hotmart": {
@@ -291,6 +311,7 @@ function carregarSolicitar(regras = {}) {
       enviarEmailDeAprovacao: async (args) => { emails.push(args); return { id: "re_1", fase: P.faseDoEstudante(args.agora) }; },
     },
     "@/config/pricing": P,
+    "@/lib/nome": N,
   });
   return { rota, banco, cupons, rd, emails };
 }
@@ -412,13 +433,14 @@ test("fluxo ABERTO com RESEND_API_KEY: o e-mail de aprovação sai pelo Resend c
   assert.equal(emails[0].token, "DIARIAESTTOKEN00000001");
   // falha no Resend: o pedido segue e o log registra
   const banco2 = bancoFalso();
-  const E = carregarTs(path.join(raiz, "lib", "estudante.js"), { "@/config/pricing": P });
+  const E = carregarTs(path.join(raiz, "lib", "estudante.js"), { "@/config/pricing": P, "@/lib/nome": N });
   const rota2 = carregarTs(path.join(raiz, "app", "api", "estudante", "solicitar", "route.js"), {
     "@supabase/supabase-js": { createClient: () => banco2.db },
     "@/lib/hotmart": {},
     "@/lib/rdstation": { enviarLeadRD: async () => {} },
     "@/lib/estudante": { ...E, enviarEmailDeAprovacao: async () => { throw new Error("Resend HTTP 500"); } },
     "@/config/pricing": P,
+    "@/lib/nome": N,
   });
   const r2 = await semLog(() => comOfertas(FICTICIAS, () => comRelogio(LANCAMENTO, () =>
     comEnvAsync({ ...LIGADO, RESEND_API_KEY: "re_teste" }, () => rota2.POST(pedidoEstudante())))));
@@ -426,18 +448,82 @@ test("fluxo ABERTO com RESEND_API_KEY: o e-mail de aprovação sai pelo Resend c
   assert.ok(banco2.chamadas.some((c) => c.tabela === "log_estudante" && passo(c, "insert")[0].acao === "email_falhou"));
 });
 
-test("fluxo ABERTO: 1 CPF = 1 lead (409 sem gravar nada), teto por hora (429) e o CPF liberado se o link não grava", async () => {
-  // CPF que já pediu: 409, e o texto depende do link anterior
-  for (const [status, padrao] of [["ativo", /ja tem seu link de estudante/], ["usado", /ja usou a condicao/], [null, /ja solicitou/]]) {
-    const { rota, banco } = carregarSolicitar({
-      leads_estudante: (op, nomes) => (nomes.includes("maybeSingle") ? { data: { id: "lead-antigo" }, error: null } : undefined),
-      cupons_estudante: (op, nomes) => (nomes.includes("maybeSingle") ? { data: status ? { codigo: "X", status } : null, error: null } : undefined),
-    });
+/** cupons_estudante de um CPF que já pediu: `linhas` são as linhas dele
+    ({ hotmart_coupon_id, status }), e o banco falso responde às duas
+    consultas da rota (link do fluxo novo; cupom usado). */
+function cuponsDoLead(linhas) {
+  return (op, nomes) => {
+    if (!nomes.includes("maybeSingle")) return undefined;
+    const novo = op.passos.some(([n, a]) => n === "is" && a[0] === "hotmart_coupon_id" && a[1] === null);
+    const usado = op.passos.some(([n, a]) => n === "eq" && a[0] === "status" && a[1] === "usado");
+    const achada = linhas.find((l) => (novo ? l.hotmart_coupon_id == null : true) && (usado ? l.status === "usado" : true));
+    return { data: novo || usado ? (achada ? { id: "linha" } : null) : null, error: null };
+  };
+}
+const LEAD_ANTIGO = (op, nomes) => {
+  if (nomes.includes("maybeSingle")) return { data: { id: "lead-antigo" }, error: null };
+  if (nomes.includes("update") && nomes.includes("single")) return { data: { id: "lead-antigo", nome: "Fulana de Teste", email: "fulana@exemplo.test" }, error: null };
+  return undefined;
+};
+
+test("fluxo ABERTO: CPF que já tem inscrição recebe UMA resposta neutra (409), que não diz se pagou, sem gravar nada", async () => {
+  const casos = [
+    [{ hotmart_coupon_id: null, status: "ativo" }],
+    [{ hotmart_coupon_id: null, status: "usado" }],
+    [{ hotmart_coupon_id: null, status: "expirado" }],
+    // cupom da main já usado
+    [{ hotmart_coupon_id: 123, status: "usado" }],
+    [{ hotmart_coupon_id: 123, status: "expirado" }, { hotmart_coupon_id: null, status: "ativo" }],
+  ];
+  const respostas = new Set();
+  for (const linhas of casos) {
+    const { rota, banco } = carregarSolicitar({ leads_estudante: LEAD_ANTIGO, cupons_estudante: cuponsDoLead(linhas) });
     const r = await semLog(() => comOfertas(FICTICIAS, () => comRelogio(LANCAMENTO, () => comEnvAsync(LIGADO, () => rota.POST(pedidoEstudante())))));
-    assert.equal(r.status, 409, String(status));
-    assert.match((await r.json()).erros[0], padrao);
-    assert.equal(banco.chamadas.some((c) => c.passos.some((p) => p[0] === "insert")), false, "nada gravado");
+    assert.equal(r.status, 409, JSON.stringify(linhas));
+    const corpo = await r.json();
+    respostas.add(JSON.stringify(corpo));
+    assert.deepEqual(corpo.erros, ["Este CPF ja fez a inscricao de estudante. Se nao recebeu o link, fale com suporte@scienceplay.com."]);
+    assert.equal(banco.chamadas.some((c) => c.passos.some((p) => p[0] === "insert" || p[0] === "update")), false, "nada gravado");
   }
+  assert.equal(respostas.size, 1, "a mesma resposta para quem pagou e para quem não pagou");
+  // o teto por hora vem ANTES da consulta do CPF
+  const fonte = fs.readFileSync(path.join(raiz, "app", "api", "estudante", "solicitar", "route.js"), "utf8");
+  assert.ok(fonte.indexOf("TETO_POR_HORA) {") < fonte.indexOf(".eq('cpf', cpf)"));
+});
+
+test("fluxo ABERTO: CPF só com o cupom ANTIGO não usado (os de agosto, do produto antigo) ganha o link novo no mesmo lead", async () => {
+  for (const linhas of [[{ hotmart_coupon_id: 9001, status: "expirado" }], [{ hotmart_coupon_id: 9002, status: "ativo" }], []]) {
+    const { rota, banco, rd, cupons } = carregarSolicitar({ leads_estudante: LEAD_ANTIGO, cupons_estudante: cuponsDoLead(linhas) });
+    const r = await semLog(() => comOfertas(FICTICIAS, () => comRelogio(LANCAMENTO, () => comEnvAsync(LIGADO, () => rota.POST(pedidoEstudante())))));
+    assert.equal(r.status, 200, JSON.stringify(linhas));
+    assert.equal((await r.json()).ok, true);
+    assert.equal(cupons.length, 0, "nada de cupom pela API da Hotmart");
+    // o mesmo lead (1 CPF = 1 lead): atualizado com os dados de agora, nenhum lead novo
+    assert.equal(banco.chamadas.some((c) => c.tabela === "leads_estudante" && c.passos[0][0] === "insert"), false);
+    const atualiza = banco.chamadas.find((c) => c.tabela === "leads_estudante" && c.passos[0][0] === "update");
+    assert.ok(atualiza, "lead atualizado");
+    assert.equal(passo(atualiza, "update")[0].whatsapp, "5500900000000");
+    assert.equal("cpf" in passo(atualiza, "update")[0], false);
+    assert.deepEqual(passo(atualiza, "eq"), ["id", "lead-antigo"]);
+    const link = banco.chamadas.find((c) => c.tabela === "cupons_estudante" && c.passos[0][0] === "insert");
+    assert.equal(passo(link, "insert")[0].lead_id, "lead-antigo");
+    assert.equal("hotmart_coupon_id" in passo(link, "insert")[0], false);
+    const log = banco.chamadas.find((c) => c.tabela === "log_estudante" && passo(c, "insert")[0].acao === "link_emitido");
+    assert.equal(passo(log, "insert")[0].detalhe.lead_do_cupom_antigo, true);
+    assert.equal(rd.length, 1);
+  }
+  // o link não grava: o lead antigo NÃO é apagado (ele já existia)
+  const falha = carregarSolicitar({
+    leads_estudante: LEAD_ANTIGO,
+    cupons_estudante: (op, nomes) => (nomes.includes("insert") ? { data: null, error: { message: "codigo duplicado" } } : cuponsDoLead([])(op, nomes)),
+  });
+  const r500 = await semLog(() => comOfertas(FICTICIAS, () => comRelogio(LANCAMENTO, () => comEnvAsync(LIGADO, () => falha.rota.POST(pedidoEstudante())))));
+  assert.equal(r500.status, 500);
+  assert.equal(falha.banco.chamadas.some((c) => c.tabela === "leads_estudante" && c.passos[0][0] === "delete"), false);
+});
+
+test("fluxo ABERTO: teto por hora (429) e o CPF liberado se o link não grava", async () => {
+
   // teto por hora
   const teto = carregarSolicitar({
     cupons_estudante: (op) => (op.passos.some(([n, a]) => n === "select" && a[1] && a[1].head) ? { count: 100, error: null } : undefined),
@@ -474,7 +560,7 @@ test("standby: /api/estudante/solicitar é a da produção, sem o 503 (o cupom d
 
 /* ------------------------------ lib/estudante ------------------------------ */
 
-const E = carregarTs(path.join(raiz, "lib", "estudante.js"), { "@/config/pricing": P });
+const E = carregarTs(path.join(raiz, "lib", "estudante.js"), { "@/config/pricing": P, "@/lib/nome": N });
 
 test("token do link: DIARIAEST + 14 caracteres sem ambíguos, no formato que o /estudante/ativar e o botão da Meta aceitam", () => {
   const vistos = new Set();
@@ -505,10 +591,11 @@ test("e-mail de aprovação: o texto do modelo, o botão para o link pessoal e o
   assert.match(t, /^Olá, Fulana\./);
   assert.match(t, /Sua inscrição como estudante no Diariamente App foi aprovada\. Toque no botão abaixo para concluir sua matrícula\. Sua condição de estudante já está aplicada\./);
   assert.match(t, /Concluir inscrição: https:\/\/www\.diariamente\.app\/estudante\/ativar\?cupom=DIARIAESTABC/);
-  assert.match(t, /Sua condição: R\$ 59,90 por ano nos 3 primeiros anos, para quem assinar até 16 de novembro\. Depois, R\$ 149,90 por ano\. À vista, ou em até 12x no cartão com acréscimo\./);
+  // o preço antes do parcelamento, como na página: o "à vista ou 12x" não parece valer para os R$ 149,90
+  assert.match(t, /Sua condição: R\$ 59,90 por ano nos 3 primeiros anos, para quem assinar até 16 de novembro\. Depois, R\$ 149,90 por ano\. R\$ 59,90 à vista, ou em até 12x no cartão com acréscimo\./);
   assert.match(l.html, /<a href="https:\/\/www\.diariamente\.app\/estudante\/ativar\?cupom=DIARIAESTABC"[^>]*>Concluir inscrição<\/a>/);
   const d = E.textoDoEmail({ nome: "Fulana", token: "DIARIAESTABC", agora: DEPOIS });
-  assert.match(d.texto.replace(/ /g, " "), /Sua condição: R\$ 79,90 por ano nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\./);
+  assert.match(d.texto.replace(/ /g, " "), /Sua condição: R\$ 79,90 por ano nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\. R\$ 79,90 à vista, ou em até 12x no cartão com acréscimo\./);
   assert.equal(/16 de novembro/.test(d.texto), false);
   for (const [m, rotulo] of [[l, "lançamento"], [d, "depois"]]) {
     textoDeCliente(m.texto, rotulo);
@@ -717,4 +804,95 @@ test("lista de espera: origem estudante vai para outra conversão e outra tag no
     assert.equal(p.conversion_identifier, "diariamente-em-breve");
     assert.ok(p.tags.includes("em-breve"));
   }
+});
+
+/* ------------------------- nome: a saudação não vira link ------------------------- */
+
+test("nome: só letras (com acento), espaço, hífen e apóstrofo, até 80; a saudação usa a primeira palavra só se for nome", () => {
+  for (const ok of ["Fulana de Teste", "José D'Ávila", "Ana-Clara Souza", "Maria  da   Silva", "Łukasz Nowak", "João Conceição Ñandú"]) {
+    assert.equal(N.problemaDoNome(ok), null, ok);
+  }
+  assert.equal(N.problemaDoNome("Fulana"), "curto");
+  assert.equal(N.problemaDoNome("  "), "curto");
+  for (const ruim of ["www.golpe.com.br Silva", "Fulana https://x.y", "Ana 123", "Ana <b>", "Ana @golpe", "Ana Jr."]) {
+    assert.equal(N.problemaDoNome(ruim), "caracteres", ruim);
+  }
+  assert.equal(N.problemaDoNome("Ana " + "b".repeat(80)), "longo");
+  assert.equal(N.problemaDoNome("A".repeat(31) + " Silva"), "longo");
+  assert.equal(N.nomeLimpo("  Maria   da  Silva "), "Maria da Silva");
+  // a saudação
+  assert.equal(N.primeiroNome("Fulana de Teste"), "Fulana");
+  assert.equal(N.primeiroNome("www.golpe.com.br Silva"), "");
+  assert.equal(N.primeiroNome("https://golpe.com Silva"), "");
+  assert.equal(N.primeiroNome(""), "");
+  assert.equal(N.primeiroNome(null), "");
+});
+
+test("nome em forma de endereço: a API recusa (400, nada gravado) e o e-mail de um pedido antigo diz só \"Olá.\"", async () => {
+  const { rota, banco } = carregarSolicitar();
+  const pedido = pedidoEstudante();
+  const corpo = await pedido.json();
+  pedido.json = async () => ({ ...corpo, nome: "www.golpe.com.br Silva" });
+  const r = await semLog(() => comOfertas(FICTICIAS, () => comRelogio(LANCAMENTO, () => comEnvAsync(LIGADO, () => rota.POST(pedido)))));
+  assert.equal(r.status, 400);
+  assert.deepEqual((await r.json()).erros, ["Use so letras no nome, sem numeros nem simbolos."]);
+  assert.equal(banco.chamadas.length, 0);
+  // e-mail (nome gravado antes da regra)
+  const m = E.textoDoEmail({ nome: "www.golpe.com.br Silva", token: "DIARIAESTABC", agora: LANCAMENTO });
+  assert.match(m.texto, /^Olá\.\n/);
+  assert.equal(/golpe/.test(m.texto + m.html), false);
+  // o WhatsApp do cron também: o primeiro nome só se for nome
+  const cron = fs.readFileSync(path.join(raiz, "app", "api", "cron", "manutencao", "route.js"), "utf8");
+  assert.match(cron, /whatsapp\.aprovado\(lead\.whatsapp, primeiroNome\(lead\.nome\) \|\| 'estudante', c\.codigo\)/);
+  // o formulário usa a mesma regra
+  const form = fs.readFileSync(path.join(raiz, "components", "EstudanteForm.tsx"), "utf8");
+  assert.match(form, /import \{ problemaDoNome \} from "@\/lib\/nome";/);
+});
+
+/* ------------------- /estudante/inscricao: o link que não abre o checkout ------------------- */
+
+function paginaInscricao(lancado = true) {
+  const jsx = require("react/jsx-runtime");
+  const React = require("react");
+  const { renderToStaticMarkup } = require("react-dom/server");
+  const pagina = carregarTs(path.join(raiz, "app", "estudante", "inscricao", "page.tsx"), {
+    "next/navigation": { redirect: (destino) => { const e = new Error("redirect"); e.destino = destino; throw e; } },
+    "@/config": { EMPRESA: { suporteEmail: "suporte@scienceplay.com" } },
+    "@/config/lancamento": { SITE_LANCADO: lancado },
+    "@/components/CnpjsDoGrupo": { RodapeDoGrupo: () => null },
+    "@/components/Brand": { OfficialLogo: () => null },
+    "../estudante.css": {},
+    "react/jsx-runtime": jsx,
+  }, { jsx: true }).default;
+  return async (situacao) => {
+    try {
+      const el = await pagina({ searchParams: Promise.resolve(situacao === undefined ? {} : { situacao }) });
+      return { html: renderToStaticMarkup(el).replace(/ /g, " ") };
+    } catch (e) {
+      if (e.destino) return { redirect: e.destino };
+      throw e;
+    }
+  };
+}
+
+test("/estudante/inscricao: concluída (link usado) e aguarde (fase sem oferta), sem preço nem prazo; o resto volta para /estudante", async () => {
+  const ver = paginaInscricao(true);
+  const concluida = await ver("concluida");
+  assert.match(concluida.html, /Sua inscrição de estudante já foi concluída\./);
+  assert.match(concluida.html, /href="\/baixar"/);
+  const aguarde = await ver("aguarde");
+  assert.match(aguarde.html, /Seu link de estudante continua valendo\./);
+  assert.match(aguarde.html, /Sua inscrição de estudante está aprovada\./);
+  for (const h of [concluida.html, aguarde.html]) {
+    textoDeCliente(h, "inscricao");
+    assert.equal(/R\$|\d+ de novembro|em até \d+ minutos|lista de espera|Me avise/.test(h), false);
+    assert.match(h, /suporte@scienceplay\.com/);
+  }
+  for (const s of [undefined, "", "outra", ["concluida", "x"].join(",")]) {
+    assert.deepEqual(await ver(s), { redirect: "/estudante" }, String(s));
+  }
+  // standby: o fluxo do link pessoal não existe
+  assert.deepEqual(await paginaInscricao(false)("aguarde"), { redirect: "/estudante" });
+  // noindex
+  assert.match(fs.readFileSync(path.join(raiz, "app", "estudante", "inscricao", "page.tsx"), "utf8"), /robots: \{ index: false, follow: false \}/);
 });

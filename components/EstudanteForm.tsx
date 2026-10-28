@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ESTUDANTE_ATUAL } from "@/config";
+import { problemaDoNome } from "@/lib/nome";
 
 /**
  * EstudanteForm — inscrição de estudante (o pedido do link pessoal), em 3 etapas.
@@ -25,6 +26,15 @@ import { ESTUDANTE_ATUAL } from "@/config";
  *  - o link pessoal nunca aparece na tela: vai pelo WhatsApp (e pelo
  *    e-mail, com o Resend configurado)
  *  - `atual` (standby): os textos da produção, com o código de 48 horas
+ *  - o nome só com letras, espaço, hífen e apóstrofo, até 80 caracteres
+ *    (lib/nome.ts, a mesma regra da API): a primeira palavra vai no
+ *    "Olá, ..." do WhatsApp e do e-mail
+ *  - 503 no fluxo novo é a inscrição FECHADA (a página foi aberta antes
+ *    de fechar): a mensagem diz isso, e não "instabilidade", que passaria
+ *    em minutos
+ *  - curso: a lista tem os da saúde e "Outro curso (qualquer área)", que
+ *    vale para qualquer graduação (o valor enviado continua "Outro", o do
+ *    campo cf_curso do RD)
  */
 
 const CURSOS = [
@@ -37,7 +47,7 @@ const CURSOS = [
   { valor: "Biomedicina", rotulo: "Biomedicina" },
   { valor: "Farmacia", rotulo: "Farmácia" },
   { valor: "EducacaoFisica", rotulo: "Educação Física" },
-  { valor: "Outro", rotulo: "Outro" },
+  { valor: "Outro", rotulo: "Outro curso (qualquer área)" },
 ];
 
 // UFs no MESMO formato do campo "Estado e UF" do RD (cf_estado_e_uf).
@@ -127,8 +137,13 @@ const VAZIO: Dados = {
 };
 
 const REGRAS: Record<Campo, (v: string) => string> = {
-  nome: (v) =>
-    v.trim().split(/\s+/).filter(Boolean).length < 2 ? "Escreva seu nome completo." : "",
+  nome: (v) => {
+    const p = problemaDoNome(v);
+    if (p === "curto") return "Escreva seu nome completo.";
+    if (p === "caracteres") return "Use só letras no nome, sem números nem símbolos.";
+    if (p === "longo") return "Nome muito longo. Use até 80 caracteres.";
+    return "";
+  },
   whats: (v) => {
     const d = v.replace(/\D/g, "");
     if (!d) return "Informe seu WhatsApp com DDD.";
@@ -215,7 +230,7 @@ export function EstudanteForm({
   const [dados, setDados] = useState<Dados>(VAZIO);
   const [erros, setErros] = useState<Partial<Record<Campo, string>>>({});
   const [etapa, setEtapa] = useState(0);
-  const [status, setStatus] = useState<"idle" | "enviando" | "erro" | "instavel">("idle");
+  const [status, setStatus] = useState<"idle" | "enviando" | "erro" | "instavel" | "fechado">("idle");
   const [errosServidor, setErrosServidor] = useState<string[]>([]);
 
   const cardRef = useRef<HTMLDivElement>(null);
@@ -336,7 +351,10 @@ export function EstudanteForm({
       });
 
       if (r.status === 503) {
-        setStatus("instavel");
+        // Fluxo novo: 503 é a inscrição FECHADA (falta a oferta da fase ou
+        // a configuração), e não passa em minutos. Standby: a falta de
+        // configuração do cupom da main, tratada como instabilidade.
+        setStatus(atual ? "instavel" : "fechado");
         return;
       }
 
@@ -421,6 +439,14 @@ export function EstudanteForm({
             <p>
               Estamos com uma instabilidade momentânea {atual ? "na emissão de códigos" : "nas inscrições"}. Tente de novo
               em alguns minutos: seus dados continuam preenchidos.
+            </p>
+          </div>
+        )}
+        {status === "fechado" && (
+          <div className="ed-alert is-warn" role="status">
+            <p>
+              A inscrição de estudante está fechada no momento e abre em breve. Recarregue a
+              página para deixar seu contato na lista de espera.
             </p>
           </div>
         )}

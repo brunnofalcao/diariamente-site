@@ -30,14 +30,17 @@ function IcOk() {
 }
 
 /* Com a chave ligada, o fluxo novo: o LINK pessoal da inscrição
-   (/estudante/ativar), que abre a oferta de estudante. Em standby, o da
-   produção: o código de 48 horas. Nos dois, o sistema ENVIA (a entrega
-   no WhatsApp não é garantida: regra da marca, CDC art. 37). */
+   (/estudante/ativar), que abre a oferta de estudante. A inscrição é
+   aprovada na hora, no próprio pedido (o link nasce antes desta página
+   abrir): nada de "estamos conferindo seus dados". Em standby, o da
+   produção: o código de 48 horas, com o texto da produção. Nos dois, o
+   sistema ENVIA (a entrega no WhatsApp não é garantida: regra da marca,
+   CDC art. 37). */
 const DEPOIS = SITE_LANCADO
   ? [
       {
         t: "O link vai para o seu WhatsApp",
-        d: `Estamos conferindo seus dados. Em até ${ESTUDANTE.esperaMinutos} minutos, enviamos o link da sua inscrição ${canaisDoLink()}. Ele é pessoal.`,
+        d: `Ele é pessoal e vale só para você. Se não encontrar a mensagem, escreva para ${EMPRESA.suporteEmail}.`,
       },
       {
         t: "Toque em Concluir inscrição",
@@ -87,9 +90,18 @@ export default function SolicitacaoRecebida() {
               Agora é com o seu WhatsApp.
             </h1>
             <p className="ed-lead" style={{ margin: "0 auto" }}>
-              Sua condição de estudante está registrada. Estamos conferindo seus dados e, em até
-              {" "}{ESTUDANTE.esperaMinutos} minutos, enviamos {SITE_LANCADO ? "o link da sua inscrição" : "o código"} para o número que você informou.
-              Não precisa esperar aqui.
+              {SITE_LANCADO ? (
+                <>
+                  Sua inscrição de estudante foi aprovada. Em até {ESTUDANTE.esperaMinutos} minutos,
+                  enviamos o link da sua inscrição {canaisDoLink()}. Não precisa esperar aqui.
+                </>
+              ) : (
+                <>
+                  Sua condição de estudante está registrada. Estamos conferindo seus dados e, em até
+                  {" "}{ESTUDANTE.esperaMinutos} minutos, enviamos o código para o número que você informou.
+                  Não precisa esperar aqui.
+                </>
+              )}
             </p>
           </div>
         </div>

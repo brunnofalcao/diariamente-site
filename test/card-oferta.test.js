@@ -30,6 +30,8 @@ const LANCAMENTO = Date.parse("2026-10-20T12:00:00-03:00");
 // os do dono): com eles, "aberto" é a Vercel pronta (DM_ESTUDANTE_ABERTO)
 // e a fase com oferta, como em produção depois que os códigos chegarem.
 Object.assign(P.OFERTAS_DO_ESTUDANTE, { lancamento: "estlanc1", depois: "estdep01" });
+// O que o next.config.js grava no build: só o NOME das fases com código.
+process.env.DM_ESTUDANTE_FASES = P.fasesComOferta().join(",");
 const ULTIMO_MINUTO = Date.parse("2026-11-16T23:59:00-03:00");
 const DEPOIS = Date.parse("2026-11-17T00:00:00-03:00");
 
@@ -316,9 +318,17 @@ test("/estudante: a regra do lançamento com o texto de antes, sem nada do card 
     const C = config(aberto);
     const BlocoPreco = carregarTs(arq("components", "BlocoPreco.tsx"), { "@/config": C, "@/config/pricing": P, "react/jsx-runtime": jsx }, { jsx: true }).BlocoPreco;
     const h = comRelogio(LANCAMENTO, () => limpo(renderToStaticMarkup(React.createElement(BlocoPreco))));
+    const d = comRelogio(DEPOIS, () => limpo(renderToStaticMarkup(React.createElement(BlocoPreco))));
+    if (!aberto) {
+      // fechada: o card sem número, sem prazo e sem comparativo (CDC, art. 37)
+      for (const x of [h, d]) {
+        assert.match(x, /O preço da condição de estudante aparece aqui quando a inscrição abrir\./);
+        assert.equal(/R\$ \d|OFF|para quem assinar|16 de novembro|Cancele quando quiser|Você economiza|ed-econ/.test(x), false);
+      }
+      continue;
+    }
     assert.match(h, /<span class="ed-econ-d">Por ano nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\.<\/span>/);
     assert.equal(/travado|Travado|a menos,|Equivale a|deixa de pagar|Quase o preço oficial|app na mão|\*/.test(h), false);
-    const d = comRelogio(DEPOIS, () => limpo(renderToStaticMarkup(React.createElement(BlocoPreco))));
     // depois, a regra do LANÇAMENTO some; a do estudante (R$ 79,90) fica
     assert.equal(/Por ano nos 3 primeiros anos/.test(d), false);
     assert.match(d, /R\$ 79,90 por ano nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\./);

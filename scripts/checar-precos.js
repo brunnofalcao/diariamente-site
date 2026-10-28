@@ -70,13 +70,17 @@
      - em config/pricing.ts, o código da oferta de estudante da FASE
        VIGENTE: ESTUDANTE_OFERTA_LANCAMENTO (R$ 59,90) até 16/11/2026 e
        ESTUDANTE_OFERTA (R$ 79,90) depois, com a mesma virada do card do
-       Brasil (lancamentoVigente). Este é conferido também NA HORA, a cada
-       página e pedido (config.ts, estudanteAberto): na virada, sem o
-       código da fase nova, o site fecha sozinho.
+       Brasil (lancamentoVigente). A fase é conferida também NA HORA, a
+       cada página e pedido (config.ts, estudanteAberto, com o nome das
+       fases que têm código, gravado em DM_ESTUDANTE_FASES; o código em si
+       nunca vai ao navegador): na virada, sem o código da fase nova, o
+       site fecha sozinho.
    Fechado: a home não leva à /estudante, a /estudante mostra a lista de
-   espera no lugar do formulário, a /api/estudante/solicitar responde 503
-   SEM gravar nada (nenhum link nasce, nenhum CPF fica preso, nenhuma
-   mensagem sai) e o /estudante/ativar volta para a /estudante.
+   espera no lugar do formulário e o card sem preço, a
+   /api/estudante/solicitar responde 503 SEM gravar nada (nenhum link
+   nasce, nenhum CPF fica preso, nenhuma mensagem sai) e o
+   /estudante/ativar leva quem já tem o link à /estudante/inscricao (o
+   link continua valendo; o pagamento abre quando a fase tiver oferta).
    STUDENT_DISCOUNT, HOTMART_OFFER_IDS e HOTMART_PRODUCT_ID não contam
    mais (eram do cupom pela API, que só existe em standby).
 
@@ -298,13 +302,17 @@ function problemasDoAlvo(alvo, mercados) {
  *   env    process.env (o da Vercel no build)
  *   alvo   alvoDoEstudante: preços, ofertas, anos e o lançamento do br
  *   agora  ms (a fase vigente no build)
- * Devolve { aberto, configurado, faltas[], fase, oferta, faltaProxima,
- * modelo, nomeInvalido }:
+ * Devolve { aberto, configurado, faltas[], fase, oferta, fases[],
+ * faltaProxima, modelo, nomeInvalido }:
  *   configurado  a Vercel está pronta (o modelo v2) e o config não tem
  *                erro: é o que o next.config.js grava em
  *                DM_ESTUDANTE_ABERTO. A oferta da fase é conferida na
  *                hora (config.ts, estudanteAberto).
  *   aberto       configurado E a fase vigente com o código da oferta.
+ *   fases        as fases com código de oferta válido ("lancamento",
+ *                "depois"): o next.config.js grava em DM_ESTUDANTE_FASES
+ *                SÓ o nome delas, para o navegador saber se a fase tem
+ *                oferta sem receber o código.
  *   faltaProxima no lançamento, o ESTUDANTE_OFERTA vazio: em 17/11 o
  *                fluxo fecha sozinho (aviso, não fecha agora).
  */
@@ -348,8 +356,9 @@ function estadoDoEstudante(env = {}, alvo = {}, agora = Date.now(), mercados = u
       `${reais(precos.depois)} por ano nos ${a.anos} primeiros anos, e sem o código dessa oferta a /estudante fecha sozinha ` +
       "nessa data (lista de espera, API em 503, home sem o card).";
   }
+  const fases = ["lancamento", "depois"].filter((f) => codigoDeOfertaValido(String(ofertas[f] || "").trim()));
   return {
-    aberto: configurado && ofertaOk, configurado, faltas, fase, oferta: ofertaOk ? oferta : "", faltaProxima,
+    aberto: configurado && ofertaOk, configurado, faltas, fase, oferta: ofertaOk ? oferta : "", fases, faltaProxima,
     modelo, nomeInvalido: Boolean(nomeEnv) && modelo !== nomeEnv,
   };
 }
@@ -497,8 +506,9 @@ function checarPrecos({
     avisos.push(
       `Estudante FECHADO neste build (fase ${faseTexto}): a home não leva à /estudante, a /estudante mostra a lista de ` +
         "espera no lugar do formulário, /api/estudante/solicitar responde 503 sem gravar nada (nenhum link, nenhum CPF preso) " +
-        `e /estudante/ativar volta para a /estudante. Para abrir: ${estudante.faltas.join("; ")}. Depois, um novo deploy.` +
-        (estudanteMostraPreco ? " A /estudante continua mostrando o preço de estudante (ESTUDANTE.mostrarPreco), com o aviso de que a solicitação abre em breve." : "")
+        "e /estudante/ativar leva quem já tem o link à /estudante/inscricao (o link continua valendo). " +
+        `Para abrir: ${estudante.faltas.join("; ")}. Depois, um novo deploy.` +
+        (estudanteMostraPreco ? " Fechada, a /estudante mostra o card SEM preço (\"O preço da condição de estudante aparece aqui quando a inscrição abrir\"): oferta com prazo que não pode ser aceita não vai ao ar." : "")
     );
   } else {
     avisos.push(
@@ -657,7 +667,7 @@ function estudanteDoProjeto(env = process.env, agora = Date.now()) {
   } catch (e) {
     return {
       aberto: false, configurado: false, faltas: [`config/pricing.ts ilegível (${e && e.message})`], fase: "depois", oferta: "",
-      faltaProxima: null, modelo: MODELO_ESTUDANTE_ANTIGO, nomeInvalido: false,
+      fases: [], faltaProxima: null, modelo: MODELO_ESTUDANTE_ANTIGO, nomeInvalido: false,
     };
   }
 }

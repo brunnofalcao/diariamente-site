@@ -11,7 +11,7 @@
 // abaixo só repassam de lá, para os componentes antigos continuarem
 // funcionando sem um segundo número escrito à mão.
 import {
-  MERCADOS, formatar, precoEstudante, porMesEstudante, percentualDoLancamento, estudanteTemOferta, periodoDoEstudante,
+  MERCADOS, formatar, precoEstudante, porMesEstudante, percentualDoLancamento, faseDoEstudante, periodoDoEstudante,
 } from "@/config/pricing";
 
 export const SITE = {
@@ -374,10 +374,17 @@ export function responsavelDoGrupo(lang: IdiomaLegal = "pt"): string {
 // ABERTO AGORA = configurado E a fase vigente com o código da oferta
 //                (estudanteAberto(agora), logo abaixo). Fechado: a home
 //                não leva à /estudante, a /estudante mostra a lista de
-//                espera no lugar do formulário, a API responde 503 sem
-//                gravar nada e o /estudante/ativar volta para a
-//                /estudante. A virada de 16/11 é conferida na hora: sem o
-//                ESTUDANTE_OFERTA, a /estudante fecha sozinha em 17/11.
+//                espera no lugar do formulário e o card sem preço, a API
+//                responde 503 sem gravar nada e o /estudante/ativar leva
+//                quem já tem o link à /estudante/inscricao (o link
+//                continua valendo). A virada de 16/11 é conferida na
+//                hora: sem o ESTUDANTE_OFERTA, a /estudante fecha
+//                sozinha em 17/11.
+// O CÓDIGO DA OFERTA NÃO PASSA POR AQUI: este arquivo vai ao navegador
+// (Home.tsx e BlocoOferta.tsx são "use client"). Aqui chega só o NOME
+// das fases com código (DM_ESTUDANTE_FASES, gravada pelo next.config.js
+// a cada build a partir de config/pricing.ts, fasesComOferta). Quem tem
+// o off= de estudante paga sem passar pela /estudante.
 // mostrarPreco = false  -> a /estudante e a home falam de "condição de
 //                          estudante" sem número.
 // ---------------------------------------------------------------------
@@ -420,12 +427,23 @@ export const ESTUDANTE = {
   regra: "Um link por pessoa, intransferível.",
 };
 
+/** As fases do estudante que têm código de oferta, gravadas no build
+    (next.config.js, DM_ESTUDANTE_FASES: "lancamento,depois"). Só o nome
+    da fase, nunca o código. Lida a cada chamada: o Next troca
+    process.env.DM_ESTUDANTE_FASES pelo valor do build. */
+export function fasesDoEstudanteComOferta(): string[] {
+  return String(process.env.DM_ESTUDANTE_FASES || "")
+    .split(",")
+    .map((f) => f.trim())
+    .filter(Boolean);
+}
+
 /** O fluxo do estudante está aberto agora? A configuração da Vercel
-    (gravada no build) e o código da oferta da fase vigente (conferido na
-    hora, para a virada de 16/11 fechar a página sozinha se faltar o da
-    fase seguinte). */
+    (gravada no build) e a fase vigente com código de oferta (a fase é
+    conferida na hora, para a virada de 16/11 fechar a página sozinha se
+    faltar o código da fase seguinte). */
 export function estudanteAberto(agora: number = Date.now()): boolean {
-  return ESTUDANTE.configurado && estudanteTemOferta(agora);
+  return ESTUDANTE.configurado && fasesDoEstudanteComOferta().includes(faseDoEstudante(agora));
 }
 
 /** "R$ 59,90", o preço do estudante na fase vigente. */

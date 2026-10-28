@@ -45,17 +45,21 @@ import "./estudante.css";
    para 5 minutos depois e o cron tenta até 5 vezes; os "2 minutos" da
    main não eram verdade).
 
-   LIGADA a chave, dois estados, decididos A CADA RENDER
-   (estudanteAberto(agora), config.ts: a Vercel configurada no build e a
-   oferta da fase vigente em config/pricing.ts):
+   LIGADA a chave, dois estados, decididos A CADA VISITA (página
+   dinâmica; estudanteAberto(agora), config.ts: a Vercel configurada no
+   build e a fase vigente com oferta em config/pricing.ts):
      aberto   o formulário faz a inscrição e o site manda o link pessoal
               (/estudante/ativar), que abre a oferta de estudante da fase
      fechado  falta configuração (o log do build diz qual) ou a oferta da
               fase vigente: o formulário dá lugar à lista de espera
               (EstudanteEspera) e os botões dizem "Me avise quando
-              abrir". Nada pede CPF, nada é gravado.
+              abrir". Nada pede CPF, nada é gravado. Sem número de preço
+              (card, FAQ e resumo): oferta com prazo que ninguém consegue
+              aceitar não vai ao ar (CDC, art. 37).
    O preço é o da fase (R$ 59,90 até 16/11, R$ 79,90 depois), sempre com
    a regra inteira: nos 3 primeiros anos e, depois, R$ 149,90 por ano.
+   A aprovação é automática ao declarar o vínculo: nenhum texto fala de
+   "conferência dos dados" no fluxo novo (o link nasce no próprio pedido).
    ===================================================================== */
 
 // Standby: a /estudante da produção, com o formulário aberto.
@@ -64,11 +68,14 @@ const ATUAL = !SITE_LANCADO;
 /** Os três estados da página: a da produção (standby), aberta e fechada. */
 type Estado = "atual" | "aberto" | "fechado";
 
-// Refaz a cada hora: o comparativo usa o preço público do dia e o preço
-// de estudante da fase, que mudam quando o lançamento termina
-// (config/pricing.ts), e a página fecha sozinha se a fase nova não tiver
-// a oferta de estudante.
-export const revalidate = 3600;
+// DINÂMICA, de propósito: a fase do estudante (R$ 59,90 até 16/11,
+// R$ 79,90 depois) e o aberto/fechado saem da hora de CADA visita. Com o
+// cache de uma hora de antes (revalidate = 3600), a versão gerada às 23h
+// de 16/11 seguia no ar depois da meia-noite com R$ 59,90 e o formulário
+// aberto, enquanto o e-mail e o /estudante/ativar já levavam à oferta de
+// R$ 79,90 (ou a API já respondia 503). A página tem pouco tráfego e não
+// busca dado nenhum: renderizar a cada visita custa pouco.
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   ...metadataDaPagina("estudante", "pt"),
@@ -170,8 +177,8 @@ function passos(estado: Estado) {
         estado === "atual"
           ? `Conferimos seus dados e, em até ${ESTUDANTE.esperaMinutos} minutos, enviamos o código para o número que você informou. Ele é pessoal e vale ${ESTUDANTE_ATUAL.validadeHoras} horas.`
           : estado === "aberto"
-            ? `Conferimos seus dados e, em até ${ESTUDANTE.esperaMinutos} minutos, enviamos o link da sua inscrição ${canaisDoLink()}. Ele é pessoal.`
-            : "Conferimos seus dados e enviamos um link pessoal para o número que você informar.",
+            ? `A inscrição é aprovada na hora e, em até ${ESTUDANTE.esperaMinutos} minutos, enviamos o link da sua inscrição ${canaisDoLink()}. Ele é pessoal.`
+            : "Quando abrir, a inscrição é aprovada na hora e enviamos um link pessoal para o número que você informar.",
     },
     link
       ? {
@@ -197,9 +204,9 @@ function faq(estado: Estado, agora: number) {
       q: "Serve para qualquer curso?",
       a: "Sim. O Diariamente não é sobre conteúdo técnico de uma área, é sobre constância, decisão e responsabilidade pessoal. Vale para qualquer graduação.",
     },
-    // A regra inteira do preço (fase vigente), só no fluxo novo: é a
-    // oferta da Hotmart que a cumpre.
-    ...(link && ESTUDANTE.mostrarPreco
+    // A regra inteira do preço (fase vigente), só no fluxo novo ABERTO: é
+    // a oferta da Hotmart que a cumpre. Fechado, nenhum número de preço.
+    ...(estado === "aberto" && ESTUDANTE.mostrarPreco
       ? [{
           q: "Quanto custa, e por quanto tempo?",
           a: `${regraDoEstudante(agora)} ${preco} ${ESTUDANTE.pagamento}. Cancele quando quiser.`,
@@ -213,8 +220,8 @@ function faq(estado: Estado, agora: number) {
         estado === "atual"
           ? `Enviamos em até ${ESTUDANTE.esperaMinutos} minutos para o WhatsApp que você informar, depois da conferência dos seus dados. Ele é pessoal e vale por ${ESTUDANTE_ATUAL.validadeHoras} horas.`
           : estado === "aberto"
-            ? `Enviamos o link em até ${ESTUDANTE.esperaMinutos} minutos ${canaisDoLink()}, depois da conferência dos seus dados. Ele é pessoal.`
-            : "Quando a solicitação abrir, enviamos o link para o WhatsApp que você informar, depois da conferência dos seus dados. Ele é pessoal.",
+            ? `Enviamos o link em até ${ESTUDANTE.esperaMinutos} minutos ${canaisDoLink()}. A inscrição é aprovada na hora, e o link é pessoal.`
+            : "Quando a solicitação abrir, enviamos o link para o WhatsApp que você informar. A inscrição é aprovada na hora, e o link é pessoal.",
     },
     {
       q: link ? "Não recebi o link. E agora?" : "Não recebi o código. E agora?",
@@ -255,6 +262,9 @@ function resumo(estado: Estado, agora: number): [string, string][] {
     ...(estado === "atual"
       ? // Standby: a linha de preço da produção (main), sem a de pagamento.
         ([["Preço estudante", `R$ ${ESTUDANTE_ATUAL.preco} no ano (valor cheio R$ ${ESTUDANTE_ATUAL.precoDe})`]] as [string, string][])
+      : estado === "fechado"
+        ? // Fechado: nenhum número de preço (o card diz o mesmo).
+          ([["Preço estudante", "Valor reduzido para estudantes, que aparece aqui quando a inscrição abrir"]] as [string, string][])
       : ([
           ["Preço estudante", `${regraDoEstudante(agora)} Equivale a ${formatar("br", porMesEstudante(agora))}/mês ${periodoDoEstudante()}.`],
           // A oferta de estudante parcela com acréscimo: o equivalente
@@ -270,8 +280,8 @@ function resumo(estado: Estado, agora: number): [string, string][] {
 }
 
 export default function Estudante() {
-  // Hora do render (a página se refaz a cada hora): a fase do estudante e
-  // o aberto/fechado saem dela.
+  // Hora da visita (a página é dinâmica): a fase do estudante e o
+  // aberto/fechado saem dela.
   const agora = Date.now();
   const estado: Estado = ATUAL ? "atual" : estudanteAberto(agora) ? "aberto" : "fechado";
   const ABERTO = estado !== "fechado";
@@ -545,7 +555,10 @@ export default function Estudante() {
               <div className="ed-rail-block">
                 <div className="ed-rail-t">Por que pedimos esses dados</div>
                 <p className="ed-rail-d">
-                  Curso, instituição e semestre confirmam que você é estudante. O CPF garante
+                  {LINK
+                    ? "Curso, instituição e semestre registram o seu vínculo de estudante."
+                    : "Curso, instituição e semestre confirmam que você é estudante."}{" "}
+                  O CPF garante
                   {LINK ? " uma inscrição" : " um código"} por pessoa. Nada além disso.
                 </p>
               </div>

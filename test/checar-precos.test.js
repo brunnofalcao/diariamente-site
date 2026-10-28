@@ -441,9 +441,12 @@ test("estudanteDoProjeto lê o config real: os dois códigos ainda vazios (o don
     { ...alvo, ofertas: { lancamento: "estlanc1", depois: "estdep01" } }, LANC, cfg.MERCADOS,
   );
   assert.equal(comCodigo.aberto, true);
+  // o nome das fases com código (DM_ESTUDANTE_FASES), nunca o código
+  assert.deepEqual(comCodigo.fases, ["lancamento", "depois"]);
+  assert.equal(JSON.stringify(comCodigo.fases).includes("estlanc1"), false);
 });
 
-test("next.config.js grava DM_ESTUDANTE_ABERTO (a Vercel pronta) e DM_ESTUDANTE_EMAIL (o Resend) só com a chave ligada", () => {
+test("next.config.js grava DM_ESTUDANTE_ABERTO (a Vercel pronta), DM_ESTUDANTE_FASES (só o nome das fases) e DM_ESTUDANTE_EMAIL (o Resend) só com a chave ligada", () => {
   const fabrica = require(path.join(__dirname, "..", "next.config.js"));
   const aviso = console.warn;
   const antes = { ...process.env };
@@ -453,6 +456,7 @@ test("next.config.js grava DM_ESTUDANTE_ABERTO (a Vercel pronta) e DM_ESTUDANTE_
     let env = fabrica("phase-development-server").env;
     assert.equal(env.DM_ESTUDANTE_ABERTO, "");
     assert.equal(env.DM_ESTUDANTE_EMAIL, "");
+    assert.equal(env.DM_ESTUDANTE_FASES, "");
     // valor posto à mão na Vercel não vale: é recalculado
     process.env.DM_ESTUDANTE_ABERTO = "1";
     process.env.DM_ESTUDANTE_EMAIL = "1";
@@ -469,6 +473,10 @@ test("next.config.js grava DM_ESTUDANTE_ABERTO (a Vercel pronta) e DM_ESTUDANTE_
     env = fabrica("phase-development-server").env;
     assert.equal(env.DM_ESTUDANTE_ABERTO, "1", "a Vercel pronta: a oferta da fase é conferida na hora");
     assert.equal(env.DM_ESTUDANTE_EMAIL, "1");
+    // só o NOME das fases com código vai ao navegador (o config real ainda sem códigos)
+    const cfg = require("../scripts/checar-precos").carregarPrecos();
+    assert.equal(env.DM_ESTUDANTE_FASES, cfg.fasesComOferta().join(","));
+    for (const c of Object.values(cfg.OFERTAS_DO_ESTUDANTE)) if (c) assert.equal(Object.values(env).some((v) => String(v).includes(c)), false, c);
     // a chave do Resend nunca vai para o navegador
     assert.equal("RESEND_API_KEY" in env, false);
   } finally {

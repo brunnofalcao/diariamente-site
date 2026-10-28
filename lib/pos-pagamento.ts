@@ -1,4 +1,4 @@
-import { MERCADOS, precoFinal, type Mercado } from "@/config/pricing";
+import { ESTUDANTE_PRECO_FINAL, MERCADOS, faseDaOfertaDoEstudante, precoFinal, type Mercado } from "@/config/pricing";
 
 /* =====================================================================
    PÓS-PAGAMENTO · valor do pedido para o Purchase
@@ -11,7 +11,14 @@ import { MERCADOS, precoFinal, type Mercado } from "@/config/pricing";
        Brasil (fhrttdh8) é o preço cheio, a de lançamento (lf63bgdd) é o
        de lançamento, mesmo que o lançamento já tenha acabado quando a
        página abre (o pedido foi pago nela);
+     - uma oferta de ESTUDANTE do Brasil (config/pricing.ts,
+       faseDaOfertaDoEstudante): o preço da fase DAQUELA oferta, R$ 59,90
+       ou R$ 79,90, e não o do mercado (que inflaria o ROAS);
      - sem oferta, o preço cobrado agora no mercado (precoFinal).
+
+   SÓ NO SERVIDOR (components/PaginaObrigado.tsx): lê o código da oferta
+   de estudante, que não pode ir ao navegador. O PurchaseTracking recebe
+   só o número.
 
    O código da oferta sai do próprio link do checkout em config/pricing.ts
    (parâmetro off): trocar uma oferta lá já vale aqui.
@@ -33,6 +40,8 @@ export function valorDoPedido(m: Mercado, off?: string | null, agora: number = D
   if (codigo) {
     if (o.lancamento && ofertaDoLink(o.lancamento.checkout) === codigo) return o.lancamento.anual;
     if (ofertaDoLink(o.checkout) === codigo) return o.anual;
+    const fase = m === "br" ? faseDaOfertaDoEstudante(codigo) : null;
+    if (fase) return ESTUDANTE_PRECO_FINAL[fase];
   }
   return precoFinal(m, agora);
 }

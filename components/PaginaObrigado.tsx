@@ -14,6 +14,7 @@ import {
   primeiro,
 } from "@/lib/obrigado.mjs";
 import { OG_LOCALE, moedaDoMercado, valorDoPedido, type Estado, type Local } from "@/lib/pos-pagamento";
+import { mercadosDasOfertasDoEstudante } from "@/config/pricing";
 
 /* =====================================================================
    PÁGINA DE OBRIGADO · o que roda no servidor
@@ -89,6 +90,8 @@ export async function PaginaObrigado({
     cookie: biscoitos.get(COOKIE_VISITA)?.value,
     off,
     mercadoDoIp: pais ? mercadoDoPais(pais) : null,
+    // As ofertas de estudante são do Brasil: o código fica só no servidor.
+    ofertasExtras: mercadosDasOfertasDoEstudante(),
   });
 
   if (estado !== "aprovado") {

@@ -27,10 +27,11 @@ import { FormularioGlobal } from "@/components/FormularioGlobal";
 
 export const metadata = metadataDaPagina("estudante", "es");
 
-// Refaz a cada hora: o "¿Estudias en Brasil?" segue a /estudante, que
-// fecha sozinha se a fase do estudante não tiver oferta (config.ts,
-// estudanteAberto).
-export const revalidate = 3600;
+// Dinâmica, como a /estudante: o "¿Estudias en Brasil?" segue a
+// /estudante, que fecha sozinha se a fase do estudante não tiver oferta
+// (config.ts, estudanteAberto), e a fase sai da hora de cada visita (com
+// o cache de uma hora, a versão de antes da virada de 16/11 seguia no ar).
+export const dynamic = "force-dynamic";
 
 const BENEFICIOS = [
   "Los 365 textos, uno liberado cada día",

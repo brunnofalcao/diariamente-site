@@ -25,13 +25,20 @@ const DEPOIS = Date.parse("2026-11-20T12:00:00-03:00");
 // os do dono). "aberto" nos testes = a Vercel pronta (DM_ESTUDANTE_ABERTO)
 // e a fase com oferta; um teste confere que sem o código a página fecha.
 const FICTICIAS = { lancamento: "estlanc1", depois: "estdep01" };
-Object.assign(P.OFERTAS_DO_ESTUDANTE, FICTICIAS);
+/** Os códigos (só no servidor) e o que o next.config.js grava no build a
+    partir deles: o NOME das fases com código (DM_ESTUDANTE_FASES), que é
+    tudo o que o config.ts e os componentes de navegador leem. */
+function ofertas(o) {
+  Object.assign(P.OFERTAS_DO_ESTUDANTE, o);
+  process.env.DM_ESTUDANTE_FASES = P.fasesComOferta().join(",");
+}
+ofertas(FICTICIAS);
 function semOfertas(fn) {
-  Object.assign(P.OFERTAS_DO_ESTUDANTE, { lancamento: "", depois: "" });
+  ofertas({ lancamento: "", depois: "" });
   try {
     return fn();
   } finally {
-    Object.assign(P.OFERTAS_DO_ESTUDANTE, FICTICIAS);
+    ofertas(FICTICIAS);
   }
 }
 
@@ -198,12 +205,12 @@ test("home do Brasil com o estudante FECHADO (Vercel sem o v2 ou fase sem oferta
     }
   }
   // a virada fecha sozinha se faltar só a oferta da fase nova
-  Object.assign(P.OFERTAS_DO_ESTUDANTE, { depois: "" });
+  ofertas({ depois: "" });
   try {
     assert.match(html(blocoOferta(config(true)), { mercado: "br", momento: LANCAMENTO }), /Sou estudante/);
     assert.equal(/estudante/i.test(html(blocoOferta(config(true)), { mercado: "br", momento: DEPOIS })), false);
   } finally {
-    Object.assign(P.OFERTAS_DO_ESTUDANTE, FICTICIAS);
+    ofertas(FICTICIAS);
   }
 });
 
@@ -291,13 +298,62 @@ test("/estudante FECHADA: lista de espera no lugar do formulário, botões \"Me 
   assert.equal(/formulario-cpf/.test(semOferta), false);
   assert.match(semOferta, /Me avise quando abrir/);
   // só a fase seguinte sem oferta: aberta até 16/11, fechada em 17/11
-  Object.assign(P.OFERTAS_DO_ESTUDANTE, { depois: "" });
+  ofertas({ depois: "" });
   try {
     assert.match(comRelogio(LANCAMENTO, () => html(paginaEstudante(config(true)))), /formulario-cpf/);
     assert.equal(/formulario-cpf/.test(comRelogio(DEPOIS, () => html(paginaEstudante(config(true))))), false);
   } finally {
-    Object.assign(P.OFERTAS_DO_ESTUDANTE, FICTICIAS);
+    ofertas(FICTICIAS);
   }
+});
+
+test("/estudante FECHADA: nenhum número de preço (card, FAQ e resumo), sem prazo de oferta e sem comparativo (CDC, art. 37)", () => {
+  for (const momento of [LANCAMENTO, DEPOIS]) {
+    for (const h of [
+      comRelogio(momento, () => html(paginaEstudante(config(false)))),
+      semOfertas(() => comRelogio(momento, () => html(paginaEstudante(config(true))))),
+    ]) {
+      assert.equal(/59,90|79,90|40,08|70,00|4,99|6,66|OFF<|para quem assinar|16 de novembro|Cancele quando quiser|Você economiza|Quanto custa/.test(h), false);
+      assert.match(h, /O preço da condição de estudante aparece aqui quando a inscrição abrir\./);
+      assert.match(h, /Preço estudante<\/span><span class="ed-review-v">Valor reduzido para estudantes, que aparece aqui quando a inscrição abrir<\/span>/);
+      assert.equal(/Pagamento<\/span>/.test(h), false);
+    }
+  }
+});
+
+test("/estudante: dinâmica (a fase e o aberto/fechado saem da hora de cada visita), e a /es/estudiantes também", () => {
+  const fs = require("fs");
+  for (const f of [["app", "estudante", "page.tsx"], ["app", "es", "estudiantes", "page.tsx"]]) {
+    const fonte = fs.readFileSync(arq(...f), "utf8");
+    assert.match(fonte, /^export const dynamic = "force-dynamic";$/m, f.join("/"));
+    assert.equal(/^export const revalidate/m.test(fonte), false, f.join("/"));
+  }
+});
+
+test("/estudante: aprovação automática, sem \"conferência dos dados\" no fluxo novo; o rail fala do vínculo", () => {
+  for (const aberto of [true, false]) {
+    const h = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(aberto))));
+    assert.equal(/[Cc]onferimos seus dados|conferência dos seus dados|confirmam que você é estudante/.test(h), false, aberto ? "aberta" : "fechada");
+  }
+  const aberta = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(true))));
+  assert.match(aberta, /A inscrição é aprovada na hora e, em até 10 minutos, enviamos o link da sua inscrição para o seu WhatsApp\./);
+  assert.match(aberta, /Curso, instituição e semestre registram o seu vínculo de estudante\./);
+  // standby segue com o texto da produção
+  const standby = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(false), false)));
+  assert.match(standby, /Conferimos seus dados e, em até 10 minutos, enviamos o código/);
+  // solicitacaorecebida
+  const fonte = require("fs").readFileSync(arq("app", "estudante", "solicitacaorecebida", "page.tsx"), "utf8");
+  const lancado = fonte.slice(fonte.indexOf("const DEPOIS = SITE_LANCADO"), fonte.indexOf(": ["));
+  assert.equal(/Estamos conferindo/.test(lancado), false);
+  assert.match(fonte, /Sua inscrição de estudante foi aprovada\. Em até \{ESTUDANTE\.esperaMinutos\} minutos,/);
+});
+
+test("formulário: 503 no fluxo novo é a inscrição FECHADA (não \"instabilidade\"), e o curso vale para qualquer área", () => {
+  const fonte = require("fs").readFileSync(arq("components", "EstudanteForm.tsx"), "utf8");
+  assert.match(fonte, /setStatus\(atual \? "instavel" : "fechado"\)/);
+  assert.match(fonte, /A inscrição de estudante está fechada no momento e abre em breve\. Recarregue a\s+página para deixar seu contato na lista de espera\./);
+  // o valor enviado ao RD continua "Outro" (cf_curso); só o rótulo diz qualquer área
+  assert.match(fonte, /\{ valor: "Outro", rotulo: "Outro curso \(qualquer área\)" \}/);
 });
 
 test("/estudante FECHADA: sem prazo, sem \"código\" no topo e sem garantir que o WhatsApp chega (revisão de 28/10/2026)", () => {
