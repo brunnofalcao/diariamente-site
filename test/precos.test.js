@@ -20,9 +20,10 @@ test("até 16/11/2026 (Brasília): R$ 99,98 por ano, R$ 8,33/mês, oferta de lan
     assert.equal(txt(P.formatar("br", P.precoFinal("br", agora))), "R$ 99,98");
     assert.equal(txt(P.formatar("br", P.porMes("br", agora))), "R$ 8,33");
     assert.equal(P.linkCheckout("br", agora), "https://pay.hotmart.com/K105072021O?off=lf63bgdd");
-    assert.equal(P.parcelaAgora("br", agora), false);
-    assert.equal(P.pagamentoAgora("br", agora), "Pagamento à vista");
-    assert.equal(/12x/.test(P.pagamentoAgora("br", agora)), false);
+    // A oferta de lançamento também parcela (checkout da lf63bgdd, 28/10/2026):
+    // nada de "Pagamento à vista" como se fosse a única forma.
+    assert.equal(P.parcelaAgora("br", agora), true);
+    assert.equal(P.pagamentoAgora("br", agora), "À vista, ou em até 12x no cartão com acréscimo");
     assert.equal(txt(P.precoCheio("br", agora)), "R$ 149,90");
     assert.equal(P.percentualDoLancamento("br", agora), 33);
     assert.equal(txt(P.regraDoLancamento("br", agora)), "33% a menos, travado nos 3 primeiros anos. Depois, R$ 149,90 por ano.");

@@ -53,7 +53,8 @@ test("config do dono (12/10/2026): links, lançamento e mercados de fora", () =>
   assert.equal(l.anos, 3);
   assert.equal(l.terminaEm, "2026-11-16");
   assert.equal(l.ativo, true);
-  assert.equal(l.parcela, false);
+  // o checkout da lf63bgdd parcela em até 12x com acréscimo (conferido em 28/10/2026)
+  assert.equal(l.parcela, true);
   // lançamento não é cupom: nenhum link de venda leva offDiscount
   for (const o of Object.values(MERCADOS)) assert.equal(/offDiscount/.test(o.checkout), false);
   assert.equal(/offDiscount/.test(l.checkout), false);

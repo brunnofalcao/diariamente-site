@@ -28,7 +28,12 @@
                         pessoal do estudante (/estudante/ativar).
    CHECKOUT_LANCAMENTO  oferta "Lançamento App": R$ 99,98 por ano nos 3
                         primeiros anos e, depois, R$ 149,90 por ano (é o
-                        que o checkout diz). Só à vista, sem parcelas.
+                        que o checkout diz). R$ 99,98 é o preço À VISTA: o
+                        checkout salvo em 28/10/2026 também parcela em até
+                        12x no cartão (e no Apple Pay e no Google Pay), com
+                        acréscimo (12x somam R$ 131,28), e mostra Pix e
+                        boleto. Nunca escrever "só à vista" nem "não
+                        parcela" (CDC, art. 37).
    FIM_DO_LANCAMENTO    último dia do preço de lançamento, AAAA-MM-DD, no
                         horário de Brasília. A página mostra a data em
                         texto e, passado esse dia, volta sozinha para
@@ -116,7 +121,7 @@ export type Oferta = {
     terminaEm: string;
     /** false = encerrado: preço cheio e link do plano, mesmo antes da data. */
     ativo: boolean;
-    /** A oferta de lançamento parcela? false: só à vista. */
+    /** O checkout da oferta de lançamento parcela? (a lf63bgdd parcela: true) */
     parcela: boolean;
   };
   /** Link do plano na Hotmart (seção 4 do handoff), sem cupom. */
@@ -240,8 +245,10 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       // abre a oferta de lançamento. Encerrado antes da data? Vire para
       // false: a página volta a R$ 149,90 e o botão, ao CHECKOUT_BRL.
       ativo: true,
-      // O checkout da oferta de lançamento não tem seletor de parcelas.
-      parcela: false,
+      // O checkout da oferta de lançamento parcela em até 12x com
+      // acréscimo (conferido em 28/10/2026: 1x de R$ 99,98 a 12x de
+      // R$ 10,94). Até 27/10 este campo dizia que não parcelava.
+      parcela: true,
     },
     checkout: CHECKOUT_BRL,
     imposto: "na",
@@ -276,7 +283,7 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       lancamentoRegra: "*{pct}% a menos*, travado nos {anos} primeiros anos. Depois, {cheio} por ano.",
       lancamentoRegraSemPercentual: "Travado nos {anos} primeiros anos. Depois, {cheio} por ano.",
       lancamentoRegraEstudante: "nos {anos} primeiros anos. Depois, {cheio} por ano.",
-      // "Equivale a": a oferta é anual e à vista, nunca mensalidade.
+      // "Equivale a": a oferta é anual, nunca mensalidade.
       // "cerca de": R$ 99,98 / 365 = 0,2739, e o ritual pede cerca de três
       // minutos.
       linhaValor: "Equivale a *{mes}* por mês. Por dia, cerca de *{dia}* e três minutos.",
@@ -294,25 +301,31 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       // acréscimo (o checkout da fhrttdh8 mostrou 12x de R$ 16,40 em
       // 12/10/2026): "com acréscimo" impede ler, ao lado do equivalente
       // "R$ 12,49 por mês", 12x de R$ 12,49.
+      // Vale também no lançamento: a oferta lf63bgdd parcela como a
+      // oficial. Sem pagamentoLancamento ("Pagamento à vista" dava a
+      // entender que só havia à vista).
       pagamento: "À vista, ou em até 12x no cartão com acréscimo",
-      pagamentoLancamento: "Pagamento à vista",
       botao: "Começar meu ano",
       renovacao: "Renova a cada ano. Cancele quando quiser.",
       renovacaoMesmoValor: "Renova a cada ano pelo mesmo valor. Cancele quando quiser.",
       // "para quem assinar até": a data é para entrar na oferta e não
-      // encurta os 3 anos. O "à vista" (a oferta de lançamento não
-      // parcela) fica aqui, antes do botão.
+      // encurta os 3 anos. "à vista" qualifica o preço: R$ 99,98 é o
+      // valor à vista (parcelado no cartão sai mais caro). Fica aqui,
+      // antes do botão.
       prazo: "Preço de lançamento, à vista, para quem assinar até",
       estudante: "Sou estudante",
       nota: "por um ano · Garantia de 7 dias",
       // Nunca "só até" colado a "nos 3 primeiros anos": daria para ler
       // que o preço acaba em 16/11. "à vista" (revisão do card,
-      // 28/10/2026): a oferta de lançamento não parcela, e o CTA final é
-      // lido sem o card ao lado. O 7 é o GARANTIA.dias do config.ts
+      // 28/10/2026): R$ 99,98 é o valor à vista (a oferta parcela em até
+      // 12x com acréscimo), e o CTA final é lido sem o card ao lado. O 7
+      // é o GARANTIA.dias do config.ts
       // (este arquivo não importa nada; um teste confere que é igual).
       notaLancamento: "por ano à vista nos {anos} primeiros anos, para quem assinar até {data} · Garantia de 7 dias",
       // Cabe ao lado do botão da barra a 375 px (~133 px em Inter 500 de
-      // 12 px); com a garantia, o botão quebraria em duas linhas.
+      // 12 px); com a garantia, o botão quebraria em duas linhas. Sem
+      // "à vista" pelo mesmo motivo: a barra leva ao card (#preco), onde
+      // o "à vista" está na linha do prazo, logo acima do botão.
       notaBarraLancamento: "por ano durante {anos} anos",
     },
     confianca: [
@@ -616,17 +629,17 @@ export function linkCheckout(m: Mercado, agora: number = Date.now()): string {
   return o.checkout;
 }
 
-/** Parcela agora? A oferta de lançamento é só à vista. */
+/** Parcela agora? As duas ofertas do Brasil parcelam (até 12x com acréscimo). */
 export function parcelaAgora(m: Mercado, agora: number = Date.now()): boolean {
   const o = MERCADOS[m];
   if (o.lancamento && lancamentoVigente(m, agora)) return o.lancamento.parcela;
   return o.parcela;
 }
 
-/** Linha de pagamento do bloco: "Pagamento à vista" no lançamento,
-    "À vista, ou em até 12x no cartão com acréscimo" no preço cheio.
-    Nunca valor de parcela. No card novo do Brasil, o "à vista" do
-    lançamento está no prazo; esta linha só aparece depois dele. */
+/** Linha de pagamento do bloco: "À vista, ou em até 12x no cartão com
+    acréscimo" (pagamentoLancamento, se um mercado tiver, no
+    lançamento). Nunca valor de parcela. No card novo do Brasil, o "à
+    vista" do lançamento está no prazo; esta linha só aparece depois dele. */
 export function pagamentoAgora(m: Mercado, agora: number = Date.now()): string {
   const t = MERCADOS[m].textos;
   return lancamentoVigente(m, agora) && t.pagamentoLancamento ? t.pagamentoLancamento : t.pagamento;

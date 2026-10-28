@@ -396,7 +396,7 @@ export const ESTUDANTE = {
   periodo: "por ano · cobrança anual",
   renovacao: "Cobrança anual. Cancele quando quiser.",
   // Como o estudante paga: o cupom vai na oferta OFICIAL (fhrttdh8), que
-  // parcela em até 12x com acréscimo, nunca na de lançamento (só à vista).
+  // parcela em até 12x com acréscimo, nunca na de lançamento.
   // É a mesma linha da oferta oficial (MERCADOS.br.textos.pagamento), com
   // inicial minúscula para seguir o preço: "R$ 89,90 à vista, ou em até 12x
   // no cartão com acréscimo". Sem valor de parcela: a Hotmart calcula, e o

@@ -235,9 +235,18 @@ minutos." e, no lugar do prazo, "À vista, ou em até 12x no cartão com
 acréscimo." A manchete também fica anual (antes era R$ 12,49/mês): o card
 não muda de forma no dia 17. Barra fixa e CTA final voltam ao de sempre.
 
-Alerta para o dono, fora do card e sem mudança: o hero diz "+5.000
-pessoas já começaram" (`lib/i18n.ts`, `proof`, e a faixa de números de
-`components/Home.tsx`). Confirmar o número ou tirar.
+O "+5.000 pessoas já começaram" do hero (`lib/i18n.ts`, `proof`, e a
+faixa de números de `components/Home.tsx`) fica: decisão do dono de
+28/10/2026.
+
+Parcelamento (conferido em 28/10/2026 no checkout salvo da lf63bgdd): a
+oferta de lançamento parcela em até 12x no cartão, no Apple Pay e no
+Google Pay, com acréscimo (1x de R$ 99,98; 12x somam R$ 131,28), e
+mostra Pix e boleto. R$ 99,98 é o preço À VISTA, por isso o "à vista"
+do prazo e do CTA final está certo. O que estava errado era a premissa
+no código ("só à vista, sem parcelas"): `lancamento.parcela` passou a
+`true` e o "Pagamento à vista" (`pagamentoLancamento`) saiu. Nunca
+escrever "só à vista" ou "não parcela" na página.
 
 ## O que muda para o público já no merge em standby
 
