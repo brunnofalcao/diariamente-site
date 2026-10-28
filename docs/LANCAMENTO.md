@@ -141,15 +141,9 @@ Pedido do dono, 27/10/2026: "O carrinho de oferta está lindo, mas não está
 claro que custa oficialmente 149,90 e somente agora está por 33% a menos."
 
 Só onde o lançamento vale (mercado br, até `FIM_DO_LANCAMENTO`, com
-`ativo: true`), o card mostra:
-
-```
-Preço oficial: R$ 149,90 por ano        (riscado)
-R$ 8,33 /mês no lançamento
-R$ 99,98 por ano nos 3 primeiros anos, 33% a menos que o preço oficial. Depois, R$ 149,90 por ano.
-Pagamento à vista
-Preço de lançamento só até 16 de novembro.
-```
+`ativo: true`), o card mostra o preço oficial riscado acima do preço de
+lançamento, na mesma unidade (por ano). O card inteiro foi refeito no
+mesmo dia (seção abaixo).
 
 - O selo "33% OFF" continua. O percentual sai da conta
   (`percentualDoLancamento`, arredondado para baixo), nunca escrito à mão:
@@ -161,8 +155,78 @@ Preço de lançamento só até 16 de novembro.
 - Passado o `FIM_DO_LANCAMENTO` (ou com `ativo: false`), nada riscado: só
   o preço cheio. Mercados sem lançamento (la, es, pt, rw) não mudam.
 - A `/estudante` (fluxo novo, chave ligada) mantém a regra sem o
-  percentual (`regraDoLancamento` com `semPercentual`): ali as diferenças
-  mostradas são as do estudante.
+  percentual (`regraDoLancamento` com `semPercentual`, texto
+  `lancamentoRegraEstudante`): ali as diferenças mostradas são as do
+  estudante. O texto dela não mudou com o card novo.
+
+## Card de oferta do Brasil
+
+Pedido do dono, 27/10/2026: "se você considerar que a pessoa tem 33% de
+desconto nos 3 primeiros anos, isso significa que ela tem 100% de
+cashback. (...) o card de venda, de oferta, ele pode ser melhor
+trabalhado, essa copy." A copy foi escrita por três redatores, julgada
+por três juízes (conversão, verdade e lei com veto, design) e sintetizada.
+Só o card de venda do Brasil muda (`components/BlocoOferta.tsx`, card
+novo, ligado por `textos.linhaValor` em `config/pricing.ts`); la, es, pt e
+rw ficam com o card de sempre.
+
+No lançamento:
+
+```
+SEU DIARIAMENTE                                         33% OFF
+Preço oficial: R$ 149,90 por ano                (só o valor riscado)
+R$ 99,98 por ano
+33% a menos, travado nos 3 primeiros anos. Depois, R$ 149,90 por ano.
+Equivale a R$ 8,33 por mês. Por dia, cerca de R$ 0,27 e três minutos.
+  3 anos no preço oficial        R$ 449,70      (sem riscado)
+  3 anos no lançamento           R$ 299,94
+  Você deixa de pagar            R$ 149,76
+  Quase o preço oficial de um ano inteiro.
+Preço de lançamento, à vista, para quem assinar até 16 de novembro.
+[Começar meu ano]
+Renova a cada ano. Cancele quando quiser.
+Garantia incondicional de 7 dias. Decida com o app na mão.
+```
+
+- A manchete passou a ser o preço ANUAL (o que é cobrado, à vista): com o
+  riscado por ano e a manchete por mês, o olho comparava 149,90 com 8,33.
+- O "100% de cashback" do pedido entra na forma que a lei aceita: o
+  quadro dos 3 anos e "Quase o preço oficial de um ano inteiro." (a
+  economia, R$ 149,76, fica R$ 0,14 abaixo de R$ 149,90). Ficaram de fora
+  "cashback", "de graça", "pague 2 leve 3" e "3 anos pelo preço de 2"
+  (R$ 299,94 é R$ 0,14 a mais que R$ 299,80): ninguém recebe dinheiro de
+  volta, e seria publicidade enganosa (CDC, art. 37).
+- O total de 3 anos no preço oficial (R$ 449,70) aparece em cinza e SEM
+  riscado: não existe plano de 3 anos, e riscar esse total seria um preço
+  de referência fictício (CDC, art. 37, § 1º). O único riscado é o
+  R$ 149,90, preço oficial vendido de verdade (`CHECKOUT_BRL`).
+- A legenda só aparece se a economia for de pelo menos 95% e de menos de
+  100% do preço oficial (`quaseUmAnoInteiro`, conta em centavos inteiros).
+  Mudou o preço e a conta saiu da faixa: a legenda some sozinha.
+- Saíram do card do Brasil a frase de proposta, a pílula "Pagamento à
+  vista" (o "à vista" foi para a linha do prazo) e o "por um ano" do
+  cabeçalho no lançamento (`tituloLancamento`).
+- Todo número sai da conta em `config/pricing.ts`: `porMes`, `porDia`,
+  `totalEmAnos`, `economiaDoLancamento`, `quaseUmAnoInteiro`,
+  `percentualDoLancamento`, `dataDoLancamento`. Os textos têm
+  `{marcadores}` e o destaque entre asteriscos (`emPartes`).
+- Barra fixa no lançamento: o preço e "por ano durante 3 anos"
+  (`notaBarraLancamento`), no lugar de "1 ano · 7 dias de garantia", que
+  dava a entender que o preço vale só no primeiro ano. CTA final: "R$ 99,98
+  por ano nos 3 primeiros anos, para quem assinar até 16 de novembro ·
+  Garantia de 7 dias" (`notaLancamento`), nunca "só até" colado aos 3
+  anos.
+
+Depois do lançamento (ou com `ativo: false`), o mesmo esqueleto, sem
+selo, âncora, regra e quadro: "SEU DIARIAMENTE POR UM ANO", "R$ 149,90 por
+ano", "Equivale a R$ 12,49 por mês. Por dia, cerca de R$ 0,41 e três
+minutos." e, no lugar do prazo, "À vista, ou em até 12x no cartão com
+acréscimo." A manchete também fica anual (antes era R$ 12,49/mês): o card
+não muda de forma no dia 17. Barra fixa e CTA final voltam ao de sempre.
+
+Alerta para o dono, fora do card e sem mudança: o hero diz "+5.000
+pessoas já começaram" (`lib/i18n.ts`, `proof`, e a faixa de números de
+`components/Home.tsx`). Confirmar o número ou tirar.
 
 ## O que muda para o público já no merge em standby
 

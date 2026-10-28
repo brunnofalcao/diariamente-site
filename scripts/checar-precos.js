@@ -435,11 +435,21 @@ function checarPrecos({
     }
   }
 
+  // O link de TODO mercado passa pela mesma conferência (o do Brasil já
+  // passou acima). Mercado aberto: trava, como sempre. Mercado fechado:
+  // aviso, porque na vitrine (/es/vendas, /pt-pt/vendas...) o botão já
+  // abre esse link (decisão do dono, 27/10/2026), mas o lançamento
+  // público não vende nele.
   const fechados = [];
   for (const [m, o] of Object.entries(mercados || {})) {
-    if (o.vendaAberta && m !== "br") {
-      const p = problemaDoLink(o.checkout, `Mercado ${m} com vendaAberta: true`);
-      if (p) problemas.push(p);
+    if (m !== "br") {
+      if (o.vendaAberta) {
+        const p = problemaDoLink(o.checkout, `Mercado ${m} com vendaAberta: true`);
+        if (p) problemas.push(p);
+      } else {
+        const p = problemaDoLink(o.checkout, `Mercado ${m} (venda fechada; na vitrine o botão já abre este link)`);
+        if (p) avisos.push(p);
+      }
     }
     if (!o.vendaAberta) fechados.push(m);
   }

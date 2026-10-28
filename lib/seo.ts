@@ -293,16 +293,36 @@ export function metadataDoMercado(mercado: MercadoComHome, lancado: boolean = SI
      - noindex, nofollow: endereço de trabalho, não de busca;
      - canonical para si mesma e SEM hreflang. O layout raiz declara
        canonical "/" e o Next mescla isso nas páginas filhas: sem esta
-       linha, a vitrine diria ao Google que é cópia da home pública.
+       linha, a vitrine diria ao Google que é cópia da home pública;
+     - Open Graph PRÓPRIO (a prévia do link que o dono manda no
+       WhatsApp): título e descrição de venda, o idioma do mercado
+       (pt_BR, es_LA, es_ES, pt_PT; o resto do mundo, pt_BR) e a URL da
+       própria vitrine. Sem ele, valia o do layout raiz, com a URL da "/".
+       A imagem vai junto, no idioma da página: o `openGraph` daqui
+       substitui o do layout inteiro, imagem inclusive (ver
+       IMAGEM_DA_PREVIA).
    Nenhuma página pública aponta para a vitrine (sitemap, hreflang e
    canonical vêm de lib/rotas.ts e de HREFLANG, sem ela).
    ===================================================================== */
 export function metadataDaVitrine(mercado: Mercado): Metadata {
-  const { title, description } = TEXTOS_DO_MERCADO[mercado === "rw" ? "br" : mercado].venda;
+  const base = mercado === "rw" ? "br" : mercado;
+  const { title, description } = TEXTOS_DO_MERCADO[base].venda;
+  const proprio = urlAbsoluta(VENDAS_DO_MERCADO[mercado]);
+  const imagem = IMAGEM_DA_PREVIA[MERCADOS[mercado].idioma];
   return {
     title,
     description,
-    alternates: { canonical: urlAbsoluta(VENDAS_DO_MERCADO[mercado]) },
+    alternates: { canonical: proprio },
+    openGraph: {
+      type: "website",
+      locale: OG_LOCALE[base],
+      url: proprio,
+      siteName: SITE.nome,
+      title,
+      description,
+      images: [imagem],
+    },
+    twitter: { card: "summary_large_image", title, description, images: [imagem] },
     robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
   };
 }

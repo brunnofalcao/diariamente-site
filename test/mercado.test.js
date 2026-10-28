@@ -250,9 +250,23 @@ test("mercados fora do Brasil: sem lançamento e todos fechados até o dono conf
 
 test("texto do lançamento: preço dos 3 primeiros anos, o desconto sobre o oficial e depois o cheio, só à vista", () => {
   const t = P.MERCADOS.br.textos;
-  assert.equal(t.lancamentoRegra, "nos {anos} primeiros anos, {pct}% a menos que o preço oficial. Depois, {cheio} por ano.");
+  // card novo (27/10/2026): o desconto travado nos 3 anos e a renovação às
+  // claras; o *destaque* nunca chega à tela
+  assert.equal(t.lancamentoRegra, "*{pct}% a menos*, travado nos {anos} primeiros anos. Depois, {cheio} por ano.");
+  assert.equal(t.lancamentoRegraSemPercentual, "Travado nos {anos} primeiros anos. Depois, {cheio} por ano.");
+  assert.equal(t.lancamentoRegraEstudante, "nos {anos} primeiros anos. Depois, {cheio} por ano.");
   assert.equal(t.ancora, "Preço oficial");
-  assert.equal(t.prazo, "Preço de lançamento só até");
+  // o "à vista" do lançamento está no prazo, antes do botão
+  assert.equal(t.prazo, "Preço de lançamento, à vista, para quem assinar até");
+  assert.equal(t.tituloLancamento, "Seu Diariamente");
+  assert.equal(t.linhaValor, "Equivale a *{mes}* por mês. Por dia, cerca de *{dia}* e três minutos.");
+  assert.deepEqual([t.quadroOficial, t.quadroLancamento, t.quadroEconomia, t.quadroLegenda], [
+    "{anos} anos no preço oficial", "{anos} anos no lançamento", "Você deixa de pagar", "Quase o preço oficial de um ano inteiro.",
+  ]);
+  assert.equal(t.notaLancamento, "por ano nos {anos} primeiros anos, para quem assinar até {data} · Garantia de 7 dias");
+  assert.equal(t.notaBarraLancamento, "por ano durante {anos} anos");
+  // a pílula do card de sempre (o Brasil não a mostra mais; fica para
+  // pagamentoAgora e para quem tiver lançamento sem o card novo)
   assert.equal(t.pagamentoLancamento, "Pagamento à vista");
   // parcelado com acréscimo (o checkout da fhrttdh8 parcela com acréscimo),
   // separado do equivalente mensal da manchete
@@ -262,8 +276,9 @@ test("texto do lançamento: preço dos 3 primeiros anos, o desconto sobre o ofic
 
 test("textos do bloco: sem travessão longo, sem compra, sem valor de parcela", () => {
   const todos = JSON.stringify(P.MERCADOS);
-  assert.equal(/—/.test(todos), false, "travessão longo");
-  assert.equal(/\bcompra(r)?\b/i.test(todos), false, "compra/comprar");
+  assert.equal(/[—–]/.test(todos), false, "travessão");
+  assert.equal(/\bcompr(a|ar|e)\b/i.test(todos), false, "compra/comprar/compre");
+  assert.equal(/cashback|de graça|grátis|gratis|pague 2|leve 3|fundador/i.test(todos), false, "promessa vetada");
   assert.equal(/\d+\s*x\s*de\b/i.test(todos), false, "valor de parcela");
   // renovação do Brasil sem "pelo mesmo valor" enquanto o dono não confirmar
   assert.equal(P.MERCADOS.br.renovaMesmoValor, false);

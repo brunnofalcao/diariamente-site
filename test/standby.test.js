@@ -266,15 +266,25 @@ test("uma página para cada endereço da vitrine, com o mercado certo, noindex e
 
 /* ------------------------------ indexação ------------------------------ */
 
-test("vitrine: noindex, nofollow, canonical para si mesma, SEM hreflang e o título de venda do mercado", () => {
+test("vitrine: noindex, nofollow, canonical para si mesma, SEM hreflang, Open Graph próprio e o título de venda do mercado", () => {
   const S = seo(false);
+  const LOCALE = { br: "pt_BR", la: "es_LA", es: "es_ES", pt: "pt_PT", rw: "pt_BR" };
   for (const [mercado, caminho] of Object.entries(M.VENDAS_DO_MERCADO)) {
     const m = S.metadataDaVitrine(mercado);
     assert.equal(m.robots.index, false, mercado);
     assert.equal(m.robots.follow, false, mercado);
     assert.equal(m.robots.googleBot.index, false, mercado);
     assert.deepEqual(m.alternates, { canonical: DOMINIO + caminho }, mercado);
-    assert.equal("openGraph" in m, false, mercado);
+    // Open Graph da própria vitrine (prévia do link): título, descrição,
+    // idioma do mercado e a URL dela, nunca a da home pública
+    assert.equal(m.openGraph.url, DOMINIO + caminho, mercado);
+    assert.equal(m.openGraph.locale, LOCALE[mercado], mercado);
+    assert.equal(m.openGraph.title, m.title, mercado);
+    assert.equal(m.openGraph.description, m.description, mercado);
+    assert.equal(m.openGraph.images.length, 1, mercado);
+    assert.equal(m.openGraph.images[0].url, P.MERCADOS[mercado].idioma === "es" ? "/es/opengraph-image" : "/opengraph-image.png", mercado);
+    assert.equal(m.twitter.title, m.title, mercado);
+    assert.equal("languages" in m.alternates, false, mercado);
   }
   // o título é o de VENDA do mercado, também onde a home pública ainda é a
   // lista de espera (la e es): a vitrine mostra a venda aberta
@@ -710,27 +720,26 @@ test("vitrine: o idioma de cada página (o <html lang> é trocado na hidrataçã
 
 /* ------------------------- preço oficial riscado ------------------------- */
 
-test("card do Brasil no lançamento: \"Preço oficial\" com R$ 149,90 riscado, 33% a menos e o prazo", () => {
+test("card do Brasil no lançamento: \"Preço oficial\" com R$ 149,90 riscado logo acima de R$ 99,98 por ano, 33% a menos e o prazo", () => {
   const { bloco } = componentesReais(false);
   for (const vitrine of [true, false]) {
     const h = bloco({ mercado: "br", vitrine });
-    assert.match(h, /<p style="margin:18px 0 0;font-size:14.5px;line-height:1.4;color:#8A9494">Preço oficial: <s style="text-decoration-thickness:1.5px;text-decoration-color:#AAB2B2">R\$ 149,90 por ano<\/s><\/p>/);
-    // logo acima da manchete mensal
-    const ancora = h.indexOf("Preço oficial: ");
-    const manchete = h.indexOf(">R$ 8,33</span>");
-    assert.ok(ancora > 0 && manchete > ancora, "o preço oficial vem antes da manchete");
-    assert.match(h, /R\$ 8,33<\/span><span [^>]*>\/mês<\/span><span [^>]*>no lançamento<\/span>/);
-    assert.match(h, /<strong [^>]*>R\$ 99,98<\/strong> por ano nos 3 primeiros anos, 33% a menos que o preço oficial\. Depois, R\$ 149,90 por ano\./);
-    assert.match(h, /<\/svg>Pagamento à vista<\/div>/);
-    assert.match(h, />Preço de lançamento só até 16 de novembro\.<\/p>/);
+    // a âncora é o primeiro elemento do miolo; só o valor é riscado
+    assert.match(h, /<div style="padding:clamp\(20px,3vw,28px\)"><p style="margin:0;font-size:14.5px;line-height:1.4;color:#8A9494">Preço oficial: <s style="text-decoration-thickness:1.5px;text-decoration-color:#AAB2B2">R\$ 149,90 por ano<\/s><\/p>/);
+    // logo abaixo, a manchete ANUAL, na mesma unidade
+    assert.match(h, /<\/s><\/p><div style="display:flex;align-items:baseline;gap:8px;margin-top:6px;flex-wrap:wrap"><span [^>]*>R\$ 99,98<\/span><span style="font-size:16px;line-height:1;color:#AAB2B2">por ano<\/span><\/div>/);
+    assert.match(h, /<strong [^>]*>33% a menos<\/strong>, travado nos 3 primeiros anos\. Depois, R\$ 149,90 por ano\./);
+    assert.match(h, /<span>Preço de lançamento, à vista, para quem assinar até <span style="white-space:nowrap">16 de novembro<\/span>\.<\/span>/);
     assert.match(h, />33% OFF<\/span>/);
+    // um único riscado: R$ 449,70 não é riscado
     assert.equal((h.match(/<s[ >]/g) || []).length, 1);
+    assert.equal(/R\$ 8,33<\/span>|\/mês<\/span>|no lançamento<\/span>|Pagamento à vista/.test(h), false);
   }
   // o percentual vem da conta, igual ao do selo
   assert.equal(P.percentualDoLancamento("br", LANCAMENTO_VALE), 33);
 });
 
-test("card do Brasil depois do lançamento (ou com o lançamento desligado): nada riscado, só o preço cheio", () => {
+test("card do Brasil depois do lançamento (ou com o lançamento desligado): nada riscado, só o preço cheio, por ano", () => {
   const { bloco } = componentesReais(false);
   const depois = bloco({ mercado: "br", vitrine: true, momento: DEPOIS_DO_LANCAMENTO });
   const br = P.MERCADOS.br;
@@ -743,10 +752,11 @@ test("card do Brasil depois do lançamento (ou com o lançamento desligado): nad
     br.lancamento.ativo = ativo;
   }
   for (const h of [depois, desligado]) {
-    assert.equal(/Preço oficial|<s[ >]|a menos que o preço oficial|OFF<|Preço de lançamento/.test(h), false);
-    assert.match(h, />R\$ 12,49<\/span>/);
-    assert.match(h, /<strong [^>]*>R\$ 149,90<\/strong> por ano<\/p>/);
-    assert.match(h, /À vista, ou em até 12x no cartão com acréscimo/);
+    assert.equal(/Preço oficial|<s[ >]|a menos|OFF<|Preço de lançamento|<dl|deixa de pagar|ano inteiro/.test(h), false);
+    assert.match(h, />Seu Diariamente por um ano<\/span><\/div>/);
+    assert.match(h, /<span [^>]*>R\$ 149,90<\/span><span [^>]*>por ano<\/span>/);
+    assert.match(h, /Equivale a <strong [^>]*>R\$ 12,49<\/strong> por mês\. Por dia, cerca de <strong [^>]*>R\$ 0,41<\/strong> e três minutos\./);
+    assert.match(h, /<span>À vista, ou em até 12x no cartão com acréscimo\.<\/span><\/p><a href="https:\/\/pay\.hotmart\.com\/K105072021O\?off=fhrttdh8"/);
   }
 });
 
@@ -760,17 +770,20 @@ test("mercados sem lançamento: nenhum \"Preço oficial\", nada riscado", () => 
   }
 });
 
-test("barra fixa e CTA final do Brasil: o preço oficial riscado ao lado do de lançamento, na mesma unidade", () => {
+test("barra fixa e CTA final do Brasil: o preço oficial riscado ao lado do de lançamento e a condição dos 3 anos", () => {
   const { home } = componentesReais(false);
   const h = home("br", { vitrine: true });
   // card, CTA final e barra fixa
   assert.equal((h.match(/<s[ >]/g) || []).length, 3);
-  // CTA final: R$ 149,90 riscado ao lado de R$ 99,98 por ano
-  assert.match(h, /<span style="position:absolute;[^"]*">Preço oficial: <\/span><s style="text-decoration-thickness:1.5px">R\$ 149,90<\/s> R\$ 99,98 por um ano · Garantia de 7 dias<\/span>/);
-  // barra fixa: R$ 149,90 riscado antes de R$ 99,98
-  assert.match(h, /<span style="position:absolute;[^"]*">Preço oficial: <\/span><s style="font-size:13px;color:#8A9494;font-family:var\(--font-sans\);margin-right:6px">R\$ 149,90<\/s>R\$ 99,98<\/div>/);
-  // depois do lançamento, nada riscado em lugar nenhum
-  assert.equal(/<s[ >]|Preço oficial/.test(home("br", { vitrine: true, momento: DEPOIS_DO_LANCAMENTO })), false);
+  // CTA final: R$ 149,90 riscado ao lado de R$ 99,98 por ano nos 3 primeiros anos
+  assert.match(h, /<span style="position:absolute;[^"]*">Preço oficial: <\/span><s style="text-decoration-thickness:1.5px">R\$ 149,90<\/s> R\$ 99,98 por ano nos 3 primeiros anos, para quem assinar até 16 de novembro · Garantia de 7 dias<\/span>/);
+  // barra fixa: R$ 149,90 riscado antes de R$ 99,98 e "por ano durante 3 anos"
+  assert.match(h, /<span style="position:absolute;[^"]*">Preço oficial: <\/span><s style="font-size:13px;color:#8A9494;font-family:var\(--font-sans\);margin-right:6px">R\$ 149,90<\/s>R\$ 99,98<\/div><div style="margin-top:4px;font-size:12px;font-weight:500;color:#8A9494;white-space:nowrap">por ano durante 3 anos<\/div>/);
+  // depois do lançamento, nada riscado em lugar nenhum, e as notas de sempre
+  const d = home("br", { vitrine: true, momento: DEPOIS_DO_LANCAMENTO });
+  assert.equal(/<s[ >]|Preço oficial/.test(d), false);
+  assert.match(d, /R\$ 149,90<\/div><div [^>]*>1 ano · 7 dias de garantia<\/div>/);
+  assert.match(d, />R\$ 149,90 por um ano · Garantia de 7 dias<\/span>/);
 });
 
 /* ------------------------- /sobre em standby ------------------------- */
