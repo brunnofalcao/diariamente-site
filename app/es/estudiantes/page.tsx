@@ -84,7 +84,7 @@ export default function Estudiantes() {
             <a href={caminho("estudante", "pt")} className="teal" hrefLang="pt-BR">
               Solicita tu código aquí
             </a>
-            ; llega por WhatsApp en unos minutos.
+            ; se envía por WhatsApp en unos minutos.
           </p>
           )}
 

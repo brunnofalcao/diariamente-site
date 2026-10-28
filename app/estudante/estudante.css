@@ -68,7 +68,9 @@
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   min-height: 62px;
 }
-.ed-topbar-logo { display: inline-flex; align-items: center; line-height: 0; }
+/* Sem sublinhado nem cor de link: o logo desenha "diariamente" em texto, e o
+   navegador sublinhava em azul (visto na captura de 28/10/2026). */
+.ed-topbar-logo { display: inline-flex; align-items: center; line-height: 0; color: inherit; text-decoration: none; }
 .ed-topbar-cta {
   display: none; align-items: center; gap: 8px;
   height: 40px; padding: 0 18px; border-radius: 999px;
@@ -253,7 +255,9 @@
 .ed-card-d { font-size: 14.5px; line-height: 1.6; color: var(--n-400); margin-top: 8px; }
 
 /* ------------------------------ PASSOS ------------------------------ */
-.ed-steps { display: grid; gap: 14px; counter-reset: ed; margin-top: clamp(28px, 4vw, 48px); }
+/* list-style e padding: o <ol> mostrava os números do navegador ("1.", "2.",
+   "3.") na margem, ao lado do número do próprio cartão (captura de 28/10/2026). */
+.ed-steps { display: grid; gap: 14px; counter-reset: ed; margin-top: clamp(28px, 4vw, 48px); list-style: none; padding: 0; }
 @media (min-width: 900px) { .ed-steps { grid-template-columns: repeat(3, 1fr); gap: 18px; } }
 .ed-step {
   position: relative; padding: clamp(20px, 2.6vw, 26px);

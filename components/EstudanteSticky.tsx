@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
  */
 export function EstudanteSticky({
   alvo = "formulario",
-  texto = "Leva um minuto. O código chega no WhatsApp.",
+  texto = "Leva um minuto. O código vai pelo WhatsApp.",
   rotulo = "Solicitar",
 }: {
   alvo?: string;

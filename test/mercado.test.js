@@ -261,13 +261,13 @@ test("texto do lançamento: preço dos 3 primeiros anos, o desconto sobre o ofic
   assert.equal(t.tituloLancamento, "Seu Diariamente");
   assert.equal(t.linhaValor, "Equivale a *{mes}* por mês. Por dia, cerca de *{dia}* e três minutos.");
   assert.deepEqual([t.quadroOficial, t.quadroLancamento, t.quadroEconomia, t.quadroLegenda], [
-    "{anos} anos no preço oficial", "{anos} anos no lançamento", "Você deixa de pagar", "Quase o preço oficial de um ano inteiro.",
+    "{anos} anos no preço oficial", "{anos} anos no lançamento", "Em {anos} anos, você deixa de pagar", "Quase o preço oficial de um ano inteiro.",
   ]);
-  assert.equal(t.notaLancamento, "por ano nos {anos} primeiros anos, para quem assinar até {data} · Garantia de 7 dias");
+  assert.equal(t.notaLancamento, "por ano à vista nos {anos} primeiros anos, para quem assinar até {data} · Garantia de 7 dias");
   assert.equal(t.notaBarraLancamento, "por ano durante {anos} anos");
-  // a pílula do card de sempre (o Brasil não a mostra mais; fica para
-  // pagamentoAgora e para quem tiver lançamento sem o card novo)
-  assert.equal(t.pagamentoLancamento, "Pagamento à vista");
+  // sem pílula própria no lançamento ("Pagamento à vista" saiu em
+  // 28/10/2026): a lf63bgdd parcela como a oficial
+  assert.equal(t.pagamentoLancamento, undefined);
   // parcelado com acréscimo (o checkout da fhrttdh8 parcela com acréscimo),
   // separado do equivalente mensal da manchete
   assert.equal(t.pagamento, "À vista, ou em até 12x no cartão com acréscimo");

@@ -6,7 +6,7 @@ import "../estudante.css";
 
 export const metadata: Metadata = {
   title: "Solicitação recebida · Diariamente",
-  description: "Sua condição de estudante foi registrada. O código chega no seu WhatsApp.",
+  description: "Sua condição de estudante foi registrada. O código vai para o seu WhatsApp.",
   robots: { index: false, follow: false },
 };
 
@@ -30,7 +30,7 @@ function IcOk() {
 
 const DEPOIS = [
   {
-    t: "O código chega no seu WhatsApp",
+    t: "O código vai para o seu WhatsApp",
     d: `Estamos conferindo seus dados. Em até ${ESTUDANTE.esperaMinutos} minutos a mensagem chega no número informado. O código é pessoal e vale por ${ESTUDANTE.validadeHoras} horas.`,
   },
   {
@@ -68,7 +68,7 @@ export default function SolicitacaoRecebida() {
             </h1>
             <p className="ed-lead" style={{ margin: "0 auto" }}>
               Sua condição de estudante está registrada. Estamos conferindo seus dados e, em até
-              {" "}{ESTUDANTE.esperaMinutos} minutos, o código chega no número que você informou.
+              {" "}{ESTUDANTE.esperaMinutos} minutos, enviamos o código para o número que você informou.
               Não precisa esperar aqui.
             </p>
           </div>

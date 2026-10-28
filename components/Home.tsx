@@ -202,8 +202,8 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
   const cheio = precoCheio(mkt, agora);
   // Com o lançamento valendo (só o Brasil tem), a condição dos 3 anos não
   // pode faltar na barra nem no CTA final: "por ano durante 3 anos" e
-  // "por ano nos 3 primeiros anos, para quem assinar até 16 de novembro ·
-  // Garantia de 7 dias" (config/pricing.ts). null fora dele: as notas de
+  // "por ano à vista nos 3 primeiros anos, para quem assinar até 16 de
+  // novembro · Garantia de 7 dias" (config/pricing.ts). null fora dele: as notas de
   // sempre.
   const notaCta = notaDoLancamento(mkt, agora);
   const notaBarra = notaDaBarra(mkt, agora);
@@ -780,7 +780,10 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={IMG.appStore} alt="App Store" width={144} height={48} style={{ display: "block", height: 48, width: "auto" }} />
               </a>
-              <a href={LINKS.googlePlay} target="_blank" rel="noopener noreferrer" aria-label="Google Play" style={{ display: "inline-flex", borderRadius: 8, overflow: "hidden" }}>
+              {/* Sem overflow:hidden: a margem negativa só tira a sobra
+                  transparente do SVG do Google Play, e o corte arredondado
+                  comia a borda do próprio selo (como no hero, que não corta). */}
+              <a href={LINKS.googlePlay} target="_blank" rel="noopener noreferrer" aria-label="Google Play" style={{ display: "inline-flex", borderRadius: 8 }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={IMG.googlePlay} alt="Google Play" width={180} height={57} style={{ display: "block", height: 57, width: "auto", margin: "-4.5px 0 -4.5px -8px" }} />
               </a>
@@ -832,9 +835,9 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
                   quebra em linhas do mesmo tamanho, sem "dias" sozinho. */}
               <span style={{ fontSize: 13, fontWeight: 500, color: C.n400, textWrap: "balance" as never }}>
                 {/* No lançamento, o preço oficial riscado ao lado, por ano
-                    como o de lançamento ("R$ 149,90 R$ 99,98 por ano nos 3
-                    primeiros anos, para quem assinar até ..."). Nunca "só
-                    até" colado aos 3 anos: o preço não acaba na data. */}
+                    como o de lançamento ("R$ 149,90 R$ 99,98 por ano à vista
+                    nos 3 primeiros anos, para quem assinar até ..."). Nunca
+                    "só até" colado aos 3 anos: o preço não acaba na data. */}
                 {vende && cheio && (
                   <>
                     {oferta.textos.ancora && <span style={somenteLeitor}>{oferta.textos.ancora}: </span>}
@@ -940,7 +943,10 @@ export function Home({ lang, mercado, momento, previa = false, vitrine = false }
               </>
             )}
           </div>
-          <button type="button" tabIndex={sticky ? 0 : -1} onClick={goToOffer} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", height: 48, padding: "0 18px", borderRadius: 999, border: "none", background: C.p500, color: C.onAccent, fontFamily: "inherit", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>{ctaLabel}</button>
+          {/* Sem venda, o rótulo curto ("Me avise"): o inteiro quebrava em
+              duas linhas dentro dos 48 px. O CTA completo fica no hero e
+              no bloco. */}
+          <button type="button" tabIndex={sticky ? 0 : -1} onClick={goToOffer} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", height: 48, padding: "0 18px", borderRadius: 999, border: "none", background: C.p500, color: C.onAccent, fontFamily: "inherit", fontSize: 15, fontWeight: 600, whiteSpace: "nowrap", cursor: "pointer" }}>{vende ? ctaLabel : oferta.espera.botaoCurto}</button>
         </div>
       </div>
     </div>

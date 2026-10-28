@@ -28,7 +28,12 @@
                         pessoal do estudante (/estudante/ativar).
    CHECKOUT_LANCAMENTO  oferta "Lançamento App": R$ 99,98 por ano nos 3
                         primeiros anos e, depois, R$ 149,90 por ano (é o
-                        que o checkout diz). Só à vista, sem parcelas.
+                        que o checkout diz). R$ 99,98 é o preço À VISTA: o
+                        checkout salvo em 28/10/2026 também parcela em até
+                        12x no cartão (e no Apple Pay e no Google Pay), com
+                        acréscimo (12x somam R$ 131,28), e mostra Pix e
+                        boleto. Nunca escrever "só à vista" nem "não
+                        parcela" (CDC, art. 37).
    FIM_DO_LANCAMENTO    último dia do preço de lançamento, AAAA-MM-DD, no
                         horário de Brasília. A página mostra a data em
                         texto e, passado esse dia, volta sozinha para
@@ -116,7 +121,7 @@ export type Oferta = {
     terminaEm: string;
     /** false = encerrado: preço cheio e link do plano, mesmo antes da data. */
     ativo: boolean;
-    /** A oferta de lançamento parcela? false: só à vista. */
+    /** O checkout da oferta de lançamento parcela? (a lf63bgdd parcela: true) */
     parcela: boolean;
   };
   /** Link do plano na Hotmart (seção 4 do handoff), sem cupom. */
@@ -202,8 +207,8 @@ export type Oferta = {
     /** Linha curta da barra fixa e do CTA final, depois do preço. */
     nota: string;
     /** No lugar de `nota` no CTA final, com o lançamento valendo:
-        "por ano nos {anos} primeiros anos, para quem assinar até {data} ·
-        Garantia de 7 dias". */
+        "por ano à vista nos {anos} primeiros anos, para quem assinar até
+        {data} · Garantia de 7 dias". */
     notaLancamento?: string;
     /** Segunda linha da barra fixa com o lançamento valendo, no lugar do
         stickyNote de lib/i18n.ts: "por ano durante {anos} anos". */
@@ -217,6 +222,9 @@ export type Oferta = {
     selo: string;
     texto: string;
     botao: string;
+    /** Rótulo do botão da barra fixa do celular: o botao inteiro quebrava
+        em duas linhas dentro dos 48 px (revisão de 28/10/2026). */
+    botaoCurto: string;
     /** Linha curta da barra fixa. */
     nota: string;
   };
@@ -240,8 +248,10 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       // abre a oferta de lançamento. Encerrado antes da data? Vire para
       // false: a página volta a R$ 149,90 e o botão, ao CHECKOUT_BRL.
       ativo: true,
-      // O checkout da oferta de lançamento não tem seletor de parcelas.
-      parcela: false,
+      // O checkout da oferta de lançamento parcela em até 12x com
+      // acréscimo (conferido em 28/10/2026: 1x de R$ 99,98 a 12x de
+      // R$ 10,94). Até 27/10 este campo dizia que não parcelava.
+      parcela: true,
     },
     checkout: CHECKOUT_BRL,
     imposto: "na",
@@ -276,7 +286,7 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       lancamentoRegra: "*{pct}% a menos*, travado nos {anos} primeiros anos. Depois, {cheio} por ano.",
       lancamentoRegraSemPercentual: "Travado nos {anos} primeiros anos. Depois, {cheio} por ano.",
       lancamentoRegraEstudante: "nos {anos} primeiros anos. Depois, {cheio} por ano.",
-      // "Equivale a": a oferta é anual e à vista, nunca mensalidade.
+      // "Equivale a": a oferta é anual, nunca mensalidade.
       // "cerca de": R$ 99,98 / 365 = 0,2739, e o ritual pede cerca de três
       // minutos.
       linhaValor: "Equivale a *{mes}* por mês. Por dia, cerca de *{dia}* e três minutos.",
@@ -285,29 +295,40 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       // fictício (CDC, art. 37, § 1º).
       quadroOficial: "{anos} anos no preço oficial",
       quadroLancamento: "{anos} anos no lançamento",
-      quadroEconomia: "Você deixa de pagar",
+      // "Em 3 anos": o número do quadro é a economia dos 3 anos, não de um
+      // (revisão do card, 28/10/2026). O {anos} sai da conta, como nas
+      // outras linhas do quadro.
+      quadroEconomia: "Em {anos} anos, você deixa de pagar",
       quadroLegenda: "Quase o preço oficial de um ano inteiro.",
       // Sem valor de parcela: a Hotmart calcula. E o parcelado tem
       // acréscimo (o checkout da fhrttdh8 mostrou 12x de R$ 16,40 em
       // 12/10/2026): "com acréscimo" impede ler, ao lado do equivalente
       // "R$ 12,49 por mês", 12x de R$ 12,49.
+      // Vale também no lançamento: a oferta lf63bgdd parcela como a
+      // oficial. Sem pagamentoLancamento ("Pagamento à vista" dava a
+      // entender que só havia à vista).
       pagamento: "À vista, ou em até 12x no cartão com acréscimo",
-      pagamentoLancamento: "Pagamento à vista",
       botao: "Começar meu ano",
       renovacao: "Renova a cada ano. Cancele quando quiser.",
       renovacaoMesmoValor: "Renova a cada ano pelo mesmo valor. Cancele quando quiser.",
       // "para quem assinar até": a data é para entrar na oferta e não
-      // encurta os 3 anos. O "à vista" (a oferta de lançamento não
-      // parcela) fica aqui, antes do botão.
+      // encurta os 3 anos. "à vista" qualifica o preço: R$ 99,98 é o
+      // valor à vista (parcelado no cartão sai mais caro). Fica aqui,
+      // antes do botão.
       prazo: "Preço de lançamento, à vista, para quem assinar até",
       estudante: "Sou estudante",
       nota: "por um ano · Garantia de 7 dias",
       // Nunca "só até" colado a "nos 3 primeiros anos": daria para ler
-      // que o preço acaba em 16/11. O 7 é o GARANTIA.dias do config.ts
+      // que o preço acaba em 16/11. "à vista" (revisão do card,
+      // 28/10/2026): R$ 99,98 é o valor à vista (a oferta parcela em até
+      // 12x com acréscimo), e o CTA final é lido sem o card ao lado. O 7
+      // é o GARANTIA.dias do config.ts
       // (este arquivo não importa nada; um teste confere que é igual).
-      notaLancamento: "por ano nos {anos} primeiros anos, para quem assinar até {data} · Garantia de 7 dias",
+      notaLancamento: "por ano à vista nos {anos} primeiros anos, para quem assinar até {data} · Garantia de 7 dias",
       // Cabe ao lado do botão da barra a 375 px (~133 px em Inter 500 de
-      // 12 px); com a garantia, o botão quebraria em duas linhas.
+      // 12 px); com a garantia, o botão quebraria em duas linhas. Sem
+      // "à vista" pelo mesmo motivo: a barra leva ao card (#preco), onde
+      // o "à vista" está na linha do prazo, logo acima do botão.
       notaBarraLancamento: "por ano durante {anos} anos",
     },
     confianca: [
@@ -322,6 +343,7 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       selo: "Em breve",
       texto: "A assinatura abre em breve. Deixe seu contato e avisamos no dia em que abrir.",
       botao: "Me avise quando abrir",
+      botaoCurto: "Me avise",
       nota: "Avisamos no dia em que abrir",
     },
   },
@@ -363,6 +385,7 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       selo: "Próximamente",
       texto: "La suscripción para América Latina abre pronto. Déjanos tu contacto y te avisamos el día que abra.",
       botao: "Avísame cuando abra",
+      botaoCurto: "Avísame",
       nota: "Te avisamos el día que abra",
     },
   },
@@ -402,6 +425,7 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       selo: "Próximamente",
       texto: "La suscripción para España abre pronto. Déjanos tu contacto y te avisamos el día que abra.",
       botao: "Avísame cuando abra",
+      botaoCurto: "Avísame",
       nota: "Te avisamos el día que abra",
     },
   },
@@ -441,6 +465,7 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       selo: "Em breve",
       texto: "A assinatura para Portugal abre em breve. Deixa o teu contacto e avisamos-te no dia em que abrir.",
       botao: "Avisem-me quando abrir",
+      botaoCurto: "Avisem-me",
       nota: "Avisamos-te no dia em que abrir",
     },
   },
@@ -484,6 +509,7 @@ export const MERCADOS: Record<Mercado, Oferta> = {
       selo: "Em breve",
       texto: "A assinatura para quem está fora do Brasil abre em breve. Deixe seu contato e avisamos no dia em que abrir.",
       botao: "Me avise quando abrir",
+      botaoCurto: "Me avise",
       nota: "Avisamos no dia em que abrir",
     },
   },
@@ -611,17 +637,17 @@ export function linkCheckout(m: Mercado, agora: number = Date.now()): string {
   return o.checkout;
 }
 
-/** Parcela agora? A oferta de lançamento é só à vista. */
+/** Parcela agora? As duas ofertas do Brasil parcelam (até 12x com acréscimo). */
 export function parcelaAgora(m: Mercado, agora: number = Date.now()): boolean {
   const o = MERCADOS[m];
   if (o.lancamento && lancamentoVigente(m, agora)) return o.lancamento.parcela;
   return o.parcela;
 }
 
-/** Linha de pagamento do bloco: "Pagamento à vista" no lançamento,
-    "À vista, ou em até 12x no cartão com acréscimo" no preço cheio.
-    Nunca valor de parcela. No card novo do Brasil, o "à vista" do
-    lançamento está no prazo; esta linha só aparece depois dele. */
+/** Linha de pagamento do bloco: "À vista, ou em até 12x no cartão com
+    acréscimo" (pagamentoLancamento, se um mercado tiver, no
+    lançamento). Nunca valor de parcela. No card novo do Brasil, o "à
+    vista" do lançamento está no prazo; esta linha só aparece depois dele. */
 export function pagamentoAgora(m: Mercado, agora: number = Date.now()): string {
   const t = MERCADOS[m].textos;
   return lancamentoVigente(m, agora) && t.pagamentoLancamento ? t.pagamentoLancamento : t.pagamento;
@@ -746,7 +772,7 @@ export function linhaDeValor(m: Mercado, agora: number = Date.now()): Parte[] | 
     economia positiva; null fora dele (o quadro some).
       oficial    "3 anos no preço oficial", R$ 449,70 (sem riscado)
       lancamento "3 anos no lançamento", R$ 299,94
-      economia   "Você deixa de pagar", R$ 149,76
+      economia   "Em 3 anos, você deixa de pagar", R$ 149,76
       legenda    "Quase o preço oficial de um ano inteiro.", só com
                  quaseUmAnoInteiro (senão null) */
 export function quadroDoLancamento(m: Mercado, agora: number = Date.now()): null | {
@@ -769,9 +795,9 @@ export function quadroDoLancamento(m: Mercado, agora: number = Date.now()): null
   };
 }
 
-/** CTA final com o lançamento valendo, depois do preço: "por ano nos 3
-    primeiros anos, para quem assinar até 16 de novembro · Garantia de 7
-    dias". null fora dele (o CTA usa textos.nota). */
+/** CTA final com o lançamento valendo, depois do preço: "por ano à vista
+    nos 3 primeiros anos, para quem assinar até 16 de novembro · Garantia
+    de 7 dias". null fora dele (o CTA usa textos.nota). */
 export function notaDoLancamento(m: Mercado, agora: number = Date.now()): string | null {
   const modelo = MERCADOS[m].textos.notaLancamento;
   if (!modelo || !lancamentoVigente(m, agora) || !dataDoLancamento(m)) return null;

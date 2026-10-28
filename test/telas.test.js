@@ -249,6 +249,31 @@ test("/estudante FECHADA: lista de espera no lugar do formulário, botões \"Me 
   assert.equal(/Por que pedimos esses dados/.test(h), false);
 });
 
+test("/estudante FECHADA: sem prazo, sem \"código\" no topo e sem garantir que o WhatsApp chega (revisão de 28/10/2026)", () => {
+  const h = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(false))));
+  assert.match(h, /Abre em breve/);
+  assert.match(h, /Quando abrir, são três passos\./);
+  assert.equal(/Leva cerca de um minuto<\/span>|Código pelo WhatsApp|Código enviado no WhatsApp/.test(h), false, "chips do topo de quem pede o código");
+  assert.equal(/em até \d+ minutos/i.test(h), false, "sem prazo com a solicitação fechada");
+  assert.equal(/código chega|chega no WhatsApp/i.test(h), false);
+  // aberta: o prazo do config, com o sistema enviando (não \"chega\")
+  const aberta = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(true))));
+  assert.match(aberta, /enviamos o código para o número que você informou/);
+  assert.equal(/código chega|chega no WhatsApp/i.test(aberta), false);
+});
+
+test("home: nada de garantir que o WhatsApp chega nem de acesso imediato por e-mail (pt, es e pt-PT)", () => {
+  for (const [lang, mercado] of [["pt", "br"], ["es", "la"], ["pt", "pt"]]) {
+    const t = i18n.dicionario(lang, mercado);
+    const tudo = JSON.stringify(t);
+    assert.equal(/chega no horário|Llega a la hora|Chega à hora|te encontra todo dia|te encuentra cada día|encontra-te/i.test(tudo), false, `${lang}/${mercado}: WhatsApp`);
+    assert.equal(/Acesso imediato|Acceso inmediato|acesso chega por e-mail|acceso llega por e-mail|Por e-mail, assim|Por e-mail, en cuanto/i.test(tudo), false, `${lang}/${mercado}: e-mail`);
+    assert.equal(/código chega|código llega/i.test(tudo), false, `${lang}/${mercado}: código`);
+  }
+  assert.match(i18n.dicionario("pt", "br").v5d, /Cadastre seu WhatsApp no app/);
+  assert.match(i18n.dicionario("pt", "br").faq.find(([q]) => q === "Como recebo o acesso?")[1], /Primeiro acesso\? Ativar conta/);
+});
+
 test("/estudante ABERTA: o formulário de sempre e os botões de solicitar", () => {
   const h = comRelogio(LANCAMENTO, () => html(paginaEstudante(config(true))));
   assert.match(h, /formulario-cpf/);
@@ -355,4 +380,17 @@ test("Home.tsx: o card do estudante depende de ESTUDANTE.aberto e o preço, de E
   // o único outro link da home para a /estudante é o do bloco de oferta
   const links = fonte.match(/caminho\("estudante"/g) || [];
   assert.equal(links.length, 1);
+});
+
+test("barra fixa sem venda: rótulo curto numa linha só; selo do Google Play sem corte (revisão de 28/10/2026)", () => {
+  const fs = require("fs");
+  for (const m of P.LISTA_MERCADOS) {
+    const e = P.MERCADOS[m].espera;
+    assert.ok(e.botaoCurto && e.botaoCurto.length <= 10, `${m}: ${e.botaoCurto}`);
+    assert.ok(e.botao.startsWith(e.botaoCurto.replace(/-me$/, "")), `${m}: o curto é o começo do inteiro`);
+  }
+  const home = fs.readFileSync(arq("components", "Home.tsx"), "utf8");
+  assert.match(home, /whiteSpace: "nowrap", cursor: "pointer" \}\}>\{vende \? ctaLabel : oferta\.espera\.botaoCurto\}<\/button>/);
+  const gp = home.match(/<a href=\{LINKS\.googlePlay\}[^>]*>/)[0];
+  assert.equal(/overflow/.test(gp), false, gp);
 });

@@ -116,7 +116,7 @@ function Entrega() {
   }
   return (
     <div className="ed-price-hint">
-      <b>O código chega só no WhatsApp.</b> Ele é pessoal, vale por{" "}
+      <b>O código vai só pelo WhatsApp.</b> Ele é pessoal, vale por{" "}
       {ESTUDANTE.validadeHoras} horas, e o botão da mensagem abre o pagamento com o
       desconto já aplicado. {ESTUDANTE.regra}
     </div>

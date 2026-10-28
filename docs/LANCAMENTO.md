@@ -180,7 +180,7 @@ R$ 99,98 por ano
 Equivale a R$ 8,33 por mês. Por dia, cerca de R$ 0,27 e três minutos.
   3 anos no preço oficial        R$ 449,70      (sem riscado)
   3 anos no lançamento           R$ 299,94
-  Você deixa de pagar            R$ 149,76
+  Em 3 anos, você deixa de pagar R$ 149,76
   Quase o preço oficial de um ano inteiro.
 Preço de lançamento, à vista, para quem assinar até 16 de novembro.
 [Começar meu ano]
@@ -213,9 +213,20 @@ Garantia incondicional de 7 dias. Decida com o app na mão.
 - Barra fixa no lançamento: o preço e "por ano durante 3 anos"
   (`notaBarraLancamento`), no lugar de "1 ano · 7 dias de garantia", que
   dava a entender que o preço vale só no primeiro ano. CTA final: "R$ 99,98
-  por ano nos 3 primeiros anos, para quem assinar até 16 de novembro ·
-  Garantia de 7 dias" (`notaLancamento`), nunca "só até" colado aos 3
-  anos.
+  por ano à vista nos 3 primeiros anos, para quem assinar até 16 de
+  novembro · Garantia de 7 dias" (`notaLancamento`), nunca "só até" colado
+  aos 3 anos.
+- Revisão do card (28/10/2026), dois ajustes e nada mais na copy: o quadro
+  diz "Em 3 anos, você deixa de pagar" (o número é a economia dos 3 anos,
+  não de um; o 3 sai de `{anos}`), e a nota do CTA final diz "à vista",
+  porque ali ela é lida sem o card ao lado. Medido no navegador: o rótulo
+  novo, com o valor ao lado, pede 314 px e a linha do quadro tem 208 px a
+  320 px e 278 px a 390 px; no celular ele quebra em duas linhas do mesmo
+  tamanho, "Em 3 anos, você / deixa de pagar" (`text-wrap: balance` nos
+  rótulos do quadro), sem "de pagar" sozinho, e só fica numa linha de
+  430 px para cima. A 375 px a nota do CTA final fica em três linhas
+  equilibradas ("R$ 149,90 R$ 99,98 por ano à vista nos / 3 primeiros
+  anos, para quem assinar / até 16 de novembro · Garantia de 7 dias").
 
 Depois do lançamento (ou com `ativo: false`), o mesmo esqueleto, sem
 selo, âncora, regra e quadro: "SEU DIARIAMENTE POR UM ANO", "R$ 149,90 por
@@ -224,9 +235,18 @@ minutos." e, no lugar do prazo, "À vista, ou em até 12x no cartão com
 acréscimo." A manchete também fica anual (antes era R$ 12,49/mês): o card
 não muda de forma no dia 17. Barra fixa e CTA final voltam ao de sempre.
 
-Alerta para o dono, fora do card e sem mudança: o hero diz "+5.000
-pessoas já começaram" (`lib/i18n.ts`, `proof`, e a faixa de números de
-`components/Home.tsx`). Confirmar o número ou tirar.
+O "+5.000 pessoas já começaram" do hero (`lib/i18n.ts`, `proof`, e a
+faixa de números de `components/Home.tsx`) fica: decisão do dono de
+28/10/2026.
+
+Parcelamento (conferido em 28/10/2026 no checkout salvo da lf63bgdd): a
+oferta de lançamento parcela em até 12x no cartão, no Apple Pay e no
+Google Pay, com acréscimo (1x de R$ 99,98; 12x somam R$ 131,28), e
+mostra Pix e boleto. R$ 99,98 é o preço À VISTA, por isso o "à vista"
+do prazo e do CTA final está certo. O que estava errado era a premissa
+no código ("só à vista, sem parcelas"): `lancamento.parcela` passou a
+`true` e o "Pagamento à vista" (`pagamentoLancamento`) saiu. Nunca
+escrever "só à vista" ou "não parcela" na página.
 
 ## O que muda para o público já no merge em standby
 
@@ -338,3 +358,43 @@ deploy, ou Instant Rollback para o deploy anterior.
 - Espanhol: links da App Store e da Google Play ainda em pt
   (`lib/i18n.ts:298-299`) e badge da Google Play em pt (`lib/i18n.ts:294`),
   antes de abrir la ou es.
+
+## Revisão de 28/10/2026 (depois das capturas com a chave ligada)
+
+O que mudou, e por quê:
+
+- **Aviso de cookies no celular** (até 560 px): compacto, com cerca de
+  115 px. O inteiro tinha ~214 px e cobria o "Quero meu acesso" na
+  primeira tela do iPhone de 390 x 664. Agora o aviso começa em 537 px e
+  o botão termina em 511 px. Sem título, texto curto com quem mede
+  (Google e Meta), "só se você aceitar" e o link da Política; Recusar e
+  Aceitar do mesmo tamanho. No computador, o de sempre.
+- **Copy sem promessa que o sistema não cumpre** (CDC, art. 37; pt, es
+  e pt-PT): o lembrete no WhatsApp não "chega no horário" nem "te
+  encontra todo dia" (depende do telefone e do aceite no app), e o
+  "acesso imediato por e-mail" virou o caminho real, ativar a conta no
+  app com o e-mail do pagamento, como dizem as páginas de obrigado.
+- **/estudante fechada** (sem `WA_TEMPLATE_ESTUDANTE`): o topo mostra
+  "Abre em breve" e a garantia, sem "Leva cerca de um minuto" e sem
+  "Código enviado no WhatsApp"; o Como funciona vira "Quando abrir, são
+  três passos.", sem prazo. Aberta, o passo 2 diz que enviamos o código,
+  não que ele chega. O logo do topo perdeu o sublinhado azul e a lista de
+  passos, os números do navegador na margem.
+- **Barra fixa sem venda** (EUA, /pt-pt, /es): rótulo curto numa linha
+  ("Me avise", "Avisem-me", "Avísame"; `espera.botaoCurto`).
+- **Selo do Google Play** em "O que acontece depois": inteiro (o link
+  cortava a borda). **Lista de confiança do card**: `text-wrap: balance`
+  e "7 dias" sem quebra.
+- **Parcelamento**: ver o fim de "Card de oferta do Brasil".
+
+Ficou de fora, com o motivo:
+
+- **"+5.000 pessoas"**: fica, decisão do dono de 28/10/2026.
+- **Selo da App Store em inglês** ("Download on the App Store") ao lado
+  do Google Play em português: o selo oficial em português do Brasil
+  ("Baixar na App Store", branco, das Apple Marketing Tools) não está no
+  repositório nem no Cloudinary. Quando estiver no Cloudinary, trocar
+  `IMG_PT.appStore` (`lib/i18n.ts`) e `LOJAS_BADGES.appStoreEscuro`
+  (`config.ts`).
+- **"à vista" na barra fixa**: não cabe ao lado do botão a 375 px; a
+  barra leva ao card, onde o "à vista" está na linha do prazo.

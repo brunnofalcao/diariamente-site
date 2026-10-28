@@ -151,6 +151,10 @@ const RECEBE = [
   },
 ];
 
+// Como funciona. O passo 2 diz o que o sistema FAZ (envia), não que o
+// WhatsApp chega: a entrega não é garantida (regra da marca, CDC art. 37).
+// Fechado (sem o fluxo do cupom), sem prazo: a página só anota o contato,
+// e a seção vira "Quando abrir" (revisão de 28/10/2026).
 const PASSOS = [
   {
     t: "Preencha seus dados de estudante",
@@ -158,7 +162,9 @@ const PASSOS = [
   },
   {
     t: "Receba seu código no WhatsApp",
-    d: `Conferimos seus dados e, em até ${ESTUDANTE.esperaMinutos} minutos, o código chega no número que você informou. Ele é pessoal e vale ${ESTUDANTE.validadeHoras} horas.`,
+    d: ABERTO
+      ? `Conferimos seus dados e, em até ${ESTUDANTE.esperaMinutos} minutos, enviamos o código para o número que você informou. Ele é pessoal e vale ${ESTUDANTE.validadeHoras} horas.`
+      : "Conferimos seus dados e enviamos um código pessoal para o número que você informar.",
   },
   {
     t: "Ative seu acesso",
@@ -176,8 +182,12 @@ const FAQ = [
     a: "Sim. O Diariamente não é sobre conteúdo técnico de uma área, é sobre constância, decisão e responsabilidade pessoal. Vale para qualquer graduação.",
   },
   {
-    q: "O código chega quando?",
-    a: `Em até ${ESTUDANTE.esperaMinutos} minutos, no WhatsApp que você informar, depois da conferência dos seus dados. Ele é pessoal e vale por ${ESTUDANTE.validadeHoras} horas.`,
+    // Quem envia é o sistema; a entrega no WhatsApp não é garantida. Fechado,
+    // sem prazo (revisão de 28/10/2026).
+    q: "Quando recebo o código?",
+    a: ABERTO
+      ? `Enviamos em até ${ESTUDANTE.esperaMinutos} minutos para o WhatsApp que você informar, depois da conferência dos seus dados. Ele é pessoal e vale por ${ESTUDANTE.validadeHoras} horas.`
+      : `Quando a solicitação abrir, enviamos o código para o WhatsApp que você informar, depois da conferência dos seus dados. Ele é pessoal e vale por ${ESTUDANTE.validadeHoras} horas.`,
   },
   {
     q: "Não recebi o código. E agora?",
@@ -293,13 +303,23 @@ export default function Estudante() {
                 </a>
               </div>
 
+              {/* Fechado, nada de prazo nem de código: a solicitação ainda
+                  não existe (revisão de 28/10/2026). */}
               <div className="ed-trust">
-                <span>
-                  <IcClock /> Leva cerca de um minuto
-                </span>
-                <span>
-                  <IcPhone /> Código enviado no WhatsApp
-                </span>
+                {ABERTO ? (
+                  <>
+                    <span>
+                      <IcClock /> Leva cerca de um minuto
+                    </span>
+                    <span>
+                      <IcPhone /> Código pelo WhatsApp
+                    </span>
+                  </>
+                ) : (
+                  <span>
+                    <IcClock /> Abre em breve
+                  </span>
+                )}
                 <span>
                   <IcShield /> Garantia de {GARANTIA.dias} dias
                 </span>
@@ -403,7 +423,9 @@ export default function Estudante() {
           <div className="ed-wrap">
             <div className="ed-sec-head is-center">
               <span className="ed-overline">Como funciona</span>
-              <h2 className="ed-h2">Do formulário ao Dia 1, em três passos.</h2>
+              <h2 className="ed-h2">
+                {ABERTO ? "Do formulário ao Dia 1, em três passos." : "Quando abrir, são três passos."}
+              </h2>
             </div>
 
             <ol className="ed-steps">
@@ -462,7 +484,7 @@ export default function Estudante() {
             </div>
             <p className="ed-legal" style={{ marginTop: 12 }}>
               {ABERTO
-                ? "Solicitar não gera compromisso. O código chega no seu WhatsApp e você decide depois, com calma."
+                ? "Solicitar não gera compromisso. O código vai para o seu WhatsApp e você decide depois, com calma."
                 : "A solicitação do código abre em breve. Deixe seu contato e avisamos no dia em que abrir."}
             </p>
           </div>
@@ -595,7 +617,7 @@ export default function Estudante() {
 
         <EstudanteSticky
           alvo="formulario"
-          texto={ABERTO ? "Leva um minuto. O código chega no WhatsApp." : "Abre em breve. Avisamos você."}
+          texto={ABERTO ? "Leva um minuto. O código vai pelo WhatsApp." : "Abre em breve. Avisamos você."}
           rotulo={ABERTO ? "Solicitar" : "Me avise"}
         />
       </main>

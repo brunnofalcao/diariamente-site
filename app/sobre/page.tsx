@@ -49,11 +49,11 @@ export default function Sobre() {
   const agora = Date.now();
   const cheio = formatar("br", MERCADOS.br.anual);
   const cheioMes = formatar("br", mensal(MERCADOS.br.anual));
-  // O lançamento é outra oferta: só à vista, e o preço dela vale nos
-  // primeiros anos; depois, o cheio. O parcelamento fica só no cheio,
-  // sempre "com acréscimo" e separado do equivalente mensal: o checkout
-  // parcela com acréscimo, e o mensal colado ao parcelamento se lia como
-  // parcela de R$ 12,49.
+  // O lançamento é outra oferta, e o preço dela (à vista; o checkout
+  // também parcela em até 12x com acréscimo, conferido em 28/10/2026) vale
+  // nos primeiros anos; depois, o cheio. A linha do parcelamento fica só
+  // no cheio, sempre "com acréscimo" e separada do equivalente mensal: o
+  // mensal colado ao parcelamento se lia como parcela de R$ 12,49.
   const vigente = lancamentoVigente("br", agora);
   const lancamento = formatar("br", precoFinal("br", agora));
   const lancamentoMes = formatar("br", porMes("br", agora));
