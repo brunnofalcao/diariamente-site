@@ -137,15 +137,18 @@ const ROTULOS_DO_APP = new Set<string>(Object.values(BOTAO_DO_APP));
  * O "chip": o rótulo EXATO do botão da tela de login do app, desenhado
  * IGUAL ao de lá (public/index.html do app: texto teal, 14 px, peso 600,
  * sem borda nem fundo, logo abaixo do botão Entrar). Não é botão aqui:
- * mostra o que procurar no app, com a mesma cara.
+ * mostra o que procurar no app, com a mesma cara. Leva o lang do rótulo
+ * (o app só tem pt-BR e es): na página en, o leitor de tela lê o rótulo
+ * em português com a voz do português, como no app (WCAG 3.1.2).
  */
 export function ChipDoApp({ rotulo }: { rotulo: string }) {
-  return <span className="pp-chip">{rotulo}</span>;
+  return <span className="pp-chip" lang={rotulo === BOTAO_DO_APP.es ? "es" : "pt-BR"}>{rotulo}</span>;
 }
 
 /**
  * Texto rico da copy: negrito ({ b }), o chip quando o negrito é o
- * rótulo do botão do app, e o e-mail do atendimento ({ atendimento }).
+ * rótulo do botão do app, rótulo do app em português no meio de outro
+ * idioma ({ pt }, com lang="pt-BR") e o e-mail do atendimento ({ atendimento }).
  */
 export function Rico({ partes, assunto = ATENDIMENTO.assuntoSuporte }: { partes: TextoRico; assunto?: string }) {
   // A pontuação logo depois do chip ("... Ativar conta.") vai junto com ele,
@@ -175,6 +178,7 @@ export function Rico({ partes, assunto = ATENDIMENTO.assuntoSuporte }: { partes:
           }
           return <strong key={i} className="pp-forte"><Inteiro texto={p.b} /></strong>;
         }
+        if ("pt" in p) return <span key={i} lang="pt-BR"><Inteiro texto={p.pt} /></span>;
         return (
           <a key={i} href={linkDoAtendimento(assunto)}>
             {ATENDIMENTO.email}

@@ -67,8 +67,12 @@ export type Estado = "aprovado" | "aguardando-pagamento" | "aguardando-analise";
 export type Aparelho = "ios" | "android" | "computador";
 export type Forma = "pix" | "boleto" | "outra";
 
-/** Trecho de texto rico: texto, negrito (ou o chip do botão do app) ou o e-mail do atendimento. */
-export type Trecho = string | { b: string } | { atendimento: true };
+/**
+ * Trecho de texto rico: texto, negrito (ou o chip do botão do app), rótulo
+ * do app em português no meio de outro idioma ({ pt }, sai com lang="pt-BR")
+ * ou o e-mail do atendimento.
+ */
+export type Trecho = string | { b: string } | { pt: string } | { atendimento: true };
 export type Rico = readonly Trecho[];
 
 type Trilha = { rotulo: string; resumo: string; passos: readonly string[]; feito: string; agora: string; depois: string };

@@ -1343,9 +1343,24 @@ test("aprovada: o subtítulo não conta passos (a trilha e os cartões numeram: 
   }
 });
 
+test("título e subtítulo não contam passos em nenhum status (\"One step left\" acima de uma trilha com dois por fazer se contradizia)", () => {
+  const conta = /\b(one|two|three) steps?\b|\bsteps? left\b|\b(um|dois|três) passos?\b|\b(un|dos|tres) pasos?\b/i;
+  for (const local of LOCAIS) {
+    for (const estado of ESTADOS) {
+      const t = TEXTOS[local][estado];
+      assert.doesNotMatch(t.titulo.join(" "), conta, `${local} ${estado}`);
+      assert.doesNotMatch(t.sub, conta, `${local} ${estado}`);
+    }
+  }
+});
+
 test("o chip é igual ao botão do app: só o texto, sem borda, fundo nem ponto de toque", () => {
   const PC = pecasComuns();
-  assert.equal(renderToStaticMarkup(React.createElement(PC.ChipDoApp, { rotulo: "Primeiro acesso? Ativar conta" })), '<span class="pp-chip">Primeiro acesso? Ativar conta</span>');
+  // com o lang do rótulo (o app só tem pt-BR e es): o leitor de tela da página en lê em português
+  assert.equal(renderToStaticMarkup(React.createElement(PC.ChipDoApp, { rotulo: "Primeiro acesso? Ativar conta" })), '<span class="pp-chip" lang="pt-BR">Primeiro acesso? Ativar conta</span>');
+  assert.equal(renderToStaticMarkup(React.createElement(PC.ChipDoApp, { rotulo: BOTAO_DO_APP.es })), '<span class="pp-chip" lang="es">¿Primer acceso? Activar cuenta</span>');
+  // o "Entrar" citado no meio do inglês também
+  assert.match(renderToStaticMarkup(React.createElement(PC.Rico, { partes: TEXTOS.en.aprovado.senha.passos[0] })), /below the <span lang="pt-BR">Entrar<\/span> \(Sign in\) button\./);
   const css = ler("components/pos-pagamento.css");
   const regra = css.match(/\.pp-chip \{([^}]*)\}/)[1];
   assert.match(regra, /color: var\(--p-400\)/);

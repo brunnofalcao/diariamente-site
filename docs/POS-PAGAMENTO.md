@@ -228,6 +228,10 @@ ser que a oferta diga outra moeda.
   the Entrar (Sign in) button") e diz, numa frase, "The app is in
   Portuguese and Spanish." em toda página que manda abrir o app. Nenhuma
   página diz em que idioma chegam o WhatsApp e o e-mail.
+- O chip sai com o **lang do rótulo** (`pt-BR` ou `es`), e o "Entrar" do
+  en com `lang="pt-BR"` (`{ pt: "Entrar" }` na copy): o leitor de tela da
+  página en lê os rótulos do app com a voz do português, como no app
+  (WCAG 3.1.2).
 - **Tela do app** no fim da aprovada: a arte das lojas, com a legenda
   escrita na imagem. pt e pt-pt usam a em português, es a em espanhol. O
   **en fica sem ela** (não há arte em inglês, e a em português seria
@@ -246,7 +250,10 @@ ser que a oferta diga outra moeda.
   o rodapé não repete a linha; no celular ela fica no rodapé.
 - O subtítulo não conta passos ("Agora falta instalar o app e criar sua
   senha."): "dois passos" logo acima do cartão "Passo 2" se contradizia.
-  A numeração fica com a trilha e os cartões.
+  A numeração fica com a trilha e os cartões. Vale para o título e o
+  subtítulo dos três status (o en aguardando dizia "One step left: your
+  payment." acima de uma trilha com dois passos por fazer; agora "Waiting
+  for payment confirmation.").
 
 **Aguardando pagamento** e **Em análise**: a mesma moldura em dourado,
 relógio, trilha no passo 2 e o que fazer enquanto isso.
