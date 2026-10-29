@@ -253,7 +253,10 @@ function comTudo(destino: string, busca: URLSearchParams): string {
  *      cookie.
  *   3. o endereço interno do resto do mundo, pedido direto: lançado, volta
  *      para "/"; standby, a página responde 404, como antes do lançamento
- *   4. só as homes decidem; página interna abre como foi pedida
+ *   4. só as homes decidem; página interna abre como foi pedida. Lançado,
+ *      só a "/" decide: a home com prefixo (/es, /es-es, /pt-pt) abre como
+ *      foi pedida, de qualquer país (decisão do dono, 29/10/2026: o
+ *      endereço de Portugal levava quem estava no Brasil para a principal)
  *   5. cookie dm_market vence o país do IP
  *   6. país do IP (x-vercel-ip-country)
  *   7. sem país (ambiente local): idioma do navegador, como antes
@@ -289,6 +292,7 @@ export function decidirRota(p: Pedido): Decisao {
   }
 
   if (!ehHome) return { tipo: "seguir", vary: false };
+  if (lancado && p.pathname !== "/") return { tipo: "seguir", vary: false };
 
   const mercado = mercadoValido(p.cookie) ?? (p.pais ? mercadoDoPais(p.pais) : null);
   if (mercado) {

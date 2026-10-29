@@ -49,10 +49,11 @@
    mesmo do preço cheio. Build de teste: DM_ENDERECO_TESTE="Rua de
    Teste, 123" npm run build (recusado em produção na Vercel).
 
-   Mercados de fora (la, rw, pt, es): links prontos, venda FECHADA
-   (vendaAberta: false) até o dono confirmar a abertura. Fechado, o
-   mercado não exige link; aberto, a trava confere o link dele. Todo
-   build lista os mercados fechados, para a decisão ficar à vista.
+   Mercados de fora (la, rw, pt, es): venda ABERTA desde 29/10/2026
+   (decisão do dono: "Pode abrir a venda de Portugal ... pode deixar
+   tudo 100% aberto a partir de agora"). Fechado, o mercado não exige
+   link; aberto, a trava confere o link dele. Todo build lista os
+   mercados fechados, para a decisão ficar à vista.
 
    Na VITRINE (site de vendas em standby: /vendas, /es/vendas,
    /es-es/vendas, /pt-pt/vendas, /mundo/vendas), todo mercado aparece com
@@ -400,9 +401,9 @@ export const MERCADOS: Record<Mercado, Oferta> = {
     imposto: "fora",
     parcela: false,
     renovaMesmoValor: true,
-    // Fechado até o dono confirmar a abertura (e os 365 textos em
-    // espanhol estarem revisados, handoff, seção 9).
-    vendaAberta: false,
+    // Aberto em 29/10/2026 ("pode deixar tudo 100% aberto"), com os 365
+    // textos em espanhol ainda sem revisão humana (handoff, seção 9).
+    vendaAberta: true,
     semVenda: "pagina",
     textos: {
       titulo: "Tu Diariamente por un año",
@@ -442,8 +443,9 @@ export const MERCADOS: Record<Mercado, Oferta> = {
     imposto: "dentro",
     parcela: false,
     renovaMesmoValor: true,
-    // Fechado até o dono confirmar a abertura.
-    vendaAberta: false,
+    // Aberto em 29/10/2026 ("pode deixar tudo 100% aberto"); checkout em
+    // euros conferido nesse dia (29,99 EUR).
+    vendaAberta: true,
     semVenda: "pagina",
     textos: {
       titulo: "Tu Diariamente por un año",
@@ -482,8 +484,9 @@ export const MERCADOS: Record<Mercado, Oferta> = {
     imposto: "dentro",
     parcela: false,
     renovaMesmoValor: true,
-    // Fechado até o dono confirmar a abertura.
-    vendaAberta: false,
+    // Aberto em 29/10/2026 ("pode deixar tudo 100% aberto"); checkout em
+    // euros conferido nesse dia (29,99 EUR).
+    vendaAberta: true,
     semVenda: "bloco",
     textos: {
       titulo: "O seu Diariamente por um ano",
@@ -524,10 +527,9 @@ export const MERCADOS: Record<Mercado, Oferta> = {
     imposto: "fora",
     parcela: false,
     renovaMesmoValor: true,
-    // Fechado até o dono confirmar a abertura: o bloco vira a lista de
-    // espera e o build lista rw entre os mercados fechados. Antes de
-    // abrir, conferir o checkout em dólar, que abre em espanhol.
-    vendaAberta: false,
+    // Aberto em 29/10/2026 ("pode deixar tudo 100% aberto"). O checkout
+    // em dólar (uevhmhy2, US$ 29,99, conferido nesse dia) abre em espanhol.
+    vendaAberta: true,
     semVenda: "bloco",
     textos: {
       titulo: "Seu Diariamente por um ano",

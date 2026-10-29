@@ -37,7 +37,13 @@ test("país do IP decide só nas homes", () => {
   assert.deepEqual(M.decidirRota(pedido({ pais: "ES" })), { tipo: "redirecionar", destino: "/es-es", vary: true });
   assert.deepEqual(M.decidirRota(pedido({ pais: "MX" })), { tipo: "redirecionar", destino: "/es", vary: true });
   assert.deepEqual(M.decidirRota(pedido({ pais: "BR" })), { tipo: "seguir", vary: true });
-  assert.deepEqual(M.decidirRota(pedido({ pathname: "/es", pais: "BR" })), { tipo: "redirecionar", destino: "/", vary: true });
+  // lançado, só a "/" decide: a home com prefixo abre como foi pedida, de
+  // qualquer país (decisão do dono, 29/10/2026)
+  assert.deepEqual(M.decidirRota(pedido({ pathname: "/es", pais: "BR" })), { tipo: "seguir", vary: false });
+  assert.deepEqual(M.decidirRota(pedido({ pathname: "/pt-pt", pais: "BR" })), { tipo: "seguir", vary: false });
+  assert.deepEqual(M.decidirRota(pedido({ pathname: "/es-es", pais: "MX" })), { tipo: "seguir", vary: false });
+  // em standby, a home com prefixo continua indo para a do país
+  assert.deepEqual(M.decidirRota(pedido({ pathname: "/es", pais: "BR", lancado: false })), { tipo: "redirecionar", destino: "/", vary: true });
   // página interna abre como foi pedida
   assert.deepEqual(M.decidirRota(pedido({ pathname: "/termos", pais: "PT" })), { tipo: "seguir", vary: false });
   assert.deepEqual(M.decidirRota(pedido({ pathname: "/estudante", pais: "MX" })), { tipo: "seguir", vary: false });
@@ -45,7 +51,8 @@ test("país do IP decide só nas homes", () => {
 
 test("resto do mundo fica em / (reescrita para a rota interna, sem trocar a URL)", () => {
   assert.deepEqual(M.decidirRota(pedido({ pais: "US" })), { tipo: "reescrever", destino: "/mundo", vary: true });
-  assert.deepEqual(M.decidirRota(pedido({ pathname: "/pt-pt", pais: "DE" })), { tipo: "redirecionar", destino: "/", vary: true });
+  // o endereço de Portugal pedido de fora abre como foi pedido (29/10/2026)
+  assert.deepEqual(M.decidirRota(pedido({ pathname: "/pt-pt", pais: "DE" })), { tipo: "seguir", vary: false });
   // a rota interna pedida direto volta para "/"
   assert.equal(M.decidirRota(pedido({ pathname: "/mundo", pais: "US" })).destino, "/");
 });
@@ -86,7 +93,7 @@ test("navegador interno de LinkedIn, Pinterest, Telegram, DuckDuckGo e Baidu é 
   ]) {
     assert.equal(M.ehRobo(ua), false, ua);
     assert.deepEqual(M.decidirRota(pedido({ userAgent: ua, pais: "PT" })), { tipo: "redirecionar", destino: "/pt-pt", vary: true }, ua);
-    assert.equal(M.decidirRota(pedido({ pathname: "/es", userAgent: ua, pais: "ES" })).destino, "/es-es", ua);
+    assert.equal(M.decidirRota(pedido({ userAgent: ua, pais: "ES" })).destino, "/es-es", ua);
     assert.equal(M.decidirRota(pedido({ userAgent: ua, pais: "US" })).tipo, "reescrever", ua);
     // o seletor do rodapé funciona para quem chega por esses apps
     assert.deepEqual(M.decidirRota(pedido({ userAgent: ua, busca: "?mercado=pt", pais: "BR" })), { tipo: "redirecionar", destino: "/pt-pt", cookie: "pt", vary: true }, ua);
@@ -117,7 +124,7 @@ test("?lang= fora das homes não é seletor: as páginas de obrigado usam ?lang=
 
 test("cookie dm_market vence o país do IP", () => {
   assert.deepEqual(M.decidirRota(pedido({ cookie: "br", pais: "PT" })), { tipo: "seguir", vary: true });
-  assert.deepEqual(M.decidirRota(pedido({ pathname: "/pt-pt", cookie: "pt", pais: "BR" })), { tipo: "seguir", vary: true });
+  assert.deepEqual(M.decidirRota(pedido({ pathname: "/pt-pt", cookie: "pt", pais: "BR" })), { tipo: "seguir", vary: false });
   assert.equal(M.decidirRota(pedido({ cookie: "es", pais: "BR" })).destino, "/es-es");
   assert.equal(M.decidirRota(pedido({ cookie: "rw", pais: "BR" })).tipo, "reescrever");
   // cookie inválido é ignorado e o país decide
@@ -243,11 +250,11 @@ test("lançamento valendo: R$ 99,98, R$ 8,33/mês, oferta própria sem cupom; en
   }
 });
 
-test("mercados fora do Brasil: sem lançamento e todos fechados até o dono confirmar", () => {
+test("mercados fora do Brasil: sem lançamento e todos abertos desde 29/10/2026 (decisão do dono)", () => {
   for (const m of ["la", "es", "pt", "rw"]) {
     assert.equal(P.MERCADOS[m].lancamento, null, m);
-    assert.equal(P.MERCADOS[m].vendaAberta, false, m);
-    assert.equal(P.vendeAgora(m), false, m);
+    assert.equal(P.MERCADOS[m].vendaAberta, true, m);
+    assert.equal(P.vendeAgora(m), true, m);
   }
   assert.equal(P.MERCADOS.br.vendaAberta, true);
   assert.equal(P.vendeAgora("br"), true);

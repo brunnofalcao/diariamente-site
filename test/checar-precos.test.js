@@ -62,14 +62,14 @@ test("config do dono (12/10/2026): links, lançamento e mercados de fora", () =>
   // lançamento não é cupom: nenhum link de venda leva offDiscount
   for (const o of Object.values(MERCADOS)) assert.equal(/offDiscount/.test(o.checkout), false);
   assert.equal(/offDiscount/.test(l.checkout), false);
-  // mercados de fora com link pronto e venda fechada
+  // mercados de fora com link pronto e venda aberta (29/10/2026: "pode deixar tudo 100% aberto")
   assert.equal(MERCADOS.la.checkout, "https://pay.hotmart.com/K105072021O?off=uevhmhy2");
   assert.equal(MERCADOS.rw.checkout, "https://pay.hotmart.com/K105072021O?off=uevhmhy2");
   assert.equal(MERCADOS.pt.checkout, "https://pay.hotmart.com/K105072021O?off=3n484jbe");
   assert.equal(MERCADOS.es.checkout, "https://pay.hotmart.com/K105072021O?off=iuoufnf6");
   assert.equal(MERCADOS.la.anual, 29.99);
   assert.equal(MERCADOS.rw.anual, 29.99);
-  for (const m of ["la", "rw", "pt", "es"]) assert.equal(MERCADOS[m].vendaAberta, false, m);
+  for (const m of ["la", "rw", "pt", "es"]) assert.equal(MERCADOS[m].vendaAberta, true, m);
 });
 
 test("nenhum link do config aponta para o checkout antigo nem para a oferta de estudante", () => {
@@ -82,9 +82,10 @@ test("hoje o build de produção da trava de preços passa (só avisos)", () => 
   const r = checarPrecosDoProjeto({});
   assert.equal(r.ok, true, r.mensagem);
   assert.equal(r.teste, false);
-  // rw fechado não exige link nem trava
+  // rw aberto: o link dele passa pela trava, sem problema
   assert.equal(/Mercado rw/.test(r.problemas.join(" ")), false);
-  assert.match(r.avisos.join(" "), /lista de espera \(vendaAberta: false\): la, es, pt, rw/);
+  // todo mercado vende desde 29/10/2026: nenhum em lista de espera
+  assert.equal(/lista de espera \(vendaAberta: false\)/.test(r.avisos.join(" ")), false);
 });
 
 test("com tudo preenchido e o estudante pronto, libera com o estudante ABERTO e sem pendência de estudante", () => {
@@ -225,7 +226,7 @@ test("mercado br sem lançamento não trava", () => {
 });
 
 test("todo build lista os mercados em lista de espera", () => {
-  const r = checar(mercados());
+  const r = checar(mercados({ la: { vendaAberta: false }, es: { vendaAberta: false }, pt: { vendaAberta: false }, rw: { vendaAberta: false } }));
   assert.match(r.avisos.join(" "), /lista de espera \(vendaAberta: false\): la, es, pt, rw/);
   const todos = mercados({ la: { vendaAberta: true }, es: { vendaAberta: true }, pt: { vendaAberta: true }, rw: { vendaAberta: true } });
   assert.equal(/lista de espera/.test(checar(todos).avisos.join(" ")), false);
@@ -266,7 +267,7 @@ test("link de TODO mercado passa pela conferência: aberto trava; fechado avisa 
 });
 
 test("avisos aparecem também na mensagem do build bloqueado", () => {
-  const m = mercados();
+  const m = mercados({ pt: { vendaAberta: false } });
   m.br.checkout = "[PREENCHER: link]";
   const r = checar(m);
   assert.equal(r.ok, false);
@@ -493,7 +494,7 @@ test("produção na Vercel com venda aberta TRAVA sem DM_WEBHOOK_V2_OK=1 (ordem 
   assert.equal(r.ok, false);
   assert.match(r.mensagem, /DM_WEBHOOK_V2_OK=1/);
   assert.match(r.mensagem, /HOTMART_WEBHOOK_V2 na posição 1/);
-  assert.match(r.mensagem, /venda aberta \(br\)/);
+  assert.match(r.mensagem, /venda aberta \(br, la, es, pt, rw\)/);
   // o problema não está no config: a mensagem não manda abrir o pricing.ts
   assert.equal(/LINKS DA HOTMART/.test(r.mensagem), false);
   assert.match(r.mensagem, /ordem do lançamento/);
@@ -522,7 +523,7 @@ test("preview da Vercel e build local não travam pelo webhook, só avisam", () 
 });
 
 test("produção sem nenhum mercado vendendo não exige a confirmação do webhook", () => {
-  const m = mercados({ br: { vendaAberta: false } });
+  const m = mercados(Object.fromEntries(["br", "la", "es", "pt", "rw"].map((x) => [x, { vendaAberta: false }])));
   const r = checar(m, { env: { ...ENV_ESTUDANTE, VERCEL: "1", VERCEL_ENV: "production" } });
   assert.equal(r.ok, true, r.mensagem);
   assert.equal(/DM_WEBHOOK_V2_OK/.test(r.avisos.join(" ")), false);

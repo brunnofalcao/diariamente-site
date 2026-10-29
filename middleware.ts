@@ -39,7 +39,8 @@ import { mercadosDasOfertasDoEstudante } from "@/config/pricing";
 
    LANÇADO (DM_SITE_LANCADO=1 no build):
 
-     - só as homes (/, /es, /pt-pt, /es-es) decidem mercado
+     - só a "/" decide mercado; as homes com prefixo (/es, /pt-pt,
+       /es-es) abrem como foram pedidas, de qualquer país (29/10/2026)
      - robô e prévia de link nunca são redirecionados
      - ?mercado=xx (seletor do rodapé) grava o cookie dm_market, 180 dias,
        e vence o país
