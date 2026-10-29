@@ -252,8 +252,8 @@ ser que a oferta diga outra moeda.
   senha."): "dois passos" logo acima do cartão "Passo 2" se contradizia.
   A numeração fica com a trilha e os cartões. Vale para o título e o
   subtítulo dos três status (o en aguardando dizia "One step left: your
-  payment." acima de uma trilha com dois passos por fazer; agora "Waiting
-  for payment confirmation.").
+  payment." acima de uma trilha com dois passos por fazer; agora "Payment
+  pending.", em duas linhas como os outros títulos).
 
 **Aguardando pagamento** e **Em análise**: a mesma moldura em dourado,
 relógio, trilha no passo 2 e o que fazer enquanto isso.
