@@ -6,7 +6,7 @@ import { TelaDaLoja } from "@/components/TelaDaLoja";
 import { Final, InstalarApp, Inteiro, Moldura, Rico, textosDo } from "@/components/PosPagamento";
 import { ATIVOS, dicionario } from "@/lib/i18n";
 import { aparelhoDoUserAgent, caminhoDoBaixar } from "@/lib/obrigado.mjs";
-import { OG_LOCALE, type Local } from "@/lib/pos-pagamento";
+import { OG_LOCALE, type LocalDoBaixar } from "@/lib/pos-pagamento";
 
 /* =====================================================================
    /baixar e /es/descargar · o app no celular, no idioma do endereço
@@ -24,10 +24,12 @@ import { OG_LOCALE, type Local } from "@/lib/pos-pagamento";
    aqui assim mesmo, vê o botão da loja dele (InstalarApp).
 
    noindex (meta e X-Robots-Tag), fora do sitemap, canonical para si. O
-   caminho decide o idioma; /baixar?lang=es leva a /es/descargar.
+   caminho decide o idioma; /baixar?lang=es leva a /es/descargar. Só pt e
+   es: as páginas de obrigado de pt-pt e en usam o /baixar (o QR code do
+   computador abre ele, e o celular vai direto para a loja).
    ===================================================================== */
 
-export function metadataDoBaixar(local: Local): Metadata {
+export function metadataDoBaixar(local: LocalDoBaixar): Metadata {
   const t = textosDo(local).baixar;
   const proprio = SITE.dominio + caminhoDoBaixar(local);
   return {
@@ -39,7 +41,7 @@ export function metadataDoBaixar(local: Local): Metadata {
   };
 }
 
-export async function BaixarApp({ local }: { local: Local }) {
+export async function BaixarApp({ local }: { local: LocalDoBaixar }) {
   const t = textosDo(local).baixar;
   const aparelho = aparelhoDoUserAgent((await headers()).get("user-agent"));
   const alt = dicionario(local).t1alt;

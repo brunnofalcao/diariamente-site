@@ -26,20 +26,27 @@
    (test/standby.test.js confere que as duas listas batem). */
 const VITRINE = ["/vendas", "/es/vendas", "/es-es/vendas", "/pt-pt/vendas", "/mundo/vendas"];
 
-/* Pós-pagamento: as 8 rotas de obrigado e do /baixar, em pt e em es
-   (lib/obrigado.mjs, ROTAS_DO_POS_PAGAMENTO; testes/obrigado.test.mjs
-   confere que as duas listas batem). Página de quem acabou de pagar não
-   vai para o índice: além do <meta robots> (components/PaginaObrigado.tsx
-   e BaixarApp.tsx), o cabeçalho. */
+/* Pós-pagamento: as 14 rotas de obrigado e do /baixar, nos quatro locais
+   (pt, pt-pt, es e en; só pt e es têm /baixar) (lib/obrigado.mjs,
+   ROTAS_DO_POS_PAGAMENTO; testes/obrigado.test.mjs confere que as duas
+   listas batem). Página de quem acabou de pagar não vai para o índice:
+   além do <meta robots> (components/PaginaObrigado.tsx e BaixarApp.tsx),
+   o cabeçalho. */
 const POS_PAGAMENTO = [
   "/obrigado-aprovado",
   "/obrigado-aguardando-pagamento",
   "/obrigado-aguardando-analise",
   "/baixar",
+  "/pt-pt/obrigado-aprovado",
+  "/pt-pt/obrigado-aguardando-pagamento",
+  "/pt-pt/obrigado-aguardando-analise",
   "/es/gracias-aprobado",
   "/es/gracias-pago-pendiente",
   "/es/gracias-en-analisis",
   "/es/descargar",
+  "/en/thank-you-approved",
+  "/en/thank-you-pending-payment",
+  "/en/thank-you-under-review",
 ];
 
 const CABECALHOS_DE_PROTECAO = [
@@ -81,7 +88,7 @@ const nextConfig = {
         { source: base, headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
         { source: `${base}/:path*`, headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
       ]),
-      // Pós-pagamento: noindex também no cabeçalho, nas 8 rotas exatas.
+      // Pós-pagamento: noindex também no cabeçalho, nas 14 rotas exatas.
       ...POS_PAGAMENTO.map((source) => ({ source, headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] })),
     ];
   },

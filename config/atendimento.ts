@@ -5,9 +5,10 @@ import { EMPRESA } from "@/config";
 // ---------------------------------------------------------------------
 // O endereço que as três páginas de obrigado (/obrigado-aprovado,
 // /obrigado-aguardando-pagamento e /obrigado-aguardando-analise, e as
-// mesmas em espanhol: /es/gracias-aprobado, /es/gracias-pago-pendiente e
-// /es/gracias-en-analisis) mostram para quem tem dificuldade de acesso ou
-// dúvida sobre o pagamento.
+// mesmas em pt-PT, /pt-pt/obrigado-*, em espanhol, /es/gracias-*, e em
+// inglês, /en/thank-you-*) mostram para quem tem dificuldade de acesso ou
+// dúvida sobre o pagamento. O assunto é o mesmo em todos os locais (em
+// português), para a triagem da caixa.
 //
 // DECIDIDO PELO DONO em 20/10/2026 (plano 2.6 do app): contato@scienceplay.com,
 // o mesmo que o app já mostra (RESPOSTA_ENVIO_INDISPONIVEL e i18n), com o

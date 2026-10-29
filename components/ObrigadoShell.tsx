@@ -19,7 +19,8 @@ import type { Aparelho, Estado, Forma, Local } from "@/lib/pos-pagamento";
 import type { Mercado } from "@/config/pricing";
 
 /* =====================================================================
-   ObrigadoShell · as três páginas de obrigado, em pt e em es
+   ObrigadoShell · as três páginas de obrigado, nos quatro locais
+   (pt, pt-pt, es e en)
    ---------------------------------------------------------------------
    APROVADO: o app é o motivo principal, então a página leva direto a ele.
      No celular, em uma coluna, nesta ordem: selo e título curtos, o
@@ -32,6 +33,12 @@ import type { Mercado } from "@/config/pricing";
      título e a trilha; à direita o cartão de instalar com o QR code, na
      primeira dobra (1280 x 800). Embaixo, a senha, o WhatsApp e o "Não
      recebeu?" à esquerda e a tela do app à direita.
+     A tela do app é a arte das lojas, com a legenda escrita na imagem:
+     pt e pt-pt usam a em português (o app de Portugal é o mesmo, em
+     pt-BR), es a em espanhol. O en fica SEM a tela: não há arte em
+     inglês, e a em português seria texto em português na página em
+     inglês. Sem ela, no computador, o WhatsApp sobe para a direita, ao
+     lado da senha (.pp-aprovado.is-sem-tela).
    AGUARDANDO PAGAMENTO e EM ANÁLISE: mesma moldura, em dourado, com o
      relógio, a trilha no passo 2 e o que fazer enquanto isso. Pix e
      boleto só para o mercado br (lib/obrigado.mjs,
@@ -100,23 +107,35 @@ function Chevron() {
   );
 }
 
+/**
+ * A tela do app (arte das lojas) que a aprovada mostra no fim: a do
+ * idioma em que o app abre para quem lê a página. null no en (sem arte em
+ * inglês; ver o cabeçalho).
+ */
+export function telaDoApp(local: Local): { base: string; alt: string } | null {
+  if (local === "en") return null;
+  if (local === "es") return { base: ATIVOS.es.img.leitura, alt: dicionario("es").finAlt };
+  return { base: ATIVOS.pt.img.leitura, alt: dicionario("pt", local === "pt-pt" ? "pt" : undefined).finAlt };
+}
+
 /* ------------------------------------------------------------------ */
 /* 1 · PAGAMENTO APROVADO                                              */
 /* ------------------------------------------------------------------ */
 function Aprovado({ local, aparelho }: { local: Local; aparelho: Aparelho }) {
   const t = textosDo(local).aprovado;
+  const tela = telaDoApp(local);
   return (
     <Moldura local={local} larga>
       {/* A ordem do HTML é a do celular (e a do leitor de tela); no
           computador, a grade de pos-pagamento.css põe cada bloco na sua
           área (.pp-aprovado). */}
-      <div className="pp-aprovado">
+      <div className={`pp-aprovado${tela ? "" : " is-sem-tela"}`}>
         <Hero classe="pp-area-hero" selo={<SeloAprovado />} sobre={t.selo} titulo={t.titulo} sub={t.sub} />
 
         {/* Passo 2: instalar o app, pelo aparelho */}
         <section className="pp-cartao is-destaque pp-surge pp-area-instalar" style={atraso(4)} id="passo-2" aria-labelledby="passo-2-titulo">
           <span className="pp-etiqueta">{t.app.selo}</span>
-          <h2 id="passo-2-titulo" className="pp-cartao-titulo">{t.app.titulo}</h2>
+          <h2 id="passo-2-titulo" className="pp-cartao-titulo"><Inteiro texto={t.app.titulo} /></h2>
           <InstalarApp local={local} aparelho={aparelho} versaoWeb={{ antes: t.webAquiAntes, link: t.webLink }} />
           <a className="pp-ja" href="#passo-3">
             <span>{t.app.jaInstalado}</span>
@@ -129,7 +148,7 @@ function Aprovado({ local, aparelho }: { local: Local; aparelho: Aparelho }) {
         {/* Passo 3: criar a senha no app */}
         <section className="pp-cartao pp-surge pp-area-senha" style={atraso(6)} id="passo-3" aria-labelledby="passo-3-titulo">
           <span className="pp-etiqueta is-neutra">{t.senha.selo}</span>
-          <h2 id="passo-3-titulo" className="pp-cartao-titulo">{t.senha.titulo}</h2>
+          <h2 id="passo-3-titulo" className="pp-cartao-titulo"><Inteiro texto={t.senha.titulo} /></h2>
           <ol className="pp-passos" role="list">
             {t.senha.passos.map((partes, i) => (
               <li key={i} className="pp-passo">
@@ -148,7 +167,7 @@ function Aprovado({ local, aparelho }: { local: Local; aparelho: Aparelho }) {
               <span className="pp-whats-icone"><IconeWhatsApp /></span>
               <span className="pp-etiqueta is-verde">{t.whatsapp.selo}</span>
             </div>
-            <h2 id="pp-whats-titulo" className="pp-cartao-titulo">{t.whatsapp.titulo}</h2>
+            <h2 id="pp-whats-titulo" className="pp-cartao-titulo"><Inteiro texto={t.whatsapp.titulo} /></h2>
             <p className="pp-texto"><Inteiro texto={t.whatsapp.texto} /></p>
           </section>
 
@@ -170,10 +189,12 @@ function Aprovado({ local, aparelho }: { local: Local; aparelho: Aparelho }) {
 
         {/* O que te espera: a tela real do app (arte das lojas). Sem
             legenda: a arte já traz o próprio título, e dois títulos
-            seguidos diziam a mesma coisa. */}
-        <figure className="pp-espera pp-surge pp-area-espera" style={atraso(9)}>
-          <TelaDaLoja base={ATIVOS[local].img.leitura} alt={dicionario(local).finAlt} sizes="(min-width: 960px) 300px, 220px" />
-        </figure>
+            seguidos diziam a mesma coisa. No en, nada (telaDoApp). */}
+        {tela && (
+          <figure className="pp-espera pp-surge pp-area-espera" style={atraso(9)}>
+            <TelaDaLoja base={tela.base} alt={tela.alt} sizes="(min-width: 960px) 300px, 220px" />
+          </figure>
+        )}
       </div>
 
       <Final
@@ -218,7 +239,7 @@ function AguardandoPagamento({
       <div className="pp-pilha">
         <section className="pp-cartao is-ouro pp-surge" style={atraso(5)} aria-labelledby="pp-concluir-titulo">
           <span className="pp-etiqueta is-ouro">{t.concluir.selo}</span>
-          <h2 id="pp-concluir-titulo" className="pp-cartao-titulo">{t.concluir.titulo}</h2>
+          <h2 id="pp-concluir-titulo" className="pp-cartao-titulo"><Inteiro texto={t.concluir.titulo} /></h2>
           {mostrar.length > 0 && (
             <div className="pp-formas">
               {mostrar.map((f) => (
@@ -237,13 +258,13 @@ function AguardandoPagamento({
 
         <section className="pp-cartao pp-surge" style={atraso(6)} aria-labelledby="pp-acesso-titulo">
           <span className="pp-etiqueta is-neutra">{t.acesso.selo}</span>
-          <h2 id="pp-acesso-titulo" className="pp-cartao-titulo">{t.acesso.titulo}</h2>
+          <h2 id="pp-acesso-titulo" className="pp-cartao-titulo"><Inteiro texto={t.acesso.titulo} /></h2>
           <p className="pp-texto"><Rico partes={t.acesso.texto} /></p>
         </section>
 
         <section className="pp-cartao pp-surge" style={atraso(7)} aria-labelledby="pp-app-titulo">
           <span className="pp-etiqueta">{t.app.selo}</span>
-          <h2 id="pp-app-titulo" className="pp-cartao-titulo">{t.app.titulo}</h2>
+          <h2 id="pp-app-titulo" className="pp-cartao-titulo"><Inteiro texto={t.app.titulo} /></h2>
           <p className="pp-texto"><Rico partes={t.app.texto} /></p>
           <InstalarApp local={local} aparelho={aparelho} />
         </section>
@@ -274,13 +295,13 @@ function AguardandoAnalise({ local, aparelho }: { local: Local; aparelho: Aparel
       <div className="pp-pilha">
         <section className="pp-cartao is-ouro pp-surge" style={atraso(5)} aria-labelledby="pp-calma-titulo">
           <span className="pp-etiqueta is-ouro">{t.calma.selo}</span>
-          <h2 id="pp-calma-titulo" className="pp-cartao-titulo">{t.calma.titulo}</h2>
+          <h2 id="pp-calma-titulo" className="pp-cartao-titulo"><Inteiro texto={t.calma.titulo} /></h2>
           <p className="pp-texto"><Rico partes={t.calma.texto} /></p>
         </section>
 
         <section className="pp-cartao pp-surge" style={atraso(6)} aria-labelledby="pp-app-titulo">
           <span className="pp-etiqueta">{t.app.selo}</span>
-          <h2 id="pp-app-titulo" className="pp-cartao-titulo">{t.app.titulo}</h2>
+          <h2 id="pp-app-titulo" className="pp-cartao-titulo"><Inteiro texto={t.app.titulo} /></h2>
           <p className="pp-texto"><Rico partes={t.app.texto} /></p>
           <InstalarApp local={local} aparelho={aparelho} />
         </section>

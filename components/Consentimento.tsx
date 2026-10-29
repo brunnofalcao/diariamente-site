@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Tracking } from "@/components/Tracking";
 import { caminho } from "@/lib/rotas";
 import { ehVitrine } from "@/lib/mercado";
-import { ehPosPagamento } from "@/lib/obrigado.mjs";
+import { LANG_HTML, ehPosPagamento, localDoPosPagamento } from "@/lib/obrigado.mjs";
 import { SITE_LANCADO } from "@/config/lancamento";
 import { apagarCookiesDeMedicao, gravarEscolha, lerEscolha, type Escolha } from "@/lib/cookies";
 import type { Lang } from "@/lib/i18n";
@@ -48,13 +48,20 @@ import type { Lang } from "@/lib/i18n";
    aviso em todas as páginas. Decisão de Meta e Analytics fica para
    depois do lançamento (dono, 27/10/2026).
 
-   PÓS-PAGAMENTO EM STANDBY (as 8 rotas de obrigado e do /baixar e o
+   PÓS-PAGAMENTO EM STANDBY (as 14 rotas de obrigado e do /baixar e o
    /obrigado antigo; lib/obrigado.mjs, ehPosPagamento): quem paga vem da
    vitrine, onde pode ter clicado em Recusar. Por isso, aqui, nada de
    medição no HTML do servidor: a página lê a escolha gravada (dm_cookies)
    primeiro. Recusou: nem GA4, nem Pixel, nem Purchase. Aceitou ou não
    escolheu: monta como a produção de hoje, sem aviso, e o Purchase sai.
    Pedido do dono, 28/10/2026.
+
+   IDIOMA DO AVISO: o da rota (pt ou es, idiomaDaRota). Nas páginas de
+   obrigado, o do local da página (lib/obrigado.mjs, localDoPosPagamento),
+   que inclui o pt-PT (/pt-pt/obrigado-*, sem o "você" do pt-BR) e o
+   inglês (/en/thank-you-*). A Política de Privacidade só existe em
+   português e em espanhol: o pt-PT leva à em português, e o inglês
+   também, dizendo no rótulo do link que ela está em português.
 
    Acessibilidade de um aviso fixo no rodapé da tela:
    - Ele vem ANTES da página no documento (mesmo aparecendo embaixo): quem
@@ -127,7 +134,10 @@ export function Consentimento({ children }: { children: React.ReactNode }) {
   );
 }
 
-const TEXTO: Record<Lang, { titulo: string; texto: string; politica: string; curto: string; politicaCurta: string; recusar: string; aceitar: string }> = {
+/** Idiomas do aviso: os das rotas (pt e es) e, nas páginas de obrigado, também pt-pt e en. */
+type IdiomaDoAviso = Lang | "pt-pt" | "en";
+
+const TEXTO: Record<IdiomaDoAviso, { titulo: string; texto: string; politica: string; curto: string; politicaCurta: string; recusar: string; aceitar: string }> = {
   pt: {
     titulo: "Cookies",
     texto:
@@ -148,6 +158,29 @@ const TEXTO: Record<Lang, { titulo: string; texto: string; politica: string; cur
     politicaCurta: "Más información",
     recusar: "Rechazar",
     aceitar: "Aceptar",
+  },
+  // Português de Portugal: sem o "você" (só nas páginas de obrigado de pt-pt).
+  "pt-pt": {
+    titulo: "Cookies",
+    texto:
+      "Usamos cookies de medição e publicidade (Google Analytics e Pixel da Meta) para perceber as visitas ao site e medir os anúncios. Só são ativados se aceitar.",
+    politica: "Saiba mais na Política de Privacidade",
+    curto: "Usamos cookies de medição do Google e da Meta só se aceitar.",
+    politicaCurta: "Saiba mais",
+    recusar: "Recusar",
+    aceitar: "Aceitar",
+  },
+  // Inglês (só nas páginas de obrigado de en). A Política existe em
+  // português e em espanhol: o link leva à em português e diz isso.
+  en: {
+    titulo: "Cookies",
+    texto:
+      "We use measurement and advertising cookies (Google Analytics and Meta Pixel) to understand site visits and measure our ads. They only turn on if you accept.",
+    politica: "Learn more in our Privacy Policy (in Portuguese)",
+    curto: "We use Google and Meta measurement cookies only if you accept.",
+    politicaCurta: "Learn more (in Portuguese)",
+    recusar: "Decline",
+    aceitar: "Accept",
   },
 };
 
@@ -180,9 +213,19 @@ function idiomaDaRota(pathname: string | null): Lang {
   return es("/es") || es("/es-es") ? "es" : "pt";
 }
 
+/** O idioma do aviso: o da página de obrigado, se for uma; senão, o da rota. */
+function idiomaDoAviso(pathname: string | null): IdiomaDoAviso {
+  return localDoPosPagamento(pathname ?? "/") ?? idiomaDaRota(pathname);
+}
+
 function AvisoCookies({ onEscolha }: { onEscolha: (e: Escolha) => void }) {
-  const lang = idiomaDaRota(usePathname());
-  const t = TEXTO[lang];
+  const idioma = idiomaDoAviso(usePathname());
+  const t = TEXTO[idioma];
+  // A Política só existe em pt e es: pt-pt e en levam à em português.
+  const lang: Lang = idioma === "es" ? "es" : "pt";
+  const politica = caminho("privacidade", lang);
+  // O link do inglês abre uma página em português: hreflang avisa o leitor de tela.
+  const hrefLang = idioma === "en" ? "pt-BR" : undefined;
   const caixa = useRef<HTMLDivElement>(null);
 
   // Altura real do aviso em --dm-ck-h (o texto quebra em mais ou menos
@@ -210,17 +253,17 @@ function AvisoCookies({ onEscolha }: { onEscolha: (e: Escolha) => void }) {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
-      <div ref={caixa} className="dm-ck" role="region" aria-labelledby="dm-ck-titulo" lang={lang === "es" ? "es" : "pt-BR"}>
+      <div ref={caixa} className="dm-ck" role="region" aria-labelledby="dm-ck-titulo" lang={LANG_HTML[idioma]}>
         <div className="dm-ck-corpo">
           <p id="dm-ck-titulo" className="dm-ck-t">{t.titulo}</p>
           {/* Um texto por tamanho de tela (o CSS esconde o outro, e o
               escondido sai também do leitor de tela). */}
           <p className="dm-ck-x">
             <span className="dm-ck-longo">
-              {t.texto} <a href={caminho("privacidade", lang)}>{t.politica}</a>.
+              {t.texto} <a href={politica} hrefLang={hrefLang}>{t.politica}</a>.
             </span>
             <span className="dm-ck-curto">
-              {t.curto} <a href={caminho("privacidade", lang)}>{t.politicaCurta}</a>.
+              {t.curto} <a href={politica} hrefLang={hrefLang}>{t.politicaCurta}</a>.
             </span>
           </p>
         </div>

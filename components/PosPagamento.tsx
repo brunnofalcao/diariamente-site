@@ -2,9 +2,10 @@ import { Fragment, type CSSProperties, type ReactNode } from "react";
 import { SITE, EMPRESA } from "@/config";
 import { ATENDIMENTO, linkDoAtendimento } from "@/config/atendimento";
 import { OfficialLogo } from "@/components/Brand";
+import { IdiomaDoDocumento } from "@/components/IdiomaDoDocumento";
 import { AppleGlyph, PlayGlyph, StoreBadges } from "@/components/StoreBadges";
 import { LOJAS_DO_LOCAL } from "@/lib/i18n";
-import { BOTAO_DO_APP, LANG_HTML, caminhoDoBaixar } from "@/lib/obrigado.mjs";
+import { BAIXAR_DO_LOCAL, BOTAO_DO_APP, LANG_HTML, caminhoDoBaixar } from "@/lib/obrigado.mjs";
 import { TEXTOS } from "@/lib/obrigado-textos.mjs";
 import type { Aparelho, Local, Rico as TextoRico, TextosDoLocal } from "@/lib/pos-pagamento";
 import "./pos-pagamento.css";
@@ -12,11 +13,11 @@ import "./pos-pagamento.css";
 /* =====================================================================
    PÓS-PAGAMENTO · peças comuns
    ---------------------------------------------------------------------
-   Usadas pelas três páginas de obrigado (components/ObrigadoShell.tsx) e
-   pelo /baixar e /es/descargar (components/BaixarApp.tsx). Nenhum texto
-   do cliente mora aqui: tudo vem de lib/obrigado-textos.mjs, onde o teste
-   confere as regras da marca nos dois idiomas (pt e es). Estilo em
-   pos-pagamento.css.
+   Usadas pelas três páginas de obrigado (components/ObrigadoShell.tsx),
+   nos quatro locais (pt, pt-pt, es e en), e pelo /baixar e /es/descargar
+   (components/BaixarApp.tsx). Nenhum texto do cliente mora aqui: tudo vem
+   de lib/obrigado-textos.mjs, onde o teste confere as regras da marca nos
+   quatro. Estilo em pos-pagamento.css.
    ===================================================================== */
 
 /** Os textos de um local, com a forma conferida pelo TypeScript. */
@@ -41,6 +42,9 @@ export function Moldura({
 }) {
   return (
     <main className={`pp${espera ? " is-espera" : ""}`} lang={LANG_HTML[local]}>
+      {/* O <html lang> do layout raiz é sempre pt-BR: na hidratação ele
+          passa a ser o do local (pt-PT, es, en). */}
+      <IdiomaDoDocumento lang={LANG_HTML[local]} />
       <div className="pp-brilho" aria-hidden="true" />
       <header className="pp-topo">
         <OfficialLogo height={30} />
@@ -107,7 +111,12 @@ export function SeloEspera() {
 
 /* ------------------------------- texto ------------------------------- */
 
-/** Palavra com hífen (e-mail, Boas-vindas) não quebra no hífen. */
+/**
+ * Palavra com hífen (e-mail, Boas-vindas, palavra-passe) não quebra no
+ * hífen. Vale também nos títulos dos cartões e nos marcos da trilha: no
+ * pt-PT, "Crie a sua palavra-passe na app" quebrava em "palavra-" e
+ * "passe" no celular.
+ */
 export function Inteiro({ texto }: { texto: string }) {
   return (
     <>
@@ -128,15 +137,18 @@ const ROTULOS_DO_APP = new Set<string>(Object.values(BOTAO_DO_APP));
  * O "chip": o rótulo EXATO do botão da tela de login do app, desenhado
  * IGUAL ao de lá (public/index.html do app: texto teal, 14 px, peso 600,
  * sem borda nem fundo, logo abaixo do botão Entrar). Não é botão aqui:
- * mostra o que procurar no app, com a mesma cara.
+ * mostra o que procurar no app, com a mesma cara. Leva o lang do rótulo
+ * (o app só tem pt-BR e es): na página en, o leitor de tela lê o rótulo
+ * em português com a voz do português, como no app (WCAG 3.1.2).
  */
 export function ChipDoApp({ rotulo }: { rotulo: string }) {
-  return <span className="pp-chip">{rotulo}</span>;
+  return <span className="pp-chip" lang={rotulo === BOTAO_DO_APP.es ? "es" : "pt-BR"}>{rotulo}</span>;
 }
 
 /**
  * Texto rico da copy: negrito ({ b }), o chip quando o negrito é o
- * rótulo do botão do app, e o e-mail do atendimento ({ atendimento }).
+ * rótulo do botão do app, rótulo do app em português no meio de outro
+ * idioma ({ pt }, com lang="pt-BR") e o e-mail do atendimento ({ atendimento }).
  */
 export function Rico({ partes, assunto = ATENDIMENTO.assuntoSuporte }: { partes: TextoRico; assunto?: string }) {
   // A pontuação logo depois do chip ("... Ativar conta.") vai junto com ele,
@@ -166,6 +178,7 @@ export function Rico({ partes, assunto = ATENDIMENTO.assuntoSuporte }: { partes:
           }
           return <strong key={i} className="pp-forte"><Inteiro texto={p.b} /></strong>;
         }
+        if ("pt" in p) return <span key={i} lang="pt-BR"><Inteiro texto={p.pt} /></span>;
         return (
           <a key={i} href={linkDoAtendimento(assunto)}>
             {ATENDIMENTO.email}
@@ -250,7 +263,7 @@ export function Trilha({
                   n
                 )}
               </span>
-              <span className="pp-marco-nome">{nome}</span>
+              <span className="pp-marco-nome"><Inteiro texto={nome} /></span>
               <span className="pp-marco-status">{t[estado]}</span>
             </li>
           );
@@ -272,19 +285,21 @@ function Seta() {
 }
 
 /**
- * Caminho do QR code do /baixar do idioma (public/qr, gerado uma vez):
+ * Caminho do QR code do /baixar do local (public/qr, gerado uma vez):
  * baixar.svg abre https://www.diariamente.app/baixar e descargar.svg abre
- * https://www.diariamente.app/es/descargar.
+ * https://www.diariamente.app/es/descargar. pt-pt e en reaproveitam o do
+ * /baixar (lib/obrigado.mjs, BAIXAR_DO_LOCAL): quem aponta a câmera está
+ * no celular, e o middleware manda o celular direto para a loja.
  */
 export function qrDoLocal(local: Local): string {
-  return local === "es" ? "/qr/descargar.svg" : "/qr/baixar.svg";
+  return BAIXAR_DO_LOCAL[local] === "es" ? "/qr/descargar.svg" : "/qr/baixar.svg";
 }
 
 /**
  * Instalar o app, pelo aparelho detectado no servidor (user-agent):
  *   ios         botão grande da App Store e "Usa Android?" discreto
  *   android     o inverso
- *   computador  QR code (abre o /baixar do idioma no celular) e as duas lojas
+ *   computador  QR code (abre o /baixar do local no celular) e as duas lojas
  *               e, na aprovada, a versão web logo abaixo (versaoWeb): quem
  *               acabou de pagar no computador pode começar ali mesmo, sem
  *               descer até o fim da página (revisão de 28/10/2026)
@@ -358,7 +373,11 @@ export function InstalarApp({
 
 /**
  * Versão web do app, no idioma da página (?lang=es no espanhol; o app lê
- * o lang em qualquer caminho).
+ * o lang em qualquer caminho). pt-pt e en vão sem lang: o app só tem
+ * pt-BR e es, e sem lang decide pelo idioma do navegador (o primeiro es
+ * ou pt da lista) e, num navegador em inglês, pelo fuso horário (país de
+ * língua espanhola, es; o resto, pt-BR). public/index.html do app,
+ * escolherIdiomaInicial.
  *   - páginas de obrigado: a rota de ativação do app (/ativar). Sem
  *     token, ela abre direto "Ativar sua conta" (e-mail, senha nova e
  *     confirmação), que é o que quem acabou de pagar precisa; a raiz abre
@@ -414,7 +433,7 @@ export function Final({
   );
 }
 
-/** Endereço absoluto do /baixar do idioma (o que o QR code abre). */
+/** Endereço absoluto do /baixar do local (o que o QR code abre). */
 export function urlDoBaixar(local: Local): string {
   return `${SITE.dominio}${caminhoDoBaixar(local)}`;
 }

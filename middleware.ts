@@ -56,14 +56,16 @@ import { mercadosDasOfertasDoEstudante } from "@/config/pricing";
    redirecionamento em cache para todo mundo.
 
    PÓS-PAGAMENTO (docs/POS-PAGAMENTO.md; regras em lib/obrigado.mjs),
-   antes da decisão das homes. Dois idiomas, pt e es:
-     - as três URLs de obrigado sem prefixo (as da Hotmart) e o
+   antes da decisão das homes. Quatro locais: pt (sem prefixo), pt-pt,
+   es e en (pedido do dono, 29/10/2026):
+     - as três URLs de obrigado sem prefixo (as automáticas) e o
        /obrigado antigo descobrem o idioma (oferta de um mercado só no
        ?off=, cookie dm_mercado, ?lang=, Accept-Language, país do IP) e,
-       se for espanhol, vão para a rota em espanhol do mesmo status
-       (/es/gracias-aprobado, /es/gracias-pago-pendiente,
-       /es/gracias-en-analisis): 307 com a busca INTEIRA (transaction,
-       off, utm...)
+       se não for pt-BR, vão para a rota do mesmo status no local
+       decidido (/pt-pt/obrigado-*, /es/gracias-*, /en/thank-you-*): 307
+       com a busca INTEIRA (transaction, off, utm...)
+     - nas rotas com prefixo o caminho manda: nada aqui as redireciona, e
+       a decisão das homes (decidirRota) as deixa seguir
      - /baixar e /es/descargar: iPhone e iPad vão direto para a App Store
        do idioma, Android para o Google Play (302); /baixar?lang=es no
        computador vai para /es/descargar (307); computador, aparelho

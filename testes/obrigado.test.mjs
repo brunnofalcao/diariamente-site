@@ -1,10 +1,11 @@
 // Pós-pagamento: páginas de obrigado (aprovado, aguardando pagamento, em
-// análise) e o /baixar, nos dois idiomas do projeto (pt e es; decisão do
-// dono, 28/10/2026). Confere a decisão de idioma das URLs da Hotmart, o
-// mercado do pedido (Purchase, Pix e boleto), o Purchase de verdade, o
-// consentimento em standby, a detecção de aparelho, os links das lojas, a
-// copy (chaves e regras da marca), o log só com nomes de parâmetros, as
-// rotas e o noindex.
+// análise) e o /baixar, nos quatro locais (pt, pt-pt, es e en; pedido do
+// dono, 29/10/2026: uma página de obrigado por mercado; só pt e es têm
+// /baixar). Confere a decisão de idioma das URLs automáticas, o mercado do
+// pedido (Purchase, Pix e boleto), o Purchase de verdade, o consentimento
+// em standby e o idioma do aviso de cookies, a detecção de aparelho, os
+// links das lojas, a copy (chaves e regras da marca), o log só com nomes
+// de parâmetros, as rotas e o noindex.
 // Roda com: npm test   (node --test, sem dependência nova)
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -17,6 +18,7 @@ import { TEXTOS } from "../lib/obrigado-textos.mjs";
 
 const {
   LOCAIS,
+  LOCAIS_DO_BAIXAR,
   ESTADOS,
   CAMINHOS,
   ROTAS_DO_POS_PAGAMENTO,
@@ -31,6 +33,8 @@ const {
   destinoDoObrigado,
   ehPosPagamento,
   formaDoPagamento,
+  LANG_HTML,
+  localDoPosPagamento,
   linhaDoLog,
   localDoBaixar,
   localDoIdioma,
@@ -67,8 +71,9 @@ const doPais = (pais) => (pais ? M.mercadoDoPais(pais) : null);
 
 /* ================================ rotas ================================ */
 
-test("as 8 rotas: pt sem prefixo e es com o caminho em espanhol", () => {
-  assert.deepEqual(LOCAIS, ["pt", "es"]);
+test("as 14 rotas: pt sem prefixo, pt-pt, es e en com o caminho no idioma da página; só pt e es têm /baixar", () => {
+  assert.deepEqual(LOCAIS, ["pt", "pt-pt", "es", "en"]);
+  assert.deepEqual(LOCAIS_DO_BAIXAR, ["pt", "es"]);
   assert.deepEqual(CAMINHOS, {
     pt: {
       aprovado: "/obrigado-aprovado",
@@ -76,63 +81,101 @@ test("as 8 rotas: pt sem prefixo e es com o caminho em espanhol", () => {
       "aguardando-analise": "/obrigado-aguardando-analise",
       baixar: "/baixar",
     },
+    "pt-pt": {
+      aprovado: "/pt-pt/obrigado-aprovado",
+      "aguardando-pagamento": "/pt-pt/obrigado-aguardando-pagamento",
+      "aguardando-analise": "/pt-pt/obrigado-aguardando-analise",
+    },
     es: {
       aprovado: "/es/gracias-aprobado",
       "aguardando-pagamento": "/es/gracias-pago-pendiente",
       "aguardando-analise": "/es/gracias-en-analisis",
       baixar: "/es/descargar",
     },
+    en: {
+      aprovado: "/en/thank-you-approved",
+      "aguardando-pagamento": "/en/thank-you-pending-payment",
+      "aguardando-analise": "/en/thank-you-under-review",
+    },
   });
-  assert.equal(ROTAS_DO_POS_PAGAMENTO.length, 8);
+  assert.deepEqual(LANG_HTML, { pt: "pt-BR", "pt-pt": "pt-PT", es: "es", en: "en" });
+  assert.equal(ROTAS_DO_POS_PAGAMENTO.length, 14);
   for (const r of ROTAS_DO_POS_PAGAMENTO) assert.equal(ehPosPagamento(r), true, r);
   assert.equal(ehPosPagamento("/obrigado"), true);
-  for (const r of ["/", "/vendas", "/es/vendas", "/es", "/es/obrigado-aprovado", "/baixar/x", "/es-es/baixar"]) {
+  for (const r of ["/", "/vendas", "/es/vendas", "/es", "/pt-pt", "/en", "/es/obrigado-aprovado", "/baixar/x", "/es-es/baixar", "/pt-pt/baixar", "/en/baixar", "/es-es/gracias-aprobado"]) {
     assert.equal(ehPosPagamento(r), false, r);
   }
-  // nenhuma URL em espanhol com palavra em português
+  // o local de cada rota vem do caminho
+  for (const local of LOCAIS) for (const r of Object.values(CAMINHOS[local])) assert.equal(localDoPosPagamento(r), local, r);
+  for (const r of ["/", "/obrigado", "/pt-pt", "/en", "/es"]) assert.equal(localDoPosPagamento(r), null, r);
+  // nenhuma URL em espanhol com palavra em português; nenhuma em inglês com palavra em português ou espanhol
   for (const r of Object.values(CAMINHOS.es)) assert.doesNotMatch(r, /obrigado|aguardando|analise|baixar/, r);
+  for (const r of Object.values(CAMINHOS.en)) assert.doesNotMatch(r, /obrigado|aguardando|analise|baixar|gracias|pago|pendiente/, r);
 });
 
 /* =========================== decisão de idioma =========================== */
 
-test("etiqueta de idioma vira local: qualquer espanhol é es; qualquer português é pt", () => {
+test("?lang= vira local: espanhol é es; pt-PT é pt-pt; o resto do português é pt; inglês é en", () => {
   for (const t of ["es", "es-ES", "es_es", "es-419", "es-MX", "ES-ar"]) assert.equal(localDoIdioma(t), "es", t);
-  for (const t of ["pt", "pt-BR", "pt-PT", "pt_br"]) assert.equal(localDoIdioma(t), "pt", t);
-  for (const t of ["en-US", "est", "ptx", "", null]) assert.equal(localDoIdioma(t), null, String(t));
+  for (const t of ["pt-PT", "pt_pt", "PT-pt"]) assert.equal(localDoIdioma(t), "pt-pt", t);
+  for (const t of ["pt", "pt-BR", "pt_br", "pt-AO"]) assert.equal(localDoIdioma(t), "pt", t);
+  for (const t of ["en", "en-US", "en_GB", "EN"]) assert.equal(localDoIdioma(t), "en", t);
+  for (const t of ["fr", "est", "ptx", "eng", "", null]) assert.equal(localDoIdioma(t), null, String(t));
 });
 
-test("Accept-Language: peso (q) e ordem; idioma que não é pt nem es é pulado", () => {
+test("Accept-Language: peso (q) e ordem; pt-PT e pt com IP de Portugal são pt-pt; inglês e outros idiomas são pulados", () => {
   assert.equal(localDoNavegador("es-MX,es;q=0.9,en;q=0.8"), "es");
   assert.equal(localDoNavegador("es-ES,es;q=0.9"), "es");
-  assert.equal(localDoNavegador("pt-PT,pt;q=0.9"), "pt");
+  assert.equal(localDoNavegador("pt-PT,pt;q=0.9"), "pt-pt");
+  assert.equal(localDoNavegador("pt-PT,pt;q=0.9", "br"), "pt-pt");
   assert.equal(localDoNavegador("pt-BR,pt;q=0.9,es;q=0.8"), "pt");
+  assert.equal(localDoNavegador("pt-BR", "pt"), "pt");
+  // pt simples: o país do IP decide entre pt-pt e pt
+  assert.equal(localDoNavegador("pt", "pt"), "pt-pt");
+  assert.equal(localDoNavegador("pt,en;q=0.5", "pt"), "pt-pt");
+  assert.equal(localDoNavegador("pt", "br"), "pt");
+  assert.equal(localDoNavegador("pt", "rw"), "pt");
+  assert.equal(localDoNavegador("pt"), "pt");
+  // inglês é pulado, mesmo antes de um pt ou es
   assert.equal(localDoNavegador("en-US,en;q=0.9,es;q=0.8,pt;q=0.7"), "es");
+  assert.equal(localDoNavegador("en-US,en;q=0.9,pt;q=0.7", "pt"), "pt-pt");
   assert.equal(localDoNavegador("pt;q=0.5, es-ES;q=0.9"), "es");
   assert.equal(localDoNavegador("es;q=0, pt-BR"), "pt");
   assert.equal(localDoNavegador("en-US"), null);
+  assert.equal(localDoNavegador("en-US,fr;q=0.8", "rw"), null);
   assert.equal(localDoNavegador(""), null);
 });
 
-test("(a) oferta de um mercado só na URL vence tudo, inclusive o cookie", () => {
-  const tudoContra = { lang: "es", idiomas: "es-MX", mercadoDoIp: "la" };
-  for (const off of ["fhrttdh8", "lf63bgdd", "3n484jbe"]) {
-    assert.deepEqual(decidirObrigado({ off, cookie: "la", ...tudoContra }), { local: "pt", fonte: "oferta" }, off);
+test("(a) oferta de um mercado só na URL vence tudo: Brasil em pt, Portugal em pt-pt, Espanha em es", () => {
+  const tudoContra = { cookie: "la", lang: "en", idiomas: "es-MX", mercadoDoIp: "rw" };
+  for (const off of ["fhrttdh8", "lf63bgdd"]) {
+    assert.deepEqual(decidirObrigado({ off, ...tudoContra }), { local: "pt", fonte: "oferta" }, off);
   }
+  assert.deepEqual(decidirObrigado({ off: "3n484jbe", ...tudoContra }), { local: "pt-pt", fonte: "oferta" });
+  assert.deepEqual(decidirObrigado({ off: "3n484jbe", cookie: "br", idiomas: "pt-BR", mercadoDoIp: "br" }), { local: "pt-pt", fonte: "oferta" });
   assert.deepEqual(decidirObrigado({ off: "iuoufnf6", cookie: "br", lang: "pt", idiomas: "pt-BR", mercadoDoIp: "br" }), { local: "es", fonte: "oferta" });
   // maiúsculas e espaços não atrapalham; oferta desconhecida é ignorada
   assert.equal(decidirObrigado({ off: " IUOUFNF6 " }).local, "es");
+  assert.equal(decidirObrigado({ off: "3N484JBE" }).local, "pt-pt");
   assert.deepEqual(decidirObrigado({ off: "zzz", idiomas: "es-MX" }), { local: "es", fonte: "navegador" });
+  // a oferta em dólar (América Latina E resto do mundo) não decide sozinha
+  assert.notEqual(decidirObrigado({ off: "uevhmhy2" }).fonte, "oferta");
 });
 
-test("(b) cookie dm_mercado: br, pt e rw leem em pt; la e es, em espanhol; vence ?lang=, navegador e país", () => {
-  const casos = { br: "pt", pt: "pt", rw: "pt", la: "es", es: "es" };
+test("(b) cookie dm_mercado: br em pt, pt em pt-pt, la e es em espanhol; rw não decide", () => {
+  const casos = { br: "pt", pt: "pt-pt", la: "es", es: "es" };
   for (const [cookie, local] of Object.entries(casos)) {
-    const contra = local === "pt" ? { lang: "es", idiomas: "es-MX", mercadoDoIp: "la" } : { lang: "pt", idiomas: "pt-BR", mercadoDoIp: "br" };
+    const contra = local === "es" ? { lang: "en", idiomas: "pt-BR", mercadoDoIp: "br" } : { lang: "es", idiomas: "es-MX", mercadoDoIp: "la" };
     assert.deepEqual(decidirObrigado({ cookie, ...contra }), { local, fonte: "cookie" }, cookie);
   }
-  // a oferta em dólar (América Latina E mundo) não decide sozinha: o cookie decide
+  // a oferta em dólar não decide sozinha: o cookie decide
   assert.deepEqual(decidirObrigado({ off: "uevhmhy2", cookie: "la", idiomas: "pt-BR" }), { local: "es", fonte: "cookie" });
-  assert.deepEqual(decidirObrigado({ off: "uevhmhy2", cookie: "rw", idiomas: "es-MX" }), { local: "pt", fonte: "cookie" });
+  // rw (o site do resto do mundo é em português): segue para ?lang=, navegador e país
+  assert.deepEqual(decidirObrigado({ cookie: "rw", mercadoDoIp: doPais("DE") }), { local: "en", fonte: "pais" });
+  assert.deepEqual(decidirObrigado({ off: "uevhmhy2", cookie: "rw", idiomas: "es-MX" }), { local: "es", fonte: "navegador" });
+  assert.deepEqual(decidirObrigado({ off: "uevhmhy2", cookie: "rw", idiomas: "pt-BR", mercadoDoIp: doPais("US") }), { local: "pt", fonte: "navegador" });
+  assert.deepEqual(decidirObrigado({ cookie: "rw", lang: "pt" }), { local: "pt", fonte: "lang" });
+  assert.deepEqual(decidirObrigado({ cookie: "rw" }), { local: "pt", fonte: "padrao" });
   // cookie inválido é ignorado
   assert.equal(decidirObrigado({ cookie: "xx", idiomas: "es-MX" }).local, "es");
 });
@@ -140,58 +183,114 @@ test("(b) cookie dm_mercado: br, pt e rw leem em pt; la e es, em espanhol; vence
 test("(c) ?lang= e (d) Accept-Language, antes do país", () => {
   assert.deepEqual(decidirObrigado({ lang: "es", idiomas: "pt-BR", mercadoDoIp: "br" }), { local: "es", fonte: "lang" });
   assert.deepEqual(decidirObrigado({ lang: ["es", "pt"] }), { local: "es", fonte: "lang" });
+  assert.deepEqual(decidirObrigado({ lang: "pt", idiomas: "es-MX", mercadoDoIp: "la" }), { local: "pt", fonte: "lang" });
+  for (const lang of ["pt-pt", "pt-PT", "pt_PT"]) assert.deepEqual(decidirObrigado({ lang, idiomas: "pt-BR", mercadoDoIp: "br" }), { local: "pt-pt", fonte: "lang" }, lang);
+  assert.deepEqual(decidirObrigado({ lang: "en", idiomas: "pt-BR", mercadoDoIp: "br" }), { local: "en", fonte: "lang" });
   assert.deepEqual(decidirObrigado({ lang: "fr", idiomas: "es-ES", mercadoDoIp: "br" }), { local: "es", fonte: "navegador" });
   assert.deepEqual(decidirObrigado({ idiomas: "es-MX,es;q=0.9", mercadoDoIp: "br" }), { local: "es", fonte: "navegador" });
-  assert.deepEqual(decidirObrigado({ idiomas: "pt-PT", mercadoDoIp: "es" }), { local: "pt", fonte: "navegador" });
+  assert.deepEqual(decidirObrigado({ idiomas: "pt-PT", mercadoDoIp: "es" }), { local: "pt-pt", fonte: "navegador" });
+  // navegador em pt (sem país) e IP de Portugal: pt-pt; com IP de fora, pt
+  assert.deepEqual(decidirObrigado({ idiomas: "pt", mercadoDoIp: doPais("PT") }), { local: "pt-pt", fonte: "navegador" });
+  assert.deepEqual(decidirObrigado({ idiomas: "pt", mercadoDoIp: doPais("US") }), { local: "pt", fonte: "navegador" });
+  // a oferta em dólar com o navegador em espanhol: es; em pt-BR, mesmo com IP dos Estados Unidos: pt
   assert.deepEqual(decidirObrigado({ off: "uevhmhy2", idiomas: "es-AR" }), { local: "es", fonte: "navegador" });
+  assert.deepEqual(decidirObrigado({ off: "uevhmhy2", idiomas: "es-US,en;q=0.8", mercadoDoIp: doPais("US") }), { local: "es", fonte: "navegador" });
+  assert.deepEqual(decidirObrigado({ off: "uevhmhy2", idiomas: "pt-BR,en;q=0.8", mercadoDoIp: doPais("US") }), { local: "pt", fonte: "navegador" });
+  // navegador em inglês não decide: o país do IP decide
+  assert.deepEqual(decidirObrigado({ idiomas: "en-US", mercadoDoIp: doPais("BR") }), { local: "pt", fonte: "pais" });
 });
 
-test("(e) país do IP, com as listas de lib/mercado.ts: América Latina e Espanha em espanhol; (f) o resto em pt", () => {
+test("(e) país do IP, com as listas de lib/mercado.ts: Brasil pt, Portugal pt-pt, Espanha e América Latina es, o resto en; (f) pt", () => {
   for (const pais of ["MX", "CO", "AR", "CL", "PE", "ES"]) {
     assert.deepEqual(decidirObrigado({ idiomas: "en-US,en;q=0.9", mercadoDoIp: doPais(pais) }), { local: "es", fonte: "pais" }, pais);
   }
-  for (const pais of ["BR", "PT", "US", "FR", "JP"]) {
-    assert.deepEqual(decidirObrigado({ idiomas: "en-US", mercadoDoIp: doPais(pais) }), { local: "pt", fonte: "pais" }, pais);
+  assert.deepEqual(decidirObrigado({ idiomas: "en-US", mercadoDoIp: doPais("BR") }), { local: "pt", fonte: "pais" });
+  assert.deepEqual(decidirObrigado({ idiomas: "en-US", mercadoDoIp: doPais("PT") }), { local: "pt-pt", fonte: "pais" });
+  for (const pais of ["US", "FR", "JP", "DE", "GB", "CA"]) {
+    assert.deepEqual(decidirObrigado({ idiomas: "en-US", mercadoDoIp: doPais(pais) }), { local: "en", fonte: "pais" }, pais);
   }
   // a oferta em dólar com o navegador em inglês: o país escolhe
   assert.equal(decidirObrigado({ off: "uevhmhy2", idiomas: "en-US", mercadoDoIp: doPais("MX") }).local, "es");
-  assert.equal(decidirObrigado({ off: "uevhmhy2", idiomas: "en-US", mercadoDoIp: doPais("US") }).local, "pt");
+  assert.deepEqual(decidirObrigado({ off: "uevhmhy2", idiomas: "en-US", mercadoDoIp: doPais("US") }), { local: "en", fonte: "pais" });
+  assert.deepEqual(decidirObrigado({ off: "uevhmhy2", mercadoDoIp: doPais("US") }), { local: "en", fonte: "pais" });
   // sem país (ambiente local) e sem nada: pt
   assert.deepEqual(decidirObrigado({ idiomas: "en-US", mercadoDoIp: null }), { local: "pt", fonte: "padrao" });
+  assert.deepEqual(decidirObrigado({ off: "uevhmhy2", idiomas: "en-US" }), { local: "pt", fonte: "padrao" });
   assert.deepEqual(decidirObrigado({}), { local: "pt", fonte: "padrao" });
   assert.deepEqual(decidirObrigado(), { local: "pt", fonte: "padrao" });
 });
 
-test("middleware: as 3 URLs da Hotmart levam quem é de espanhol à rota es equivalente, com TODOS os parâmetros", () => {
+test("middleware: as 3 URLs automáticas levam à rota do mesmo status no local decidido, com TODOS os parâmetros", () => {
   const busca = "?transaction=HPTESTE&off=uevhmhy2&utm_source=ig&lang=es";
-  const es = { aprovado: "/es/gracias-aprobado", "aguardando-pagamento": "/es/gracias-pago-pendiente", "aguardando-analise": "/es/gracias-en-analisis" };
   for (const estado of ESTADOS) {
     const pathname = `/obrigado-${estado}`;
-    for (const cookie of ["la", "es"]) assert.equal(destinoDoObrigado({ pathname, busca, cookie }), `${es[estado]}${busca}`, `${estado} ${cookie}`);
-    assert.equal(destinoDoObrigado({ pathname, busca: "?transaction=HPTESTE&off=iuoufnf6" }), `${es[estado]}?transaction=HPTESTE&off=iuoufnf6`);
-    assert.equal(destinoDoObrigado({ pathname, busca: "?transaction=HPTESTE", idiomas: "es-MX" }), `${es[estado]}?transaction=HPTESTE`);
-    assert.equal(destinoDoObrigado({ pathname, busca: "?transaction=HPTESTE", mercadoDoIp: doPais("MX") }), `${es[estado]}?transaction=HPTESTE`);
-    // pt (br, pt, rw, ou nada): fica onde está
-    for (const cookie of ["br", "pt", "rw", null]) {
+    const em = (local) => CAMINHOS[local][estado];
+    for (const cookie of ["la", "es"]) assert.equal(destinoDoObrigado({ pathname, busca, cookie }), `${em("es")}${busca}`, `${estado} ${cookie}`);
+    assert.equal(destinoDoObrigado({ pathname, busca: "?transaction=HPTESTE&off=iuoufnf6" }), `${em("es")}?transaction=HPTESTE&off=iuoufnf6`);
+    assert.equal(destinoDoObrigado({ pathname, busca: "?transaction=HPTESTE", idiomas: "es-MX" }), `${em("es")}?transaction=HPTESTE`);
+    assert.equal(destinoDoObrigado({ pathname, busca: "?transaction=HPTESTE", mercadoDoIp: doPais("MX") }), `${em("es")}?transaction=HPTESTE`);
+    // Portugal: a oferta, o cookie, o navegador pt-PT, o pt com IP de Portugal ou só o IP
+    assert.equal(destinoDoObrigado({ pathname, busca: "?transaction=HPTESTE&off=3n484jbe", cookie: "br" }), `${em("pt-pt")}?transaction=HPTESTE&off=3n484jbe`);
+    assert.equal(destinoDoObrigado({ pathname, busca: "?transaction=HPTESTE", cookie: "pt" }), `${em("pt-pt")}?transaction=HPTESTE`);
+    assert.equal(destinoDoObrigado({ pathname, busca: "?transaction=HPTESTE", idiomas: "pt-PT" }), `${em("pt-pt")}?transaction=HPTESTE`);
+    assert.equal(destinoDoObrigado({ pathname, busca: "?transaction=HPTESTE", idiomas: "pt", mercadoDoIp: doPais("PT") }), `${em("pt-pt")}?transaction=HPTESTE`);
+    assert.equal(destinoDoObrigado({ pathname, busca: "?transaction=HPTESTE", mercadoDoIp: doPais("PT") }), `${em("pt-pt")}?transaction=HPTESTE`);
+    // a oferta em dólar dos Estados Unidos e demais países: en
+    const dolar = "?transaction=HPTESTE&off=uevhmhy2&utm_source=ig";
+    assert.equal(destinoDoObrigado({ pathname, busca: dolar, idiomas: "en-US", mercadoDoIp: doPais("US") }), `${em("en")}${dolar}`);
+    assert.equal(destinoDoObrigado({ pathname, busca: dolar, cookie: "rw", mercadoDoIp: doPais("DE") }), `${em("en")}${dolar}`);
+    assert.equal(destinoDoObrigado({ pathname, busca: "?lang=en" }), `${em("en")}?lang=en`);
+    // pt-BR (oferta do Brasil, cookie br, navegador pt-BR com IP de fora, ou nada): fica onde está
+    for (const cookie of ["br", "pt", "rw", "la", null]) {
       assert.equal(destinoDoObrigado({ pathname, busca: "?transaction=HPTESTE&off=fhrttdh8", cookie }), null, `${estado} ${cookie}`);
     }
+    assert.equal(destinoDoObrigado({ pathname, busca: dolar, idiomas: "pt-BR,en;q=0.8", mercadoDoIp: doPais("US") }), null);
+    assert.equal(destinoDoObrigado({ pathname, busca: "?transaction=HPTESTE", cookie: "br", mercadoDoIp: doPais("US") }), null);
+    assert.equal(destinoDoObrigado({ pathname, busca: "?transaction=HPTESTE" }), null);
   }
   // ?lang=es dos links antigos do app ainda leva ao es
   assert.equal(destinoDoObrigado({ pathname: "/obrigado-aprovado", busca: "?lang=es" }), "/es/gracias-aprobado?lang=es");
-  // o /obrigado antigo vai direto para a aprovada em espanhol
+  // o /obrigado antigo vai direto para a aprovada do local
   assert.equal(destinoDoObrigado({ pathname: "/obrigado", busca: "?transaction=HP1", cookie: "la" }), "/es/gracias-aprobado?transaction=HP1");
+  assert.equal(destinoDoObrigado({ pathname: "/obrigado", busca: "?transaction=HP1", cookie: "pt" }), "/pt-pt/obrigado-aprovado?transaction=HP1");
+  assert.equal(destinoDoObrigado({ pathname: "/obrigado", busca: "?transaction=HP1", mercadoDoIp: doPais("US") }), "/en/thank-you-approved?transaction=HP1");
   // parâmetro repetido e caracteres especiais seguem iguais
   assert.equal(
     destinoDoObrigado({ pathname: "/obrigado-aprovado", busca: "?a=1&a=2&email=x%40y.com", idiomas: "es-CO" }),
     "/es/gracias-aprobado?a=1&a=2&email=x%40y.com",
   );
+  assert.equal(
+    destinoDoObrigado({ pathname: "/obrigado-aguardando-pagamento", busca: "?a=1&a=2&email=x%40y.com&off=uevhmhy2", mercadoDoIp: doPais("US") }),
+    "/en/thank-you-pending-payment?a=1&a=2&email=x%40y.com&off=uevhmhy2",
+  );
   // sem busca
   assert.equal(destinoDoObrigado({ pathname: "/obrigado-aprovado", idiomas: "es-AR" }), "/es/gracias-aprobado");
+  assert.equal(destinoDoObrigado({ pathname: "/obrigado-aguardando-analise", mercadoDoIp: doPais("JP") }), "/en/thank-you-under-review");
 });
 
-test("middleware: nas rotas em espanhol o caminho manda, e nada fora das URLs da Hotmart redireciona", () => {
-  for (const caminho of [...Object.values(CAMINHOS.es), "/termos", "/vendas", "/es/vendas", "/baixar"]) {
-    assert.equal(destinoDoObrigado({ pathname: caminho, busca: "?lang=pt", cookie: "br", idiomas: "pt-BR" }), null, caminho);
+test("middleware: nas rotas com prefixo (pt-pt, es e en) o caminho manda, e nada fora das URLs automáticas redireciona", () => {
+  const contra = [
+    { busca: "?lang=pt", cookie: "br", idiomas: "pt-BR", mercadoDoIp: "br" },
+    { busca: "?lang=en&off=uevhmhy2", cookie: "rw", idiomas: "en-US", mercadoDoIp: "rw" },
+    { busca: "?off=iuoufnf6", cookie: "es", idiomas: "es-ES", mercadoDoIp: "es" },
+    { busca: "?off=3n484jbe", cookie: "pt", idiomas: "pt-PT", mercadoDoIp: "pt" },
+  ];
+  const caminhos = [...Object.values(CAMINHOS["pt-pt"]), ...Object.values(CAMINHOS.es), ...Object.values(CAMINHOS.en), "/termos", "/vendas", "/es/vendas", "/pt-pt", "/en", "/baixar"];
+  for (const caminho of caminhos) {
+    for (const c of contra) assert.equal(destinoDoObrigado({ pathname: caminho, ...c }), null, `${caminho} ${c.busca}`);
+  }
+});
+
+test("middleware: a decisão das homes não intercepta as rotas de obrigado com prefixo, nem grava o dm_mercado nelas", () => {
+  for (const pathname of [...Object.values(CAMINHOS["pt-pt"]), ...Object.values(CAMINHOS.en), ...Object.values(CAMINHOS.es)]) {
+    for (const lancado of [false, true]) {
+      for (const pais of ["BR", "PT", "US", "MX", null]) {
+        const p = { pathname, busca: "?transaction=HP1&off=uevhmhy2", userAgent: IPHONE, cookie: null, pais, idiomas: "en-US", lancado };
+        const d = M.decidirRota(p);
+        assert.equal(d.tipo, "seguir", `${pathname} ${pais} ${lancado}`);
+        assert.equal(M.mercadoDaVisita(p, d), null, pathname);
+      }
+    }
   }
 });
 
@@ -209,29 +308,47 @@ test("o middleware aplica as regras do pós-pagamento antes da decisão das home
 
 /* =============================== mercado =============================== */
 
-test("mercado do pedido: a oferta manda; a do dólar segue o idioma da página", () => {
+test("mercado do pedido: a oferta manda; a do dólar é la na página es e rw nas outras", () => {
   assert.equal(mercadoDoObrigado("es", { off: "iuoufnf6" }), "es");
   assert.equal(mercadoDoObrigado("pt", { off: "3n484jbe" }), "pt");
+  assert.equal(mercadoDoObrigado("pt-pt", { off: "3n484jbe", cookie: "br" }), "pt");
+  assert.equal(mercadoDoObrigado("en", { off: "fhrttdh8" }), "br");
   assert.equal(mercadoDoObrigado("pt", { off: "lf63bgdd", cookie: "rw" }), "br");
   assert.equal(mercadoDoObrigado("pt", { off: "uevhmhy2" }), "rw");
+  assert.equal(mercadoDoObrigado("pt-pt", { off: "uevhmhy2" }), "rw");
+  assert.equal(mercadoDoObrigado("en", { off: "uevhmhy2", cookie: "la" }), "rw");
   assert.equal(mercadoDoObrigado("es", { off: "uevhmhy2", cookie: "es" }), "la");
 });
 
-test("mercado do pedido sem oferta: o cookie, depois o país, se forem do idioma da página; senão o do idioma", () => {
+test("mercado do pedido sem oferta: o cookie, depois o país, se forem mercados do local (pt: br e rw; pt-pt: pt; es: la e es; en: rw); senão o natural", () => {
+  assert.deepEqual(O.MERCADOS_DO_LOCAL, { pt: ["br", "rw"], "pt-pt": ["pt"], es: ["la", "es"], en: ["rw"] });
+  assert.deepEqual(O.MERCADO_DO_LOCAL, { pt: "br", "pt-pt": "pt", es: "la", en: "rw" });
+  // pt: brasileiro no Brasil ou no exterior (dólar)
   assert.equal(mercadoDoObrigado("pt", { cookie: "rw" }), "rw");
-  assert.equal(mercadoDoObrigado("pt", { cookie: "pt" }), "pt");
   assert.equal(mercadoDoObrigado("pt", { cookie: "br", mercadoDoIp: "rw" }), "br");
+  assert.equal(mercadoDoObrigado("pt", { cookie: "pt" }), "br");
   assert.equal(mercadoDoObrigado("pt", { cookie: "la" }), "br");
-  assert.equal(mercadoDoObrigado("es", { cookie: "es" }), "es");
-  assert.equal(mercadoDoObrigado("es", { cookie: "br" }), "la");
-  // sem cookie: o país (um brasileiro nos Estados Unidos lendo em pt paga em dólar)
+  assert.equal(mercadoDoObrigado("pt", { cookie: "la", mercadoDoIp: doPais("US") }), "rw");
   assert.equal(mercadoDoObrigado("pt", { mercadoDoIp: doPais("US") }), "rw");
-  assert.equal(mercadoDoObrigado("pt", { mercadoDoIp: doPais("PT") }), "pt");
+  assert.equal(mercadoDoObrigado("pt", { mercadoDoIp: doPais("PT") }), "br");
   assert.equal(mercadoDoObrigado("pt", { mercadoDoIp: doPais("BR") }), "br");
   assert.equal(mercadoDoObrigado("pt", { mercadoDoIp: doPais("MX") }), "br");
+  // pt-pt: só Portugal (euro)
+  assert.equal(mercadoDoObrigado("pt-pt", { cookie: "pt" }), "pt");
+  assert.equal(mercadoDoObrigado("pt-pt", { cookie: "br", mercadoDoIp: doPais("BR") }), "pt");
+  assert.equal(mercadoDoObrigado("pt-pt", { mercadoDoIp: doPais("US") }), "pt");
+  assert.equal(mercadoDoObrigado("pt-pt"), "pt");
+  // es: América Latina (dólar) ou Espanha (euro)
+  assert.equal(mercadoDoObrigado("es", { cookie: "es" }), "es");
+  assert.equal(mercadoDoObrigado("es", { cookie: "br" }), "la");
   assert.equal(mercadoDoObrigado("es", { mercadoDoIp: doPais("ES") }), "es");
   assert.equal(mercadoDoObrigado("es", { mercadoDoIp: doPais("MX") }), "la");
   assert.equal(mercadoDoObrigado("es", { mercadoDoIp: doPais("US") }), "la");
+  // en: só o resto do mundo (dólar)
+  assert.equal(mercadoDoObrigado("en", { cookie: "br", mercadoDoIp: doPais("BR") }), "rw");
+  assert.equal(mercadoDoObrigado("en", { cookie: "es" }), "rw");
+  assert.equal(mercadoDoObrigado("en", { mercadoDoIp: doPais("US") }), "rw");
+  assert.equal(mercadoDoObrigado("en"), "rw");
   assert.equal(mercadoDoObrigado("pt"), "br");
   assert.equal(mercadoDoObrigado("es", {}), "la");
 });
@@ -364,6 +481,12 @@ test("Purchase só na aprovada, com a moeda e o valor do mercado do pedido", asy
     ["pt", {}, { pais: "US" }, "USD", P.precoFinal("rw")],
     ["pt", { off: "fhrttdh8" }, { cookie: "rw" }, "BRL", P.MERCADOS.br.anual],
     ["pt", {}, {}, "BRL", P.precoFinal("br")],
+    ["pt-pt", { off: "3n484jbe" }, {}, "EUR", P.precoFinal("pt")],
+    ["pt-pt", {}, { pais: "BR", cookie: "br" }, "EUR", P.precoFinal("pt")],
+    ["pt-pt", { off: "uevhmhy2" }, {}, "USD", P.precoFinal("rw")],
+    ["en", { off: "uevhmhy2" }, { pais: "US" }, "USD", P.precoFinal("rw")],
+    ["en", {}, { cookie: "la", pais: "MX" }, "USD", P.precoFinal("rw")],
+    ["en", { off: "fhrttdh8" }, {}, "BRL", P.MERCADOS.br.anual],
   ];
   for (const [local, busca, opcoes, moeda, valor] of casos) {
     const r = await renderizarPagina("aprovado", local, busca, opcoes);
@@ -503,6 +626,65 @@ test("standby: na página de obrigado, quem recusou os cookies não monta GA4 ne
   assert.deepEqual(consentimentoEmStandby("/", null).primeiro, { valor: "aceito", medicao: true });
 });
 
+/** O aviso de cookies que aparece (chave ligada, sem escolha) no caminho: os textos e os atributos. */
+function avisoDeCookies(pathname) {
+  const g = reactComGanchos();
+  const { Consentimento } = carregarTs(arq("components", "Consentimento.tsx"), {
+    react: g.R,
+    "react/jsx-runtime": g.runtime,
+    "next/navigation": { usePathname: () => pathname },
+    "@/components/Tracking": { Tracking: () => null },
+    "@/lib/rotas": { caminho: (chave, lang) => (lang === "es" ? "/es/privacidad" : "/privacidade") },
+    "@/lib/mercado": M,
+    "@/lib/obrigado.mjs": O,
+    "@/lib/cookies": { lerEscolha: () => null, gravarEscolha: () => {}, apagarCookiesDeMedicao: () => {} },
+    "@/config/lancamento": { SITE_LANCADO: true },
+  }, { jsx: true });
+  g.desenhar(() => Consentimento({ children: "PAGINA" }));
+  g.rodarEfeitos();
+  const arvore = g.desenhar(() => Consentimento({ children: "PAGINA" }));
+  const aviso = [].concat(arvore.props.children).find((c) => c && typeof c.type === "function");
+  // desenha o próprio aviso e junta os textos e os atributos
+  const el = g.desenhar(() => aviso.type(aviso.props));
+  const textos = [];
+  const attrs = [];
+  const andar = (n) => {
+    if (n == null || n === false) return;
+    if (typeof n === "string" || typeof n === "number") return void textos.push(String(n));
+    if (Array.isArray(n)) return n.forEach(andar);
+    const { children, dangerouslySetInnerHTML, ...resto } = n.props || {};
+    attrs.push(resto);
+    andar(children);
+  };
+  andar(el);
+  return { texto: textos.join(" "), attrs };
+}
+
+test("aviso de cookies no idioma da página de obrigado: pt-PT sem o \"você\", inglês com a Política em português dita no link", () => {
+  const en = avisoDeCookies("/en/thank-you-approved");
+  assert.match(en.texto, /Decline/);
+  assert.match(en.texto, /Accept/);
+  assert.match(en.texto, /Privacy Policy \(in Portuguese\)/);
+  assert.match(en.texto, /Learn more \(in Portuguese\)/);
+  assert.doesNotMatch(en.texto, /Recusar|Aceitar|você|Saiba/);
+  assert.ok(en.attrs.some((a) => a.lang === "en"));
+  assert.ok(en.attrs.some((a) => a.href === "/privacidade" && a.hrefLang === "pt-BR"));
+  for (const r of Object.values(CAMINHOS.en)) assert.match(avisoDeCookies(r).texto, /Decline/, r);
+
+  const ptpt = avisoDeCookies("/pt-pt/obrigado-aguardando-pagamento");
+  assert.match(ptpt.texto, /só se aceitar/);
+  assert.doesNotMatch(ptpt.texto, /você/);
+  assert.ok(ptpt.attrs.some((a) => a.lang === "pt-PT"));
+  assert.ok(ptpt.attrs.some((a) => a.href === "/privacidade"));
+
+  // o resto do site não mudou: pt-BR na "/" e na home de Portugal, espanhol em /es
+  assert.match(avisoDeCookies("/obrigado-aprovado").texto, /se você aceitar/);
+  assert.match(avisoDeCookies("/pt-pt").texto, /se você aceitar/);
+  const es = avisoDeCookies("/es/gracias-aprobado");
+  assert.match(es.texto, /Rechazar/);
+  assert.ok(es.attrs.some((a) => a.href === "/es/privacidad"));
+});
+
 /* =========================== cookie dm_mercado =========================== */
 
 const NAVEGADOR = IPHONE;
@@ -564,7 +746,7 @@ test("aparelho pelo user-agent: iPhone, iPad e iPod são ios; Android é android
 
 test("/baixar e /es/descargar: celular vai para a loja do idioma (302); computador fica na página", () => {
   const L = I.LOJAS_DO_LOCAL;
-  for (const local of LOCAIS) {
+  for (const local of LOCAIS_DO_BAIXAR) {
     const pathname = caminhoDoBaixar(local);
     assert.deepEqual(destinoDoBaixar({ pathname, userAgent: IPHONE }, L), { destino: L[local].appStore, status: 302 }, pathname);
     assert.deepEqual(destinoDoBaixar({ pathname, userAgent: IPAD }, L), { destino: L[local].appStore, status: 302 }, pathname);
@@ -572,7 +754,9 @@ test("/baixar e /es/descargar: celular vai para a loja do idioma (302); computad
     assert.equal(destinoDoBaixar({ pathname, userAgent: MAC }, L), null, pathname);
     assert.equal(destinoDoBaixar({ pathname, userAgent: WINDOWS }, L), null, pathname);
   }
-  assert.deepEqual(LOCAIS.map(caminhoDoBaixar), ["/baixar", "/es/descargar"]);
+  assert.deepEqual(LOCAIS_DO_BAIXAR.map(caminhoDoBaixar), ["/baixar", "/es/descargar"]);
+  // pt-pt e en não têm /baixar: usam o do pt (o QR code do computador abre ele)
+  assert.deepEqual(LOCAIS.map(caminhoDoBaixar), ["/baixar", "/baixar", "/es/descargar", "/baixar"]);
   // ?lang=es no /baixar: loja em espanhol no celular; no computador, a página em espanhol (307, com os parâmetros)
   assert.deepEqual(destinoDoBaixar({ pathname: "/baixar", busca: "?lang=es", userAgent: IPHONE }, L), { destino: L.es.appStore, status: 302 });
   assert.deepEqual(destinoDoBaixar({ pathname: "/baixar", busca: "?lang=es&utm_source=x", userAgent: MAC }, L), { destino: "/es/descargar?lang=es&utm_source=x", status: 307 });
@@ -581,22 +765,32 @@ test("/baixar e /es/descargar: celular vai para a loja do idioma (302); computad
   assert.equal(destinoDoBaixar({ pathname: "/vendas", userAgent: IPHONE }, L), null);
   assert.equal(destinoDoBaixar({ pathname: "/baixar/x", userAgent: IPHONE }, L), null);
   assert.equal(destinoDoBaixar({ pathname: "/es/baixar", userAgent: IPHONE }, L), null);
+  for (const pathname of ["/pt-pt/baixar", "/en/baixar", "/en/download"]) assert.equal(destinoDoBaixar({ pathname, userAgent: IPHONE }, L), null, pathname);
 });
 
 /* ================================= lojas ================================= */
 
-test("links das lojas: um app só, a ficha em pt e em es, nos caminhos novos", () => {
+test("links das lojas: um app só, um par por local (pt, pt-pt, es e en), nos caminhos novos", () => {
   const L = I.LOJAS_DO_LOCAL;
   assert.deepEqual(L, {
     pt: {
       appStore: "https://apps.apple.com/br/app/diariamente-sa%C3%BAde-mental/id6762151251",
       googlePlay: "https://play.google.com/store/apps/details?id=club.diariamente.app&hl=pt-BR",
     },
+    "pt-pt": {
+      appStore: "https://apps.apple.com/pt/app/diariamente-sa%C3%BAde-mental/id6762151251",
+      googlePlay: "https://play.google.com/store/apps/details?id=club.diariamente.app&hl=pt-PT",
+    },
     es: {
       appStore: "https://apps.apple.com/mx/app/diariamente-salud-mental/id6762151251",
       googlePlay: "https://play.google.com/store/apps/details?id=club.diariamente.app&hl=es",
     },
+    en: {
+      appStore: "https://apps.apple.com/us/app/diariamente-sa%C3%BAde-mental/id6762151251",
+      googlePlay: "https://play.google.com/store/apps/details?id=club.diariamente.app&hl=en",
+    },
   });
+  assert.deepEqual(Object.keys(L).sort(), [...LOCAIS].sort());
   // ATIVOS (homes) repassa a fonte única
   assert.deepEqual([I.ATIVOS.pt.links.appStore, I.ATIVOS.pt.links.googlePlay], [L.pt.appStore, L.pt.googlePlay]);
   assert.deepEqual([I.ATIVOS.es.links.appStore, I.ATIVOS.es.links.googlePlay], [L.es.appStore, L.es.googlePlay]);
@@ -646,10 +840,12 @@ function textoPlano(v) {
 const EMOJI = /\p{Extended_Pictographic}/gu;
 // "compra", "comprar", "compraste", "compró"... (comprovante e compromisso não contam)
 const COMPRA = /\bcompr(?!ov|om)/i;
+// no inglês, nem "purchase", "buy" ou "bought" (payment, subscription, access, order)
+const COMPRA_EN = /\b(purchas|buy|bought)/i;
 
-test("copy: só pt e es, com as mesmas chaves", () => {
-  assert.deepEqual(Object.keys(TEXTOS).sort(), ["es", "pt"]);
-  assert.deepEqual(chaves(TEXTOS.es), chaves(TEXTOS.pt));
+test("copy: os quatro locais, com as mesmas chaves do pt", () => {
+  assert.deepEqual(Object.keys(TEXTOS).sort(), [...LOCAIS].sort());
+  for (const local of LOCAIS) assert.deepEqual(chaves(TEXTOS[local]), chaves(TEXTOS.pt), local);
 });
 
 // O que cada página mostra: os textos do status e os das lojas.
@@ -660,6 +856,7 @@ for (const local of LOCAIS) {
 
     test(`copy ${local} ${pagina}: regras da marca (sem compra, sem travessão, no máximo 1 emoji)`, () => {
       assert.doesNotMatch(tudo, COMPRA);
+      assert.doesNotMatch(tudo, COMPRA_EN);
       assert.doesNotMatch(tudo, /[—–]/);
       assert.ok((tudo.match(EMOJI) || []).length <= 1);
     });
@@ -667,45 +864,108 @@ for (const local of LOCAIS) {
     test(`copy ${local} ${pagina}: nenhum texto vazio`, () => {
       for (const k of chaves(TEXTOS[local][pagina])) {
         const v = k.split(".").reduce((o, c) => o[c], TEXTOS[local][pagina]);
-        if (Array.isArray(v) && v.length === 0) continue; // formas: vazia no espanhol
+        if (Array.isArray(v) && v.length === 0) continue; // formas: vazia fora do pt
         assert.ok(textoPlano(v).trim(), `${k} vazio`);
       }
     });
   }
 }
 
+/** As frases de um texto (para conferir uma a uma). */
+const frasesDe = (texto) => texto.split(/(?<=[.?!])\s+/).filter(Boolean);
+
+/**
+ * Palavra inteira, com acento: o \b do JavaScript só conhece [A-Za-z0-9_]
+ * e não acharia "você" seguido de espaço.
+ */
+const palavras = (lista) => new RegExp(`(?<![\\p{L}\\p{N}])(${lista.join("|")})(?![\\p{L}\\p{N}])`, "iu");
+
 test("copy: assinatura da marca; o WhatsApp sem garantia de entrega e sem dizer o idioma", () => {
+  const assinatura = { pt: "Volte amanhã.", "pt-pt": "Volte amanhã.", es: "Vuelve mañana.", en: "Come back tomorrow." };
   for (const local of LOCAIS) {
-    const frase = local === "es" ? "Vuelve mañana." : "Volte amanhã.";
-    for (const pagina of PAGINAS) assert.equal(TEXTOS[local][pagina].frase, frase, `${local} ${pagina}`);
+    for (const pagina of PAGINAS) assert.equal(TEXTOS[local][pagina].frase, assinatura[local], `${local} ${pagina}`);
     const whats = TEXTOS[local].aprovado.whatsapp.texto;
-    // condicional (pergunta) e "deve/debería", nunca "vai chegar"
+    // condicional (pergunta) e "deve/debería/should", nunca "vai chegar"
     assert.match(whats, /\?/);
-    assert.match(whats, /\bDeve\b|\bDebería\b/i);
-    assert.doesNotMatch(whats, /vai chegar|chegará|llegará|va a llegar|em instantes|en unos instantes/i);
+    assert.match(whats, /\bDeve\b|\bDebería\b|\bshould\b/i);
+    assert.doesNotMatch(whats, /vai chegar|chegará|llegará|va a llegar|em instantes|en unos instantes|will (arrive|get|receive)|in a (moment|few)|right away|instantly/i);
     // frases curtas: nenhuma com mais de 20 palavras
-    for (const f of whats.split(/(?<=[.?!])\s+/)) assert.ok(f.split(/\s+/).length <= 20, f);
-    assert.doesNotMatch(textoPlano(TEXTOS[local]), /em português|en portugués|em espanhol|en español/i);
+    for (const f of frasesDe(whats)) assert.ok(f.split(/\s+/).length <= 20, f);
+    // (o en diz, numa frase só, que o APP está em português e espanhol: teste logo abaixo)
+    const semAFraseDoApp = textoPlano(TEXTOS[local]).split("The app is in Portuguese and Spanish.").join(" ");
+    assert.doesNotMatch(semAFraseDoApp, /em português|en portugués|em espanhol|en español|in Portuguese|in Spanish|in English|em inglês|en inglés/i, local);
   }
 });
 
+test("copy en: uma frase honesta de que o app está em português e espanhol, sem dizer o idioma do WhatsApp nem do e-mail", () => {
+  const en = TEXTOS.en;
+  const frase = "The app is in Portuguese and Spanish.";
+  // em toda página que manda abrir o app
+  for (const rico of [en.aprovado.senha.passos[0], en["aguardando-pagamento"].app.texto, en["aguardando-analise"].app.texto, en.baixar.primeiroAcesso]) {
+    assert.ok(textoPlano(rico).startsWith(frase), textoPlano(rico));
+  }
+  // uma vez por página, só ela fala de idioma, e nenhuma frase sobre WhatsApp ou e-mail fala de idioma
+  for (const pagina of PAGINAS) {
+    const tudo = textoPlano(en[pagina]);
+    assert.equal(tudo.split(frase).length - 1, 1, pagina);
+    for (const f of frasesDe(tudo.replace(frase, ""))) assert.doesNotMatch(f, /Portuguese|Spanish|English|language/i, f);
+  }
+  // pt, pt-pt e es não falam de idioma
+  for (const local of ["pt", "pt-pt", "es"]) assert.doesNotMatch(textoPlano(TEXTOS[local]), /idioma|português|portugués|espanhol|español|inglês|inglés/i, local);
+});
+
+test("copy en: nada em português, a não ser os rótulos do app citados (com a tradução entre parênteses)", () => {
+  // os rótulos do app que a página cita, e a marca
+  const citados = [BOTAO_DO_APP.en, "Entrar", "Diariamente", "Hotmart"];
+  let tudo = textoPlano(TEXTOS.en);
+  for (const c of citados) tudo = tudo.split(c).join(" ");
+  assert.doesNotMatch(tudo, /[ãõçàáâéêíóôú]/i);
+  assert.doesNotMatch(tudo, palavras(["você", "seu", "sua", "pagamento", "senha", "aplicativo", "baixar", "obrigado", "conta", "acesso", "botão", "abaixo", "toque", "primeiro"]));
+  // primeira vez em cada página: o rótulo em português e, logo depois, a tradução
+  const chip = (rico) => rico[rico.findIndex((p) => p && p.b === BOTAO_DO_APP.en) + 1];
+  for (const rico of [TEXTOS.en.aprovado.senha.passos[0], TEXTOS.en["aguardando-pagamento"].app.texto, TEXTOS.en["aguardando-analise"].app.texto, TEXTOS.en.baixar.primeiroAcesso]) {
+    assert.match(chip(rico), /^ \(First access\? Activate account\)/, textoPlano(rico));
+  }
+  assert.match(textoPlano(TEXTOS.en.aprovado.senha.passos[0]), /below the Entrar \(Sign in\) button/);
+});
+
+test("copy pt-pt: português de Portugal, sem brasileirismo nem \"você\"", () => {
+  const tudo = textoPlano(TEXTOS["pt-pt"]).split(BOTAO_DO_APP["pt-pt"]).join(" ");
+  assert.doesNotMatch(tudo, palavras(["você", "celular", "tela", "baixar", "baixe", "cadastro", "cadastrado", "senha", "o app", "do app", "no app", "pelo app", "aba", "equipe", "contato", "câmera", "pra", "aguardando", "analisando", "ônibus", "time"]));
+  for (const palavra of [/telemóvel/, /palavra-passe/, /\ba app\b/, /\bo seu\b|\ba sua\b/, /separador/, /câmara/, /Descarregar na App Store/]) {
+    assert.match(textoPlano(TEXTOS["pt-pt"]), palavra, String(palavra));
+  }
+  // o que muda para o pt: não é uma cópia
+  assert.notDeepEqual(TEXTOS["pt-pt"].aprovado, TEXTOS.pt.aprovado);
+});
+
 test("copy: o código de 6 dígitos sem garantia absoluta (sem WhatsApp, o app manda um link no e-mail)", () => {
-  const pt = textoPlano(TEXTOS.pt.aprovado.senha.passos[2]);
-  const es = textoPlano(TEXTOS.es.aprovado.senha.passos[2]);
-  assert.match(pt, /6 dígitos/);
-  assert.match(pt, /link/);
-  assert.match(pt, /e-mail/);
-  assert.match(es, /6 dígitos/);
-  assert.match(es, /enlace/);
-  assert.match(es, /correo/);
-  for (const t of [pt, es]) assert.doesNotMatch(t, /que chega|que te llega/);
+  const passo = (l) => textoPlano(TEXTOS[l].aprovado.senha.passos[2]);
+  const esperado = {
+    pt: [/6 dígitos/, /link/, /e-mail/],
+    "pt-pt": [/6 dígitos/, /link/, /e-mail/],
+    es: [/6 dígitos/, /enlace/, /correo/],
+    en: [/6-digit/, /link/, /email/],
+  };
+  for (const local of LOCAIS) {
+    for (const r of esperado[local]) assert.match(passo(local), r, local);
+    assert.doesNotMatch(passo(local), /que chega|que te llega|you will get|will arrive/, local);
+  }
   // o "Não recebeu?" fala do link no e-mail
   assert.match(textoPlano(TEXTOS.pt.aprovado.naoRecebeu), /enviou um link/);
+  assert.match(textoPlano(TEXTOS["pt-pt"].aprovado.naoRecebeu), /enviou um link/);
   assert.match(textoPlano(TEXTOS.es.aprovado.naoRecebeu), /envió un enlace/);
+  assert.match(textoPlano(TEXTOS.en.aprovado.naoRecebeu), /sent a link/);
 });
 
 test("copy: o chip usa o rótulo EXATO do botão do app e diz onde ele fica (abaixo do Entrar)", () => {
-  assert.deepEqual(BOTAO_DO_APP, { pt: "Primeiro acesso? Ativar conta", es: "¿Primer acceso? Activar cuenta" });
+  // o app só tem pt-BR e es: pt-pt e en citam o rótulo em português
+  assert.deepEqual(BOTAO_DO_APP, {
+    pt: "Primeiro acesso? Ativar conta",
+    "pt-pt": "Primeiro acesso? Ativar conta",
+    es: "¿Primer acceso? Activar cuenta",
+    en: "Primeiro acesso? Ativar conta",
+  });
   for (const local of LOCAIS) {
     const rotulo = BOTAO_DO_APP[local];
     const t = TEXTOS[local];
@@ -714,13 +974,17 @@ test("copy: o chip usa o rótulo EXATO do botão do app e diz onde ele fica (aba
     }
   }
   assert.match(textoPlano(TEXTOS.pt.aprovado.senha.passos[0]), /abaixo do botão Entrar/);
+  assert.match(textoPlano(TEXTOS["pt-pt"].aprovado.senha.passos[0]), /por baixo do botão Entrar/);
   assert.match(textoPlano(TEXTOS.es.aprovado.senha.passos[0]), /debajo del botón Entrar/);
+  assert.match(textoPlano(TEXTOS.en.aprovado.senha.passos[0]), /below the Entrar \(Sign in\) button/);
 });
 
 test("copy: Pix e boleto só no pt; a trilha tem 3 marcos em todo status", () => {
   assert.deepEqual(TEXTOS.pt["aguardando-pagamento"].concluir.formas.map((f) => f.id), ["pix", "boleto"]);
-  assert.deepEqual(TEXTOS.es["aguardando-pagamento"].concluir.formas, []);
-  assert.doesNotMatch(textoPlano(TEXTOS.es), /\bpix\b|boleto/i);
+  for (const local of ["pt-pt", "es", "en"]) {
+    assert.deepEqual(TEXTOS[local]["aguardando-pagamento"].concluir.formas, [], local);
+    assert.doesNotMatch(textoPlano(TEXTOS[local]), /\bpix\b|boleto/i, local);
+  }
   for (const local of LOCAIS) for (const estado of ESTADOS) assert.equal(TEXTOS[local][estado].trilha.passos.length, 3);
 });
 
@@ -759,20 +1023,20 @@ test("orientação do pagamento: com a forma, só ela; outra forma ou sem Pix e 
     const c = TEXTOS[local]["aguardando-pagamento"].concluir;
     // a linha da "outra forma" e a geral não falam de Pix nem de boleto
     assert.doesNotMatch(c.instrucoesSoEmail + c.instrucoesGeral, /pix|boleto/i, local);
-    assert.doesNotMatch(c.instrucoesSoEmail, /também|también/i, local);
+    assert.doesNotMatch(c.instrucoesSoEmail, /também|también|\btoo\b|\balso\b|as well/i, local);
     assert.match(c.instrucoesSoEmail, /Hotmart/, local);
   }
 });
 
-/** O pendente de verdade (ObrigadoShell), com as peças de fora de mentira. */
-function htmlDoPendente(local, mercado, forma = null) {
+/** O ObrigadoShell de verdade, com as peças de fora de mentira (a tela do app vira <i data-tela>). */
+function shellDeMentira() {
   const passa = ({ children }) => React.createElement("div", null, children);
   const nada = () => null;
-  const { ObrigadoShell } = carregarTs(arq("components", "ObrigadoShell.tsx"), {
+  return carregarTs(arq("components", "ObrigadoShell.tsx"), {
     react: React,
     "react/jsx-runtime": jsxRuntime,
     "@/config/atendimento": { ATENDIMENTO: { email: "x@y.z", assuntoSuporte: "S", assuntoAtendimento: "A" } },
-    "@/components/TelaDaLoja": { TelaDaLoja: nada },
+    "@/components/TelaDaLoja": { TelaDaLoja: ({ base }) => React.createElement("i", { "data-tela": base }) },
     "@/components/PosPagamento": {
       Final: nada, Hero: nada, InstalarApp: nada, Moldura: passa, Rico: nada, SeloAprovado: nada, SeloEspera: nada, Trilha: nada,
       Inteiro: ({ texto }) => texto,
@@ -781,7 +1045,16 @@ function htmlDoPendente(local, mercado, forma = null) {
     "@/lib/i18n": I,
     "@/lib/obrigado.mjs": O,
   }, { jsx: true });
-  return renderToStaticMarkup(React.createElement(ObrigadoShell, { estado: "aguardando-pagamento", local, aparelho: "ios", forma, mercado }));
+}
+
+/** ObrigadoShell de verdade (peças de fora de mentira), já renderizado. */
+function htmlDoShell(props) {
+  const { ObrigadoShell } = shellDeMentira();
+  return renderToStaticMarkup(React.createElement(ObrigadoShell, props));
+}
+
+function htmlDoPendente(local, mercado, forma = null) {
+  return htmlDoShell({ estado: "aguardando-pagamento", local, aparelho: "ios", forma, mercado });
 }
 
 test("aguardando pagamento: Pix e boleto só para o mercado br; quem lê em pt e paga em dólar ou euro vê a linha geral", async () => {
@@ -790,7 +1063,8 @@ test("aguardando pagamento: Pix e boleto só para o mercado br; quem lê em pt e
   assert.match(br, /data-forma="boleto"/);
   assert.match(htmlDoPendente("pt", "br", "pix"), /data-forma="pix"/);
   assert.doesNotMatch(htmlDoPendente("pt", "br", "pix"), /data-forma="boleto"/);
-  for (const [local, mercado] of [["pt", "rw"], ["pt", "pt"], ["es", "la"], ["es", "es"]]) {
+  for (const [local, mercado] of [["pt", "rw"], ["pt", "pt"], ["es", "la"], ["es", "es"], ["pt-pt", "pt"], ["en", "rw"], ["pt-pt", "br"], ["en", "br"]]) {
+    // (mercado br em pt-pt ou en: a oferta do Brasil aberta na rota de outro local; a copy não tem Pix nem boleto)
     const html = htmlDoPendente(local, mercado);
     assert.doesNotMatch(html, /data-forma=/, `${local} ${mercado}`);
     assert.match(html, /data-linha="instrucoesGeral"/, `${local} ${mercado}`);
@@ -800,7 +1074,8 @@ test("aguardando pagamento: Pix e boleto só para o mercado br; quem lê em pt e
     [{}, { cookie: "rw" }, "rw"],
     [{ off: "uevhmhy2" }, {}, "rw"],
     [{}, { pais: "US" }, "rw"],
-    [{}, { pais: "PT" }, "pt"],
+    // Portugal na página pt-BR (sem oferta): o mercado do pt-BR; Portugal tem a página dele (pt-pt)
+    [{}, { pais: "PT" }, "br"],
     [{}, {}, "br"],
     [{ off: "fhrttdh8" }, { pais: "US" }, "br"],
   ];
@@ -808,14 +1083,36 @@ test("aguardando pagamento: Pix e boleto só para o mercado br; quem lê em pt e
     const r = await renderizarPagina("aguardando-pagamento", "pt", busca, opcoes);
     assert.equal(r.shell.props.mercado, mercado, JSON.stringify([busca, opcoes]));
   }
+  // pt-pt e en: o mercado do local, sem Pix nem boleto
+  for (const [local, busca, opcoes, mercado] of [["pt-pt", {}, { pais: "PT" }, "pt"], ["pt-pt", {}, { cookie: "br" }, "pt"], ["en", { off: "uevhmhy2" }, { pais: "US" }, "rw"], ["en", {}, { cookie: "la" }, "rw"]]) {
+    const r = await renderizarPagina("aguardando-pagamento", local, busca, opcoes);
+    assert.equal(r.shell.props.mercado, mercado, JSON.stringify([local, busca, opcoes]));
+    assert.equal(r.shell.props.local, local);
+  }
+});
+
+test("aprovada: a tela do app (arte das lojas) em pt, pt-pt e es; o en fica sem ela (a arte é em português) e o WhatsApp sobe para a direita", () => {
+  const { telaDoApp } = shellDeMentira();
+  assert.equal(telaDoApp("pt").base, "/telas/pt/leitura");
+  assert.equal(telaDoApp("pt-pt").base, "/telas/pt/leitura");
+  assert.equal(telaDoApp("es").base, "/telas/es/leitura");
+  assert.equal(telaDoApp("pt").alt, telaDoApp("pt-pt").alt);
+  assert.equal(telaDoApp("en"), null);
+  for (const local of LOCAIS) {
+    const html = htmlDoShell({ estado: "aprovado", local, aparelho: "ios", mercado: O.MERCADO_DO_LOCAL[local] });
+    assert.equal(/data-tela=/.test(html), local !== "en", local);
+    assert.equal(/class="pp-aprovado is-sem-tela"/.test(html), local === "en", local);
+  }
+  const css = ler("components/pos-pagamento.css");
+  assert.match(css, /\.pp-aprovado\.is-sem-tela \{\s*grid-template-areas:\s*"hero\s+instalar"\s*"trilha\s+instalar"\s*"senha\s+whats";\s*\}/);
 });
 
 test("aguardando pagamento e em análise: sem prazo inventado", () => {
   for (const local of LOCAIS) {
     for (const estado of ["aguardando-pagamento", "aguardando-analise"]) {
       const tudo = textoPlano(TEXTOS[local][estado]);
-      assert.doesNotMatch(tudo, /\d+\s*(dia|día|hora|minuto)/i, `${local} ${estado}`);
-      assert.doesNotMatch(tudo, /úteis|hábiles|instantes/i, `${local} ${estado}`);
+      assert.doesNotMatch(tudo, /\d+\s*(dia|día|hora|minuto|day|hour|minute)/i, `${local} ${estado}`);
+      assert.doesNotMatch(tudo, /úteis|hábiles|instantes|business day|instantly|right away/i, `${local} ${estado}`);
     }
   }
 });
@@ -844,7 +1141,7 @@ test("a página entrega local, aparelho, forma e mercado ao shell, e registra s�
 
 /* ============================ rotas no app/ ============================ */
 
-test("as 6 páginas de obrigado e os 2 /baixar existem, dinâmicos, com o status e o local do caminho", () => {
+test("as 12 páginas de obrigado e os 2 /baixar existem, dinâmicos, com o status e o local do caminho", () => {
   for (const local of LOCAIS) {
     for (const estado of ESTADOS) {
       const rel = `app${caminhoDoObrigado(estado, local)}/page.tsx`;
@@ -855,6 +1152,8 @@ test("as 6 páginas de obrigado e os 2 /baixar existem, dinâmicos, com o status
       assert.match(fonte, new RegExp(`<PaginaObrigado estado="${estado}" local="${local}"`), rel);
       assert.doesNotMatch(fonte, /lang=|PurchaseTracking/, rel);
     }
+  }
+  for (const local of LOCAIS_DO_BAIXAR) {
     const rel = `app${caminhoDoBaixar(local)}/page.tsx`;
     assert.ok(existsSync(arq(rel)), rel);
     assert.match(ler(rel), /^export const dynamic = "force-dynamic";$/m, rel);
@@ -863,13 +1162,16 @@ test("as 6 páginas de obrigado e os 2 /baixar existem, dinâmicos, com o status
   }
   // o /obrigado antigo continua levando para a aprovada com os parâmetros
   assert.match(ler("app/obrigado/page.tsx"), /redirect\(comParametros\("\/obrigado-aprovado", searchParams\)\)/);
-  // as rotas que nunca foram ao ar saíram (português dentro de /es, /es-es e /pt-pt)
-  for (const velha of ["es/obrigado-aprovado", "es/obrigado-aguardando-pagamento", "es/obrigado-aguardando-analise", "es/baixar", "es-es/obrigado-aprovado", "es-es/baixar", "pt-pt/obrigado-aprovado", "pt-pt/baixar"]) {
+  // as rotas que nunca foram ao ar continuam fora (português dentro de /es e /es-es; /baixar de pt-pt e en)
+  for (const velha of ["es/obrigado-aprovado", "es/obrigado-aguardando-pagamento", "es/obrigado-aguardando-analise", "es/baixar", "es-es/obrigado-aprovado", "es-es/gracias-aprobado", "es-es/baixar", "pt-pt/baixar", "pt-pt/descargar", "en/baixar", "en/download"]) {
     assert.equal(existsSync(arq("app", velha)), false, velha);
   }
+  // em /en só as três de obrigado; em /pt-pt, as três ao lado das páginas de mercado de antes
+  assert.deepEqual(readdirSync(arq("app", "en")).sort(), ["thank-you-approved", "thank-you-pending-payment", "thank-you-under-review"]);
+  assert.deepEqual(readdirSync(arq("app", "pt-pt")).filter((n) => n.startsWith("obrigado")).sort(), ["obrigado-aguardando-analise", "obrigado-aguardando-pagamento", "obrigado-aprovado"]);
 });
 
-test("noindex, nofollow e canonical para si na meta; X-Robots-Tag nas 8 rotas; fora do sitemap", async () => {
+test("noindex, nofollow e canonical para si na meta; X-Robots-Tag nas 14 rotas; fora do sitemap", async () => {
   const pagina = ler("components/PaginaObrigado.tsx");
   const baixar = ler("components/BaixarApp.tsx");
   for (const fonte of [pagina, baixar]) {
@@ -890,8 +1192,30 @@ test("noindex, nofollow e canonical para si na meta; X-Robots-Tag nas 8 rotas; f
     assert.ok(r, rota);
     assert.deepEqual(r.headers, [{ key: "X-Robots-Tag", value: "noindex, nofollow" }], rota);
   }
+  // a lista do next.config.js é exatamente a de lib/obrigado.mjs
+  const comNoindex = regras.filter((x) => x.source.match(/obrigado|baixar|gracias|descargar|thank-you/)).map((x) => x.source);
+  assert.deepEqual(comNoindex.sort(), [...ROTAS_DO_POS_PAGAMENTO].sort());
   // o sitemap nasce de lib/rotas.ts: nada do pós-pagamento lá
-  assert.doesNotMatch(ler("lib/rotas.ts"), /obrigado|baixar|gracias|descargar/);
+  assert.doesNotMatch(ler("lib/rotas.ts"), /obrigado|baixar|gracias|descargar|thank-you/);
+  // metadata: título, descrição, Open Graph e Twitter no idioma do local
+  const pagina2 = carregarTs(arq("components", "PaginaObrigado.tsx"), {
+    react: React, "react/jsx-runtime": jsxRuntime,
+    "next/headers": {}, "@/config": { SITE: { dominio: "https://www.diariamente.app" } },
+    "@/components/ObrigadoShell": {}, "@/components/PurchaseTracking": {},
+    "@/components/PosPagamento": { textosDo: (l) => TEXTOS[l] },
+    "@/lib/mercado": M, "@/lib/obrigado.mjs": O, "@/lib/pos-pagamento": PP, "@/config/pricing": P,
+  }, { jsx: true });
+  const og = { pt: "pt_BR", "pt-pt": "pt_PT", es: "es_LA", en: "en_US" };
+  for (const local of LOCAIS) {
+    for (const estado of ESTADOS) {
+      const m = pagina2.metadataDoObrigado(estado, local);
+      assert.equal(m.title, TEXTOS[local][estado].aba);
+      assert.equal(m.alternates.canonical, `https://www.diariamente.app${CAMINHOS[local][estado]}`);
+      assert.equal(m.openGraph.locale, og[local]);
+      assert.equal(m.twitter.title, TEXTOS[local][estado].aba);
+      assert.equal(m.robots.index, false);
+    }
+  }
 });
 
 test("QR codes: um SVG por idioma em public/qr, só os dois", async () => {
@@ -904,6 +1228,36 @@ test("QR codes: um SVG por idioma em public/qr, só os dois", async () => {
   assert.equal(PC.qrDoLocal("es"), "/qr/descargar.svg");
   assert.equal(PC.urlDoBaixar("pt"), "https://www.diariamente.app/baixar");
   assert.equal(PC.urlDoBaixar("es"), "https://www.diariamente.app/es/descargar");
+  // pt-pt e en reaproveitam o QR do /baixar (no celular, o middleware manda direto para a loja)
+  for (const local of ["pt-pt", "en"]) {
+    assert.equal(PC.qrDoLocal(local), "/qr/baixar.svg", local);
+    assert.equal(PC.urlDoBaixar(local), "https://www.diariamente.app/baixar", local);
+  }
+});
+
+test("lojas por local nas páginas de obrigado: o botão do aparelho abre a loja do local", () => {
+  const PC = pecasComuns();
+  for (const local of LOCAIS) {
+    const L = I.LOJAS_DO_LOCAL[local];
+    const href = (u) => `href="${u.replace(/&/g, "&amp;")}"`;
+    const ios = renderToStaticMarkup(React.createElement(PC.InstalarApp, { local, aparelho: "ios" }));
+    assert.ok(ios.includes(href(L.appStore)), local);
+    assert.ok(ios.includes(href(L.googlePlay)), local);
+    assert.ok(ios.includes(TEXTOS[local].lojas.iphone.botao), local);
+    const android = renderToStaticMarkup(React.createElement(PC.InstalarApp, { local, aparelho: "android" }));
+    assert.ok(android.includes(TEXTOS[local].lojas.android.botao), local);
+  }
+});
+
+test("o <html lang> vira o do local na hidratação (o do layout raiz é sempre pt-BR)", () => {
+  const PC = pecasComuns();
+  for (const local of LOCAIS) {
+    const html = renderToStaticMarkup(React.createElement(PC.Moldura, { local }, "x"));
+    assert.match(html, new RegExp(`^<main class="pp" lang="${LANG_HTML[local]}"><i data-idioma="${LANG_HTML[local]}"></i>`), local);
+  }
+  const fonte = ler("components/IdiomaDoDocumento.tsx");
+  assert.match(fonte, /^"use client";/);
+  assert.match(fonte, /document\.documentElement\.lang = lang;/);
 });
 
 /* =============================== atendimento =============================== */
@@ -938,6 +1292,7 @@ function pecasComuns() {
     "@/config": { SITE: { dominio: "https://www.diariamente.app", appUrl: "https://app.diariamente.club" }, EMPRESA: {} },
     "@/config/atendimento": { ATENDIMENTO: { email: "x@y.z" }, linkDoAtendimento: () => "mailto:x@y.z" },
     "@/components/Brand": { OfficialLogo: () => null },
+    "@/components/IdiomaDoDocumento": { IdiomaDoDocumento: ({ lang }) => React.createElement("i", { "data-idioma": lang }) },
     "@/components/StoreBadges": { AppleGlyph: () => null, PlayGlyph: () => null, StoreBadges: () => null },
     "@/lib/i18n": I,
     "@/lib/obrigado.mjs": O,
@@ -952,6 +1307,9 @@ test("versão web: nas páginas de obrigado, a ativação do app (/ativar); no /
   assert.equal(PC.linkDaVersaoWeb("es"), "https://app.diariamente.club/ativar?lang=es");
   assert.equal(PC.linkDaVersaoWeb("pt", "raiz"), "https://app.diariamente.club/");
   assert.equal(PC.linkDaVersaoWeb("es", "raiz"), "https://app.diariamente.club/?lang=es");
+  // pt-pt e en sem lang: o app só tem pt-BR e es e decide sozinho
+  assert.equal(PC.linkDaVersaoWeb("pt-pt"), "https://app.diariamente.club/ativar");
+  assert.equal(PC.linkDaVersaoWeb("en"), "https://app.diariamente.club/ativar");
   assert.match(ler("components/BaixarApp.tsx"), /<Final [^>]*web="raiz"/);
   assert.doesNotMatch(ler("components/ObrigadoShell.tsx"), /web="raiz"/);
 });
@@ -976,17 +1334,33 @@ test("aprovada no computador: a versão web (/ativar) no fim do cartão de insta
 });
 
 test("aprovada: o subtítulo não conta passos (a trilha e os cartões numeram: Passo 2 e Passo 3)", () => {
+  const passo2 = { pt: "Passo 2", "pt-pt": "Passo 2", es: "Paso 2", en: "Step 2" };
   for (const local of LOCAIS) {
     const t = TEXTOS[local].aprovado;
-    assert.doesNotMatch(t.sub, /dois passos|dos pasos|\bdois\b|\bdos\b/i, t.sub);
-    assert.equal(t.app.selo, local === "es" ? "Paso 2" : "Passo 2");
+    assert.doesNotMatch(t.sub, /dois passos|dos pasos|two steps|\bdois\b|\bdos\b|\btwo\b/i, t.sub);
+    assert.equal(t.app.selo, passo2[local]);
     assert.equal(t.trilha.passos.length, 3);
+  }
+});
+
+test("título e subtítulo não contam passos em nenhum status (\"One step left\" acima de uma trilha com dois por fazer se contradizia)", () => {
+  const conta = /\b(one|two|three) steps?\b|\bsteps? left\b|\b(um|dois|três) passos?\b|\b(un|dos|tres) pasos?\b/i;
+  for (const local of LOCAIS) {
+    for (const estado of ESTADOS) {
+      const t = TEXTOS[local][estado];
+      assert.doesNotMatch(t.titulo.join(" "), conta, `${local} ${estado}`);
+      assert.doesNotMatch(t.sub, conta, `${local} ${estado}`);
+    }
   }
 });
 
 test("o chip é igual ao botão do app: só o texto, sem borda, fundo nem ponto de toque", () => {
   const PC = pecasComuns();
-  assert.equal(renderToStaticMarkup(React.createElement(PC.ChipDoApp, { rotulo: "Primeiro acesso? Ativar conta" })), '<span class="pp-chip">Primeiro acesso? Ativar conta</span>');
+  // com o lang do rótulo (o app só tem pt-BR e es): o leitor de tela da página en lê em português
+  assert.equal(renderToStaticMarkup(React.createElement(PC.ChipDoApp, { rotulo: "Primeiro acesso? Ativar conta" })), '<span class="pp-chip" lang="pt-BR">Primeiro acesso? Ativar conta</span>');
+  assert.equal(renderToStaticMarkup(React.createElement(PC.ChipDoApp, { rotulo: BOTAO_DO_APP.es })), '<span class="pp-chip" lang="es">¿Primer acceso? Activar cuenta</span>');
+  // o "Entrar" citado no meio do inglês também
+  assert.match(renderToStaticMarkup(React.createElement(PC.Rico, { partes: TEXTOS.en.aprovado.senha.passos[0] })), /below the <span lang="pt-BR">Entrar<\/span> \(Sign in\) button\./);
   const css = ler("components/pos-pagamento.css");
   const regra = css.match(/\.pp-chip \{([^}]*)\}/)[1];
   assert.match(regra, /color: var\(--p-400\)/);
