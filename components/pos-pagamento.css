@@ -375,6 +375,15 @@
   .pp-area-senha { grid-area: senha; }
   .pp-area-whats { grid-area: whats; }
   .pp-area-espera { grid-area: espera; position: sticky; top: 24px; width: 300px; margin: 0 auto; }
+  /* Sem a tela do app (en, components/ObrigadoShell.tsx, telaDoApp): o
+     WhatsApp e o "Não recebeu?" sobem para a direita, ao lado da senha,
+     em vez de deixar a coluna vazia. */
+  .pp-aprovado.is-sem-tela {
+    grid-template-areas:
+      "hero    instalar"
+      "trilha  instalar"
+      "senha   whats";
+  }
   .pp-aprovado > .pp-hero { text-align: left; padding: 8px 0 0; }
   .pp-aprovado > .pp-hero .pp-selo { margin-left: 0; }
   .pp-aprovado > .pp-hero .pp-sub { margin: 0; }

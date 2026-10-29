@@ -55,8 +55,14 @@ export function moedaDoMercado(m: Mercado): "BRL" | "USD" | "EUR" {
    TIPOS das páginas (as regras moram em lib/obrigado.mjs, e os textos em
    lib/obrigado-textos.mjs; aqui só a forma, para os componentes).
    --------------------------------------------------------------------- */
-/** Os dois idiomas do pós-pagamento: pt (pt-BR) e es (espanhol da América Latina). */
-export type Local = "pt" | "es";
+/**
+ * Os quatro locais do pós-pagamento (pedido do dono, 29/10/2026): pt
+ * (pt-BR, Brasil), pt-pt (Portugal), es (América Latina e Espanha) e en
+ * (Estados Unidos e demais países). Regras em lib/obrigado.mjs.
+ */
+export type Local = "pt" | "pt-pt" | "es" | "en";
+/** Só pt e es têm /baixar próprio; pt-pt e en usam o do pt (lib/obrigado.mjs, BAIXAR_DO_LOCAL). */
+export type LocalDoBaixar = "pt" | "es";
 export type Estado = "aprovado" | "aguardando-pagamento" | "aguardando-analise";
 export type Aparelho = "ios" | "android" | "computador";
 export type Forma = "pix" | "boleto" | "outra";
@@ -124,4 +130,4 @@ export type TextosDoLocal = {
 };
 
 /** Locale do Open Graph de cada local (es_LA, como o resto do site em espanhol latino). */
-export const OG_LOCALE: Record<Local, string> = { pt: "pt_BR", es: "es_LA" };
+export const OG_LOCALE: Record<Local, string> = { pt: "pt_BR", "pt-pt": "pt_PT", es: "es_LA", en: "en_US" };

@@ -302,7 +302,7 @@ test("vitrine: noindex, nofollow, canonical para si mesma, SEM hreflang, Open Gr
   assert.equal(/próximamente|em breve/i.test(JSON.stringify(Object.keys(venda).map((m) => S.metadataDaVitrine(m)))), false);
 });
 
-test("next.config.js: X-Robots-Tag noindex nos cinco endereços da vitrine (e abaixo deles) e nas 8 rotas do pós-pagamento, e só neles", async () => {
+test("next.config.js: X-Robots-Tag noindex nos cinco endereços da vitrine (e abaixo deles) e nas 14 rotas do pós-pagamento, e só neles", async () => {
   const fabrica = require(arq("next.config.js"));
   const aviso = console.warn;
   console.warn = () => {};
@@ -313,9 +313,10 @@ test("next.config.js: X-Robots-Tag noindex nos cinco endereços da vitrine (e ab
     console.warn = aviso;
   }
   const comNoindex = regras.filter((r) => r.headers.some((h) => h.key === "X-Robots-Tag"));
-  // Pós-pagamento (lib/obrigado.mjs): obrigado e /baixar, em pt e em es, só a rota exata.
+  // Pós-pagamento (lib/obrigado.mjs): obrigado em pt, pt-pt, es e en e o
+  // /baixar em pt e es, só a rota exata.
   const { ROTAS_DO_POS_PAGAMENTO } = await import(arq("lib", "obrigado.mjs"));
-  assert.equal(ROTAS_DO_POS_PAGAMENTO.length, 8);
+  assert.equal(ROTAS_DO_POS_PAGAMENTO.length, 14);
   const esperado = [
     ...Object.values(M.VENDAS_DO_MERCADO).flatMap((base) => [base, `${base}/:path*`]),
     ...ROTAS_DO_POS_PAGAMENTO,

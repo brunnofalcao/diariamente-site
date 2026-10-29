@@ -323,26 +323,34 @@ const IMG_PT = {
 /* LOJAS POR IDIOMA · fonte única dos links do app
    ---------------------------------------------------------------------
    UM app para o mundo todo (App Store id6762151251, Google Play
-   club.diariamente.app), em dois idiomas, como o projeto (decisão do
-   dono, 28/10/2026: só português e espanhol). No celular, o link abre a
-   loja do país da pessoa de qualquer jeito; o caminho só muda a vitrine
-   e o idioma da ficha no computador:
-     pt  App Store /br/ (ficha em pt-BR), Google Play &hl=pt-BR
-     es  App Store /mx/ (espanhol latino), Google Play &hl=es
-   Caminho NOVO da Apple, com o nome da ficha (diariamente-sa%C3%BAde-mental
-   em pt, diariamente-salud-mental em es): os dois respondem 200 direto. O
-   antigo (/br/app/diariamente/id6762151251) dava 301 e não pode voltar
-   (o teste confere em todo o site).
-   Quem lê: as páginas de obrigado e o /baixar (pt e es), o
-   redirecionamento do celular no middleware, StoreBadges e ATIVOS (homes,
-   inclusive /pt-pt e /es-es, que usam o pt e o es). config.ts (LOJAS)
-   repete o pt: o JSON-LD do layout e o rodapé leem de lá, e o teste
-   confere que é igual a este. */
+   club.diariamente.app). No celular, o link abre a loja do país da pessoa
+   de qualquer jeito; o caminho só muda a vitrine e o idioma da ficha no
+   computador. Um par de links por local do pós-pagamento (pedido do
+   dono, 29/10/2026: uma página de obrigado por mercado):
+     pt     App Store /br/ (ficha em pt-BR), Google Play &hl=pt-BR
+     pt-pt  App Store /pt/ (vitrine de Portugal), Google Play &hl=pt-PT
+     es     App Store /mx/ (espanhol latino), Google Play &hl=es
+     en     App Store /us/ (vitrine dos Estados Unidos), Google Play &hl=en
+   Caminho NOVO da Apple, com o nome da ficha (diariamente-sa%C3%BAde-mental,
+   o mesmo nas vitrines br, pt e us; diariamente-salud-mental na mx). Os
+   oito responderam 200 direto, sem redirecionar (curl -sIL, 28/10/2026
+   para pt e es, 29/10/2026 para pt-pt e en). O antigo
+   (/br/app/diariamente/id6762151251) dava 301 e não pode voltar (o teste
+   confere em todo o site).
+   Quem lê: as páginas de obrigado e o /baixar, o redirecionamento do
+   celular no middleware (só pt e es, os locais com /baixar), StoreBadges
+   e ATIVOS (homes, inclusive /pt-pt e /es-es, que usam o pt e o es).
+   config.ts (LOJAS) repete o pt: o JSON-LD do layout e o rodapé leem de
+   lá, e o teste confere que é igual a este. */
 const APP_STORE = (pais: string, ficha: string) => `https://apps.apple.com/${pais}/app/${ficha}/id6762151251`;
 const GOOGLE_PLAY = (hl: string) => `https://play.google.com/store/apps/details?id=club.diariamente.app&hl=${hl}`;
-export const LOJAS_DO_LOCAL: Record<Lang, { appStore: string; googlePlay: string }> = {
+/** Os locais do pós-pagamento (lib/pos-pagamento.ts, Local), que têm cada um o seu par de lojas. */
+export type LocalDaLoja = "pt" | "pt-pt" | "es" | "en";
+export const LOJAS_DO_LOCAL: Record<LocalDaLoja, { appStore: string; googlePlay: string }> = {
   pt: { appStore: APP_STORE("br", "diariamente-sa%C3%BAde-mental"), googlePlay: GOOGLE_PLAY("pt-BR") },
+  "pt-pt": { appStore: APP_STORE("pt", "diariamente-sa%C3%BAde-mental"), googlePlay: GOOGLE_PLAY("pt-PT") },
   es: { appStore: APP_STORE("mx", "diariamente-salud-mental"), googlePlay: GOOGLE_PLAY("es") },
+  en: { appStore: APP_STORE("us", "diariamente-sa%C3%BAde-mental"), googlePlay: GOOGLE_PLAY("en") },
 };
 
 const LINKS_PT = {

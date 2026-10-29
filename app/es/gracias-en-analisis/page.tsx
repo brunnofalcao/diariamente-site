@@ -1,7 +1,8 @@
 import { PaginaObrigado, metadataDoObrigado, type Busca } from "@/components/PaginaObrigado";
 
-// Espanhol da América Latina, com o endereço em espanhol. Quem chega pela
-// URL da Hotmart (sem prefixo) e lê em espanhol é trazido para cá pelo
+// Espanhol, com o endereço em espanhol: a URL que vai na oferta da
+// Espanha (iuoufnf6), e a página da América Latina. Quem chega pela URL
+// automática (sem prefixo) e lê em espanhol é trazido para cá pelo
 // middleware, com todos os parâmetros (lib/obrigado.mjs,
 // destinoDoObrigado). Aqui o caminho decide o idioma. Regras:
 // docs/POS-PAGAMENTO.md.

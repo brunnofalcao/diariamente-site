@@ -19,21 +19,23 @@ import { mercadosDasOfertasDoEstudante } from "@/config/pricing";
 /* =====================================================================
    PÁGINA DE OBRIGADO · o que roda no servidor
    ---------------------------------------------------------------------
-   Cada rota (app/obrigado-<status>/page.tsx em pt e
-   app/es/gracias-<status>/page.tsx em espanhol) só diz o status e o
+   Cada rota (app/obrigado-<status>/page.tsx em pt,
+   app/pt-pt/obrigado-<status>/page.tsx em pt-pt,
+   app/es/gracias-<status>/page.tsx em espanhol e
+   app/en/thank-you-<status>/page.tsx em inglês) só diz o status e o
    local; o resto mora aqui:
 
      - o idioma já veio decidido pelo CAMINHO. As três URLs sem prefixo
-       (as da Hotmart) passam antes pelo middleware, que leva quem lê em
-       espanhol para a rota em espanhol (lib/obrigado.mjs,
+       (as automáticas) passam antes pelo middleware, que leva quem não
+       lê em pt-BR para a rota do seu local (lib/obrigado.mjs,
        destinoDoObrigado). Nada de ?lang= aqui.
      - o aparelho, pelo user-agent (iPhone, Android ou computador), para
        mostrar a loja certa ou o QR code
      - o MERCADO do pedido (lib/obrigado.mjs, mercadoDoObrigado: a oferta
-       ?off=, o cookie dm_mercado e o país do IP, quando são do idioma da
-       página): decide a moeda e o valor do Purchase na aprovada e, no
-       pendente, se Pix e boleto aparecem (só no mercado br; quem lê em
-       português e paga em dólar ou euro vê a linha geral)
+       ?off=, o cookie dm_mercado e o país do IP, quando são mercados do
+       local da página): decide a moeda e o valor do Purchase na aprovada
+       e, no pendente, se Pix e boleto aparecem (só no mercado br; quem
+       lê em português e paga em dólar ou euro vê a linha geral)
      - a forma de pagamento, se a URL disser (só muda o pendente do Brasil)
      - LOG DE APRENDIZADO: uma linha com o status, o local e só os NOMES
        dos parâmetros que chegaram (nunca os valores), para descobrirmos o
@@ -61,6 +63,8 @@ export function metadataDoObrigado(estado: Estado, local: Local): Metadata {
     // Sobrescreve o canonical "/" e o hreflang que o layout raiz declara.
     alternates: { canonical: proprio },
     openGraph: { title: t.aba, description: t.descricao, url: proprio, locale: OG_LOCALE[local] },
+    // O do layout raiz é em português; aqui, o do local.
+    twitter: { title: t.aba, description: t.descricao },
     robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
   };
 }
