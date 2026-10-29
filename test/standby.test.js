@@ -413,17 +413,13 @@ test("standby: as homes públicas mostram a lista de espera; a vitrine mostra o 
 
 test("lançado: as homes públicas seguem vendaAberta e semVenda; a vitrine continua mostrando a venda aberta", () => {
   const ver = pagina(true);
-  // br, pt e rw: o site de vendas (pt e rw com a lista de espera no bloco)
-  for (const m of ["br", "pt", "rw"]) assert.match(ver(m, false), new RegExp(`data-c="Home" data-m="${m}" data-v="false"`), m);
-  // la e es: a lista de espera inteira, como no PR #3
-  for (const m of ["la", "es"]) assert.match(ver(m, false), new RegExp(`data-c="EmBreve" data-m="${m}" data-v="false"`), m);
+  // todo mercado vende desde 29/10/2026 ("pode deixar tudo 100% aberto"): o site de vendas
+  for (const m of ["br", "la", "es", "pt", "rw"]) assert.match(ver(m, false), new RegExp(`data-c="Home" data-m="${m}" data-v="false"`), m);
   // a vitrine, se o middleware não redirecionasse, segue as regras públicas
-  for (const m of ["br", "pt", "rw"]) assert.match(ver(m, true), new RegExp(`data-c="Home" data-m="${m}" data-v="false"`), m);
-  for (const m of ["la", "es"]) assert.match(ver(m, true), new RegExp(`data-c="EmBreve" data-m="${m}" data-v="false"`), m);
-  // vendaAberta e semVenda não mudaram: o lançamento público segue fechado fora do Brasil
+  for (const m of ["br", "la", "es", "pt", "rw"]) assert.match(ver(m, true), new RegExp(`data-c="Home" data-m="${m}" data-v="false"`), m);
   assert.deepEqual(
     Object.fromEntries(["br", "la", "es", "pt", "rw"].map((m) => [m, [P.MERCADOS[m].vendaAberta, P.MERCADOS[m].semVenda]])),
-    { br: [true, "bloco"], la: [false, "pagina"], es: [false, "pagina"], pt: [false, "bloco"], rw: [false, "bloco"] },
+    { br: [true, "bloco"], la: [true, "pagina"], es: [true, "pagina"], pt: [true, "bloco"], rw: [true, "bloco"] },
   );
 });
 
@@ -672,29 +668,40 @@ test("standby: \"/\" e \"/es\" (e as outras homes públicas) continuam \"Em brev
   }
 });
 
-test("lançado: só o Brasil vende na home pública; /es segue a lista de espera e /pt-pt, a lista no bloco", () => {
+test("lançado: todo mercado vende na home pública (29/10/2026), cada um no checkout da sua moeda", () => {
   const { pagina } = componentesReais(true);
   assert.ok(checkouts(pagina("br")).length >= 2);
-  for (const m of ["la", "es"]) {
-    const h = pagina(m);
-    assert.equal(/pay\.hotmart\.com/.test(h), false, m);
-    assert.match(h, /Próximamente/, m);
+  for (const m of ["la", "es", "pt", "rw"]) {
+    const links = checkouts(pagina(m));
+    assert.ok(links.length >= 1, m);
+    for (const l of links) assert.match(l, new RegExp(`[?&](amp;)?off=${OFERTA_DA_VITRINE[m]}\\b`), m);
+    assert.equal(/data-lista=/.test(pagina(m)), false, m);
   }
-  for (const m of ["pt", "rw"]) {
-    const h = pagina(m);
-    assert.equal(/pay\.hotmart\.com/.test(h), false, m);
-    assert.match(h, new RegExp(`data-lista="${m}"`), m);
-  }
+  // mercado fechado (vendaAberta: false) volta para a lista de espera
+  const antes = P.MERCADOS.pt.vendaAberta;
+  try {
+    P.MERCADOS.pt.vendaAberta = false;
+    const h = pagina("pt");
+    assert.equal(/pay\.hotmart\.com/.test(h), false);
+    assert.match(h, /data-lista="pt"/);
+  } finally { P.MERCADOS.pt.vendaAberta = antes; }
 });
 
 test("prévias do dono (previa) seguem como estavam: bloco de venda, botão sem pagamento e a nota de prévia interna", () => {
   const { bloco } = componentesReais(true);
-  const h = bloco({ mercado: "pt", previa: true });
-  assert.equal(/pay\.hotmart\.com/.test(h), false);
-  assert.match(h, /aria-disabled="true"/);
-  assert.match(h, /Prévia interna: a venda deste mercado ainda está fechada/);
-  // fora da vitrine e sem prévia, mercado fechado continua lista de espera
-  assert.match(bloco({ mercado: "pt" }), /data-lista="pt"/);
+  // a prévia só existe com a venda fechada (desde 29/10/2026 todo mercado vende)
+  const antes = P.MERCADOS.pt.vendaAberta;
+  try {
+    P.MERCADOS.pt.vendaAberta = false;
+    const h = bloco({ mercado: "pt", previa: true });
+    assert.equal(/pay\.hotmart\.com/.test(h), false);
+    assert.match(h, /aria-disabled="true"/);
+    assert.match(h, /Prévia interna: a venda deste mercado ainda está fechada/);
+    // fora da vitrine e sem prévia, mercado fechado continua lista de espera
+    assert.match(bloco({ mercado: "pt" }), /data-lista="pt"/);
+  } finally { P.MERCADOS.pt.vendaAberta = antes; }
+  // aberto, o bloco leva ao checkout em euros
+  assert.match(bloco({ mercado: "pt" }), /off=3n484jbe/);
 });
 
 test("vitrine: PT | ES e o seletor de país levam aos endereços novos, com o idioma na frente", () => {

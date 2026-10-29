@@ -118,7 +118,7 @@ test("mercados de fora: US$ 29,99 por ano (US$ 2,50/mês) em la e rw; 29,99 € 
   assert.equal(txt(P.formatar("es", P.precoFinal("es", ANTES))), "29,99 €");
   for (const m of ["la", "rw", "pt", "es"]) {
     assert.equal(P.lancamentoVigente(m, ANTES), false, m);
-    assert.equal(P.vendeAgora(m), false, m);
+    assert.equal(P.vendeAgora(m), true, m);
   }
 });
 
